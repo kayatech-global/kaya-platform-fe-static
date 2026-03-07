@@ -1,0 +1,10 @@
+# Windsurf Project Rules
+
+Please read the `design_system.md` file located at the root of the project before generating or modifying any code in this repository. 
+The design system contains all primary source-of-truth instructions on:
+- Technology stack conventions (App Router, shadcn/ui, Tailwind).
+- Reusable UI component rules.
+- Color and typography usage as defined in the `tailwind.config.ts`.
+- Code layout and dependency choices.
+
+Any code you generate must strictly adhere to the guidelines set in `design_system.md`.

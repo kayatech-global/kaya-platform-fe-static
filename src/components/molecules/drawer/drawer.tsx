@@ -1,0 +1,96 @@
+'use client';
+
+import * as React from 'react';
+import { Drawer as DrawerPrimitive } from 'vaul';
+
+import { cn } from '@/lib/utils';
+
+const Drawer = ({ shouldScaleBackground = true, ...props }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
+    <DrawerPrimitive.Root shouldScaleBackground={shouldScaleBackground} {...props} />
+);
+Drawer.displayName = 'Drawer';
+
+const DrawerTrigger = DrawerPrimitive.Trigger;
+
+const DrawerPortal = DrawerPrimitive.Portal;
+
+const DrawerClose = DrawerPrimitive.Close;
+
+const DrawerOverlay = React.forwardRef<
+    React.ElementRef<typeof DrawerPrimitive.Overlay>,
+    React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+    <DrawerPrimitive.Overlay
+        ref={ref}
+        style={{ backgroundColor: '#11182769' }}
+        className={cn('fixed inset-0 z-50', className)}
+        {...props}
+    />
+));
+DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
+
+const DrawerContent = React.forwardRef<
+    React.ElementRef<typeof DrawerPrimitive.Content>,
+    React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+    <DrawerPortal>
+        <DrawerOverlay />
+        <DrawerPrimitive.Content
+            ref={ref}
+            className={cn(
+                'fixed inset-y-0 right-1 z-50 flex h-screen sm:h-auto flex-col w-[633px] my-2 bg-white rounded-xl border-l-2 border-l-blue-600 border-b-2 border-b-blue-600 dark:bg-gray-800 dark:border-l-blue-800 dark:border-b-blue-800',
+                className
+            )}
+            {...props}
+        >
+            {children}
+        </DrawerPrimitive.Content>
+    </DrawerPortal>
+));
+DrawerContent.displayName = 'DrawerContent';
+
+const DrawerHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+    <div className={cn('p-4 border-b border-gray-200 rounded-t-xl dark:border-gray-700', className)} {...props} />
+);
+DrawerHeader.displayName = 'DrawerHeader';
+
+const DrawerFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+    <div
+        className={cn('mt-auto p-4 border-t border-gray-200 rounded-b-xl dark:border-gray-700', className)}
+        {...props}
+    />
+);
+DrawerFooter.displayName = 'DrawerFooter';
+
+const DrawerTitle = React.forwardRef<
+    React.ElementRef<typeof DrawerPrimitive.Title>,
+    React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
+>(({ className, ...props }, ref) => (
+    <DrawerPrimitive.Title
+        ref={ref}
+        className={cn('text-lg font-semibold leading-none tracking-tight', className)}
+        {...props}
+    />
+));
+DrawerTitle.displayName = DrawerPrimitive.Title.displayName;
+
+const DrawerDescription = React.forwardRef<
+    React.ElementRef<typeof DrawerPrimitive.Description>,
+    React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Description>
+>(({ className, ...props }, ref) => (
+    <DrawerPrimitive.Description ref={ref} className={cn('text-sm text-muted-foreground', className)} {...props} />
+));
+DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
+
+export {
+    Drawer,
+    DrawerPortal,
+    DrawerOverlay,
+    DrawerTrigger,
+    DrawerClose,
+    DrawerContent,
+    DrawerHeader,
+    DrawerFooter,
+    DrawerTitle,
+    DrawerDescription,
+};

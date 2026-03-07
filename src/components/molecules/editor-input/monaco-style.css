@@ -1,0 +1,15 @@
+.monaco-scrollable-element {
+    left: 12px !important;
+}
+
+.decorationsOverviewRuler {
+    display: none !important;
+}
+
+.monaco-editor {
+    border-radius: 12px !important;
+}
+
+.overflow-guard {
+    border-radius: 12px !important;
+}

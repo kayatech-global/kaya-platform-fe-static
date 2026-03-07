@@ -1,0 +1,20 @@
+@media screen and (max-width: 1440px) {
+    /* Responsive breakpoint - add styles as needed */
+}
+
+.dropdown-content {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .dropdown-content {
+        max-height: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dropdown-content {
+        max-height: 150px;
+    }
+}
