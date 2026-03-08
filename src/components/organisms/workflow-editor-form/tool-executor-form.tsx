@@ -108,7 +108,7 @@ const MappingInput: React.FC<MappingInputProps> = ({
             {description && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{description}</p>
             )}
-            
+
             {items.map((item, index) => (
                 <div
                     key={item.id}
@@ -141,7 +141,7 @@ const MappingInput: React.FC<MappingInputProps> = ({
                     </div>
                 </div>
             ))}
-            
+
             <div className="mb-2">
                 <Button size="sm" disabled={disabled} onClick={onAdd}>
                     <span className="flex gap-2">
@@ -186,7 +186,7 @@ export const ToolExecutorForm = ({
     const [graphRags, setGraphRags] = useState<IGraphRag[] | undefined>([]);
     const [selectedConnector, setSelectedConnector] = useState<IConnectorForm[] | undefined>([]);
     const [executableFunctions, setExecutableFunctions] = useState<ExecutableFunction[] | undefined>([]);
-    
+
     // Parameter and Response Mapping state
     const [parameterMapping, setParameterMapping] = useState<MappingItem[]>([]);
     const [responseMapping, setResponseMapping] = useState<MappingItem[]>([]);
@@ -200,7 +200,7 @@ export const ToolExecutorForm = ({
     // Initialize form with node data
     const initFormData = useCallback(() => {
         const data = selectedNode?.data as ToolExecutorType;
-        
+
         setName(data?.name ?? '');
         setDescription(data?.description ?? '');
         setApis(data?.apis ?? []);
@@ -346,15 +346,15 @@ export const ToolExecutorForm = ({
                                 isReadonly: isReadOnly,
                                 apiLoading: apiLoading,
                                 onRefetch: () => {
-                                    Promise.resolve(refetchApiTools()).catch(() => {});
+                                    Promise.resolve(refetchApiTools()).catch(() => { });
                                 },
                             }}
                             mcpSelectorProps={{
-                                mcpServers: mcpServers,
+                                mcpServers: mcpServers || [],
                                 setMcpServers: setMcpServers,
                                 agent: undefined,
                                 onRefetch: () => {
-                                    Promise.resolve(refetchMcp()).catch(() => {});
+                                    Promise.resolve(refetchMcp()).catch(() => { });
                                 },
                                 isReadonly: isReadOnly,
                                 loading: mcpLoading,
@@ -362,35 +362,35 @@ export const ToolExecutorForm = ({
                             }}
                             vectorSelectorProps={{
                                 agent: undefined,
-                                vectorRags: vectorRags,
+                                vectorRags: vectorRags || [],
                                 setVectorRags: setVectorRags,
                                 allVectorRags: allVectorRags ?? [],
                                 vectorRagLoading: vectorRagLoading,
                                 isReadonly: isReadOnly,
                                 onRefetch: () => {
-                                    Promise.resolve(refetchVectorRag()).catch(() => {});
+                                    Promise.resolve(refetchVectorRag()).catch(() => { });
                                 },
                             }}
                             graphSelectorProps={{
                                 agent: undefined,
-                                graphRags: graphRags,
+                                graphRags: graphRags || [],
                                 setGraphRags: setGraphRags,
                                 allGraphRags: allGraphRag ?? [],
                                 graphRagLoading: fetchingGraphRag,
                                 isReadonly: isReadOnly,
                                 onRefetch: () => {
-                                    Promise.resolve(refetchGraphRag()).catch(() => {});
+                                    Promise.resolve(refetchGraphRag()).catch(() => { });
                                 },
                             }}
                             connectorSelectorProps={{
                                 agent: undefined,
-                                connectors: selectedConnector,
+                                connectors: selectedConnector || [],
                                 isMultiple: true,
                                 setConnectors: setSelectedConnector,
                                 allConnectors: allConnectors ?? [],
                                 isReadonly: isReadOnly,
                                 onRefetch: () => {
-                                    Promise.resolve(refetchConnectors()).catch(() => {});
+                                    Promise.resolve(refetchConnectors()).catch(() => { });
                                 },
                                 onConnectorsChange: connector => setSelectedConnector(connector),
                             }}
@@ -402,7 +402,7 @@ export const ToolExecutorForm = ({
                                 isReadonly: isReadOnly,
                                 functionLoading: executableFunctionsLoading,
                                 onRefetch: () => {
-                                    Promise.resolve(refetchExecutableFunctions()).catch(() => {});
+                                    Promise.resolve(refetchExecutableFunctions()).catch(() => { });
                                 },
                             }}
                         />
