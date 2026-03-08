@@ -12,6 +12,7 @@ import {
     Button,
     Input,
     Textarea,
+    Label,
 } from '@/components/atoms';
 import { useDnD } from '@/context';
 import { IMCPBody } from '@/hooks/use-mcp-configuration';
@@ -21,6 +22,14 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { EditorPanelAgentProps } from '@/app/editor/[wid]/[workflow_id]/components/editor-panel';
 import { AgentType, API, ExecutableFunction } from './agent-form';
+import { Plus, X } from 'lucide-react';
+
+// Types for Parameter/Response Mapping
+interface MappingItem {
+    id: string;
+    paramName: string;
+    value: string;
+}
 
 // Types for Tool Executor
 export type ToolExecutorType = {
@@ -32,10 +41,9 @@ export type ToolExecutorType = {
     rags?: IVectorRag[];
     knowledgeGraphs?: IGraphRag[];
     connectors?: IConnectorForm[];
-    // Dynamic input connections - stores the count of input handles
-    dynamicInputCount?: number;
-    // Input connection mappings
-    inputConnections?: { id: string; label: string; sourceNodeId?: string }[];
+    // Parameter and Response mappings
+    parameterMapping?: MappingItem[];
+    responseMapping?: MappingItem[];
 };
 
 interface ToolExecutorFormProps extends EditorPanelAgentProps {
@@ -68,6 +76,81 @@ type McpToolResponseType = {
     isReadOnly?: boolean;
     description: string;
     configurations: any;
+};
+
+// Reusable Mapping Input Component
+interface MappingInputProps {
+    label: string;
+    description?: string;
+    items: MappingItem[];
+    onAdd: () => void;
+    onRemove: (id: string) => void;
+    onUpdate: (id: string, field: 'paramName' | 'value', newValue: string) => void;
+    disabled?: boolean;
+    namePlaceholder?: string;
+    valuePlaceholder?: string;
+}
+
+const MappingInput: React.FC<MappingInputProps> = ({
+    label,
+    description,
+    items,
+    onAdd,
+    onRemove,
+    onUpdate,
+    disabled = false,
+    namePlaceholder = 'Parameter Name',
+    valuePlaceholder = 'Value',
+}) => {
+    return (
+        <div className="flex flex-col items-start gap-y-[6px] w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700">
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-100 mb-1">{label}</Label>
+            {description && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{description}</p>
+            )}
+            
+            {items.map((item, index) => (
+                <div
+                    key={item.id}
+                    className="w-full flex flex-col sm:flex-row gap-2 mb-2"
+                >
+                    <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <Input
+                            placeholder={namePlaceholder}
+                            value={item.paramName}
+                            onChange={(e) => onUpdate(item.id, 'paramName', e.target.value)}
+                            disabled={disabled}
+                        />
+                        <Input
+                            placeholder={valuePlaceholder}
+                            value={item.value}
+                            onChange={(e) => onUpdate(item.id, 'value', e.target.value)}
+                            disabled={disabled}
+                        />
+                    </div>
+                    <div className="mt-1.5">
+                        <Button
+                            className="w-full sm:w-max"
+                            disabled={disabled}
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onRemove(item.id)}
+                        >
+                            <X />
+                        </Button>
+                    </div>
+                </div>
+            ))}
+            
+            <div className="mb-2">
+                <Button size="sm" disabled={disabled} onClick={onAdd}>
+                    <span className="flex gap-2">
+                        <Plus /> Add
+                    </span>
+                </Button>
+            </div>
+        </div>
+    );
 };
 
 export const ToolExecutorForm = ({
@@ -104,14 +187,15 @@ export const ToolExecutorForm = ({
     const [selectedConnector, setSelectedConnector] = useState<IConnectorForm[]>([]);
     const [executableFunctions, setExecutableFunctions] = useState<ExecutableFunction[]>([]);
     
-    // Dynamic input connections state
-    const [dynamicInputCount, setDynamicInputCount] = useState<number>(1);
-    const [inputConnections, setInputConnections] = useState<{ id: string; label: string; sourceNodeId?: string }[]>([
-        { id: 'input-1', label: 'Input 1' }
-    ]);
+    // Parameter and Response Mapping state
+    const [parameterMapping, setParameterMapping] = useState<MappingItem[]>([]);
+    const [responseMapping, setResponseMapping] = useState<MappingItem[]>([]);
 
     const { trigger, setSelectedNodeId, setTrigger } = useDnD();
     const { updateNodeData } = useReactFlow();
+
+    // Generate unique ID for mapping items
+    const generateId = () => `mapping-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Initialize form with node data
     const initFormData = useCallback(() => {
@@ -125,8 +209,8 @@ export const ToolExecutorForm = ({
         setGraphRags(data?.knowledgeGraphs ?? []);
         setSelectedConnector(data?.connectors ?? []);
         setExecutableFunctions(data?.executableFunctions ?? []);
-        setDynamicInputCount(data?.dynamicInputCount ?? 1);
-        setInputConnections(data?.inputConnections ?? [{ id: 'input-1', label: 'Input 1' }]);
+        setParameterMapping(data?.parameterMapping ?? []);
+        setResponseMapping(data?.responseMapping ?? []);
     }, [selectedNode?.data]);
 
     useEffect(() => {
@@ -143,8 +227,8 @@ export const ToolExecutorForm = ({
         knowledgeGraphs: graphRags?.length > 0 ? graphRags : undefined,
         connectors: selectedConnector?.length > 0 ? selectedConnector : undefined,
         executableFunctions: executableFunctions?.length > 0 ? executableFunctions : undefined,
-        dynamicInputCount,
-        inputConnections,
+        parameterMapping: parameterMapping?.length > 0 ? parameterMapping : undefined,
+        responseMapping: responseMapping?.length > 0 ? responseMapping : undefined,
     }), [
         name,
         description,
@@ -154,8 +238,8 @@ export const ToolExecutorForm = ({
         graphRags,
         selectedConnector,
         executableFunctions,
-        dynamicInputCount,
-        inputConnections,
+        parameterMapping,
+        responseMapping,
     ]);
 
     // Save handler
@@ -165,29 +249,33 @@ export const ToolExecutorForm = ({
         setTrigger((trigger ?? 0) + 1);
     };
 
-    // Add new dynamic input connection
-    const handleAddInputConnection = () => {
-        const newCount = dynamicInputCount + 1;
-        setDynamicInputCount(newCount);
-        setInputConnections(prev => [
-            ...prev,
-            { id: `input-${newCount}`, label: `Input ${newCount}` }
-        ]);
+    // Parameter Mapping handlers
+    const handleAddParameterMapping = () => {
+        setParameterMapping(prev => [...prev, { id: generateId(), paramName: '', value: '' }]);
     };
 
-    // Remove dynamic input connection
-    const handleRemoveInputConnection = (inputId: string) => {
-        if (inputConnections.length <= 1) {
-            toast.warning('At least one input connection is required');
-            return;
-        }
-        setInputConnections(prev => prev.filter(conn => conn.id !== inputId));
+    const handleRemoveParameterMapping = (id: string) => {
+        setParameterMapping(prev => prev.filter(item => item.id !== id));
     };
 
-    // Update input connection label
-    const handleUpdateInputLabel = (inputId: string, newLabel: string) => {
-        setInputConnections(prev => 
-            prev.map(conn => conn.id === inputId ? { ...conn, label: newLabel } : conn)
+    const handleUpdateParameterMapping = (id: string, field: 'paramName' | 'value', newValue: string) => {
+        setParameterMapping(prev =>
+            prev.map(item => item.id === id ? { ...item, [field]: newValue } : item)
+        );
+    };
+
+    // Response Mapping handlers
+    const handleAddResponseMapping = () => {
+        setResponseMapping(prev => [...prev, { id: generateId(), paramName: '', value: '' }]);
+    };
+
+    const handleRemoveResponseMapping = (id: string) => {
+        setResponseMapping(prev => prev.filter(item => item.id !== id));
+    };
+
+    const handleUpdateResponseMapping = (id: string, field: 'paramName' | 'value', newValue: string) => {
+        setResponseMapping(prev =>
+            prev.map(item => item.id === id ? { ...item, [field]: newValue } : item)
         );
     };
 
@@ -246,59 +334,52 @@ export const ToolExecutorForm = ({
                         />
                     </div>
 
-                    {/* Dynamic Input Connections Section */}
+                    {/* Parameter Mapping Section */}
                     <div className="flex flex-col gap-y-4 pb-4 bottom-gradient-border">
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col gap-y-1">
-                                <p className="text-md font-medium text-gray-700 dark:text-gray-100">
-                                    Input Connections
-                                </p>
-                                <p className="text-xs font-normal text-gray-500 dark:text-gray-300">
-                                    Configure dynamic input handles for this node
-                                </p>
-                            </div>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={handleAddInputConnection}
-                                disabled={isReadOnly}
-                            >
-                                Add Input
-                            </Button>
+                        <div className="flex flex-col gap-y-1">
+                            <p className="text-md font-medium text-gray-700 dark:text-gray-100">
+                                Parameter Mapping
+                            </p>
+                            <p className="text-xs font-normal text-gray-500 dark:text-gray-300">
+                                Define parameter mappings for the tool executor
+                            </p>
                         </div>
 
-                        <div className="flex flex-col gap-y-3">
-                            {inputConnections.map((connection, index) => (
-                                <div
-                                    key={connection.id}
-                                    className="flex items-center gap-x-2 p-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800"
-                                >
-                                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-600 text-white text-xs font-semibold">
-                                        {index + 1}
-                                    </div>
-                                    <Input
-                                        className="flex-1"
-                                        placeholder="Input label"
-                                        value={connection.label}
-                                        onChange={e => handleUpdateInputLabel(connection.id, e.target.value)}
-                                        disabled={isReadOnly}
-                                    />
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleRemoveInputConnection(connection.id)}
-                                        disabled={isReadOnly || inputConnections.length <= 1}
-                                        className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                    >
-                                        <i className="ri-delete-bin-line text-lg" />
-                                    </Button>
-                                </div>
-                            ))}
+                        <MappingInput
+                            label="Parameters"
+                            description="Map parameter names to their values"
+                            items={parameterMapping}
+                            onAdd={handleAddParameterMapping}
+                            onRemove={handleRemoveParameterMapping}
+                            onUpdate={handleUpdateParameterMapping}
+                            disabled={isReadOnly}
+                            namePlaceholder="param_name"
+                            valuePlaceholder="value"
+                        />
+                    </div>
+
+                    {/* Response Mapping Section */}
+                    <div className="flex flex-col gap-y-4 pb-4 bottom-gradient-border">
+                        <div className="flex flex-col gap-y-1">
+                            <p className="text-md font-medium text-gray-700 dark:text-gray-100">
+                                Response Mapping
+                            </p>
+                            <p className="text-xs font-normal text-gray-500 dark:text-gray-300">
+                                Define response mappings for the tool executor output
+                            </p>
                         </div>
 
-                        <p className="text-xs text-gray-400">
-                            {inputConnections.length} input connection{inputConnections.length !== 1 ? 's' : ''} configured
-                        </p>
+                        <MappingInput
+                            label="Response Fields"
+                            description="Map response field names to their values"
+                            items={responseMapping}
+                            onAdd={handleAddResponseMapping}
+                            onRemove={handleRemoveResponseMapping}
+                            onUpdate={handleUpdateResponseMapping}
+                            disabled={isReadOnly}
+                            namePlaceholder="field_name"
+                            valuePlaceholder="value"
+                        />
                     </div>
 
                     {/* Input Data Connect Section - Reusing existing components */}
