@@ -40,4 +40,6 @@ export enum CustomNodeTypes {
     tradingNode = 'trading_node',
     workflow = 'workflow_node',
     humanInLoop = 'human_in_loop',
+    // Tool Executor node
+    toolExecutorNode = 'tool_executor_node',
 }

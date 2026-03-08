@@ -19,16 +19,14 @@ export const metadata = {
 
 const RootLayout = ({
     children,
-    dehydratedState,
 }: Readonly<{
     children: React.ReactNode;
-    dehydratedState: never;
 }>) => {
     return (
         <html lang="en" className={inter.variable}>
             <head></head>
             <body>
-                <QueryProvider dehydratedState={dehydratedState}>
+                <QueryProvider dehydratedState={undefined}>
                     <AppContextProvider>
                         <AuthProvider>
                             <ThemeProvider defaultTheme="light">{children}</ThemeProvider>
