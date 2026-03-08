@@ -303,5 +303,24 @@ export const Node: React.FC<NodeProps> = ({ id, data, type }) => {
         return <IteratorNode data={data} id={id} allowedNodes={[CustomNodeTypes.subflowNode]} />;
     }
 
+    if (type === CustomNodeTypes.toolExecutorNode) {
+        return (
+            <CustomNodeBase
+                id={id}
+                data={data}
+                title="Tool Executor"
+                type={type}
+                color="#0891B2"
+                activeColor="#0E7490"
+                icon="ri-tools-fill text-[50px] antialiased text-white"
+                handleConfig={{ showSource: true, showTarget: true }}
+                showInteractions
+                iconType="icon"
+                showTitle
+                customTitle={data?.name as string}
+            />
+        );
+    }
+
     return null;
 };

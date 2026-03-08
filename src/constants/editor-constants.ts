@@ -656,6 +656,17 @@ export const NODE_LIST: NodeListTypeDef[] = [
                 color: '#1888de',
                 icon: 'ri-file-settings-fill text-[50px] antialiased text-white',
             },
+            {
+                id: 'tool_executor_init_menu',
+                data: {},
+                title: 'Tool Executor',
+                type: CustomNodeTypes.toolExecutorNode,
+                showTitle: true,
+                showInteractions: false,
+                isActive: false,
+                color: '#0891B2',
+                icon: 'ri-tools-fill text-[50px] antialiased text-white',
+            },
         ],
     },
     {

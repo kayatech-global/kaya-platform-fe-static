@@ -194,6 +194,8 @@ export const getNodeLabel = (nodeType: CustomNodeTypes): string => {
             return 'Sub Workflow';
         case CustomNodeTypes.iteratorNode:
             return 'Iterator';
+        case CustomNodeTypes.toolExecutorNode:
+            return 'Tool Executor';
         default:
             return 'End';
     }
@@ -434,6 +436,7 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
                 [CustomNodeTypes.deepAgentNode]: Node,
                 [CustomNodeTypes.subflowNode]: Node,
                 [CustomNodeTypes.iteratorNode]: Node,
+                [CustomNodeTypes.toolExecutorNode]: Node,
             }),
             []
         );
