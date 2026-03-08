@@ -180,12 +180,12 @@ export const ToolExecutorForm = ({
     // Form state
     const [name, setName] = useState<string>('');
     const [description, setDescription] = useState<string>('');
-    const [apis, setApis] = useState<API[]>([]);
-    const [mcpServers, setMcpServers] = useState<IMCPBody[]>([]);
-    const [vectorRags, setVectorRags] = useState<IVectorRag[]>([]);
-    const [graphRags, setGraphRags] = useState<IGraphRag[]>([]);
-    const [selectedConnector, setSelectedConnector] = useState<IConnectorForm[]>([]);
-    const [executableFunctions, setExecutableFunctions] = useState<ExecutableFunction[]>([]);
+    const [apis, setApis] = useState<API[] | undefined>([]);
+    const [mcpServers, setMcpServers] = useState<IMCPBody[] | undefined>([]);
+    const [vectorRags, setVectorRags] = useState<IVectorRag[] | undefined>([]);
+    const [graphRags, setGraphRags] = useState<IGraphRag[] | undefined>([]);
+    const [selectedConnector, setSelectedConnector] = useState<IConnectorForm[] | undefined>([]);
+    const [executableFunctions, setExecutableFunctions] = useState<ExecutableFunction[] | undefined>([]);
     
     // Parameter and Response Mapping state
     const [parameterMapping, setParameterMapping] = useState<MappingItem[]>([]);
