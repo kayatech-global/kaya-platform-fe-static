@@ -24,7 +24,8 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { EditorPanelAgentProps } from '@/app/editor/[wid]/[workflow_id]/components/editor-panel';
 import { AgentType, API, ExecutableFunction } from './agent-form';
-import { Plus, X, Cable, Trash2, GripVertical, FileJson2 } from 'lucide-react';
+import { Plus, X, Cable, Trash2, GripVertical, FileJson2, Maximize2, Minimize2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import MonacoEditor, { IntellisenseCategory } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
 
 // Types for Parameter/Response Mapping
@@ -354,6 +355,8 @@ export const ToolExecutorForm = ({
     const [dynamicInputConnects, setDynamicInputConnects] = useState<DynamicInputConnect[]>([]);
     // Response Data Mapping JSON state - keyed by API id
     const [responseDataMapping, setResponseDataMapping] = useState<Record<string, string>>({});
+    // Maximized editor state - stores the API being edited in full screen
+    const [maximizedApi, setMaximizedApi] = useState<{ id: string; name: string } | null>(null);
 
     const { trigger, setSelectedNodeId, setTrigger } = useDnD();
     const { updateNodeData } = useReactFlow();
@@ -645,32 +648,74 @@ export const ToolExecutorForm = ({
                             </div>
                         ) : (
                             <div className="flex flex-col gap-y-4">
-                                {apis.map((api, index) => (
-                                    <div key={api.id || index} className="flex flex-col gap-y-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30">
-                                        <div className="flex items-center gap-x-2">
-                                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">
-                                                API {index + 1}
-                                            </span>
-                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
-                                                {api.name || 'Unnamed API'}
-                                            </span>
+                                {apis.map((api, index) => {
+                                    const apiKey = api.id || `api-${index}`;
+                                    return (
+                                        <div key={apiKey} className="flex flex-col gap-y-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-x-2">
+                                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">
+                                                        API {index + 1}
+                                                    </span>
+                                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
+                                                        {api.name || 'Unnamed API'}
+                                                    </span>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                                    onClick={() => setMaximizedApi({ id: apiKey, name: api.name || 'Unnamed API' })}
+                                                    title="Maximize editor"
+                                                >
+                                                    <Maximize2 size={14} />
+                                                </Button>
+                                            </div>
+                                            <MonacoEditor
+                                                value={responseDataMapping[apiKey] || ''}
+                                                onChange={(value) => handleApiMappingChange(apiKey, value)}
+                                                intellisenseData={intellisenseData}
+                                                onRefetchVariables={handleRefetchVariables}
+                                                placeholder={`{\n  "result": @response,\n  "userId": @userId\n}`}
+                                                helperInfo="Type @ to trigger intellisense"
+                                                height="h-[150px]"
+                                                hasEnhance={false}
+                                                disabled={isReadOnly}
+                                                enableCategoryIcon={true}
+                                            />
                                         </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* Maximized Editor Modal */}
+                        <Dialog open={!!maximizedApi} onOpenChange={(open) => !open && setMaximizedApi(null)}>
+                            <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+                                <DialogHeader className="flex-shrink-0">
+                                    <DialogTitle className="flex items-center gap-x-2">
+                                        <FileJson2 size={20} className="text-emerald-600 dark:text-emerald-400" />
+                                        <span>Response Data Mapping - {maximizedApi?.name}</span>
+                                    </DialogTitle>
+                                </DialogHeader>
+                                <div className="flex-1 min-h-0">
+                                    {maximizedApi && (
                                         <MonacoEditor
-                                            value={responseDataMapping[api.id || `api-${index}`] || ''}
-                                            onChange={(value) => handleApiMappingChange(api.id || `api-${index}`, value)}
+                                            value={responseDataMapping[maximizedApi.id] || ''}
+                                            onChange={(value) => handleApiMappingChange(maximizedApi.id, value)}
                                             intellisenseData={intellisenseData}
                                             onRefetchVariables={handleRefetchVariables}
-                                            placeholder={`{\n  "result": @response,\n  "userId": @userId\n}`}
-                                            helperInfo="Type @ to trigger intellisense"
-                                            height="h-[150px]"
+                                            placeholder={`{\n  "result": @response,\n  "userId": @userId,\n  "data": {\n    "field1": @firstName,\n    "field2": @lastName\n  }\n}`}
+                                            helperInfo="Type @ to trigger intellisense and select from available variables"
+                                            height="h-full"
                                             hasEnhance={false}
                                             disabled={isReadOnly}
                                             enableCategoryIcon={true}
                                         />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    )}
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
 
                     {/* Form Actions */}
