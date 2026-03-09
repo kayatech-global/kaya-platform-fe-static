@@ -92,7 +92,7 @@ const activityData: ActivityProps[] = [
     },
 ];
 
-const MOCK_API_CONFIGS: ToolAPI[] = [
+export const MOCK_API_CONFIGS: ToolAPI[] = [
     {
         id: 'mock-1',
         name: 'Get User Profile',

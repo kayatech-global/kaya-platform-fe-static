@@ -61,6 +61,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { toast } from 'sonner';
 import { IMCPBody } from './use-mcp-configuration';
+import { MOCK_API_CONFIGS } from './use-api-configuration';
 
 export const useIntellisense = (workflowId?: string) => {
     const params = useParams();
@@ -490,36 +491,36 @@ export const useSTSQuery = <T = ISTSForm, TSelected = T[]>({
 };
 
 export const useApiQuery = <T = ToolAPI, TSelected = T[]>({
-    props,
-    queryKey,
-    select,
-    onSuccess,
-    onError,
-}: {
-    props?: IHookProps;
-    queryKey?: string;
-    select?: (data: T[]) => TSelected;
-    onSuccess?: (data: TSelected) => void;
-    onError?: (error: any) => void;
-} = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
-
-    return useQuery<T[], any, TSelected>(
-        queryKey ?? QueryKeyType.API,
-        async () => [] as T[],
-        {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
-            refetchOnWindowFocus: false,
-            select,
-            onSuccess,
-            onError: e => {
-                onError?.(e);
-                console.error('Failed to fetch API:', e);
-            },
-        }
-    );
-};
+  props,
+  queryKey,
+  select,
+  onSuccess,
+  onError,
+  }: {
+  props?: IHookProps;
+  queryKey?: string;
+  select?: (data: T[]) => TSelected;
+  onSuccess?: (data: TSelected) => void;
+  onError?: (error: any) => void;
+  } = {}) => {
+  const params = useParams();
+  const { token } = useAuth();
+  
+  return useQuery<T[], any, TSelected>(
+  queryKey ?? QueryKeyType.API,
+  async () => MOCK_API_CONFIGS as T[],
+  {
+  enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+  refetchOnWindowFocus: false,
+  select,
+  onSuccess,
+  onError: e => {
+  onError?.(e);
+  console.error('Failed to fetch API:', e);
+  },
+  }
+  );
+  };
 
 export const useMcpQuery = <T = IMCPBody, TSelected = T[]>({
     props,
