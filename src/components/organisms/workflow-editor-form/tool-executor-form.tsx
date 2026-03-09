@@ -59,8 +59,8 @@ export type ToolExecutorType = {
     responseMapping?: MappingItem[];
     // Dynamic Input Connects
     dynamicInputConnects?: DynamicInputConnect[];
-    // Response Data Mapping JSON
-    responseDataMapping?: string;
+    // Response Data Mapping JSON - keyed by API id
+    responseDataMapping?: Record<string, string>;
 };
 
 interface ToolExecutorFormProps extends EditorPanelAgentProps {
@@ -352,8 +352,8 @@ export const ToolExecutorForm = ({
     const [responseMapping, setResponseMapping] = useState<MappingItem[]>([]);
     // Dynamic Input Connects state
     const [dynamicInputConnects, setDynamicInputConnects] = useState<DynamicInputConnect[]>([]);
-    // Response Data Mapping JSON state
-    const [responseDataMapping, setResponseDataMapping] = useState<string>('');
+    // Response Data Mapping JSON state - keyed by API id
+    const [responseDataMapping, setResponseDataMapping] = useState<Record<string, string>>({});
 
     const { trigger, setSelectedNodeId, setTrigger } = useDnD();
     const { updateNodeData } = useReactFlow();
@@ -376,7 +376,7 @@ export const ToolExecutorForm = ({
         setParameterMapping(data?.parameterMapping ?? []);
         setResponseMapping(data?.responseMapping ?? []);
         setDynamicInputConnects(data?.dynamicInputConnects ?? []);
-        setResponseDataMapping(data?.responseDataMapping ?? '');
+        setResponseDataMapping(data?.responseDataMapping ?? {});
     }, [selectedNode?.data]);
 
     useEffect(() => {
@@ -396,7 +396,7 @@ export const ToolExecutorForm = ({
         parameterMapping: (parameterMapping?.length ?? 0) > 0 ? parameterMapping : undefined,
         responseMapping: (responseMapping?.length ?? 0) > 0 ? responseMapping : undefined,
         dynamicInputConnects: (dynamicInputConnects?.length ?? 0) > 0 ? dynamicInputConnects : undefined,
-        responseDataMapping: responseDataMapping || undefined,
+        responseDataMapping: Object.keys(responseDataMapping).length > 0 ? responseDataMapping : undefined,
     }), [
         name,
         description,
@@ -515,6 +515,14 @@ export const ToolExecutorForm = ({
         // Can be enhanced to refetch dynamic variables
     };
 
+    // Handler for updating individual API response mapping
+    const handleApiMappingChange = (apiId: string, value: string) => {
+        setResponseDataMapping(prev => ({
+            ...prev,
+            [apiId]: value,
+        }));
+    };
+
     return (
         <React.Fragment>
             {/* Loading state */}
@@ -624,23 +632,45 @@ export const ToolExecutorForm = ({
                                     Response Data Mapping
                                 </p>
                                 <p className="text-xs font-normal text-gray-500 dark:text-gray-300">
-                                    Define the JSON structure for mapping API response data. Type @ to access available variables.
+                                    Define the JSON structure for mapping each API response. Type @ to access available variables.
                                 </p>
                             </div>
                         </div>
 
-                        <MonacoEditor
-                            value={responseDataMapping}
-                            onChange={setResponseDataMapping}
-                            intellisenseData={intellisenseData}
-                            onRefetchVariables={handleRefetchVariables}
-                            placeholder={`{\n  "field_name": @variable_name,\n  "nested": {\n    "value": @response.data\n  }\n}`}
-                            helperInfo="Type @ to trigger intellisense and select from available variables"
-                            height="h-[200px]"
-                            hasEnhance={false}
-                            disabled={isReadOnly}
-                            enableCategoryIcon={true}
-                        />
+                        {(!apis || apis.length === 0) ? (
+                            <div className="flex items-center justify-center py-6 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    No APIs selected. Add APIs above to configure response mappings.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-y-4">
+                                {apis.map((api, index) => (
+                                    <div key={api.id || index} className="flex flex-col gap-y-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30">
+                                        <div className="flex items-center gap-x-2">
+                                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">
+                                                API {index + 1}
+                                            </span>
+                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
+                                                {api.name || 'Unnamed API'}
+                                            </span>
+                                        </div>
+                                        <MonacoEditor
+                                            value={responseDataMapping[api.id || `api-${index}`] || ''}
+                                            onChange={(value) => handleApiMappingChange(api.id || `api-${index}`, value)}
+                                            intellisenseData={intellisenseData}
+                                            onRefetchVariables={handleRefetchVariables}
+                                            placeholder={`{\n  "result": @response,\n  "userId": @userId\n}`}
+                                            helperInfo="Type @ to trigger intellisense"
+                                            height="h-[150px]"
+                                            hasEnhance={false}
+                                            disabled={isReadOnly}
+                                            enableCategoryIcon={true}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Form Actions */}
