@@ -500,25 +500,6 @@ export const ToolExecutorForm = ({
                         { hidden: isLoading }
                     )}
                 >
-                    {/* Basic Information Section */}
-                    <div className="flex flex-col gap-y-5 pb-4 bottom-gradient-border">
-                        <Input
-                            label="Name"
-                            placeholder="Name of the tool executor"
-                            value={name}
-                            onChange={e => setName(e.target.value)}
-                            disabled={isReadOnly}
-                        />
-                        <Textarea
-                            label="Description"
-                            placeholder="Describe what this tool executor does"
-                            rows={4}
-                            value={description}
-                            onChange={e => setDescription(e.target.value)}
-                            disabled={isReadOnly}
-                        />
-                    </div>
-
                     {/* Input Data Connect Section - Reusing existing components */}
                     <div className="flex flex-col gap-y-2 pb-4 bottom-gradient-border">
                         <InputDataConnectContainer
