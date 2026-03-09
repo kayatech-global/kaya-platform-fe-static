@@ -16,6 +16,7 @@ import TestApiModal from '@/components/molecules/test-api-modal/test-api-modal';
 import { API_AUTHENTICATION_GRANT_TYPES } from '@/constants';
 import { AuthenticationGrantType, AuthorizationType } from '@/enums';
 import { HeaderType } from '@/hooks/use-api-configuration';
+import { MOCK_QUERY_PARAM_OPTIONS, MOCK_RESPONSE_FIELD_OPTIONS } from '@/components/atoms/header-input';
 import {
     cn,
     getSubmitButtonLabel,
@@ -623,6 +624,8 @@ export const FormBody = (props: ApiConfigurationFormProps) => {
                             disabledInputs={isEdit && isReadOnly}
                             customNameValidator={(value, index) => validateUniqueTitle(value, index, true)}
                             customValueValidator={(value, index) => validateValue(value, index, true)}
+                            useSelectableParamName={isQueryParams}
+                            paramNameOptions={MOCK_QUERY_PARAM_OPTIONS}
                         />
                     </div>
                     <div className="col-span-1 sm:col-span-2">
@@ -643,6 +646,8 @@ export const FormBody = (props: ApiConfigurationFormProps) => {
                             disabledInputs={isEdit && isReadOnly}
                             customNameValidator={validateUniqueTitle}
                             customValueValidator={(value, index) => validateValue(value, index, false, 'Value')}
+                            useSelectableParamName={isQueryParams}
+                            paramNameOptions={MOCK_QUERY_PARAM_OPTIONS}
                         />
                     </div>
                     <div className="col-span-1 sm:col-span-2">
@@ -661,6 +666,8 @@ export const FormBody = (props: ApiConfigurationFormProps) => {
                             valuePlaceholder="Description"
                             list={promotedVariablesVal}
                             disabledInputs={isEdit && isReadOnly}
+                            useSelectableParamName={true}
+                            paramNameOptions={MOCK_RESPONSE_FIELD_OPTIONS}
                         />
                     </div>
                 </>
