@@ -2,6 +2,7 @@
 'use client';
 
 import { InputDataConnectContainer } from '@/app/editor/[wid]/[workflow_id]/components/input-data-connect/input-data-connect-container';
+import { InputConnectKey } from '@/app/editor/[wid]/[workflow_id]/components/input-data-connect/input-data-connect-modal';
 import { SelectedInputConnects } from '@/app/editor/[wid]/[workflow_id]/components/input-data-connect/selected-input-connects';
 import {
     IConnectorForm,
@@ -589,6 +590,7 @@ export const ToolExecutorForm = ({
                                     Promise.resolve(refetchExecutableFunctions()).catch(() => { });
                                 },
                             }}
+                            enabledCategories={[InputConnectKey.API]}
                         />
 <SelectedInputConnects data={selectedInputConnectData} />
                     </div>

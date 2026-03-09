@@ -10,6 +10,7 @@ interface InputCategoryTypeCardProps {
     selectedCategory: InputConnectCategoryType;
     setSelectedCategory: React.Dispatch<React.SetStateAction<InputConnectCategoryType>>;
     selectedCounts: Record<InputConnectKey, number>;
+    disabled?: boolean;
 }
 
 export const InputCategoryTypeCard = ({
@@ -17,16 +18,19 @@ export const InputCategoryTypeCard = ({
     selectedCategory,
     setSelectedCategory,
     selectedCounts,
+    disabled = false,
 }: InputCategoryTypeCardProps) => {
     return (
         <button
             type="button"
-            onClick={() => setSelectedCategory(category)}
+            onClick={() => !disabled && setSelectedCategory(category)}
+            disabled={disabled}
             className={cn(
                 'h-[38px] px-3 py-2 dark:bg-gray-700 border dark:border-gray-600 border-gray-300 rounded mb-1 w-full cursor-pointer hover:bg-[rgba(97,148,250,0.2)] hover:border-[rgba(97,148,250,0.5)] transition-all duration-100 text-left',
                 {
                     'bg-[rgba(97,148,250,0.2)] border-[rgba(97,148,250,0.5)]':
                         selectedCategory.categoryKey === category.categoryKey,
+                    'opacity-40 cursor-not-allowed hover:bg-transparent hover:border-gray-300 dark:hover:border-gray-600': disabled,
                 }
             )}
         >

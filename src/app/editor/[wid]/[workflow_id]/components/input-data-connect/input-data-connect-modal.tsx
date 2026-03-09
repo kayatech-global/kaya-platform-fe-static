@@ -33,6 +33,7 @@ interface InputDataConnectModalProps {
     executableSelectorProps: ExecutableFunctionSelector;
     connectorSelectorProps: ConnectorSelectorProps;
     selectedCounts: Record<InputConnectKey, number>;
+    enabledCategories?: InputConnectKey[];
 }
 
 export const INPUT_CONNECT_CATEGORY_TYPE: InputConnectCategoryType[] = [
@@ -54,6 +55,7 @@ export const InputDataConnectModal = ({
     executableSelectorProps,
     connectorSelectorProps,
     selectedCounts,
+    enabledCategories,
 }: InputDataConnectModalProps) => {
     const [selectedCategory, setSelectedCategory] = React.useState<InputConnectCategoryType>(
         INPUT_CONNECT_CATEGORY_TYPE[0]
@@ -76,6 +78,7 @@ export const InputDataConnectModal = ({
                                 selectedCategory={selectedCategory}
                                 setSelectedCategory={setSelectedCategory}
                                 selectedCounts={selectedCounts}
+                                enabledCategories={enabledCategories}
                             />
                             {/* Display input data connects based on selected category */}
                             <div className="w-max-full flex-1">
