@@ -5,6 +5,7 @@ import { AgentHoverCard } from '../../agent-hover-card/agent-hover-card';
 import { AgentType } from '@/components/organisms';
 import { VoiceAgent } from '@/components/organisms/workflow-editor-form/voice-agent-form';
 import { IteratorNode } from '../../iterator-node/iterator-node';
+import { ToolExecutorNode } from '../../tool-executor-node/tool-executor-node';
 import { CustomNodeTypes } from '@/enums';
 
 export const Node: React.FC<NodeProps> = ({ id, data, type }) => {
@@ -300,24 +301,15 @@ export const Node: React.FC<NodeProps> = ({ id, data, type }) => {
     }
 
     if (type === CustomNodeTypes.iteratorNode) {
-        return <IteratorNode data={data} id={id} allowedNodes={[CustomNodeTypes.subflowNode]} />;
+        return <IteratorNode data={data} id={id} allowedNodes={[CustomNodeTypes.subflowNode, CustomNodeTypes.toolExecutorNode]} />;
     }
 
     if (type === CustomNodeTypes.toolExecutorNode) {
         return (
-            <CustomNodeBase
+            <ToolExecutorNode
                 id={id}
                 data={data}
-                title="Tool Executor"
                 type={type}
-                color="#0891B2"
-                activeColor="#0E7490"
-                icon="ri-tools-fill text-[50px] antialiased text-white"
-                handleConfig={{ showSource: true, showTarget: true }}
-                showInteractions
-                iconType="icon"
-                showTitle
-                customTitle={data?.name as string}
             />
         );
     }

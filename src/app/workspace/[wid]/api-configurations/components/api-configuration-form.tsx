@@ -16,6 +16,7 @@ import TestApiModal from '@/components/molecules/test-api-modal/test-api-modal';
 import { API_AUTHENTICATION_GRANT_TYPES } from '@/constants';
 import { AuthenticationGrantType, AuthorizationType } from '@/enums';
 import { HeaderType } from '@/hooks/use-api-configuration';
+
 import {
     cn,
     getSubmitButtonLabel,
@@ -638,11 +639,10 @@ export const FormBody = (props: ApiConfigurationFormProps) => {
                             control={control}
                             isQueryParams={isQueryParams}
                             isResponseField={true}
-                            valuePlaceholder="Value"
+                            valuePlaceholder="Value (optional)"
                             list={watch('defaultApiParameters') as IHeaderValues[]}
                             disabledInputs={isEdit && isReadOnly}
                             customNameValidator={validateUniqueTitle}
-                            customValueValidator={(value, index) => validateValue(value, index, false, 'Value')}
                         />
                     </div>
                     <div className="col-span-1 sm:col-span-2">

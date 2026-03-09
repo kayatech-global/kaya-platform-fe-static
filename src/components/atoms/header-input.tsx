@@ -22,6 +22,63 @@ import { IHeaderValues } from '@/models';
 import { get } from 'lodash';
 import { HeaderType } from '@/hooks/use-guardrails-api-configuration';
 
+// Mock query param options for dropdown selection (GET/DELETE methods)
+export const MOCK_QUERY_PARAM_OPTIONS: OptionModel[] = [
+    { name: 'user_id', value: 'user_id' },
+    { name: 'email', value: 'email' },
+    { name: 'username', value: 'username' },
+    { name: 'page', value: 'page' },
+    { name: 'limit', value: 'limit' },
+    { name: 'offset', value: 'offset' },
+    { name: 'sort_by', value: 'sort_by' },
+    { name: 'order', value: 'order' },
+    { name: 'search', value: 'search' },
+    { name: 'filter', value: 'filter' },
+    { name: 'category', value: 'category' },
+    { name: 'status', value: 'status' },
+    { name: 'start_date', value: 'start_date' },
+    { name: 'end_date', value: 'end_date' },
+    { name: 'include_deleted', value: 'include_deleted' },
+];
+
+// Mock payload param options for dropdown selection (POST/PUT/PATCH methods)
+export const MOCK_PAYLOAD_PARAM_OPTIONS: OptionModel[] = [
+    { name: 'amount', value: 'amount' },
+    { name: 'currency', value: 'currency' },
+    { name: 'source', value: 'source' },
+    { name: 'description', value: 'description' },
+    { name: 'title', value: 'title' },
+    { name: 'body', value: 'body' },
+    { name: 'content', value: 'content' },
+    { name: 'items', value: 'items' },
+    { name: 'quantity', value: 'quantity' },
+    { name: 'price', value: 'price' },
+    { name: 'recipient', value: 'recipient' },
+    { name: 'message', value: 'message' },
+    { name: 'metadata', value: 'metadata' },
+    { name: 'options', value: 'options' },
+    { name: 'settings', value: 'settings' },
+];
+
+// Mock response field options for dropdown selection  
+export const MOCK_RESPONSE_FIELD_OPTIONS: OptionModel[] = [
+    { name: 'id', value: 'id' },
+    { name: 'name', value: 'name' },
+    { name: 'email', value: 'email' },
+    { name: 'status', value: 'status' },
+    { name: 'created_at', value: 'created_at' },
+    { name: 'updated_at', value: 'updated_at' },
+    { name: 'total', value: 'total' },
+    { name: 'count', value: 'count' },
+    { name: 'data', value: 'data' },
+    { name: 'items', value: 'items' },
+    { name: 'message', value: 'message' },
+    { name: 'success', value: 'success' },
+    { name: 'error_code', value: 'error_code' },
+    { name: 'metadata', value: 'metadata' },
+    { name: 'pagination', value: 'pagination' },
+];
+
 interface InputProps {
     isDestructive?: boolean;
     label?: string;
@@ -54,6 +111,8 @@ interface InputProps {
     customNameValidator?: (value: string, index?: number) => string | true;
     customValueValidator?: (value: string, index?: number) => string | true;
     onSecretRefetch?: () => void;
+    useSelectableParamName?: boolean;
+    paramNameOptions?: OptionModel[];
 }
 
 const HeaderInput = React.forwardRef<HTMLInputElement, InputProps>((props: InputProps, ref) => {
@@ -88,6 +147,8 @@ const HeaderInput = React.forwardRef<HTMLInputElement, InputProps>((props: Input
         customNameValidator,
         customValueValidator,
         onSecretRefetch,
+        useSelectableParamName = false,
+        paramNameOptions = [],
     } = props;
     const [isDisable, setDisable] = React.useState(false);
 
@@ -212,26 +273,60 @@ const HeaderInput = React.forwardRef<HTMLInputElement, InputProps>((props: Input
                                 (useTextarea || !hasType) && 'sm:grid-cols-2'
                             )}
                         >
-                            <Input
-                                {...register(`${namePrefix}[${index}].name`, {
-                                    required: isRequired,
-                                    validate: value =>
-                                        type === HeaderType.PromotedVariables
-                                            ? validateIdentifier(value, namePlaceholder?.toLocaleLowerCase())
-                                            : customNameValidator?.(value, index),
-                                })}
-                                placeholder={namePlaceholder}
-                                defaultValue={item.name}
-                                disabled={disabledInputs}
-                                isDestructive={!!get(errors, `${namePrefix}.${index}.name.message`)}
-                                supportiveText={(() => {
-                                    const err = get(errors, `${namePrefix}.${index}.name`);
-                                    const msg = err?.message;
-                                    if (!msg) return undefined;
-                                    return typeof msg === 'string' ? msg : JSON.stringify(msg);
-                                })()}
-                                onKeyUp={onTextChange}
-                            />
+                            {useSelectableParamName && paramNameOptions.length > 0 ? (
+                                <Controller
+                                    name={`${namePrefix}[${index}].name`}
+                                    control={control}
+                                    rules={{
+                                        required: isRequired,
+                                        validate: value =>
+                                            type === HeaderType.PromotedVariables
+                                                ? validateIdentifier(value, namePlaceholder?.toLocaleLowerCase())
+                                                : customNameValidator?.(value, index),
+                                    }}
+                                    render={({ field }) => (
+                                        <Select
+                                            value={field.value}
+                                            onChange={e => {
+                                                field.onChange(e.target.value);
+                                                onTextChange();
+                                            }}
+                                            options={paramNameOptions}
+                                            placeholder={namePlaceholder}
+                                            disabled={disabledInputs}
+                                            currentValue={field.value}
+                                            isDestructive={!!get(errors, `${namePrefix}.${index}.name.message`)}
+                                            supportiveText={(() => {
+                                                const err = get(errors, `${namePrefix}.${index}.name`);
+                                                const msg = err?.message;
+                                                if (!msg) return undefined;
+                                                return typeof msg === 'string' ? msg : JSON.stringify(msg);
+                                            })()}
+                                        />
+                                    )}
+                                />
+                            ) : (
+                                <Input
+                                    {...register(`${namePrefix}[${index}].name`, {
+                                        required: isRequired,
+                                        validate: value =>
+                                            type === HeaderType.PromotedVariables
+                                                ? validateIdentifier(value, namePlaceholder?.toLocaleLowerCase())
+                                                : customNameValidator?.(value, index),
+                                    })}
+                                    placeholder={namePlaceholder}
+                                    defaultValue={item.name}
+                                    disabled={disabledInputs}
+                                    isDestructive={!!get(errors, `${namePrefix}.${index}.name.message`)}
+                                    supportiveText={(() => {
+                                        const err = get(errors, `${namePrefix}.${index}.name`);
+                                        const msg = err?.message;
+                                        if (!msg) return undefined;
+                                        return typeof msg === 'string' ? msg : JSON.stringify(msg);
+                                    })()}
+                                    onKeyUp={onTextChange}
+                                />
+                            )}
                             {hasType && (
                                 <Select
                                     {...register(`${namePrefix}[${index}].dataType`)}

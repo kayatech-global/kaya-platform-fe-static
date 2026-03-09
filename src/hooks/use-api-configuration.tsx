@@ -92,11 +92,11 @@ const activityData: ActivityProps[] = [
     },
 ];
 
-const MOCK_API_CONFIGS: ToolAPI[] = [
+export const MOCK_API_CONFIGS: ToolAPI[] = [
     {
         id: 'mock-1',
         name: 'Get User Profile',
-        description: 'Retrieves user profile information',
+        description: 'Retrieves user profile information including name, email, and preferences',
         configurations: {
             url: 'https://api.example.com/user/profile',
             method: 'GET',
@@ -111,7 +111,7 @@ const MOCK_API_CONFIGS: ToolAPI[] = [
     {
         id: 'mock-2',
         name: 'Send Notification',
-        description: 'Sends a push notification to the user',
+        description: 'Sends a push notification to the user device',
         configurations: {
             url: 'https://api.example.com/notifications/send',
             method: 'POST',
@@ -121,6 +121,179 @@ const MOCK_API_CONFIGS: ToolAPI[] = [
                 body: { type: 'string', description: 'Body content' },
             }),
             authorization: { authType: AuthorizationType.Empty, meta: {} },
+            promotedVariables: '{}',
+            defaultApiParameters: '{}',
+            concurrencyLimit: 5,
+        },
+    },
+    {
+        id: 'mock-3',
+        name: 'Create Order',
+        description: 'Creates a new order in the e-commerce system with specified items and shipping details',
+        configurations: {
+            url: 'https://api.example.com/orders/create',
+            method: 'POST',
+            headers: [
+                { name: 'Content-Type', value: 'application/json', isSecret: false, dataType: 'string' },
+                { name: 'X-API-Key', value: '{{api_key}}', isSecret: true, dataType: 'string' },
+            ],
+            payload: JSON.stringify({
+                items: { type: 'array', description: 'List of items to order' },
+                shippingAddress: { type: 'object', description: 'Shipping address details' },
+                paymentMethod: { type: 'string', description: 'Payment method ID' },
+            }),
+            authorization: { authType: AuthorizationType.APIKey, meta: { headerName: 'X-API-Key', headerValue: '{{api_key}}' } },
+            promotedVariables: '{}',
+            defaultApiParameters: '{}',
+            concurrencyLimit: 20,
+        },
+    },
+    {
+        id: 'mock-4',
+        name: 'Search Products',
+        description: 'Searches the product catalog with filters and pagination support',
+        configurations: {
+            url: 'https://api.example.com/products/search',
+            method: 'GET',
+            headers: [{ name: 'Accept', value: 'application/json', isSecret: false, dataType: 'string' }],
+            payload: JSON.stringify({
+                query: { type: 'string', description: 'Search query string' },
+                category: { type: 'string', description: 'Product category filter' },
+                minPrice: { type: 'number', description: 'Minimum price filter' },
+                maxPrice: { type: 'number', description: 'Maximum price filter' },
+                page: { type: 'number', description: 'Page number for pagination' },
+            }),
+            authorization: { authType: AuthorizationType.Empty, meta: {} },
+            promotedVariables: '{}',
+            defaultApiParameters: '{}',
+            concurrencyLimit: 50,
+        },
+    },
+    {
+        id: 'mock-5',
+        name: 'Update Inventory',
+        description: 'Updates the inventory count for a specific product SKU',
+        configurations: {
+            url: 'https://api.example.com/inventory/update',
+            method: 'PUT',
+            headers: [
+                { name: 'Content-Type', value: 'application/json', isSecret: false, dataType: 'string' },
+                { name: 'Authorization', value: 'Bearer {{token}}', isSecret: true, dataType: 'string' },
+            ],
+            payload: JSON.stringify({
+                sku: { type: 'string', description: 'Product SKU identifier' },
+                quantity: { type: 'number', description: 'New inventory quantity' },
+                warehouseId: { type: 'string', description: 'Warehouse location ID' },
+            }),
+            authorization: { authType: AuthorizationType.BearerToken, meta: { token: '{{token}}' } },
+            promotedVariables: '{}',
+            defaultApiParameters: '{}',
+            concurrencyLimit: 15,
+        },
+    },
+    {
+        id: 'mock-6',
+        name: 'Send Email',
+        description: 'Sends a transactional email using the email service provider',
+        configurations: {
+            url: 'https://api.sendgrid.com/v3/mail/send',
+            method: 'POST',
+            headers: [
+                { name: 'Content-Type', value: 'application/json', isSecret: false, dataType: 'string' },
+                { name: 'Authorization', value: 'Bearer {{SENDGRID_API_KEY}}', isSecret: true, dataType: 'string' },
+            ],
+            payload: JSON.stringify({
+                to: { type: 'string', description: 'Recipient email address' },
+                subject: { type: 'string', description: 'Email subject line' },
+                htmlContent: { type: 'string', description: 'HTML email body content' },
+                templateId: { type: 'string', description: 'Email template ID (optional)' },
+            }),
+            authorization: { authType: AuthorizationType.BearerToken, meta: { token: '{{SENDGRID_API_KEY}}' } },
+            promotedVariables: '{}',
+            defaultApiParameters: '{}',
+            concurrencyLimit: 100,
+        },
+    },
+    {
+        id: 'mock-7',
+        name: 'Get Weather Data',
+        description: 'Retrieves current weather data and forecast for a specific location',
+        configurations: {
+            url: 'https://api.openweathermap.org/data/2.5/weather',
+            method: 'GET',
+            headers: [{ name: 'Accept', value: 'application/json', isSecret: false, dataType: 'string' }],
+            payload: JSON.stringify({
+                city: { type: 'string', description: 'City name for weather lookup' },
+                units: { type: 'string', description: 'Units of measurement (metric/imperial)' },
+            }),
+            authorization: { authType: AuthorizationType.APIKey, meta: { headerName: 'appid', headerValue: '{{WEATHER_API_KEY}}' } },
+            promotedVariables: '{}',
+            defaultApiParameters: JSON.stringify({ units: { value: 'metric', type: 'string' } }),
+            concurrencyLimit: 30,
+        },
+    },
+    {
+        id: 'mock-8',
+        name: 'Process Payment',
+        description: 'Processes a payment transaction through the payment gateway',
+        configurations: {
+            url: 'https://api.stripe.com/v1/charges',
+            method: 'POST',
+            headers: [
+                { name: 'Content-Type', value: 'application/x-www-form-urlencoded', isSecret: false, dataType: 'string' },
+                { name: 'Authorization', value: 'Bearer {{STRIPE_API_KEY}}', isSecret: true, dataType: 'string' },
+            ],
+            payload: JSON.stringify({
+                amount: { type: 'number', description: 'Amount in cents to charge' },
+                currency: { type: 'string', description: 'Three-letter currency code (e.g., usd)' },
+                source: { type: 'string', description: 'Payment source token' },
+                description: { type: 'string', description: 'Transaction description' },
+            }),
+            authorization: { authType: AuthorizationType.BearerToken, meta: { token: '{{STRIPE_API_KEY}}' } },
+            promotedVariables: '{}',
+            defaultApiParameters: JSON.stringify({ currency: { value: 'usd', type: 'string' } }),
+            concurrencyLimit: 25,
+        },
+    },
+    {
+        id: 'mock-9',
+        name: 'Upload Document',
+        description: 'Uploads a document to the cloud storage service',
+        configurations: {
+            url: 'https://api.example.com/documents/upload',
+            method: 'POST',
+            headers: [
+                { name: 'Content-Type', value: 'multipart/form-data', isSecret: false, dataType: 'string' },
+                { name: 'Authorization', value: 'Bearer {{token}}', isSecret: true, dataType: 'string' },
+            ],
+            payload: JSON.stringify({
+                file: { type: 'string', description: 'Base64 encoded file content' },
+                filename: { type: 'string', description: 'Original filename' },
+                folder: { type: 'string', description: 'Destination folder path' },
+                tags: { type: 'array', description: 'List of tags for the document' },
+            }),
+            authorization: { authType: AuthorizationType.BearerToken, meta: { token: '{{token}}' } },
+            promotedVariables: '{}',
+            defaultApiParameters: '{}',
+            concurrencyLimit: 10,
+        },
+    },
+    {
+        id: 'mock-10',
+        name: 'Delete Record',
+        description: 'Permanently deletes a record from the database by ID',
+        configurations: {
+            url: 'https://api.example.com/records/{{recordId}}',
+            method: 'DELETE',
+            headers: [
+                { name: 'Authorization', value: 'Bearer {{token}}', isSecret: true, dataType: 'string' },
+                { name: 'X-Confirm-Delete', value: 'true', isSecret: false, dataType: 'string' },
+            ],
+            payload: JSON.stringify({
+                recordId: { type: 'string', description: 'ID of the record to delete' },
+                reason: { type: 'string', description: 'Reason for deletion (audit log)' },
+            }),
+            authorization: { authType: AuthorizationType.BearerToken, meta: { token: '{{token}}' } },
             promotedVariables: '{}',
             defaultApiParameters: '{}',
             concurrencyLimit: 5,

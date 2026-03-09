@@ -61,6 +61,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { toast } from 'sonner';
 import { IMCPBody } from './use-mcp-configuration';
+import { MOCK_API_CONFIGS } from './use-api-configuration';
 
 export const useIntellisense = (workflowId?: string) => {
     const params = useParams();
@@ -489,37 +490,51 @@ export const useSTSQuery = <T = ISTSForm, TSelected = T[]>({
     );
 };
 
-export const useApiQuery = <T = ToolAPI, TSelected = T[]>({
-    props,
-    queryKey,
-    select,
-    onSuccess,
-    onError,
-}: {
-    props?: IHookProps;
-    queryKey?: string;
-    select?: (data: T[]) => TSelected;
-    onSuccess?: (data: TSelected) => void;
-    onError?: (error: any) => void;
-} = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
-
-    return useQuery<T[], any, TSelected>(
-        queryKey ?? QueryKeyType.API,
-        async () => [] as T[],
-        {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
-            refetchOnWindowFocus: false,
-            select,
-            onSuccess,
-            onError: e => {
-                onError?.(e);
-                console.error('Failed to fetch API:', e);
-            },
+// Helper to get APIs from localStorage or fallback to mock data
+const getApisFromStorage = (): ToolAPI[] => {
+    if (typeof window === 'undefined') return MOCK_API_CONFIGS;
+    try {
+        const stored = localStorage.getItem('mock_api_configs');
+        if (stored) {
+            return JSON.parse(stored);
         }
-    );
+    } catch {
+        // Fallback to mock data if parsing fails
+    }
+    return MOCK_API_CONFIGS;
 };
+
+export const useApiQuery = <T = ToolAPI, TSelected = T[]>({
+  props,
+  queryKey,
+  select,
+  onSuccess,
+  onError,
+  }: {
+  props?: IHookProps;
+  queryKey?: string;
+  select?: (data: T[]) => TSelected;
+  onSuccess?: (data: TSelected) => void;
+  onError?: (error: any) => void;
+  } = {}) => {
+  const params = useParams();
+  const { token } = useAuth();
+  
+  return useQuery<T[], any, TSelected>(
+  queryKey ?? QueryKeyType.API,
+  async () => getApisFromStorage() as T[],
+  {
+  enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+  refetchOnWindowFocus: false,
+  select,
+  onSuccess,
+  onError: e => {
+  onError?.(e);
+  console.error('Failed to fetch API:', e);
+  },
+  }
+  );
+  };
 
 export const useMcpQuery = <T = IMCPBody, TSelected = T[]>({
     props,

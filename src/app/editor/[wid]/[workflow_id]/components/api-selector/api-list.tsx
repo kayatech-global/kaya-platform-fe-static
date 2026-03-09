@@ -17,6 +17,7 @@ interface ApiListProps {
     onAddNewClicked?: () => void;
     isReadonly?: boolean;
     showAddNewButton?: boolean;
+    hideEditButton?: boolean;
 }
 
 export const ApiList: React.FC<ApiListProps> = ({
@@ -32,6 +33,7 @@ export const ApiList: React.FC<ApiListProps> = ({
     onAddNewClicked,
     isReadonly,
     showAddNewButton,
+    hideEditButton,
 }) => {
     if (isLoading) {
         return (
@@ -71,7 +73,7 @@ export const ApiList: React.FC<ApiListProps> = ({
                                     isChecked={checkedItemIds?.includes(api.id) || false}
                                     imagePath="/png/api.png"
                                     handleClick={() => onItemCheck(api)}
-                                    onEdit={onEdit}
+                                    onEdit={hideEditButton ? undefined : onEdit}
                                 />
                             ))}
                             <div className="border-t dark:border-gray-600 border-gray-400 my-3" />
@@ -91,7 +93,7 @@ export const ApiList: React.FC<ApiListProps> = ({
                                 isChecked={checkedItemIds?.includes(api.id) || false}
                                 imagePath="/png/api.png"
                                 handleClick={() => onItemCheck(api)}
-                                onEdit={onEdit}
+                                onEdit={hideEditButton ? undefined : onEdit}
                             />
                         ))}
                 </div>

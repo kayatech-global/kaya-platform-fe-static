@@ -18,6 +18,7 @@ interface InputDataConnectContainerProps {
     graphSelectorProps: GraphRagSelectorProps;
     connectorSelectorProps: ConnectorSelectorProps;
     executableSelectorProps: ExecutableFunctionSelector;
+    enabledCategories?: InputConnectKey[];
 }
 
 export const InputDataConnectContainer = ({
@@ -28,6 +29,7 @@ export const InputDataConnectContainer = ({
     graphSelectorProps,
     connectorSelectorProps,
     executableSelectorProps,
+    enabledCategories,
 }: InputDataConnectContainerProps) => {
     const [openModal, setOpenModal] = useState(false);
 
@@ -81,6 +83,7 @@ export const InputDataConnectContainer = ({
                 connectorSelectorProps={connectorSelectorProps}
                 executableSelectorProps={executableSelectorProps}
                 selectedCounts={selectedCounts}
+                enabledCategories={enabledCategories}
             />
         </>
     );

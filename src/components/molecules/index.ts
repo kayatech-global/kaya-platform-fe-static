@@ -30,6 +30,7 @@ export * from './generate-query-modal/generate-query-modal';
 export * from './data-connector/connector-query-variables';
 export * from './code-diff-viewer/code-diff-viewer';
 export * from './iterator-node/iterator-node';
+export * from './tool-executor-node/tool-executor-node';
 export * from './environment-configuration/environment-configure-accordion';
 export * from './execution-report/';
 export * from './execution-steps/';

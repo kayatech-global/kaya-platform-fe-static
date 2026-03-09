@@ -168,6 +168,7 @@ export const APISelector: React.FC<APISelectorProps> = ({
     isSelfLearning,
     showListOnly = false,
     setInputDataConnectModalOpen,
+    hideEditButton = false,
 }) => {
     // --- Hooks & Logic ---
     const {
@@ -316,6 +317,7 @@ export const APISelector: React.FC<APISelectorProps> = ({
                         selectedApis={selectedApis}
                         showSelectedSection={true}
                         showAddNewButton={!isOpen} // Show key "New API" button if form is closed
+                        hideEditButton={hideEditButton}
                     />
                 )}
 
@@ -401,6 +403,7 @@ export const APISelector: React.FC<APISelectorProps> = ({
                     searchTerm: searchTerm,
                     selectedApis: [], // Not used in dialog
                     showSelectedSection: false,
+                    hideEditButton: hideEditButton,
                 }}
                 footerProps={{
                     isOpen: isOpen,

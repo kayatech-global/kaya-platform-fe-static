@@ -100,7 +100,7 @@ export const EditorPanel = (props: EditorPanelProps) => {
             case CustomNodeTypes.subflowNode:
                 return '/png/nodes/workflow-node-preview.png';
             case CustomNodeTypes.toolExecutorNode:
-                return '/png/nodes/tool_executor_preview.png';
+                return '/png/nodes/tool_executor_preview.jpg';
         }
     };
 
