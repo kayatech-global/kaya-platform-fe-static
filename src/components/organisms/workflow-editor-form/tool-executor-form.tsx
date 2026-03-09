@@ -595,65 +595,6 @@ export const ToolExecutorForm = ({
 <SelectedInputConnects data={selectedInputConnectData} />
                     </div>
 
-                    {/* Dynamic Input Connects Section */}
-                    <div className="flex flex-col gap-y-2 pb-4 bottom-gradient-border">
-                        <DynamicInputConnectSection
-                            items={dynamicInputConnects}
-                            onAdd={handleAddDynamicInputConnect}
-                            onRemove={handleRemoveDynamicInputConnect}
-                            onUpdate={handleUpdateDynamicInputConnect}
-                            disabled={isReadOnly}
-                        />
-                    </div>
-
-                    {/* Parameter Mapping Section */}
-                    <div className="flex flex-col gap-y-4 pb-4 bottom-gradient-border">
-                        <div className="flex flex-col gap-y-1">
-                            <p className="text-md font-medium text-gray-700 dark:text-gray-100">
-                                Parameter Mapping
-                            </p>
-                            <p className="text-xs font-normal text-gray-500 dark:text-gray-300">
-                                Define parameter mappings for the tool executor
-                            </p>
-                        </div>
-
-                        <MappingInput
-                            label="Parameters"
-                            description="Map parameter names to their values"
-                            items={parameterMapping}
-                            onAdd={handleAddParameterMapping}
-                            onRemove={handleRemoveParameterMapping}
-                            onUpdate={handleUpdateParameterMapping}
-                            disabled={isReadOnly}
-                            namePlaceholder="param_name"
-                            valuePlaceholder="value"
-                        />
-                    </div>
-
-                    {/* Response Mapping Section */}
-                    <div className="flex flex-col gap-y-4 pb-4 bottom-gradient-border">
-                        <div className="flex flex-col gap-y-1">
-                            <p className="text-md font-medium text-gray-700 dark:text-gray-100">
-                                Response Mapping
-                            </p>
-                            <p className="text-xs font-normal text-gray-500 dark:text-gray-300">
-                                Define response mappings for the tool executor output
-                            </p>
-                        </div>
-
-                        <MappingInput
-                            label="Response Fields"
-                            description="Map response field names to their values"
-                            items={responseMapping}
-                            onAdd={handleAddResponseMapping}
-                            onRemove={handleRemoveResponseMapping}
-                            onUpdate={handleUpdateResponseMapping}
-                            disabled={isReadOnly}
-                            namePlaceholder="field_name"
-                            valuePlaceholder="value"
-                        />
-                    </div>
-
                     {/* Form Actions */}
                     <div className="tool-executor-form-footer flex gap-x-3 justify-end pb-4">
                         <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
