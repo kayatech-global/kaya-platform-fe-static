@@ -543,10 +543,10 @@ export const ToolExecutorForm = ({
             </div>
 
             {/* Main form */}
-            <div className="group">
+            <div className="group flex flex-col h-[calc(100vh-270px)]">
                 <div
                     className={cn(
-                        'tool-executor-form pr-1 flex flex-col gap-y-6 h-[calc(100vh-270px)] overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700',
+                        'tool-executor-form pr-1 flex flex-col gap-y-6 flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700',
                         { hidden: isLoading }
                     )}
                 >
@@ -720,7 +720,7 @@ export const ToolExecutorForm = ({
                 </div>
 
                 {/* Form Actions - Fixed at bottom */}
-                <div className="tool-executor-form-footer flex gap-x-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="tool-executor-form-footer flex-shrink-0 flex gap-x-3 justify-end pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
                     <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
                         Cancel
                     </Button>
