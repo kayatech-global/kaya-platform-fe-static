@@ -641,11 +641,10 @@ export const FormBody = (props: ApiConfigurationFormProps) => {
                             control={control}
                             isQueryParams={isQueryParams}
                             isResponseField={true}
-                            valuePlaceholder="Value"
+                            valuePlaceholder="Value (optional)"
                             list={watch('defaultApiParameters') as IHeaderValues[]}
                             disabledInputs={isEdit && isReadOnly}
                             customNameValidator={validateUniqueTitle}
-                            customValueValidator={(value, index) => validateValue(value, index, false, 'Value')}
                             useSelectableParamName={true}
                             paramNameOptions={isQueryParams ? MOCK_QUERY_PARAM_OPTIONS : MOCK_PAYLOAD_PARAM_OPTIONS}
                         />
