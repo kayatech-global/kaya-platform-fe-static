@@ -490,6 +490,20 @@ export const useSTSQuery = <T = ISTSForm, TSelected = T[]>({
     );
 };
 
+// Helper to get APIs from localStorage or fallback to mock data
+const getApisFromStorage = (): ToolAPI[] => {
+    if (typeof window === 'undefined') return MOCK_API_CONFIGS;
+    try {
+        const stored = localStorage.getItem('mock_api_configs');
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    } catch {
+        // Fallback to mock data if parsing fails
+    }
+    return MOCK_API_CONFIGS;
+};
+
 export const useApiQuery = <T = ToolAPI, TSelected = T[]>({
   props,
   queryKey,
@@ -508,7 +522,7 @@ export const useApiQuery = <T = ToolAPI, TSelected = T[]>({
   
   return useQuery<T[], any, TSelected>(
   queryKey ?? QueryKeyType.API,
-  async () => MOCK_API_CONFIGS as T[],
+  async () => getApisFromStorage() as T[],
   {
   enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
   refetchOnWindowFocus: false,
