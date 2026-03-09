@@ -22,7 +22,7 @@ import { IHeaderValues } from '@/models';
 import { get } from 'lodash';
 import { HeaderType } from '@/hooks/use-guardrails-api-configuration';
 
-// Mock query param options for dropdown selection
+// Mock query param options for dropdown selection (GET/DELETE methods)
 export const MOCK_QUERY_PARAM_OPTIONS: OptionModel[] = [
     { name: 'user_id', value: 'user_id' },
     { name: 'email', value: 'email' },
@@ -39,6 +39,25 @@ export const MOCK_QUERY_PARAM_OPTIONS: OptionModel[] = [
     { name: 'start_date', value: 'start_date' },
     { name: 'end_date', value: 'end_date' },
     { name: 'include_deleted', value: 'include_deleted' },
+];
+
+// Mock payload param options for dropdown selection (POST/PUT/PATCH methods)
+export const MOCK_PAYLOAD_PARAM_OPTIONS: OptionModel[] = [
+    { name: 'amount', value: 'amount' },
+    { name: 'currency', value: 'currency' },
+    { name: 'source', value: 'source' },
+    { name: 'description', value: 'description' },
+    { name: 'title', value: 'title' },
+    { name: 'body', value: 'body' },
+    { name: 'content', value: 'content' },
+    { name: 'items', value: 'items' },
+    { name: 'quantity', value: 'quantity' },
+    { name: 'price', value: 'price' },
+    { name: 'recipient', value: 'recipient' },
+    { name: 'message', value: 'message' },
+    { name: 'metadata', value: 'metadata' },
+    { name: 'options', value: 'options' },
+    { name: 'settings', value: 'settings' },
 ];
 
 // Mock response field options for dropdown selection  
