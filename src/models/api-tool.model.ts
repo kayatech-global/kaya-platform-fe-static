@@ -43,6 +43,7 @@ export interface APISelectorProps {
     isSelfLearning?: boolean;
     showListOnly?: boolean;
     setInputDataConnectModalOpen?: (open: boolean) => void;
+    hideEditButton?: boolean;
     // Added to support React Hook Form usage which passes name, onChange, onBlur, ref via spread
     name?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -24,7 +24,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { EditorPanelAgentProps } from '@/app/editor/[wid]/[workflow_id]/components/editor-panel';
 import { AgentType, API, ExecutableFunction } from './agent-form';
-import { Plus, X, Cable, Trash2, GripVertical, FileJson2, Maximize2, Minimize2 } from 'lucide-react';
+import { Plus, X, Cable, Trash2, GripVertical, FileJson2, Maximize2, ChevronDown, ChevronRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import MonacoEditor, { IntellisenseCategory } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
 
@@ -357,6 +357,8 @@ export const ToolExecutorForm = ({
     const [responseDataMapping, setResponseDataMapping] = useState<Record<string, string>>({});
     // Maximized editor state - stores the API being edited in full screen
     const [maximizedApi, setMaximizedApi] = useState<{ id: string; name: string } | null>(null);
+    // Expanded API accordion state - only one API can be expanded at a time
+    const [expandedApiId, setExpandedApiId] = useState<string | null>(null);
 
     const { trigger, setSelectedNodeId, setTrigger } = useDnD();
     const { updateNodeData } = useReactFlow();
@@ -555,12 +557,12 @@ export const ToolExecutorForm = ({
                         <InputDataConnectContainer
                             agent={undefined}
                             apiSelectorProps={{
-                                agent: undefined,
                                 apis: apis,
                                 setApis: setApis,
                                 allApiTools: allApiTools as ApiToolResponseType[],
                                 isReadonly: isReadOnly,
                                 apiLoading: apiLoading,
+                                hideEditButton: true,
                                 onRefetch: () => {
                                     Promise.resolve(refetchApiTools()).catch(() => { });
                                 },
@@ -647,13 +649,24 @@ export const ToolExecutorForm = ({
                                 </p>
                             </div>
                         ) : (
-                            <div className="flex flex-col gap-y-4">
+                            <div className="flex flex-col gap-y-2">
                                 {apis.map((api, index) => {
                                     const apiKey = api.id || `api-${index}`;
+                                    const isExpanded = expandedApiId === apiKey;
                                     return (
-                                        <div key={apiKey} className="flex flex-col gap-y-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30">
-                                            <div className="flex items-center justify-between">
+                                        <div key={apiKey} className="flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30 overflow-hidden">
+                                            {/* Collapsible Header */}
+                                            <button
+                                                type="button"
+                                                className="flex items-center justify-between p-3 w-full hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                                                onClick={() => setExpandedApiId(isExpanded ? null : apiKey)}
+                                            >
                                                 <div className="flex items-center gap-x-2">
+                                                    {isExpanded ? (
+                                                        <ChevronDown size={16} className="text-gray-500 dark:text-gray-400" />
+                                                    ) : (
+                                                        <ChevronRight size={16} className="text-gray-500 dark:text-gray-400" />
+                                                    )}
                                                     <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">
                                                         API {index + 1}
                                                     </span>
@@ -661,28 +674,35 @@ export const ToolExecutorForm = ({
                                                         {api.name || 'Unnamed API'}
                                                     </span>
                                                 </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                                                    onClick={() => setMaximizedApi({ id: apiKey, name: api.name || 'Unnamed API' })}
-                                                    title="Maximize editor"
-                                                >
-                                                    <Maximize2 size={14} />
-                                                </Button>
-                                            </div>
-                                            <MonacoEditor
-                                                value={responseDataMapping[apiKey] || ''}
-                                                onChange={(value) => handleApiMappingChange(apiKey, value)}
-                                                intellisenseData={intellisenseData}
-                                                onRefetchVariables={handleRefetchVariables}
-                                                placeholder={`{\n  "result": @response,\n  "userId": @userId\n}`}
-                                                helperInfo="Type @ to trigger intellisense"
-                                                height="h-[150px]"
-                                                hasEnhance={false}
-                                                disabled={isReadOnly}
-                                                enableCategoryIcon={true}
-                                            />
+                                                <div className="flex items-center gap-x-1" onClick={(e) => e.stopPropagation()}>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                                        onClick={() => setMaximizedApi({ id: apiKey, name: api.name || 'Unnamed API' })}
+                                                        title="Maximize editor"
+                                                    >
+                                                        <Maximize2 size={14} />
+                                                    </Button>
+                                                </div>
+                                            </button>
+                                            {/* Collapsible Content */}
+                                            {isExpanded && (
+                                                <div className="px-3 pb-3">
+                                                    <MonacoEditor
+                                                        value={responseDataMapping[apiKey] || ''}
+                                                        onChange={(value) => handleApiMappingChange(apiKey, value)}
+                                                        intellisenseData={intellisenseData}
+                                                        onRefetchVariables={handleRefetchVariables}
+                                                        placeholder={`{\n  "result": @response,\n  "userId": @userId\n}`}
+                                                        helperInfo="Type @ to trigger intellisense"
+                                                        height="h-[150px]"
+                                                        hasEnhance={false}
+                                                        disabled={isReadOnly}
+                                                        enableCategoryIcon={true}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
