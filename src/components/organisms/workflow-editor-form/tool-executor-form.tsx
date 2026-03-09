@@ -717,16 +717,16 @@ export const ToolExecutorForm = ({
                             </DialogContent>
                         </Dialog>
                     </div>
+                </div>
 
-                    {/* Form Actions */}
-                    <div className="tool-executor-form-footer flex gap-x-3 justify-end pb-4">
-                        <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
-                            Cancel
-                        </Button>
-                        <Button variant="primary" onClick={handleSaveNodeData}>
-                            Save
-                        </Button>
-                    </div>
+                {/* Form Actions - Fixed at bottom */}
+                <div className="tool-executor-form-footer flex gap-x-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
+                        Cancel
+                    </Button>
+                    <Button variant="primary" onClick={handleSaveNodeData}>
+                        Save
+                    </Button>
                 </div>
             </div>
         </React.Fragment>
