@@ -24,7 +24,8 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { EditorPanelAgentProps } from '@/app/editor/[wid]/[workflow_id]/components/editor-panel';
 import { AgentType, API, ExecutableFunction } from './agent-form';
-import { Plus, X, Cable, Trash2, GripVertical } from 'lucide-react';
+import { Plus, X, Cable, Trash2, GripVertical, FileJson2 } from 'lucide-react';
+import MonacoEditor, { IntellisenseCategory } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
 
 // Types for Parameter/Response Mapping
 interface MappingItem {
@@ -58,6 +59,8 @@ export type ToolExecutorType = {
     responseMapping?: MappingItem[];
     // Dynamic Input Connects
     dynamicInputConnects?: DynamicInputConnect[];
+    // Response Data Mapping JSON
+    responseDataMapping?: string;
 };
 
 interface ToolExecutorFormProps extends EditorPanelAgentProps {
@@ -349,6 +352,8 @@ export const ToolExecutorForm = ({
     const [responseMapping, setResponseMapping] = useState<MappingItem[]>([]);
     // Dynamic Input Connects state
     const [dynamicInputConnects, setDynamicInputConnects] = useState<DynamicInputConnect[]>([]);
+    // Response Data Mapping JSON state
+    const [responseDataMapping, setResponseDataMapping] = useState<string>('');
 
     const { trigger, setSelectedNodeId, setTrigger } = useDnD();
     const { updateNodeData } = useReactFlow();
@@ -371,6 +376,7 @@ export const ToolExecutorForm = ({
         setParameterMapping(data?.parameterMapping ?? []);
         setResponseMapping(data?.responseMapping ?? []);
         setDynamicInputConnects(data?.dynamicInputConnects ?? []);
+        setResponseDataMapping(data?.responseDataMapping ?? '');
     }, [selectedNode?.data]);
 
     useEffect(() => {
@@ -390,6 +396,7 @@ export const ToolExecutorForm = ({
         parameterMapping: (parameterMapping?.length ?? 0) > 0 ? parameterMapping : undefined,
         responseMapping: (responseMapping?.length ?? 0) > 0 ? responseMapping : undefined,
         dynamicInputConnects: (dynamicInputConnects?.length ?? 0) > 0 ? dynamicInputConnects : undefined,
+        responseDataMapping: responseDataMapping || undefined,
     }), [
         name,
         description,
@@ -402,6 +409,7 @@ export const ToolExecutorForm = ({
         parameterMapping,
         responseMapping,
         dynamicInputConnects,
+        responseDataMapping,
     ]);
 
     // Save handler
@@ -475,6 +483,56 @@ export const ToolExecutorForm = ({
     } as AgentType), [apis, mcpServers, vectorRags, graphRags, selectedConnector, executableFunctions]);
 
     const isLoading = fetchingApiTools || fetchingMcp || fetchingGraphRag || fetchingConnectors || vectorRagLoading;
+
+    // Generate intellisense options from selected APIs
+    const intellisenseData: IntellisenseCategory[] = useMemo(() => {
+        const categories: IntellisenseCategory[] = [];
+
+        // Add API response fields
+        if (apis && apis.length > 0) {
+            const apiOptions = apis.flatMap(api => {
+                // Get promoted variables from API if available
+                const promotedVars = (api as any)?.promotedVariables || [];
+                return promotedVars.map((v: any) => ({
+                    label: `${api.name}.${v.name}`,
+                    value: `API:${api.name}.${v.name}`,
+                }));
+            });
+            if (apiOptions.length > 0) {
+                categories.push({ name: 'APIs', options: apiOptions });
+            }
+        }
+
+        // Add Variables category with common response fields
+        categories.push({
+            name: 'Variables',
+            options: [
+                { label: 'response', value: 'Variable:response' },
+                { label: 'response.data', value: 'Variable:response.data' },
+                { label: 'response.status', value: 'Variable:response.status' },
+                { label: 'response.message', value: 'Variable:response.message' },
+                { label: 'result', value: 'Variable:result' },
+                { label: 'output', value: 'Variable:output' },
+            ],
+        });
+
+        // Add Metadata category
+        categories.push({
+            name: 'Metadata',
+            options: [
+                { label: 'timestamp', value: 'Metadata:timestamp' },
+                { label: 'request_id', value: 'Metadata:request_id' },
+                { label: 'execution_time', value: 'Metadata:execution_time' },
+            ],
+        });
+
+        return categories;
+    }, [apis]);
+
+    // Refetch variables handler (no-op for now, can be enhanced later)
+    const handleRefetchVariables = async () => {
+        // Can be enhanced to refetch dynamic variables
+    };
 
     return (
         <React.Fragment>
@@ -574,6 +632,34 @@ export const ToolExecutorForm = ({
                             enabledCategories={[InputConnectKey.API]}
                         />
 <SelectedInputConnects data={selectedInputConnectData} />
+                    </div>
+
+                    {/* Response Data Mapping Section */}
+                    <div className="flex flex-col gap-y-4 pb-4 bottom-gradient-border">
+                        <div className="flex items-center gap-x-2">
+                            <FileJson2 size={20} className="text-emerald-600 dark:text-emerald-400" />
+                            <div className="flex flex-col gap-y-1">
+                                <p className="text-md font-medium text-gray-700 dark:text-gray-100">
+                                    Response Data Mapping
+                                </p>
+                                <p className="text-xs font-normal text-gray-500 dark:text-gray-300">
+                                    Define the JSON structure for mapping API response data. Type @ to access available variables.
+                                </p>
+                            </div>
+                        </div>
+
+                        <MonacoEditor
+                            value={responseDataMapping}
+                            onChange={setResponseDataMapping}
+                            intellisenseData={intellisenseData}
+                            onRefetchVariables={handleRefetchVariables}
+                            placeholder={`{\n  "field_name": @variable_name,\n  "nested": {\n    "value": @response.data\n  }\n}`}
+                            helperInfo="Type @ to trigger intellisense and select from available variables"
+                            height="h-[200px]"
+                            hasEnhance={false}
+                            disabled={isReadOnly}
+                            enableCategoryIcon={true}
+                        />
                     </div>
 
                     {/* Form Actions */}
