@@ -632,10 +632,10 @@ export const ToolExecutorForm = ({
                             <FileJson2 size={20} className="text-emerald-600 dark:text-emerald-400" />
                             <div className="flex flex-col gap-y-1">
                                 <p className="text-md font-medium text-gray-700 dark:text-gray-100">
-                                    Response Data Mapping
+                                    Input Request Structure
                                 </p>
                                 <p className="text-xs font-normal text-gray-500 dark:text-gray-300">
-                                    Define the JSON structure for mapping each API response. Type @ to access available variables.
+                                    JSON mirroring previous node output. Use Variable:name for values. Type @ to insert variables.
                                 </p>
                             </div>
                         </div>
