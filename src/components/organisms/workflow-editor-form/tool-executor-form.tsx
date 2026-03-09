@@ -484,50 +484,31 @@ export const ToolExecutorForm = ({
 
     const isLoading = fetchingApiTools || fetchingMcp || fetchingGraphRag || fetchingConnectors || vectorRagLoading;
 
-    // Generate intellisense options from selected APIs
+    // Generate intellisense options - Variables only with user-related fields
     const intellisenseData: IntellisenseCategory[] = useMemo(() => {
-        const categories: IntellisenseCategory[] = [];
-
-        // Add API response fields
-        if (apis && apis.length > 0) {
-            const apiOptions = apis.flatMap(api => {
-                // Get promoted variables from API if available
-                const promotedVars = (api as any)?.promotedVariables || [];
-                return promotedVars.map((v: any) => ({
-                    label: `${api.name}.${v.name}`,
-                    value: `API:${api.name}.${v.name}`,
-                }));
-            });
-            if (apiOptions.length > 0) {
-                categories.push({ name: 'APIs', options: apiOptions });
-            }
-        }
-
-        // Add Variables category with common response fields
-        categories.push({
-            name: 'Variables',
-            options: [
-                { label: 'response', value: 'Variable:response' },
-                { label: 'response.data', value: 'Variable:response.data' },
-                { label: 'response.status', value: 'Variable:response.status' },
-                { label: 'response.message', value: 'Variable:response.message' },
-                { label: 'result', value: 'Variable:result' },
-                { label: 'output', value: 'Variable:output' },
-            ],
-        });
-
-        // Add Metadata category
-        categories.push({
-            name: 'Metadata',
-            options: [
-                { label: 'timestamp', value: 'Metadata:timestamp' },
-                { label: 'request_id', value: 'Metadata:request_id' },
-                { label: 'execution_time', value: 'Metadata:execution_time' },
-            ],
-        });
-
-        return categories;
-    }, [apis]);
+        return [
+            {
+                name: 'Variables',
+                options: [
+                    { label: 'userId', value: 'Variable:userId' },
+                    { label: 'username', value: 'Variable:username' },
+                    { label: 'email', value: 'Variable:email' },
+                    { label: 'firstName', value: 'Variable:firstName' },
+                    { label: 'lastName', value: 'Variable:lastName' },
+                    { label: 'phone', value: 'Variable:phone' },
+                    { label: 'status', value: 'Variable:status' },
+                    { label: 'role', value: 'Variable:role' },
+                    { label: 'startDate', value: 'Variable:startDate' },
+                    { label: 'endDate', value: 'Variable:endDate' },
+                    { label: 'createdAt', value: 'Variable:createdAt' },
+                    { label: 'updatedAt', value: 'Variable:updatedAt' },
+                    { label: 'address', value: 'Variable:address' },
+                    { label: 'country', value: 'Variable:country' },
+                    { label: 'city', value: 'Variable:city' },
+                ],
+            },
+        ];
+    }, []);
 
     // Refetch variables handler (no-op for now, can be enhanced later)
     const handleRefetchVariables = async () => {
