@@ -301,7 +301,7 @@ export const Node: React.FC<NodeProps> = ({ id, data, type }) => {
     }
 
     if (type === CustomNodeTypes.iteratorNode) {
-        return <IteratorNode data={data} id={id} allowedNodes={[CustomNodeTypes.subflowNode]} />;
+        return <IteratorNode data={data} id={id} allowedNodes={[CustomNodeTypes.subflowNode, CustomNodeTypes.toolExecutorNode]} />;
     }
 
     if (type === CustomNodeTypes.toolExecutorNode) {
