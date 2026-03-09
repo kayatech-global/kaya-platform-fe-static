@@ -557,6 +557,7 @@ export const ToolExecutorForm = ({
                         <InputDataConnectContainer
                             agent={undefined}
                             apiSelectorProps={{
+                                agent: undefined,
                                 apis: apis,
                                 setApis: setApis,
                                 allApiTools: allApiTools as ApiToolResponseType[],
@@ -625,7 +626,7 @@ export const ToolExecutorForm = ({
                             }}
                             enabledCategories={[InputConnectKey.API]}
                         />
-<SelectedInputConnects data={selectedInputConnectData} />
+                        <SelectedInputConnects data={selectedInputConnectData} />
                     </div>
 
                     {/* Response Data Mapping Section */}
