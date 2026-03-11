@@ -61,18 +61,20 @@ export const WorkspaceOverviewSkeleton = () => {
                     <div className="h-9 w-[150px] bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                 </div>
 
-                {/* KPI Cards */}
+                {/* KPI Cards - 6 total (Workflows, Executions, Success Rate, Failed, Tokens, Health) */}
                 <div
                     className={cn('grid gap-4', {
                         'grid-cols-1': isMobile,
                         'grid-cols-2': isSm,
                         'grid-cols-3': isMd,
-                        'grid-cols-4': !isMobile && !isSm && !isMd,
+                        'grid-cols-6': !isMobile && !isSm && !isMd,
                     })}
                 >
                     <SkeletonCard />
                     <SkeletonCard className={cn({ hidden: isMobile })} />
                     <SkeletonCard className={cn({ hidden: isMobile || isSm })} />
+                    <SkeletonCard className={cn({ hidden: isMobile || isSm || isMd })} />
+                    <SkeletonCard className={cn({ hidden: isMobile || isSm || isMd })} />
                     <SkeletonCard className={cn({ hidden: isMobile || isSm || isMd })} />
                 </div>
 

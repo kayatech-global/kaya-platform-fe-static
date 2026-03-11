@@ -14,6 +14,7 @@ import {
     TokenUsageByWorkflow,
     RecentlyModifiedWorkflow,
     WorkspaceOverviewPermissions,
+    HealthIndexLevel,
 } from '../types/types';
 
 // Helper function to get date range based on filter
@@ -137,12 +138,30 @@ const generateMockData = (
 
     // Calculate metrics
     const totalExecutions = executionTrend.reduce((sum, point) => sum + point.executions, 0);
+    const successRate = Math.random() * 15 + 85;
+    const activeWorkflows = Math.floor(workflowNames.length * 0.8); // ~80% are published/active
+    
+    // Calculate health index score based on success rate, activity level, and efficiency
+    const healthIndexScore = Math.floor(
+        (successRate * 0.5) + // 50% weight on success rate
+        (Math.min(totalExecutions / 100, 30) * 0.3) + // 30% weight on activity (capped at 30)
+        (Math.random() * 20) // 20% other factors
+    );
+    
+    // Determine health index level
+    let healthIndex: HealthIndexLevel = 'Low';
+    if (healthIndexScore >= 80) healthIndex = 'High';
+    else if (healthIndexScore >= 50) healthIndex = 'Medium';
+
     const metrics: WorkspaceOverviewMetrics = {
         totalWorkflows: workflowNames.length,
+        activeWorkflows,
         totalExecutions,
-        successRate: Math.random() * 15 + 85,
+        successRate,
         totalTokens: tokenUsage.reduce((sum, wf) => sum + wf.totalTokens, 0),
         failedExecutions: Math.floor(totalExecutions * (Math.random() * 0.1 + 0.02)),
+        healthIndex,
+        healthIndexScore,
         trendComparedToPrevious: {
             executions: Math.floor(Math.random() * 200) - 100,
             successRate: Math.random() * 10 - 5,
@@ -224,10 +243,13 @@ export const useWorkspaceOverview = (timeRange: TimeRangeFilter) => {
     // Default empty metrics
     const defaultMetrics: WorkspaceOverviewMetrics = {
         totalWorkflows: 0,
+        activeWorkflows: 0,
         totalExecutions: 0,
         successRate: 0,
         totalTokens: 0,
         failedExecutions: 0,
+        healthIndex: 'Low',
+        healthIndexScore: 0,
         trendComparedToPrevious: {
             executions: 0,
             successRate: 0,
@@ -260,12 +282,7 @@ export const useWorkspaceOverview = (timeRange: TimeRangeFilter) => {
         }
     );
 
-    // Persist time range preference in session storage
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            sessionStorage.setItem(`workspace-overview-timerange-${workspaceId}`, timeRange);
-        }
-    }, [timeRange, workspaceId]);
+
 
     const hasWorkflows = useMemo(() => {
         return (data?.metrics.totalWorkflows ?? 0) > 0;

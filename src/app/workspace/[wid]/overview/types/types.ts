@@ -11,13 +11,19 @@ export interface TimeRangeOption {
 // Workflow status
 export type WorkflowStatus = 'Draft' | 'Published';
 
+// ROI/Health Index values
+export type HealthIndexLevel = 'High' | 'Medium' | 'Low';
+
 // Summary KPI data
 export interface WorkspaceOverviewMetrics {
     totalWorkflows: number;
+    activeWorkflows: number;
     totalExecutions: number;
     successRate: number;
     totalTokens: number;
     failedExecutions: number;
+    healthIndex: HealthIndexLevel;
+    healthIndexScore: number; // 0-100 score
     trendComparedToPrevious: {
         executions: number;
         successRate: number;

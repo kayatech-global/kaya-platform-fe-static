@@ -8,7 +8,8 @@ import { Badge } from '@/components/atoms/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/atoms/tooltip';
 import { RecentlyModifiedWorkflow, TimeRangeFilter } from '../types/types';
 import { cn } from '@/lib/utils';
-import { Play, CheckCircle, Coins, Lock } from 'lucide-react';
+import { Play, CheckCircle, Coins, Lock, Clock } from 'lucide-react';
+import moment from 'moment';
 
 interface WorkflowTileProps {
     workflow: RecentlyModifiedWorkflow;
@@ -103,6 +104,14 @@ export const WorkflowTile: React.FC<WorkflowTileProps> = ({
                             </TooltipContent>
                         )}
                     </Tooltip>
+
+                    {/* Last Modified Date */}
+                    <div className="flex items-center gap-x-1.5 text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        <Clock size={12} />
+                        <span>
+                            Last modified: {moment(workflow.lastModifiedAt).format('MMM D, YYYY, HH:mm')}
+                        </span>
+                    </div>
 
                     {/* Metrics Grid */}
                     <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">

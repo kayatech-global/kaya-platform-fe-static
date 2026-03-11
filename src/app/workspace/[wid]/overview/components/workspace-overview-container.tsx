@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { useWorkspaceOverview } from '../hooks/use-workspace-overview';
 import { WorkspaceOverviewSkeleton } from './workspace-overview-skeleton';
 import { WorkspaceOverviewHeader } from './workspace-overview-header';
@@ -14,9 +15,38 @@ import { TimeRangeFilter } from '../types/types';
 import { cn } from '@/lib/utils';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
 
+// Helper to get saved time range from session storage
+const getSavedTimeRange = (workspaceId: string): TimeRangeFilter => {
+    if (typeof window === 'undefined') return 'last7d';
+    const saved = sessionStorage.getItem(`workspace-overview-timerange-${workspaceId}`);
+    if (saved && ['last24h', 'last7d', 'last30d'].includes(saved)) {
+        return saved as TimeRangeFilter;
+    }
+    return 'last7d'; // Default is last 7 days per requirements
+};
+
 export const WorkspaceOverviewContainer = () => {
+    const params = useParams();
+    const workspaceId = params.wid as string;
     const [timeRange, setTimeRange] = useState<TimeRangeFilter>('last7d');
+    const [isInitialized, setIsInitialized] = useState(false);
     const { isMobile, isSm } = useBreakpoint();
+
+    // Initialize time range from session storage on mount
+    useEffect(() => {
+        if (workspaceId && !isInitialized) {
+            const savedRange = getSavedTimeRange(workspaceId);
+            setTimeRange(savedRange);
+            setIsInitialized(true);
+        }
+    }, [workspaceId, isInitialized]);
+
+    // Save time range to session storage when it changes
+    useEffect(() => {
+        if (typeof window !== 'undefined' && workspaceId && isInitialized) {
+            sessionStorage.setItem(`workspace-overview-timerange-${workspaceId}`, timeRange);
+        }
+    }, [timeRange, workspaceId, isInitialized]);
 
     const {
         isFetching,
@@ -71,6 +101,7 @@ export const WorkspaceOverviewContainer = () => {
                 <WorkspaceOverviewKPICards
                     metrics={metrics}
                     permissions={permissions}
+                    timeRange={timeRange}
                 />
 
                 {/* Charts Section */}
