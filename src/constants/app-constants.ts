@@ -48,6 +48,13 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
                 icon: 'Cloud',
                 isSingleLink: true,
             },
+            {
+                id: 'configure-databases',
+                title: 'Configure Databases',
+                url: '/workspace/[wid]/configure-databases',
+                icon: 'Database',
+                isSingleLink: true,
+            },
             // {
             //     id: 'guardrails',
             //     title: 'Guardrails',
