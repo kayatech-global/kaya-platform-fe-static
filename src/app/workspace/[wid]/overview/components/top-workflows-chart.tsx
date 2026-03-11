@@ -108,8 +108,12 @@ export const TopWorkflowsChart: React.FC<TopWorkflowsChartProps> = ({ data }) =>
                                 dataKey="displayName"
                                 tickLine={false}
                                 axisLine={false}
-                                tick={{ fill: 'var(--gray-500)', fontSize: 10 }}
-                                width={100}
+                                tick={{ 
+                                    fill: theme === 'light' ? '#374151' : '#d1d5db', 
+                                    fontSize: 12,
+                                    fontWeight: 500
+                                }}
+                                width={120}
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
                             <Bar
