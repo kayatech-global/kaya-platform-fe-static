@@ -62,7 +62,7 @@ const getTimeRangeLabel = (timeRange: TimeRangeFilter): string => {
     }
 };
 
-interface KPICardWithTooltipProps extends DashboardDataCardProps {
+interface KPICardWithTooltipProps extends Omit<DashboardDataCardProps, 'tooltipContent'> {
     tooltipContent: React.ReactNode;
 }
 
