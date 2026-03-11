@@ -70,8 +70,29 @@ const KPICardWithTooltip: React.FC<KPICardWithTooltipProps> = ({ tooltipContent,
     return (
         <Tooltip>
             <TooltipTrigger asChild>
-                <div className="relative h-full">
-                    <DashboardDataCard {...cardProps} width={undefined} />
+                <div className="relative h-full w-full">
+                    <div className="dashboard-data-card bg-[rgba(255,255,255,0.6)] h-[124px] rounded-lg backdrop-blur-[7px] border border-gray-200 px-6 py-3 flex flex-col gap-y-[10px] dark:bg-[rgba(31,41,55,0.8)] dark:border-gray-700 w-full">
+                        <div className="flex justify-between">
+                            <div className="flex flex-col gap-y-1">
+                                {typeof cardProps.title === 'string' ? (
+                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{cardProps.title}</p>
+                                ) : (
+                                    <div>{cardProps.title}</div>
+                                )}
+                                {cardProps.value}
+                            </div>
+                            <div className="w-[42px] h-[42px] bg-[rgba(49,111,237,0.3)] rounded-lg flex items-center justify-center flex-shrink-0">
+                                <cardProps.Icon size={24} className="stroke-1 text-blue-700 dark:text-blue-600" />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-x-2" title={cardProps.trendValue + ' ' + cardProps.description}>
+                            {cardProps.showTrendIcon && <cardProps.TrendIcon size={24} className={cn(cardProps.trendColor)} />}
+                            <p className="text-sm font-normal text-gray-700 dark:text-gray-300 truncate">
+                                <span className={cn('text-sm font-medium pr-1', cardProps.trendColor)}>{cardProps.trendValue}</span>
+                                {cardProps.description}
+                            </p>
+                        </div>
+                    </div>
                     <div className="absolute top-2 right-2">
                         <Info size={14} className="text-gray-400 dark:text-gray-500" />
                     </div>
