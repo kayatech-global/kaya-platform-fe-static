@@ -30,12 +30,13 @@ export const WorkspaceOverviewSkeleton = () => {
         />
     );
 
-    const SkeletonTile = () => (
+    const SkeletonTile = ({ className = '' }: { className?: string }) => (
         <div
             className={cn(
                 'bg-[rgba(255,255,255,0.6)] h-[200px] rounded-lg backdrop-blur-[7px] border border-gray-200 p-4',
                 'dark:bg-[rgba(31,41,55,0.8)] dark:border-gray-700',
-                'animate-pulse'
+                'animate-pulse',
+                className
             )}
         />
     );
