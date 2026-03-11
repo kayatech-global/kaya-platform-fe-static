@@ -3,6 +3,7 @@ export * from './drawer/app-drawer';
 export * from './sidebar/sidebar';
 export * from './sidebar/app-sidebar';
 export * from './sidebar/sidebar-header';
+export * from './sidebar/nav-workspace-overview';
 export * from './dashboard-header/dashboard-header';
 export * from './table/table';
 export * from './activity-feed/activity-feed';

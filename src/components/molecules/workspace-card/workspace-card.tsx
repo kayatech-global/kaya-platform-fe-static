@@ -43,7 +43,7 @@ const WorkspaceCard = ({
 
     const cardOnClick = () => {
         setWorkspaceInfo({ id: String(uuid), name: name });
-        router.push(getWorkspacePath('/workspace/[wid]/workflows/workflow-authoring', String(uuid)));
+        router.push(getWorkspacePath('/workspace/[wid]/overview', String(uuid)));
     };
 
     return (
