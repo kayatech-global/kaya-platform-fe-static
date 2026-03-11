@@ -6,14 +6,9 @@ import { useWorkspaceOverview } from '../hooks/use-workspace-overview';
 import { WorkspaceOverviewSkeleton } from './workspace-overview-skeleton';
 import { WorkspaceOverviewHeader } from './workspace-overview-header';
 import { WorkspaceOverviewKPICards } from './workspace-overview-kpi-cards';
-import { ExecutionTrendChart } from './execution-trend-chart';
-import { TopWorkflowsChart } from './top-workflows-chart';
-import { TokenUsageChart } from './token-usage-chart';
 import { RecentlyModifiedWorkflows } from './recently-modified-workflows';
 import { WorkspaceOverviewEmptyState } from './workspace-overview-empty-state';
 import { TimeRangeFilter } from '../types/types';
-import { cn } from '@/lib/utils';
-import { useBreakpoint } from '@/hooks/use-breakpoints';
 
 // Helper to get saved time range from session storage
 const getSavedTimeRange = (workspaceId: string): TimeRangeFilter => {
@@ -30,7 +25,6 @@ export const WorkspaceOverviewContainer = () => {
     const workspaceId = params.wid as string;
     const [timeRange, setTimeRange] = useState<TimeRangeFilter>('last7d');
     const [isInitialized, setIsInitialized] = useState(false);
-    const { isMobile, isSm } = useBreakpoint();
 
     // Initialize time range from session storage on mount
     useEffect(() => {
@@ -51,16 +45,11 @@ export const WorkspaceOverviewContainer = () => {
     const {
         isFetching,
         metrics,
-        executionTrendData,
-        topWorkflowsData,
-        tokenUsageData,
         recentlyModifiedWorkflows,
         hasWorkflows,
-        hasExecutions,
         workspaceName,
         workspaceDescription,
         permissions,
-        refetch,
     } = useWorkspaceOverview(timeRange);
 
     const handleTimeRangeChange = (newRange: TimeRangeFilter) => {
@@ -103,30 +92,6 @@ export const WorkspaceOverviewContainer = () => {
                     permissions={permissions}
                     timeRange={timeRange}
                 />
-
-                {/* Charts Section */}
-                {hasExecutions ? (
-                    <>
-                        {/* Execution Trend and Top Workflows Row */}
-                        <div
-                            className={cn('grid gap-6', {
-                                'grid-cols-1': isMobile || isSm,
-                                'grid-cols-2': !isMobile && !isSm,
-                            })}
-                        >
-                            <ExecutionTrendChart data={executionTrendData} />
-                            <TopWorkflowsChart data={topWorkflowsData} />
-                        </div>
-
-                        {/* Token Usage Chart */}
-                        <TokenUsageChart
-                            data={tokenUsageData}
-                            canViewTokenUsage={permissions.canViewTokenUsage}
-                        />
-                    </>
-                ) : (
-                    <WorkspaceOverviewEmptyState type="no-executions" timeRange={timeRange} />
-                )}
 
                 {/* Recently Modified Workflows Tile Grid */}
                 <RecentlyModifiedWorkflows

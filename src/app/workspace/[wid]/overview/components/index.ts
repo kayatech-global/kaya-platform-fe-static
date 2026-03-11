@@ -3,8 +3,5 @@ export { WorkspaceOverviewHeader } from './workspace-overview-header';
 export { WorkspaceOverviewKPICards } from './workspace-overview-kpi-cards';
 export { WorkspaceOverviewSkeleton } from './workspace-overview-skeleton';
 export { WorkspaceOverviewEmptyState } from './workspace-overview-empty-state';
-export { ExecutionTrendChart } from './execution-trend-chart';
-export { TopWorkflowsChart } from './top-workflows-chart';
-export { TokenUsageChart } from './token-usage-chart';
 export { RecentlyModifiedWorkflows } from './recently-modified-workflows';
 export { WorkflowTile } from './workflow-tile';
