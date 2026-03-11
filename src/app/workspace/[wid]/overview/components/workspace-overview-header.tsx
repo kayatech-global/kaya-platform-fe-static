@@ -69,24 +69,24 @@ export const WorkspaceOverviewHeader: React.FC<WorkspaceOverviewHeaderProps> = (
 
             {/* Header Row with Title and Filter */}
             <div
-                className={cn('flex items-start justify-between', {
-                    'flex-col gap-y-4': isMobile,
-                    'flex-row items-center': !isMobile,
+                className={cn('flex justify-between gap-4', {
+                    'flex-col': isMobile,
+                    'flex-row items-start': !isMobile,
                 })}
             >
-                <div className="flex flex-col gap-y-1">
-                    <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                <div className="flex flex-col gap-y-1 min-w-0 flex-1">
+                    <h1 className="text-xl font-semibold text-foreground">
                         {workspaceName || 'Workspace'} Overview
                     </h1>
                     {workspaceDescription && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 max-w-[600px] line-clamp-2">
+                        <p className="text-sm text-muted-foreground max-w-2xl line-clamp-2">
                             {workspaceDescription}
                         </p>
                     )}
                 </div>
 
                 {/* Time Range Filter */}
-                <div className={cn('flex-shrink-0', { 'w-full': isMobile, 'w-[180px]': !isMobile })}>
+                <div className={cn('flex-shrink-0', { 'w-full': isMobile, 'w-44': !isMobile })}>
                     <Select
                         options={selectOptions}
                         value={timeRange}
