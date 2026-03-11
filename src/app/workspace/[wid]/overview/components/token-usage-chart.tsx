@@ -124,11 +124,11 @@ export const TokenUsageChart: React.FC<TokenUsageChartProps> = ({ data, canViewT
             </CardHeader>
             <CardContent>
                 {hasData ? (
-                    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                    <ChartContainer config={chartConfig} className="h-[350px] w-full">
                         <BarChart
                             data={chartData}
-                            layout="horizontal"
-                            margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                            layout="vertical"
+                            margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
                         >
                             <CartesianGrid
                                 horizontal={false}
@@ -151,15 +151,15 @@ export const TokenUsageChart: React.FC<TokenUsageChartProps> = ({ data, canViewT
                                 dataKey="displayName"
                                 tickLine={false}
                                 axisLine={false}
-                                tick={{ fill: 'var(--gray-500)', fontSize: 10 }}
-                                width={120}
+                                tick={{ fill: 'var(--gray-500)', fontSize: 11 }}
+                                width={140}
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
                             <Bar
                                 dataKey="totalTokens"
                                 fill="var(--amber-500)"
                                 radius={[0, 4, 4, 0]}
-                                barSize={20}
+                                barSize={24}
                             />
                         </BarChart>
                     </ChartContainer>
