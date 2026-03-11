@@ -323,7 +323,7 @@ export const WorkspaceOverviewKPICards: React.FC<WorkspaceOverviewKPICardsProps>
     return (
         <div
             className={cn(
-                'workspace-kpi-cards grid gap-4',
+                'workspace-kpi-cards grid gap-6',
                 {
                     'grid-cols-5': kpiCards.length === 5,
                     'grid-cols-6': kpiCards.length === 6,
