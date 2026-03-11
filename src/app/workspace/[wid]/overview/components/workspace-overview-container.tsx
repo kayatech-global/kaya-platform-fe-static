@@ -74,7 +74,7 @@ export const WorkspaceOverviewContainer = () => {
     // Empty state when no workflows exist
     if (!hasWorkflows) {
         return (
-            <div className="flex flex-col gap-y-6">
+            <div className="flex flex-col gap-y-6 pt-16">
                 <WorkspaceOverviewHeader
                     workspaceName={workspaceName}
                     workspaceDescription={workspaceDescription}
@@ -87,7 +87,7 @@ export const WorkspaceOverviewContainer = () => {
     }
 
     return (
-        <div className="workspace-overview-container pb-8">
+        <div className="workspace-overview-container pt-16 pb-8">
             <div className="flex flex-col gap-y-6">
                 {/* Header with breadcrumb and time filter */}
                 <WorkspaceOverviewHeader
