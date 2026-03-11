@@ -67,6 +67,9 @@ interface KPICardWithTooltipProps extends DashboardDataCardProps {
 }
 
 const KPICardWithTooltip: React.FC<KPICardWithTooltipProps> = ({ tooltipContent, ...cardProps }) => {
+    const IconComponent = cardProps.Icon;
+    const TrendIconComponent = cardProps.TrendIcon;
+    
     return (
         <Tooltip>
             <TooltipTrigger asChild>
@@ -82,11 +85,11 @@ const KPICardWithTooltip: React.FC<KPICardWithTooltipProps> = ({ tooltipContent,
                                 {cardProps.value}
                             </div>
                             <div className="w-[42px] h-[42px] bg-[rgba(49,111,237,0.3)] rounded-lg flex items-center justify-center flex-shrink-0">
-                                <cardProps.Icon size={24} className="stroke-1 text-blue-700 dark:text-blue-600" />
+                                <IconComponent size={24} className="stroke-1 text-blue-700 dark:text-blue-600" />
                             </div>
                         </div>
                         <div className="flex items-center gap-x-2" title={cardProps.trendValue + ' ' + cardProps.description}>
-                            {cardProps.showTrendIcon && <cardProps.TrendIcon size={24} className={cn(cardProps.trendColor)} />}
+                            {cardProps.showTrendIcon && <TrendIconComponent size={24} className={cn(cardProps.trendColor)} />}
                             <p className="text-sm font-normal text-gray-700 dark:text-gray-300 truncate">
                                 <span className={cn('text-sm font-medium pr-1', cardProps.trendColor)}>{cardProps.trendValue}</span>
                                 {cardProps.description}
