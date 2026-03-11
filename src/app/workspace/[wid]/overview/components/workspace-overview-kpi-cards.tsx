@@ -6,8 +6,8 @@ import { Carousel, CarouselContent, CarouselItem } from '@/components/atoms/caro
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/atoms/tooltip';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
 import { cn } from '@/lib/utils';
-import { WorkspaceOverviewMetrics, WorkspaceOverviewPermissions, TimeRangeFilter, HealthIndexLevel } from '../types/types';
-import { Workflow, Play, CheckCircle, Coins, AlertTriangle, TrendingUp, TrendingDown, Minus, Activity, Info } from 'lucide-react';
+import { WorkspaceOverviewMetrics, WorkspaceOverviewPermissions, TimeRangeFilter } from '../types/types';
+import { Workflow, Play, CheckCircle, Coins, TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
 
 interface WorkspaceOverviewKPICardsProps {
     metrics: WorkspaceOverviewMetrics;
@@ -59,32 +59,6 @@ const getTimeRangeLabel = (timeRange: TimeRangeFilter): string => {
             return 'last 30 days';
         default:
             return 'selected period';
-    }
-};
-
-const getHealthIndexColor = (level: HealthIndexLevel): string => {
-    switch (level) {
-        case 'High':
-            return 'text-green-600 dark:text-green-400';
-        case 'Medium':
-            return 'text-amber-500 dark:text-amber-400';
-        case 'Low':
-            return 'text-red-500 dark:text-red-400';
-        default:
-            return 'text-gray-500';
-    }
-};
-
-const getHealthIndexBgColor = (level: HealthIndexLevel): string => {
-    switch (level) {
-        case 'High':
-            return 'bg-green-50 dark:bg-green-900/20';
-        case 'Medium':
-            return 'bg-amber-50 dark:bg-amber-900/20';
-        case 'Low':
-            return 'bg-red-50 dark:bg-red-900/20';
-        default:
-            return 'bg-gray-50 dark:bg-gray-800';
     }
 };
 
@@ -201,34 +175,6 @@ export const WorkspaceOverviewKPICards: React.FC<WorkspaceOverviewKPICardsProps>
                 </div>
             ),
         },
-        // Failed Executions Card
-        {
-            card: {
-                title: 'Failed Executions',
-                value: (
-                    <p className="text-d-md font-semibold text-gray-800 dark:text-gray-300">
-                        {formatNumber(metrics.failedExecutions)}
-                    </p>
-                ),
-                description: 'vs previous period',
-                trendValue: formatTrendValue(metrics.trendComparedToPrevious.failedExecutions),
-                trendColor: getTrendColor(metrics.trendComparedToPrevious.failedExecutions, false),
-                Icon: AlertTriangle,
-                TrendIcon: getTrendIcon(metrics.trendComparedToPrevious.failedExecutions),
-                showTrendIcon: metrics.trendComparedToPrevious.failedExecutions !== 0,
-            },
-            tooltip: (
-                <div className="space-y-1">
-                    <p className="font-medium text-gray-900 dark:text-gray-100">Failed Executions</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Count of failed workflow execution events in the workspace during the selected time window.
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
-                        Time window: {timeRangeLabel}
-                    </p>
-                </div>
-            ),
-        },
     ];
 
     // Add token usage card if user has permission
@@ -262,45 +208,6 @@ export const WorkspaceOverviewKPICards: React.FC<WorkspaceOverviewKPICardsProps>
         });
     }
 
-    // Add ROI/Health Index Card
-    kpiCards.push({
-        card: {
-            title: 'Workspace Health',
-            value: (
-                <div className={cn('inline-flex items-center gap-x-2 px-3 py-1 rounded-full', getHealthIndexBgColor(metrics.healthIndex))}>
-                    <span className={cn('text-d-md font-semibold', getHealthIndexColor(metrics.healthIndex))}>
-                        {metrics.healthIndex}
-                    </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                        ({metrics.healthIndexScore}/100)
-                    </span>
-                </div>
-            ),
-            description: 'ROI Index',
-            trendValue: '',
-            trendColor: 'text-gray-500',
-            Icon: Activity,
-            TrendIcon: Minus,
-            showTrendIcon: false,
-        },
-        tooltip: (
-            <div className="space-y-2">
-                <p className="font-medium text-gray-900 dark:text-gray-100">Workspace Health Index</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                    A composite indicator of workspace performance based on:
-                </p>
-                <ul className="text-xs text-gray-600 dark:text-gray-400 list-disc pl-4 space-y-0.5">
-                    <li>Successful execution rate</li>
-                    <li>Workflow activity level</li>
-                    <li>Cost vs usage efficiency</li>
-                </ul>
-                <p className="text-xs text-gray-500 dark:text-gray-500 pt-1 border-t border-gray-100 dark:border-gray-700">
-                    <strong>High:</strong> 80-100 | <strong>Medium:</strong> 50-79 | <strong>Low:</strong> 0-49
-                </p>
-            </div>
-        ),
-    });
-
     // Use carousel on small screens, grid on larger screens
     if (isSm || isMobile) {
         return (
@@ -325,8 +232,8 @@ export const WorkspaceOverviewKPICards: React.FC<WorkspaceOverviewKPICardsProps>
             className={cn(
                 'workspace-kpi-cards grid gap-6',
                 {
-                    'grid-cols-5': kpiCards.length === 5,
-                    'grid-cols-6': kpiCards.length === 6,
+                    'grid-cols-3': kpiCards.length === 3,
+                    'grid-cols-4': kpiCards.length === 4,
                 }
             )}
         >
