@@ -96,6 +96,12 @@ const WorkspaceListHeader = ({
                         <Button onClick={() => handleCreate()} size={'sm'}>
                             New Workspace
                         </Button>
+                        <Button
+                            size={'sm'}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Red Button
+                        </Button>
                     </div>
                 )}
             </div>
