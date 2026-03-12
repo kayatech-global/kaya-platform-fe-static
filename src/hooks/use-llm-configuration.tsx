@@ -127,7 +127,15 @@ export const useLlmConfiguration = (props?: IHookProps) => {
     usePlatformQuery({
         queryKey: 'providers',
         onSuccess: data => {
-            setProviders(JSON.parse(data.llmProviders));
+            if (data?.llmProviders) {
+                try {
+                    setProviders(JSON.parse(data.llmProviders));
+                } catch {
+                    setProviders([]);
+                }
+            } else {
+                setProviders([]);
+            }
         },
         onError: () => {
             setProviders([]);
