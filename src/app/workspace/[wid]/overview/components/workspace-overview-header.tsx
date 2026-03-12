@@ -85,14 +85,24 @@ export const WorkspaceOverviewHeader: React.FC<WorkspaceOverviewHeaderProps> = (
                     )}
                 </div>
 
-                {/* Time Range Filter */}
-                <div className={cn('flex-shrink-0', { 'w-full': isMobile, 'w-44': !isMobile })}>
-                    <Select
-                        options={selectOptions}
-                        value={timeRange}
-                        onChange={(e) => onTimeRangeChange(e.target.value as TimeRangeFilter)}
-                        aria-label="Select time range"
-                    />
+                {/* Primary Actions */}
+                <div className={cn('flex items-center gap-3 flex-shrink-0', { 'w-full': isMobile })}>
+                    <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 transition-colors"
+                        aria-label="Test Red Button"
+                    >
+                        Test Red Button
+                    </button>
+
+                    <div className={cn('flex-shrink-0', { 'w-full': isMobile, 'w-44': !isMobile })}>
+                        <Select
+                            options={selectOptions}
+                            value={timeRange}
+                            onChange={(e) => onTimeRangeChange(e.target.value as TimeRangeFilter)}
+                            aria-label="Select time range"
+                        />
+                    </div>
                 </div>
             </div>
         </div>
