@@ -33,6 +33,10 @@ interface EditorHeaderProps {
     } | null;
     hasChanges: boolean;
     setHasChanges: React.Dispatch<React.SetStateAction<boolean>>;
+    canUndo?: boolean;
+    canRedo?: boolean;
+    handleUndo?: () => void;
+    handleRedo?: () => void;
 }
 
 export const EditorHeader = ({
@@ -50,6 +54,10 @@ export const EditorHeader = ({
     initialSnapshot,
     hasChanges,
     setHasChanges,
+    canUndo,
+    canRedo,
+    handleUndo,
+    handleRedo,
 }: EditorHeaderProps) => {
     const params = useParams();
     const { workflowVariables, isVoiceWorkflow } = useDnD();
@@ -130,6 +138,30 @@ export const EditorHeader = ({
                         >
                             <i className="ri-history-line text-xs text-gray-700 dark:text-gray-300" />
                             <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Reset</p>
+                        </button>
+                        {/* Undo Button */}
+                        <button
+                            className={`bg-white border-gray-300 dark:bg-gray-800 border dark:border-gray-700 rounded flex items-center px-2 py-1 gap-x-2 ${
+                                !canUndo ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                            }`}
+                            onClick={handleUndo}
+                            disabled={!canUndo}
+                            title="Undo (Ctrl+Z)"
+                        >
+                            <i className="ri-arrow-go-back-line text-xs text-gray-700 dark:text-gray-300" />
+                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Undo</p>
+                        </button>
+                        {/* Redo Button */}
+                        <button
+                            className={`bg-white border-gray-300 dark:bg-gray-800 border dark:border-gray-700 rounded flex items-center px-2 py-1 gap-x-2 ${
+                                !canRedo ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                            }`}
+                            onClick={handleRedo}
+                            disabled={!canRedo}
+                            title="Redo (Ctrl+Shift+Z)"
+                        >
+                            <i className="ri-arrow-go-forward-line text-xs text-gray-700 dark:text-gray-300" />
+                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Redo</p>
                         </button>
                     </div>
                     <hr aria-orientation="vertical" className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2 border-0" />

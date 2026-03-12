@@ -21,6 +21,7 @@ const AppSidebarHeader = () => {
                     width={state === 'collapsed' ? 20 : 142}
                     height={state === 'collapsed' ? 20 : 29}
                     src={appLogo}
+                    style={{ width: 'auto', height: 'auto' }}
                 />
             </div>
         </SidebarHeader>

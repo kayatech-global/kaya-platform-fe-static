@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useCallback, useEffect, useImperativeHandle, useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import {
     ReactFlow,
     addEdge,
@@ -9,6 +9,8 @@ import {
     Connection,
     Node as FlowNode,
     Edge,
+    EdgeChange,
+    NodeChange,
     ConnectionLineType,
     Controls,
 } from '@xyflow/react';
@@ -323,6 +325,8 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
             isOpenCommit,
             isGuardrailBindingCompleted,
             initialLoad,
+            canUndo,
+            canRedo,
             setReactFlowInstance,
             setInitialLoad,
             setEdgesSaved,
@@ -332,6 +336,9 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
             setEdges,
             manageTemplates,
             handleReset,
+            handleUndo,
+            handleRedo,
+            captureSnapshot,
             onEdgesChange,
             onNodesChange,
             onUpdateRecentUsed,
@@ -445,6 +452,68 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
             return nodes.some(node => node.type === CustomNodeTypes.voiceNode);
         };
 
+        // Refs to track if we need to capture a snapshot
+        const isDraggingRef = useRef(false);
+        const hasSnapshotBeforeDragRef = useRef(false);
+
+        /**
+         * Wrapped node change handler that captures snapshots for undo/redo.
+         * Captures a snapshot when node dragging starts or when nodes are removed.
+         */
+        const handleNodesChangeWithUndo = useCallback(
+            (changes: NodeChange[]) => {
+                // Check for position changes (dragging)
+                const hasPositionChange = changes.some(
+                    change => change.type === 'position' && change.dragging !== undefined
+                );
+                const isDragStarting = changes.some(
+                    change => change.type === 'position' && change.dragging === true
+                );
+                const isDragEnding = changes.some(
+                    change => change.type === 'position' && change.dragging === false
+                );
+
+                // Capture snapshot at the start of a drag operation
+                if (isDragStarting && !hasSnapshotBeforeDragRef.current) {
+                    captureSnapshot();
+                    hasSnapshotBeforeDragRef.current = true;
+                    isDraggingRef.current = true;
+                }
+
+                // Reset tracking when drag ends
+                if (isDragEnding) {
+                    hasSnapshotBeforeDragRef.current = false;
+                    isDraggingRef.current = false;
+                }
+
+                // Check for node removal
+                const hasRemoval = changes.some(change => change.type === 'remove');
+                if (hasRemoval && !isDraggingRef.current) {
+                    captureSnapshot();
+                }
+
+                onNodesChange(changes);
+            },
+            [captureSnapshot, onNodesChange]
+        );
+
+        /**
+         * Wrapped edge change handler that captures snapshots for undo/redo.
+         * Captures a snapshot when edges are removed.
+         */
+        const handleEdgesChangeWithUndo = useCallback(
+            (changes: EdgeChange[]) => {
+                // Check for edge removal
+                const hasRemoval = changes.some(change => change.type === 'remove');
+                if (hasRemoval) {
+                    captureSnapshot();
+                }
+
+                onEdgesChange(changes);
+            },
+            [captureSnapshot, onEdgesChange]
+        );
+
         const handleConnect = (connection: Connection) => {
             const sourceNode = nodes.find(n => n.id === connection.source);
             const targetNode = nodes.find(n => n.id === connection.target);
@@ -455,6 +524,8 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
                 return;
             }
 
+            // Capture snapshot before adding edge for undo/redo
+            captureSnapshot();
             setEdges(eds => addEdge({ ...connection, animated: true, type: 'straight' }, eds));
         };
 
@@ -488,6 +559,9 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
             if (!type) return;
 
             const nodeType = type as CustomNodeTypes;
+
+            // Capture snapshot before making changes for undo/redo
+            captureSnapshot();
 
             if (
                 nodeType === CustomNodeTypes.singleAgentTemplate ||
@@ -731,14 +805,18 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
                     edges={edges}
                     hasChanges={hasChanges}
                     setHasChanges={setHasChanges}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
+                    handleUndo={handleUndo}
+                    handleRedo={handleRedo}
                 />
                 <ReactFlow
                     proOptions={{ hideAttribution: true }}
                     style={theme === 'light' ? BACKGROUND_STYLE : BACKGROUND_STYLE_DARK}
                     nodes={nodes}
                     edges={edges}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
+                    onNodesChange={handleNodesChangeWithUndo}
+                    onEdgesChange={handleEdgesChangeWithUndo}
                     onConnect={handleConnect}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
