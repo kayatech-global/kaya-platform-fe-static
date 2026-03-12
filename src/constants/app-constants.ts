@@ -48,34 +48,29 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
                 icon: 'Cloud',
                 isSingleLink: true,
             },
-            // {
-            //     id: 'guardrails',
-            //     title: 'Guardrails',
-            //     url: '#',
-            //     icon: 'ShieldCheck',
-            //     items: [
-            //         {
-            //             id: 'setup-guardrails',
-            //             title: 'Setup Guardrails',
-            //             url: '/workspace/[wid]/guardrails/setup-guardrails',
-            //         },
-            //         {
-            //             id: 'guardrails-api-configurations',
-            //             title: 'Guardrails API Configurations',
-            //             url: '/workspace/[wid]/guardrails/guardrails-api-configurations',
-            //             isDisabled: true,
-            //             disabledMessage: 'Guardrails API Configurations are not enabled for this workspace',
-            //         },
-            //         {
-            //             id: 'guardrails-model-configurations',
-            //             title: 'Guardrails Model Configurations',
-            //             url: '/workspace/[wid]/guardrails/guardrails-model-configurations',
-            //         },
-            //     ],
-            //     // isSingleLink: true,
-            //     // isDisabled: false,
-            //     // disabledMessage: 'Guardrails not enabled for the sandbox license',
-            // },
+            {
+                id: 'guardrails',
+                title: 'Guardrails',
+                url: '#',
+                icon: 'ShieldCheck',
+                items: [
+                    {
+                        id: 'setup-guardrails',
+                        title: 'Setup Guardrails',
+                        url: '/workspace/[wid]/guardrails/setup-guardrails',
+                    },
+                    {
+                        id: 'guardrails-api-configurations',
+                        title: 'Guardrails API Configurations',
+                        url: '/workspace/[wid]/guardrails/guardrails-api-configurations',
+                    },
+                    {
+                        id: 'guardrails-model-configurations',
+                        title: 'Guardrails Model Configurations',
+                        url: '/workspace/[wid]/guardrails/guardrails-model-configurations',
+                    },
+                ],
+            },
             // {
             //     id: 'language_model_configs',
             //     title: 'Configure Intelligence Sources',
