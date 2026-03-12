@@ -1,7 +1,7 @@
 import React from 'react';
 import { SidebarTrigger } from '../sidebar/sidebar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/atoms';
-import { BellDot, ChevronDown, Maximize, Moon, Sun } from 'lucide-react';
+import { BellDot, ChevronDown, Maximize, Moon, Sun, BarChart3 } from 'lucide-react';
 import { cn, goFullScreen } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/atoms/avatar';
 import { useTheme } from '@/theme';
@@ -11,6 +11,8 @@ import { useAuth } from '@/context';
 import { motion } from 'framer-motion';
 import useLocalStorage from '@/hooks/useLocalStorage';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface DashboardHeaderTopProps extends DashboardHeaderProps {
     value: string;
@@ -21,10 +23,14 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
     const { user } = useAuth();
     const [workspaceInfo] = useLocalStorage('workspaceInfo');
     const { isSm, isMobile } = useBreakpoint();
+    const pathname = usePathname();
 
     const toggleTheme = () => {
         setTheme(theme === 'light' ? 'dark' : 'light');
     };
+
+    const isEnterpriseInsightsPage = pathname === '/enterprise-insights';
+    const isWorkspacesPage = pathname === '/workspaces';
 
     return (
         <div
@@ -39,8 +45,36 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                 })}
             >
                 {isFullWidth ? (
-                    <div className="logo w-fit h-fit py-[6.5px]">
-                        <Image alt="kaya-logo" width={142} height={29} src={'/png/kaya-logo-light.png'} />
+                    <div className="flex items-center gap-x-8">
+                        <div className="logo w-fit h-fit py-[6.5px]">
+                            <Image alt="kaya-logo" width={142} height={29} src={'/png/kaya-logo-light.png'} />
+                        </div>
+                        {/* Navigation links for full-width header (workspaces/enterprise pages) */}
+                        <nav className="flex items-center gap-x-1">
+                            <Link
+                                href="/workspaces"
+                                className={cn(
+                                    'flex items-center gap-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                                    isWorkspacesPage
+                                        ? 'bg-blue-500/20 text-white'
+                                        : 'text-blue-100 hover:bg-blue-500/10 hover:text-white'
+                                )}
+                            >
+                                Workspaces
+                            </Link>
+                            <Link
+                                href="/enterprise-insights"
+                                className={cn(
+                                    'flex items-center gap-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                                    isEnterpriseInsightsPage
+                                        ? 'bg-blue-500/20 text-white'
+                                        : 'text-blue-100 hover:bg-blue-500/10 hover:text-white'
+                                )}
+                            >
+                                <BarChart3 size={16} />
+                                Enterprise Insights
+                            </Link>
+                        </nav>
                     </div>
                 ) : (
                     <React.Fragment>
