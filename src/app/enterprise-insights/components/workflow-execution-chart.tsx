@@ -110,7 +110,7 @@ export const WorkflowExecutionChart: React.FC<WorkflowExecutionChartProps> = ({
             {/* Content */}
             {activeTab === 'chart' && (
                 <div className="h-[280px]">
-                    <ChartContainer config={chartConfig}>
+                    <ChartContainer config={chartConfig} className="h-full w-full [&>div]:h-full">
                         <AreaChart
                             data={data}
                             margin={{ left: -16, right: 12, top: 12, bottom: 0 }}

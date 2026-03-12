@@ -128,7 +128,7 @@ export const TokenUsageChart: React.FC<TokenUsageChartProps> = ({
             {/* Content */}
             {activeTab === 'trend' && (
                 <div className="h-[220px]">
-                    <ChartContainer config={chartConfig}>
+                    <ChartContainer config={chartConfig} className="h-full w-full [&>div]:h-full">
                         <AreaChart
                             data={data}
                             margin={{ left: -8, right: 12, top: 12, bottom: 0 }}
@@ -175,7 +175,7 @@ export const TokenUsageChart: React.FC<TokenUsageChartProps> = ({
 
             {activeTab === 'consumers' && (
                 <div className="h-[220px]">
-                    <ChartContainer config={{ tokens: { label: 'Tokens', color: 'var(--amber-500)' } }}>
+                    <ChartContainer config={{ tokens: { label: 'Tokens', color: 'var(--amber-500)' } }} className="h-full w-full [&>div]:h-full">
                         <BarChart
                             data={consumerData}
                             layout="vertical"
