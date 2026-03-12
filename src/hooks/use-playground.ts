@@ -6,7 +6,7 @@ import {
     VisualGraphDataType,
 } from '@/app/editor/[wid]/[workflow_id]/components/editor-playground';
 import { NODE_LIST } from '@/constants/editor-constants';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CustomNodeProps } from '@/components';
 import { useDnD } from '@/context';
 import { areObjectsEqual } from '@/lib/utils';
@@ -17,6 +17,7 @@ import { useParams } from 'next/navigation';
 import dagre from '@dagrejs/dagre';
 import { toast } from 'sonner';
 import { useGuardrailBindingQuery } from './use-common';
+import { useUndoRedo } from './use-undo-redo';
 
 export const usePlayground = (visualGraphData?: VisualGraphDataType) => {
     const params = useParams();
@@ -31,6 +32,23 @@ export const usePlayground = (visualGraphData?: VisualGraphDataType) => {
     const [edgesSaved, setEdgesSaved] = useState<Edge[]>();
     const [initialLoad, setInitialLoad] = useState<boolean>(false);
     const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+
+    // Undo/Redo functionality
+    const {
+        canUndo,
+        canRedo,
+        undo: undoFromHistory,
+        redo: redoFromHistory,
+        takeSnapshot,
+        clearHistory,
+        pushToRedo,
+        pushToUndo,
+    } = useUndoRedo({ maxHistorySize: 50 });
+
+    // Track if we're in the middle of undo/redo operation to avoid taking snapshots
+    const isUndoRedoOperationRef = useRef(false);
+    // Track the previous state for comparison
+    const previousStateRef = useRef<{ nodes: FlowNode[]; edges: Edge[] } | null>(null);
 
     useEffect(() => {
         const allNodes = NODE_LIST.flatMap(category => category.nodes);
@@ -399,6 +417,84 @@ export const usePlayground = (visualGraphData?: VisualGraphDataType) => {
         return true; // safe to delete
     };
 
+    /**
+     * Takes a snapshot of current state for undo/redo history.
+     * Should be called before making changes to nodes/edges.
+     */
+    const captureSnapshot = useCallback(() => {
+        if (!isUndoRedoOperationRef.current) {
+            takeSnapshot(nodes, edges);
+        }
+    }, [nodes, edges, takeSnapshot]);
+
+    /**
+     * Handles undo operation - restores previous state from history.
+     */
+    const handleUndo = useCallback(() => {
+        if (!canUndo) return;
+
+        // Save current state to redo stack before undoing
+        pushToRedo(nodes, edges);
+
+        isUndoRedoOperationRef.current = true;
+        const previousState = undoFromHistory();
+
+        if (previousState) {
+            setNodes(previousState.nodes);
+            setEdges(previousState.edges);
+        }
+
+        // Reset the flag after state is applied
+        setTimeout(() => {
+            isUndoRedoOperationRef.current = false;
+        }, 0);
+    }, [canUndo, nodes, edges, pushToRedo, undoFromHistory, setNodes, setEdges]);
+
+    /**
+     * Handles redo operation - restores next state from history.
+     */
+    const handleRedo = useCallback(() => {
+        if (!canRedo) return;
+
+        // Save current state to undo stack before redoing
+        pushToUndo(nodes, edges);
+
+        isUndoRedoOperationRef.current = true;
+        const nextState = redoFromHistory();
+
+        if (nextState) {
+            setNodes(nextState.nodes);
+            setEdges(nextState.edges);
+        }
+
+        // Reset the flag after state is applied
+        setTimeout(() => {
+            isUndoRedoOperationRef.current = false;
+        }, 0);
+    }, [canRedo, nodes, edges, pushToUndo, redoFromHistory, setNodes, setEdges]);
+
+    // Keyboard shortcuts for undo/redo
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const modifier = isMac ? event.metaKey : event.ctrlKey;
+
+            if (modifier && event.key === 'z' && !event.shiftKey) {
+                event.preventDefault();
+                handleUndo();
+            } else if (modifier && event.key === 'z' && event.shiftKey) {
+                event.preventDefault();
+                handleRedo();
+            } else if (modifier && event.key === 'y') {
+                event.preventDefault();
+                handleRedo();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleUndo, handleRedo]);
+
     return {
         nodes,
         edges,
@@ -409,6 +505,8 @@ export const usePlayground = (visualGraphData?: VisualGraphDataType) => {
         isGuardrailBindingCompleted,
         initialLoad,
         reactFlowInstance,
+        canUndo,
+        canRedo,
         setReactFlowInstance,
         setInitialLoad,
         setEdgesSaved,
@@ -418,6 +516,9 @@ export const usePlayground = (visualGraphData?: VisualGraphDataType) => {
         setOpenCommit,
         manageTemplates,
         handleReset,
+        handleUndo,
+        handleRedo,
+        captureSnapshot,
         onEdgesChange,
         onNodesChange,
         onUpdateRecentUsed,
