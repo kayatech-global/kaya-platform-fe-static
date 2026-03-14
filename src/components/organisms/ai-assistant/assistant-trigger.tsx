@@ -3,7 +3,7 @@
 import { FC } from 'react';
 import { Bot } from 'lucide-react';
 import { Button } from '@/components/atoms/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/atoms/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/atoms/tooltip';
 import { cn } from '@/lib/utils';
 
 interface AssistantTriggerProps {
@@ -31,8 +31,9 @@ export const AssistantTrigger: FC<AssistantTriggerProps> = ({
 
     return (
         <div className="fixed bottom-6 right-6 z-50">
-            <Tooltip>
-                <TooltipTrigger asChild>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
                     <Button
                         onClick={onClick}
                         variant="primary"
@@ -84,7 +85,8 @@ export const AssistantTrigger: FC<AssistantTriggerProps> = ({
                         )}
                     </div>
                 </TooltipContent>
-            </Tooltip>
+                </Tooltip>
+            </TooltipProvider>
         </div>
     );
 };
