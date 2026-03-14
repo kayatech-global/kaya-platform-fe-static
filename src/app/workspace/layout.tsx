@@ -2,6 +2,7 @@ import { SidebarInset, SidebarProvider } from '@/components/molecules';
 import AppSidebar from '@/components/molecules/sidebar/app-sidebar';
 import HOCProtectedRoute from '@/components/hoc/hoc-protected-route';
 import DashboardHeader from '@/components/molecules/dashboard-header/dashboard-header';
+import { AssistantWrapper } from '@/components/organisms/ai-assistant/assistant-wrapper';
 import '../globals.css';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +26,15 @@ const DashboardLayout = ({
                     </div>
                 </SidebarInset>
             </SidebarProvider>
+            {/* Context-aware AI Assistant */}
+            <AssistantWrapper
+                settings={{
+                    isEnabled: true,
+                    proactiveValidation: true,
+                    executionInsights: true,
+                    optimizationSuggestions: true,
+                }}
+            />
         </HOCProtectedRoute>
     );
 };
