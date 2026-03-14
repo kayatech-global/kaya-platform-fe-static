@@ -92,6 +92,9 @@ export function useAssistant(): UseAssistantReturn {
   const abortControllerRef = useRef<AbortController | null>(null);
   const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const previousContextRef = useRef<string>('');
+  // Holds a stable reference to the latest fetchInsights so interval callbacks
+  // are never stale regardless of when they close over the function.
+  const fetchInsightsRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
   // Clear streaming interval on unmount
   useEffect(() => {
@@ -103,22 +106,6 @@ export function useAssistant(): UseAssistantReturn {
         abortControllerRef.current.abort();
       }
     };
-  }, []);
-
-  // Fetch proactive insights when context changes
-  useEffect(() => {
-    const contextKey = `${currentContext.level}:${currentContext.workspaceId}:${currentContext.workflowId}`;
-    
-    if (contextKey !== previousContextRef.current) {
-      previousContextRef.current = contextKey;
-      fetchInsights();
-    }
-  }, [currentContext.level, currentContext.workspaceId, currentContext.workflowId]);
-
-  // Periodic insights refresh
-  useEffect(() => {
-    const interval = setInterval(fetchInsights, INSIGHTS_REFRESH_INTERVAL_MS);
-    return () => clearInterval(interval);
   }, []);
 
   const fetchInsights = useCallback(async () => {
@@ -157,6 +144,28 @@ export function useAssistant(): UseAssistantReturn {
       console.error('Failed to fetch proactive insights:', error);
     }
   }, [currentContext, token]);
+
+  // Keep the ref pointing at the latest fetchInsights so the interval below
+  // always calls the up-to-date version with the current context.
+  fetchInsightsRef.current = fetchInsights;
+
+  // Trigger a fresh insight fetch whenever the navigation context changes.
+  useEffect(() => {
+    const contextKey = `${currentContext.level}:${currentContext.workspaceId}:${currentContext.workflowId}`;
+
+    if (contextKey !== previousContextRef.current) {
+      previousContextRef.current = contextKey;
+      fetchInsights();
+    }
+  }, [currentContext.level, currentContext.workspaceId, currentContext.workflowId, fetchInsights]);
+
+  // Periodic insights refresh — uses the ref to avoid a stale closure.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchInsightsRef.current();
+    }, INSIGHTS_REFRESH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, []);
 
   const simulateStreamingResponse = useCallback((fullContent: string, messageId: string) => {
     let currentIndex = 0;

@@ -14,22 +14,28 @@ const breakpoints = {
     xxlg: 1920,
 };
 
+const getBreakpoint = (width: number): string => {
+    if (width < breakpoints.mobile) return 'mobile';
+    if (width >= breakpoints.mobile && width <= breakpoints.sm) return 'sm';
+    if (width >= breakpoints.sm && width <= breakpoints.md) return 'md';
+    if (width >= breakpoints.md && width <= breakpoints.lg) return 'lg';
+    if (width >= breakpoints.lg && width <= breakpoints.xl) return 'xl';
+    if (width >= breakpoints.xl && width <= breakpoints.xxlg) return 'xxlg';
+    return 'xl';
+};
+
 export const useBreakpoint = (props?: BreakpointHookProps) => {
     const [isWidthReached, setWidthReached] = useState(false);
 
-    const getBreakpoint = (width: number): string => {
-        if (width < breakpoints.mobile) return 'mobile';
-        if (width >= breakpoints.mobile && width <= breakpoints.sm) return 'sm';
-        if (width >= breakpoints.sm && width <= breakpoints.md) return 'md';
-        if (width >= breakpoints.md && width <= breakpoints.lg) return 'lg';
-        if (width >= breakpoints.lg && width <= breakpoints.xl) return 'xl';
-        if (width >= breakpoints.xl && width <= breakpoints.xxlg) return 'xxlg';
-        return 'xl';
-    };
+    // SSR-safe initialisation: use a sensible default until client mounts
+    const [breakpoint, setBreakpoint] = useState<string>(() =>
+        typeof window !== 'undefined' ? getBreakpoint(window.innerWidth) : 'xl'
+    );
 
-    const [breakpoint, setBreakpoint] = useState<string>(getBreakpoint(window.innerWidth));
-
+    // Sync breakpoint after hydration and on resize
     useEffect(() => {
+        setBreakpoint(getBreakpoint(window.innerWidth));
+
         const handleResize = () => {
             const newBreakpoint = getBreakpoint(window.innerWidth);
             setBreakpoint(newBreakpoint);

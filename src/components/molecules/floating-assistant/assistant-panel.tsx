@@ -7,10 +7,10 @@ import { AssistantHeader } from './assistant-header';
 import { AssistantMessage as AssistantMessageComponent, AssistantLoadingIndicator } from './assistant-message';
 import { AssistantInput } from './assistant-input';
 import { ProactiveInsightCard } from './proactive-insight-card';
-import type { 
-  AssistantMessage as AssistantMessageType, 
+import type {
+  AssistantMessage as AssistantMessageType,
   PlatformContext,
-  ProactiveInsight 
+  ProactiveInsight,
 } from '@/models/assistant.model';
 
 interface AssistantPanelProps {
@@ -37,14 +37,22 @@ export function AssistantPanel({
   isMobile,
 }: AssistantPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive or loading state changes
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isLoading]);
+
+  // Determine whether to show the bouncing-dots loading indicator.
+  // Show it when we are loading AND the last assistant message has empty content
+  // (i.e. streaming hasn't produced any text yet).
+  const lastMessage = messages[messages.length - 1];
+  const showLoadingDots =
+    isLoading && (!lastMessage || (lastMessage.role === 'assistant' && lastMessage.content === ''));
+
+  const hasMessages = messages.length > 0;
 
   return (
     <motion.div
@@ -55,7 +63,7 @@ export function AssistantPanel({
       role="dialog"
       aria-modal="true"
       aria-label="KAYA Assistant"
-      ref={containerRef}
+      tabIndex={-1}
       className={cn(
         'flex flex-col overflow-hidden',
         // Glass morphism styling
@@ -63,11 +71,9 @@ export function AssistantPanel({
         'backdrop-blur-xl',
         'border border-gray-200 dark:border-gray-700',
         'shadow-2xl',
-        'rounded-2xl',
-        // Size
-        isMobile
-          ? 'fixed inset-0 rounded-none'
-          : 'w-[400px] max-h-[min(600px,70vh)]'
+        // On mobile the widget parent is also fixed; we use a large enough size
+        // here and let the widget handle full-screen placement via its own styles.
+        isMobile ? 'rounded-2xl w-[calc(100vw-2rem)] max-h-[85vh]' : 'rounded-2xl w-[400px] max-h-[min(600px,70vh)]'
       )}
     >
       {/* Header */}
@@ -84,9 +90,9 @@ export function AssistantPanel({
           'scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600'
         )}
       >
-        {/* Proactive insights */}
-        {proactiveInsights.length > 0 && messages.length === 0 && (
-          <div className="space-y-2 mb-4">
+        {/* Proactive insights — always visible until dismissed, regardless of messages */}
+        {proactiveInsights.length > 0 && (
+          <div className="space-y-2">
             {proactiveInsights.map((insight) => (
               <ProactiveInsightCard
                 key={insight.id}
@@ -97,8 +103,8 @@ export function AssistantPanel({
           </div>
         )}
 
-        {/* Welcome message when no messages */}
-        {messages.length === 0 && proactiveInsights.length === 0 && (
+        {/* Welcome message when there are no messages and no insights */}
+        {!hasMessages && proactiveInsights.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-blue-700 flex items-center justify-center mb-4">
               <span className="text-white text-xl">✨</span>
@@ -112,16 +118,13 @@ export function AssistantPanel({
           </div>
         )}
 
-        {/* Messages */}
+        {/* Conversation messages */}
         {messages.map((message) => (
           <AssistantMessageComponent key={message.id} message={message} />
         ))}
 
-        {/* Loading indicator */}
-        {isLoading && messages.length > 0 && messages[messages.length - 1]?.content === '' && null}
-        {isLoading && messages.length > 0 && messages[messages.length - 1]?.content !== '' && (
-          <AssistantLoadingIndicator />
-        )}
+        {/* Bouncing dots — shown while waiting for the first streaming chunk */}
+        {showLoadingDots && <AssistantLoadingIndicator />}
 
         {/* Scroll anchor */}
         <div ref={messagesEndRef} />

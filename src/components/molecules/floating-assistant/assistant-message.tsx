@@ -3,13 +3,20 @@
 import { MarkdownText } from '@/components/molecules/mardown-text/markdown-text';
 import { cn } from '@/lib/utils';
 import { SEVERITY_COLORS } from '@/constants/assistant-constants';
-import type { AssistantMessage as AssistantMessageType } from '@/models/assistant.model';
+import type { AssistantMessage as AssistantMessageType, InsightSeverity, MessageType } from '@/models/assistant.model';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 interface AssistantMessageProps {
   message: AssistantMessageType;
 }
+
+/** Maps a MessageType to the InsightSeverity used by SEVERITY_COLORS. */
+const MESSAGE_TYPE_TO_SEVERITY: Partial<Record<MessageType, InsightSeverity>> = {
+  warning: 'warning',
+  error: 'error',
+  insight: 'info',
+};
 
 function formatTimestamp(isoString: string): string {
   const date = new Date(isoString);
@@ -21,10 +28,10 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
   const messageType = message.metadata?.type || 'text';
   const isSpecialType = messageType !== 'text';
 
-  // Get severity colors for special message types
-  const severityConfig = isSpecialType
-    ? SEVERITY_COLORS[messageType as keyof typeof SEVERITY_COLORS]
-    : null;
+  // Map MessageType → InsightSeverity to resolve the correct color config.
+  // 'text' has no mapping and severityConfig will be null (no colored border).
+  const severity = isSpecialType ? MESSAGE_TYPE_TO_SEVERITY[messageType] : undefined;
+  const severityConfig = severity ? SEVERITY_COLORS[severity] : null;
 
   return (
     <div className="flex flex-col gap-1">

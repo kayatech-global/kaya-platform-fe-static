@@ -72,35 +72,53 @@ export function FloatingAssistantWidget() {
   }, [setIsOpen, clearMessages]);
 
   return (
-    <div
-      className={cn(
-        'fixed z-[9999]',
-        isMobile ? 'right-4 bottom-4' : 'right-6 bottom-6'
+    <>
+      {/* FAB — always anchored to bottom-right */}
+      {!isOpen && (
+        <div
+          className={cn(
+            'fixed z-[9999]',
+            isMobile ? 'right-4 bottom-4' : 'right-6 bottom-6'
+          )}
+        >
+          <AnimatePresence mode="wait">
+            <AssistantFab
+              key="fab"
+              onClick={handleFabClick}
+              hasUnreadInsights={hasUnreadInsights}
+              isMobile={isMobile}
+            />
+          </AnimatePresence>
+        </div>
       )}
-    >
-      <AnimatePresence mode="wait">
-        {isOpen ? (
-          <AssistantPanel
-            key="panel"
-            messages={messages}
-            isLoading={isLoading}
-            currentContext={currentContext}
-            proactiveInsights={proactiveInsights}
-            onSend={sendMessage}
-            onDismissInsight={dismissInsight}
-            onMinimize={handleMinimize}
-            onClose={handleClose}
-            isMobile={isMobile}
-          />
-        ) : (
-          <AssistantFab
-            key="fab"
-            onClick={handleFabClick}
-            hasUnreadInsights={hasUnreadInsights}
-            isMobile={isMobile}
-          />
-        )}
-      </AnimatePresence>
-    </div>
+
+      {/* Chat panel — on desktop anchored bottom-right; on mobile centred above the bottom bar */}
+      {isOpen && (
+        <div
+          className={cn(
+            'fixed z-[9999]',
+            isMobile
+              ? // Centre horizontally, sit just above the bottom edge
+                'left-1/2 -translate-x-1/2 bottom-4'
+              : 'right-6 bottom-6'
+          )}
+        >
+          <AnimatePresence mode="wait">
+            <AssistantPanel
+              key="panel"
+              messages={messages}
+              isLoading={isLoading}
+              currentContext={currentContext}
+              proactiveInsights={proactiveInsights}
+              onSend={sendMessage}
+              onDismissInsight={dismissInsight}
+              onMinimize={handleMinimize}
+              onClose={handleClose}
+              isMobile={isMobile}
+            />
+          </AnimatePresence>
+        </div>
+      )}
+    </>
   );
 }
