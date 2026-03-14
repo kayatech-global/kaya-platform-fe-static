@@ -101,13 +101,21 @@ export function AssistantPanel({
         {messages.length === 0 && proactiveInsights.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-blue-700 flex items-center justify-center mb-4">
-              <span className="text-white text-xl">✨</span>
+              <span className="text-white text-xl">&#10024;</span>
             </div>
             <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-              How can I help you?
+              {currentContext.workspaceName 
+                ? `Hi! I can see you're in ${currentContext.workspaceName}.`
+                : currentContext.level === 'enterprise'
+                ? 'Hi! How can I help you today?'
+                : 'Hi! How can I help you?'}
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 max-w-[280px]">
-              I can help you understand your workflows, analyze execution data, and identify configuration issues.
+              {currentContext.level === 'workflow' || currentContext.level === 'agent'
+                ? 'Ask me about this workflow, analyze executions, or check for configuration issues.'
+                : currentContext.level === 'workspace'
+                ? 'Ask me about workflows, execution performance, or configuration help.'
+                : 'Ask me about your workspaces, workflows, or platform usage.'}
             </p>
           </div>
         )}
@@ -117,9 +125,10 @@ export function AssistantPanel({
           <AssistantMessageComponent key={message.id} message={message} />
         ))}
 
-        {/* Loading indicator */}
-        {isLoading && messages.length > 0 && messages[messages.length - 1]?.content === '' && null}
-        {isLoading && messages.length > 0 && messages[messages.length - 1]?.content !== '' && (
+        {/* Loading indicator - show when assistant is about to respond (empty content placeholder) */}
+        {isLoading && messages.length > 0 && 
+          messages[messages.length - 1]?.role === 'assistant' && 
+          messages[messages.length - 1]?.content === '' && (
           <AssistantLoadingIndicator />
         )}
 

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, type KeyboardEvent, type ChangeEvent } from 'react';
 import { Send } from 'lucide-react';
-import { Button, Textarea } from '@/components';
+import { Button } from '@/components';
 import { cn } from '@/lib/utils';
 import { SuggestedActionChips } from './suggested-action-chips';
 import type { ContextLevel } from '@/models/assistant.model';
@@ -67,7 +67,7 @@ export function AssistantInput({ contextLevel, onSend, isLoading }: AssistantInp
     <div className="border-t border-gray-200 dark:border-gray-700 p-3 space-y-3">
       {/* Input area */}
       <div className="flex items-end gap-2">
-        <Textarea
+        <textarea
           ref={textareaRef}
           value={value}
           onChange={handleChange}
@@ -78,8 +78,11 @@ export function AssistantInput({ contextLevel, onSend, isLoading }: AssistantInp
           className={cn(
             'flex-1 min-h-[40px] max-h-[120px] resize-none',
             'text-sm bg-gray-100 dark:bg-gray-800',
-            'border-gray-300 dark:border-gray-600',
-            'focus:ring-blue-500 focus:border-blue-500'
+            'border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2',
+            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+            'placeholder:text-gray-500 dark:placeholder:text-gray-400',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            'text-gray-900 dark:text-gray-100'
           )}
         />
         <Button

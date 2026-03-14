@@ -16,15 +16,21 @@ function formatTimestamp(isoString: string): string {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+// Map message types to severity color keys
+function getSeverityConfig(messageType: string) {
+  if (messageType === 'warning') return SEVERITY_COLORS.warning;
+  if (messageType === 'error') return SEVERITY_COLORS.error;
+  if (messageType === 'insight') return SEVERITY_COLORS.info;
+  return null;
+}
+
 export function AssistantMessage({ message }: AssistantMessageProps) {
   const isUser = message.role === 'user';
   const messageType = message.metadata?.type || 'text';
-  const isSpecialType = messageType !== 'text';
+  const isSpecialType = messageType === 'warning' || messageType === 'error' || messageType === 'insight';
 
   // Get severity colors for special message types
-  const severityConfig = isSpecialType
-    ? SEVERITY_COLORS[messageType as keyof typeof SEVERITY_COLORS]
-    : null;
+  const severityConfig = isSpecialType ? getSeverityConfig(messageType) : null;
 
   return (
     <div className="flex flex-col gap-1">
