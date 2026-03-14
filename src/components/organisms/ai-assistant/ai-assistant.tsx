@@ -25,15 +25,18 @@ export const AiAssistant: React.FC<AiAssistantProps> = ({ settings }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const pathname = usePathname();
-  const { userContext, isAuthenticated, keycloakParsedToken } = useAuth();
+  const { user, token } = useAuth();
+  
+  // Check if user is authenticated
+  const isAuthenticated = !!user && !!token;
   
   // Determine if assistant is enabled (enterprise opt-in)
   const isEnabled = settings?.isEnabled ?? true;
 
   // Context detection
-  const { context, isLoading: contextLoading } = useAssistantContext({
+  const { context, isLoading: contextLoading, hasContextChanged } = useAssistantContext({
     pathname,
-    userContext,
+    userContext: user,
     enabled: isEnabled && isAuthenticated,
   });
 
@@ -48,7 +51,7 @@ export const AiAssistant: React.FC<AiAssistantProps> = ({ settings }) => {
     stopGeneration,
   } = useAiAssistant({
     context,
-    userContext,
+    userContext: user,
     enabled: isEnabled && isAuthenticated,
     settings: {
       isEnabled,
@@ -140,10 +143,15 @@ export const AiAssistant: React.FC<AiAssistantProps> = ({ settings }) => {
     }
   }, []);
 
+  console.log('[v0] AiAssistant: isEnabled=', isEnabled, 'isAuthenticated=', isAuthenticated);
+
   // Don't render if not enabled or not authenticated
   if (!isEnabled || !isAuthenticated) {
+    console.log('[v0] AiAssistant: Not rendering');
     return null;
   }
+  
+  console.log('[v0] AiAssistant: Rendering trigger and sheet');
 
   return (
     <>
@@ -151,9 +159,9 @@ export const AiAssistant: React.FC<AiAssistantProps> = ({ settings }) => {
       <AssistantTrigger
         isOpen={isOpen}
         onClick={() => setIsOpen(true)}
-        context={context}
-        hasIssues={validationIssues.length > 0}
-        isLoading={contextLoading}
+        contextLabel={getContextLabel(context?.level, context)}
+        hasContextChanged={hasContextChanged}
+        validationErrorCount={validationIssues.length}
       />
 
       {/* Assistant panel */}
@@ -225,6 +233,21 @@ function getInputPlaceholder(level?: string): string {
       return 'Ask about execution traces, performance, or debugging...';
     default:
       return 'Ask me anything about the platform...';
+  }
+}
+
+function getContextLabel(level?: string, context?: { workspace?: { name?: string }; workflow?: { name?: string } } | null): string {
+  switch (level) {
+    case 'enterprise':
+      return 'Enterprise Overview';
+    case 'workspace':
+      return context?.workspace?.name ? `Workspace: ${context.workspace.name}` : 'Workspace';
+    case 'workflow':
+      return context?.workflow?.name ? `Workflow: ${context.workflow.name}` : 'Workflow Editor';
+    case 'execution':
+      return 'Execution Analysis';
+    default:
+      return 'Platform Assistant';
   }
 }
 

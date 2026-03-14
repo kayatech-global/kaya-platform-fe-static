@@ -25,10 +25,13 @@ interface AssistantWrapperProps {
  * This wrapper should be placed in layouts where the assistant should be available.
  */
 export const AssistantWrapper: React.FC<AssistantWrapperProps> = ({ settings }) => {
-  const { isAuthenticated, userContext } = useAuth();
+  const { user, token } = useAuth();
+
+  console.log('[v0] AssistantWrapper: user=', !!user, 'token=', !!token);
 
   // Only render for authenticated users
-  if (!isAuthenticated || !userContext) {
+  if (!user || !token) {
+    console.log('[v0] AssistantWrapper: Not rendering - user or token missing');
     return null;
   }
 
@@ -37,9 +40,11 @@ export const AssistantWrapper: React.FC<AssistantWrapperProps> = ({ settings }) 
   const isEnabled = settings?.isEnabled ?? true;
 
   if (!isEnabled) {
+    console.log('[v0] AssistantWrapper: Not rendering - feature disabled');
     return null;
   }
 
+  console.log('[v0] AssistantWrapper: Rendering AiAssistant');
   return <AiAssistant settings={settings} />;
 };
 

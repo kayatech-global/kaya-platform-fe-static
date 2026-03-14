@@ -15,6 +15,9 @@ interface WorkflowContextData {
 }
 
 interface UseAssistantContextOptions {
+    pathname?: string;
+    userContext?: unknown;
+    enabled?: boolean;
     workflowData?: WorkflowContextData;
     workspaceData?: {
         id: string;
@@ -36,9 +39,14 @@ interface UseAssistantContextReturn {
  * Hook to detect and manage the current platform context for the AI assistant
  */
 export function useAssistantContext(options?: UseAssistantContextOptions): UseAssistantContextReturn {
-    const pathname = usePathname();
+    const currentPathname = usePathname();
     const params = useParams();
-    const { user } = useAuth();
+    const { user: authUser } = useAuth();
+    
+    // Use provided values or fall back to hook values
+    const pathname = options?.pathname ?? currentPathname;
+    const user = options?.userContext ?? authUser;
+    const enabled = options?.enabled ?? true;
     
     const [context, setContext] = useState<AssistantContext | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -84,8 +92,10 @@ export function useAssistantContext(options?: UseAssistantContextOptions): UseAs
 
     // Detect context on mount and when dependencies change
     useEffect(() => {
-        detectContext();
-    }, [detectContext]);
+        if (enabled) {
+            detectContext();
+        }
+    }, [detectContext, enabled]);
 
     // Also detect when params change (workspace or workflow ID)
     useEffect(() => {

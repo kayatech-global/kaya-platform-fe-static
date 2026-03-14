@@ -47,6 +47,9 @@ export interface AssistantChatMessage {
     isStreaming?: boolean;
 }
 
+// Alias for convenience
+export type ChatMessage = AssistantChatMessage;
+
 // Actions that can be suggested by the assistant
 export interface AssistantAction {
     type: 'navigate' | 'configure' | 'execute' | 'validate' | 'fix';
