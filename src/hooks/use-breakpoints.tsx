@@ -14,21 +14,20 @@ const breakpoints = {
     xxlg: 1920,
 };
 
-const getBreakpoint = (width: number): string => {
-    if (width < breakpoints.mobile) return 'mobile';
-    if (width >= breakpoints.mobile && width <= breakpoints.sm) return 'sm';
-    if (width >= breakpoints.sm && width <= breakpoints.md) return 'md';
-    if (width >= breakpoints.md && width <= breakpoints.lg) return 'lg';
-    if (width >= breakpoints.lg && width <= breakpoints.xl) return 'xl';
-    if (width >= breakpoints.xl && width <= breakpoints.xxlg) return 'xxlg';
-    return 'xl';
-};
-
 export const useBreakpoint = (props?: BreakpointHookProps) => {
     const [isWidthReached, setWidthReached] = useState(false);
 
-    // SSR-safe initialization - default to 'xl' and update on client
-    const [breakpoint, setBreakpoint] = useState<string>('xl');
+    const getBreakpoint = (width: number): string => {
+        if (width < breakpoints.mobile) return 'mobile';
+        if (width >= breakpoints.mobile && width <= breakpoints.sm) return 'sm';
+        if (width >= breakpoints.sm && width <= breakpoints.md) return 'md';
+        if (width >= breakpoints.md && width <= breakpoints.lg) return 'lg';
+        if (width >= breakpoints.lg && width <= breakpoints.xl) return 'xl';
+        if (width >= breakpoints.xl && width <= breakpoints.xxlg) return 'xxlg';
+        return 'xl';
+    };
+
+    const [breakpoint, setBreakpoint] = useState<string>(getBreakpoint(window.innerWidth));
 
     useEffect(() => {
         const handleResize = () => {
@@ -41,12 +40,9 @@ export const useBreakpoint = (props?: BreakpointHookProps) => {
             }
         };
 
-        // Set initial value on mount
-        handleResize();
-
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [props?.maxWidth]);
+    }, []);
 
     return {
         isMobile: breakpoint === 'mobile',
