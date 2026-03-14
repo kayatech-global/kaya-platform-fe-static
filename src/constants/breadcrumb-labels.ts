@@ -26,6 +26,7 @@ export const BREADCRUMB_LABELS_LEVEL_4: Record<string, string> = {
 /** Page title by path (for getPageTitle) */
 export const PAGE_TITLE_BY_PATH: Record<string, string> = {
     workspaces: 'Workspace Management',
+    'enterprise-insights': 'Enterprise Insights',
     usage: 'Usage',
     learnings: 'Learning Records',
     'api-configurations': 'API Configurations',
@@ -65,6 +66,7 @@ export function getPageTitleFromPath(pathSegments: string[]): string {
     const p3 = pathSegments[3];
     const p4 = pathSegments[4];
     if (p1 === 'workspaces') return PAGE_TITLE_BY_PATH.workspaces;
+    if (p1 === 'enterprise-insights') return PAGE_TITLE_BY_PATH['enterprise-insights'];
     if (p3 && PAGE_TITLE_BY_PATH[p3]) return PAGE_TITLE_BY_PATH[p3];
     if (p4 && PAGE_TITLE_BY_PATH[p4]) return PAGE_TITLE_BY_PATH[p4];
     return startCase(p3?.replaceAll(/-/g, ' ') ?? '');

@@ -38,7 +38,7 @@ function DashboardHeaderBottom({ isFullWidth }: Readonly<DashboardHeaderBottomPr
             <div className="breadcrumbs-container">
                 <Breadcrumb>
                     <BreadcrumbList className="flex items-center gap-x-1">
-                        {pathName[1] !== 'workspaces' && (
+                        {pathName[1] !== 'workspaces' && pathName[1] !== 'enterprise-insights' && (
                             <>
                                 <BreadcrumbItem>
                                     <BreadcrumbPage className={cn('text-sm font-regular text-blue-100', { 'text-xs': isMobile })}>
