@@ -36,3 +36,4 @@ export * from './execution-report/';
 export * from './execution-steps/';
 export * from './test-case-table/';
 export * from './execution-steps/mini-execution-tracker';
+export * from './floating-assistant';
