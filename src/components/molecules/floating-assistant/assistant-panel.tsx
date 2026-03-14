@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { AssistantHeader } from './assistant-header';
-import { AssistantMessage, AssistantLoadingIndicator } from './assistant-message';
+import { AssistantMessage as AssistantMessageComponent, AssistantLoadingIndicator } from './assistant-message';
 import { AssistantInput } from './assistant-input';
 import { ProactiveInsightCard } from './proactive-insight-card';
 import type { 
@@ -114,7 +114,7 @@ export function AssistantPanel({
 
         {/* Messages */}
         {messages.map((message) => (
-          <AssistantMessage key={message.id} message={message} />
+          <AssistantMessageComponent key={message.id} message={message} />
         ))}
 
         {/* Loading indicator */}

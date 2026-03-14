@@ -1,6 +1,7 @@
 'use client';
 
-import { SidebarInset, SidebarProvider, FloatingAssistantWidget } from '@/components';
+import { SidebarInset, SidebarProvider } from '@/components';
+import { FloatingAssistantWidget } from '@/components/molecules/floating-assistant';
 import HOCProtectedRoute from '@/components/hoc/hoc-protected-route';
 import AppSidebar from '@/components/molecules/sidebar/app-sidebar';
 import { AssistantProvider } from '@/context/assistant-context';

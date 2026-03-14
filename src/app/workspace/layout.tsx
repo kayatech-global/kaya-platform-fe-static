@@ -1,5 +1,6 @@
-import { SidebarInset, SidebarProvider, FloatingAssistantWidget } from '@/components/molecules';
+import { SidebarInset, SidebarProvider } from '@/components/molecules';
 import AppSidebar from '@/components/molecules/sidebar/app-sidebar';
+import { FloatingAssistantWidget } from '@/components/molecules/floating-assistant';
 import HOCProtectedRoute from '@/components/hoc/hoc-protected-route';
 import DashboardHeader from '@/components/molecules/dashboard-header/dashboard-header';
 import { AssistantProvider } from '@/context/assistant-context';
