@@ -1,12 +1,13 @@
 import React from 'react';
 import { SidebarTrigger } from '../sidebar/sidebar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/atoms';
-import { BellDot, ChevronDown, Maximize, Moon, Sun } from 'lucide-react';
+import { BellDot, ChevronDown, Maximize, Moon, Sun, UserCircle } from 'lucide-react';
 import { cn, goFullScreen } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/atoms/avatar';
 import { useTheme } from '@/theme';
 import { DashboardHeaderProps } from './dashboard-header';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '@/context';
 import { motion } from 'framer-motion';
 import useLocalStorage from '@/hooks/useLocalStorage';
@@ -112,6 +113,15 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                                     className="flex flex-col gap-y-2"
                                     align="end"
                                 >
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/profile"
+                                            className="flex w-full cursor-pointer items-center gap-x-2 px-3 py-[6px] text-sm text-gray-700 dark:text-gray-200"
+                                        >
+                                            <UserCircle className="h-4 w-4" />
+                                            My Profile
+                                        </Link>
+                                    </DropdownMenuItem>
                                     {isMobile && (
                                         <DropdownMenuItem className="flex items-center justify-evenly w-full ">
                                             <motion.div
