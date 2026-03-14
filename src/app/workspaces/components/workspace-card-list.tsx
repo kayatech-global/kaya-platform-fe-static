@@ -55,26 +55,30 @@ const WorkspaceCardGrid = ({
     const workspaces = user?.user?.workspaces;
 
     if (data?.length > 0 || !isSuccess) {
-        return data.map((workspace) => {
-            const isWorkspaceAdmin = workspaces?.some(
-                ws => ws.id === workspace.id && ws.roles.includes(RoleType.WORKSPACE_ADMIN)
-            );
+        return (
+            <>
+                {data.map((workspace) => {
+                    const isWorkspaceAdmin = workspaces?.some(
+                        ws => ws.id === workspace.id && ws.roles.includes(RoleType.WORKSPACE_ADMIN)
+                    );
 
-            return (
-                <WorkspaceCard
-                    key={workspace.id}
-                    {...workspace}
-                    showOptions={isSuperAdmin || isWorkspaceAdmin}
-                    cardWidth={cardWidth}
-                    onDeleteClick={workspaceId => {
-                        onHandleDelete(workspaceId);
-                    }}
-                    onEditClick={workspaceId => {
-                        onHandleEdit(workspaceId);
-                    }}
-                />
-            );
-        });
+                    return (
+                        <WorkspaceCard
+                            key={workspace.id}
+                            {...workspace}
+                            showOptions={isSuperAdmin || isWorkspaceAdmin}
+                            cardWidth={cardWidth}
+                            onDeleteClick={workspaceId => {
+                                onHandleDelete(workspaceId);
+                            }}
+                            onEditClick={workspaceId => {
+                                onHandleEdit(workspaceId);
+                            }}
+                        />
+                    );
+                })}
+            </>
+        );
     }
 
     if (hasFilters) return <EmptyWorkspace />;
