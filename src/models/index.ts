@@ -39,3 +39,4 @@ export * from './schedule-trigger.model';
 export * from './workflow-pull.model';
 export * from './test-studio.model';
 export * from './api-tool.model';
+export * from './assistant.model';
