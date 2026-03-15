@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { SidebarTrigger } from '../sidebar/sidebar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/atoms';
-import { BellDot, ChevronDown, Info, Maximize, Moon, Sun } from 'lucide-react';
+import { BellDot, ChevronDown, Info, Maximize, Moon, Sun, Zap } from 'lucide-react';
 import { cn, goFullScreen } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/atoms/avatar';
 import { useTheme } from '@/theme';
@@ -23,6 +23,8 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
     const { isSm, isMobile } = useBreakpoint();
     const [infoOpen, setInfoOpen] = useState(false);
     const infoRef = useRef<HTMLDivElement>(null);
+    const [zapOpen, setZapOpen] = useState(false);
+    const zapRef = useRef<HTMLDivElement>(null);
 
     const toggleTheme = () => {
         setTheme(theme === 'light' ? 'dark' : 'light');
@@ -33,14 +35,17 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
             if (infoRef.current && !infoRef.current.contains(event.target as Node)) {
                 setInfoOpen(false);
             }
+            if (zapRef.current && !zapRef.current.contains(event.target as Node)) {
+                setZapOpen(false);
+            }
         };
-        if (infoOpen) {
+        if (infoOpen || zapOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         }
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [infoOpen]);
+    }, [infoOpen, zapOpen]);
 
     return (
         <div
@@ -96,6 +101,51 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                         <motion.div whileTap={{ scale: 0.9 }}>
                             <BellDot width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
                         </motion.div>
+                        <div ref={zapRef} className="relative">
+                            <motion.div whileTap={{ scale: 0.9 }} onClick={() => {
+                                console.log("[v0] Zap icon clicked, current zapOpen:", zapOpen);
+                                setZapOpen((prev) => !prev);
+                            }}>
+                                <Zap width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
+                            </motion.div>
+                            {console.log("[v0] zapOpen state:", zapOpen)}
+                            <AnimatePresence>
+                                {zapOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                                        transition={{ duration: 0.15, ease: 'easeOut' }}
+                                        className="absolute right-0 top-8 z-50 w-52 rounded-lg border border-blue-400/30 bg-[#0d1117] shadow-xl shadow-black/40"
+                                    >
+                                        <div className="flex flex-col items-center gap-y-3 px-4 py-4">
+                                            <Image
+                                                alt="kaya-logo"
+                                                width={80}
+                                                height={16}
+                                                src="/png/kaya-logo-light.png"
+                                                className="opacity-90"
+                                            />
+                                            <div className="w-full border-t border-blue-400/20" />
+                                            <div className="flex w-full flex-col gap-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-gray-400">Platform</span>
+                                                    <span className="text-xs font-medium text-white">KAYA AI Platform</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-gray-400">Version</span>
+                                                    <span className="text-xs font-medium text-white">v2.4.0</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-gray-400">Build</span>
+                                                    <span className="text-xs font-medium text-white">2026.03.15</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                         <div ref={infoRef} className="relative">
                             <motion.div whileTap={{ scale: 0.9 }} onClick={() => {
                                 console.log("[v0] Info icon clicked, current infoOpen:", infoOpen);
