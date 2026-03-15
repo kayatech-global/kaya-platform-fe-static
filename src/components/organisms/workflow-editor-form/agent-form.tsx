@@ -4,6 +4,7 @@
 import { GuardrailSelector } from '@/app/editor/[wid]/[workflow_id]/components/guardrail-selector';
 import { GraphRagSelectorRef } from '@/app/editor/[wid]/[workflow_id]/components/graph-rag-selector';
 import { LanguageSelector } from '@/app/editor/[wid]/[workflow_id]/components/language-selector';
+import { PanelSection } from '@/app/editor/[wid]/[workflow_id]/components/panel-section';
 import { PromptSelector, PromptSelectorRef } from '@/app/editor/[wid]/[workflow_id]/components/prompt-selector';
 import { VectorRagSelectorRef } from '@/app/editor/[wid]/[workflow_id]/components/vector-rag-selector';
 import { ReusableAgentSelector } from '@/app/editor/[wid]/[workflow_id]/components/reusable-agent-selector';
@@ -908,25 +909,25 @@ export const AgentForm = ({
                     </p>
                 </div>
             </div>
-            <div className="group">
-                <div
-                    className={cn(
-                        'agent-form pr-1 flex flex-col gap-y-6 h-[calc(100vh-270px)] overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700',
-                        {
-                            hidden:
-                                fetchingPrompts ||
-                                fetchingApiTools ||
-                                fetchingModels ||
-                                fetchingSLMModels ||
-                                fetchingMcp ||
-                                fetchingGraphRag ||
-                                vectorRagLoading ||
-                                fetchingMessageBroker ||
-                                fetchingGuardrails,
-                        }
-                    )}
-                >
-                    <div className="pb-4 bottom-gradient-border">
+            <div
+                className={cn('group flex flex-col h-[calc(100vh-210px)]', {
+                    hidden:
+                        fetchingPrompts ||
+                        fetchingApiTools ||
+                        fetchingModels ||
+                        fetchingSLMModels ||
+                        fetchingMcp ||
+                        fetchingGraphRag ||
+                        vectorRagLoading ||
+                        fetchingMessageBroker ||
+                        fetchingGuardrails,
+                })}
+            >
+                {/* Scrollable sections */}
+                <div className="agent-form pr-1 flex flex-col gap-y-2 flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700">
+
+                    {/* Reusable Agent Selector — always visible, no accordion */}
+                    <div className="pb-2">
                         <ReusableAgentSelector
                             agent={agent}
                             setAgent={setAgent}
@@ -969,97 +970,82 @@ export const AgentForm = ({
                             }}
                         />
                     </div>
-                    <div className="flex flex-col gap-y-5 pb-4 bottom-gradient-border">
-                        <Input
-                            label="Name"
-                            placeholder="Name of the agent"
-                            value={agent?.isReusableAgentSelected ? agent.name : (agentName ?? '')}
-                            onChange={e => setAgentName(e.target.value)}
-                            disabled={agent?.isReusableAgentSelected}
-                        />
-                        <Textarea
-                            label="Description"
-                            placeholder="Outline the specific tasks and responsibilities you expect this agent to handle"
-                            rows={7}
-                            value={agent?.isReusableAgentSelected ? agent.description : (description ?? '')}
-                            onChange={e => setDescription(e.target.value)}
-                            disabled={agent?.isReusableAgentSelected}
-                        />
-                        <PromptSelector
-                            ref={promptRef}
-                            agent={agent}
-                            prompt={prompt}
-                            setPrompt={setPrompt}
-                            allPrompts={allPrompts as PromptResponse[]}
-                            isReadonly={isReadOnly}
-                            promptsLoading={promptsLoading}
-                            onRefetch={onRefetchPrompt}
-                            onPromptChange={onPromptChange}
-                        />
-                        <div className="flex flex-col gap-y-2 mt-6 bottom-gradient-border pb-4">
-                            <LanguageSelector
-                                isSlm={isSlm}
-                                agent={agent}
-                                languageModel={languageModel}
-                                setLanguageModel={setLanguageModel}
-                                allModels={allModels}
-                                allSLMModels={allSLMModels as never}
-                                allSTSModels={[]}
-                                isReadonly={isReadOnly}
-                                llmModelsLoading={llmModelsLoading}
-                                slmModelsLoading={slmModelsLoading}
-                                onRefetch={() => {
-                                    refetchLLM();
-                                    refetchSLM();
-                                }}
-                                onIntelligenceSourceChange={value => setSlm(value)}
-                            />
-                        </div>
-                        <StructuredOutputCreator
-                            agent={agent}
-                            setStructuredOutput={setStructuredOutput}
-                            structuredOutput={structuredOutput}
-                        />
 
-                        <div className="flex gap-x-3 items-start">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Checkbox
-                                            id="enable-custom-attributes"
-                                            disabled={isReadOnly}
-                                            checked={enableCustomAttributes}
-                                            onCheckedChange={e => setEnableCustomAttributes(!!e)}
-                                        />
-                                    </TooltipTrigger>
-                                    {isReadOnly && (
-                                        <TooltipContent side="left" align="center">
-                                            You don&apos;t have permission to modify
-                                        </TooltipContent>
-                                    )}
-                                </Tooltip>
-                            </TooltipProvider>
-                            <div className="flex flex-col -mt-1 gap-y-1">
-                                <p className="text-md font-medium text-gray-700 dark:text-gray-100">
-                                    Custom Attributes
-                                </p>
-                                <p className="text-xs font-normal text-gray-500 dark:text-gray-300">
-                                    Toggle to attach custom JSON attributes to this agent
-                                </p>
-                            </div>
-                        </div>
-                        {enableCustomAttributes && (
+                    {/* Prompt Instruction */}
+                    <PanelSection
+                        key={`prompt-${selectedNode.id}`}
+                        title="Prompt Instruction"
+                        isConfigured={!!prompt || !!agent?.prompt?.id}
+                    >
+                        <div className="flex flex-col gap-y-4">
+                            <Input
+                                label="Name"
+                                placeholder="Name of the agent"
+                                value={agent?.isReusableAgentSelected ? agent.name : (agentName ?? '')}
+                                onChange={e => setAgentName(e.target.value)}
+                                disabled={agent?.isReusableAgentSelected}
+                            />
                             <Textarea
-                                label="Custom Attributes"
-                                placeholder={`${'Enter custom attributes in JSON format (e.g., {"key": "value"})'}`}
+                                label="Description"
+                                placeholder="Outline the specific tasks and responsibilities you expect this agent to handle"
                                 rows={5}
-                                value={customAttributes}
-                                onChange={e => setCustomAttributes(e.target.value)}
-                                disabled={!enableCustomAttributes || isReadOnly}
+                                value={agent?.isReusableAgentSelected ? agent.description : (description ?? '')}
+                                onChange={e => setDescription(e.target.value)}
+                                disabled={agent?.isReusableAgentSelected}
                             />
-                        )}
+                            <PromptSelector
+                                ref={promptRef}
+                                agent={agent}
+                                prompt={prompt}
+                                setPrompt={setPrompt}
+                                allPrompts={allPrompts as PromptResponse[]}
+                                isReadonly={isReadOnly}
+                                promptsLoading={promptsLoading}
+                                onRefetch={onRefetchPrompt}
+                                onPromptChange={onPromptChange}
+                            />
+                        </div>
+                    </PanelSection>
 
-                        <div className="flex flex-col gap-y-2 mt-6 bottom-gradient-border pb-4">
+                    {/* Intelligence Source */}
+                    <PanelSection
+                        key={`intelligence-${selectedNode.id}`}
+                        title="Intelligence Source"
+                        isConfigured={!!languageModel || !!agent?.languageModal?.modelId}
+                    >
+                        <LanguageSelector
+                            isSlm={isSlm}
+                            agent={agent}
+                            languageModel={languageModel}
+                            setLanguageModel={setLanguageModel}
+                            allModels={allModels}
+                            allSLMModels={allSLMModels as never}
+                            allSTSModels={[]}
+                            isReadonly={isReadOnly}
+                            llmModelsLoading={llmModelsLoading}
+                            slmModelsLoading={slmModelsLoading}
+                            onRefetch={() => {
+                                refetchLLM();
+                                refetchSLM();
+                            }}
+                            onIntelligenceSourceChange={value => setSlm(value)}
+                        />
+                    </PanelSection>
+
+                    {/* Tools / Input Data Connect */}
+                    <PanelSection
+                        key={`tools-${selectedNode.id}`}
+                        title="Tools & Data Sources"
+                        isConfigured={
+                            (apis?.length ?? 0) > 0 ||
+                            (mcpServers?.length ?? 0) > 0 ||
+                            (vectorRags?.length ?? 0) > 0 ||
+                            (graphRags?.length ?? 0) > 0 ||
+                            (selectedConnector?.length ?? 0) > 0 ||
+                            (executableFunctions?.length ?? 0) > 0
+                        }
+                    >
+                        <div className="flex flex-col gap-y-3">
                             <InputDataConnectContainer
                                 agent={agent}
                                 apiSelectorProps={{
@@ -1132,7 +1118,14 @@ export const AgentForm = ({
                             />
                             <SelectedInputConnects data={selectedInputConnectData} />
                         </div>
+                    </PanelSection>
 
+                    {/* Human Input */}
+                    <PanelSection
+                        key={`human-input-${selectedNode.id}`}
+                        title="Human Input"
+                        isConfigured={!!humanInput?.isHumanInput}
+                    >
                         <HumanInput
                             humanInput={humanInput}
                             messageBrokers={messageBrokers ?? []}
@@ -1141,99 +1134,177 @@ export const AgentForm = ({
                             workflowId={params?.workflow_id as string}
                             setHumanInput={setHumanInput}
                         />
+                    </PanelSection>
+
+                    {/* Guardrails */}
+                    <PanelSection
+                        key={`guardrails-${selectedNode.id}`}
+                        title="Guardrails"
+                        isConfigured={(guardrails?.length ?? 0) > 0}
+                    >
+                        <GuardrailSelector
+                            agent={agent}
+                            allGuardrails={guardrailData ?? []}
+                            guardrails={guardrails}
+                            isReadonly={isReadOnly}
+                            guardrailsLoading={guardrailLoading}
+                            title="Agent Level Guardrails"
+                            level={GuardrailBindingLevelType.AGENT}
+                            setGuardrails={setGuardrails}
+                            onRefetch={() => {
+                                Promise.resolve(refetchGuardrails()).catch(() => {});
+                            }}
+                        />
+                    </PanelSection>
+
+                    {/* Self Learning */}
+                    <PanelSection
+                        key={`self-learning-${selectedNode.id}`}
+                        title="Self Learning"
+                        isConfigured={!!selfLearning?.enabled}
+                    >
+                        <SelfLearning
+                            selfLearning={selfLearning}
+                            isReadOnly={isReadOnly}
+                            apis={apis}
+                            allApiTools={allApiTools}
+                            llms={allModels}
+                            slms={allSLMModels as never}
+                            workflow={workflow}
+                            agent={agent}
+                            nodeId={selectedNode?.id}
+                            allPrompts={allPrompts as PromptResponse[]}
+                            promptsLoading={promptsLoading}
+                            llmModelsLoading={llmModelsLoading}
+                            slmModelsLoading={slmModelsLoading}
+                            messageBrokers={messageBrokers ?? []}
+                            setSelfLearning={setSelfLearning}
+                            onRefetch={refetchApiTools}
+                            onRefetchIntelligence={() => {
+                                refetchLLM();
+                                refetchSLM();
+                            }}
+                            onRefetchPrompt={onRefetchPrompt}
+                            allConnectors={allConnectors ?? []}
+                            onRefetchConnector={refetchConnectors}
+                            connectorsLoading={fetchingConnectors ?? false}
+                        />
+                    </PanelSection>
+
+                    {/* Output Broadcasting */}
+                    <PanelSection
+                        key={`output-broadcasting-${selectedNode.id}`}
+                        title="Output Broadcasting"
+                        isConfigured={!!outputBroadcasting?.isEnabled}
+                    >
+                        <MessagePublisher
+                            title="Output Broadcasting"
+                            detailButtonLabel="Add Output Broadcasting"
+                            viewLabel="View Output Broadcasting"
+                            agent={agent}
+                            messagePublisher={outputBroadcasting}
+                            messageBrokers={messageBrokers ?? []}
+                            isReadOnly={isReadOnly}
+                            workflowId={params?.workflow_id as string}
+                            setMessagePublisher={setOutputBroadcasting}
+                        />
+                    </PanelSection>
+
+                    {/* Structured Output */}
+                    <PanelSection
+                        key={`structured-output-${selectedNode.id}`}
+                        title="Structured Output"
+                        isConfigured={!!structuredOutput?.enabled}
+                    >
+                        <StructuredOutputCreator
+                            agent={agent}
+                            setStructuredOutput={setStructuredOutput}
+                            structuredOutput={structuredOutput}
+                        />
+                    </PanelSection>
+
+                    {/* Custom Attributes */}
+                    <PanelSection
+                        key={`custom-attributes-${selectedNode.id}`}
+                        title="Custom Attributes"
+                        isConfigured={enableCustomAttributes && customAttributes.trim().length > 0}
+                    >
+                        <div className="flex flex-col gap-y-3">
+                            <div className="flex gap-x-3 items-start">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Checkbox
+                                                id="enable-custom-attributes"
+                                                disabled={isReadOnly}
+                                                checked={enableCustomAttributes}
+                                                onCheckedChange={e => setEnableCustomAttributes(!!e)}
+                                            />
+                                        </TooltipTrigger>
+                                        {isReadOnly && (
+                                            <TooltipContent side="left" align="center">
+                                                You don&apos;t have permission to modify
+                                            </TooltipContent>
+                                        )}
+                                    </Tooltip>
+                                </TooltipProvider>
+                                <div className="flex flex-col -mt-1 gap-y-1">
+                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-100">
+                                        Enable Custom Attributes
+                                    </p>
+                                    <p className="text-xs font-normal text-gray-500 dark:text-gray-300">
+                                        Toggle to attach custom JSON attributes to this agent
+                                    </p>
+                                </div>
+                            </div>
+                            {enableCustomAttributes && (
+                                <Textarea
+                                    label="Custom Attributes"
+                                    placeholder={`${'Enter custom attributes in JSON format (e.g., {"key": "value"})'}`}
+                                    rows={5}
+                                    value={customAttributes}
+                                    onChange={e => setCustomAttributes(e.target.value)}
+                                    disabled={!enableCustomAttributes || isReadOnly}
+                                />
+                            )}
+                        </div>
+                    </PanelSection>
+
+                    {/* Save as Reusable Agent */}
+                    <div className="flex items-center gap-x-2 px-1 py-1">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Checkbox
+                                        disabled={agent?.isReusableAgentSelected || isReadOnly}
+                                        checked={saveAsReusableAgent}
+                                        onCheckedChange={e => setSaveAsReusableAgent(!!e)}
+                                    />
+                                </TooltipTrigger>
+                                {isReadOnly && (
+                                    <TooltipContent side="left" align="center">
+                                        You don&apos;t have permission to modify
+                                    </TooltipContent>
+                                )}
+                            </Tooltip>
+                        </TooltipProvider>
+                        <p className="text-xs font-medium text-gray-400">Save as reusable agent</p>
                     </div>
 
-                    <div>
-                        <div className="bottom-gradient-border pb-4">
-                            <GuardrailSelector
-                                agent={agent}
-                                allGuardrails={guardrailData ?? []}
-                                guardrails={guardrails}
-                                isReadonly={isReadOnly}
-                                guardrailsLoading={guardrailLoading}
-                                title="Agent Level Guardrails"
-                                level={GuardrailBindingLevelType.AGENT}
-                                setGuardrails={setGuardrails}
-                                onRefetch={() => {
-                                    Promise.resolve(refetchGuardrails()).catch(() => {});
-                                }}
-                            />
-                        </div>
-                        <div className="mt-6 bottom-gradient-border pb-4">
-                            <SelfLearning
-                                selfLearning={selfLearning}
-                                isReadOnly={isReadOnly}
-                                apis={apis}
-                                allApiTools={allApiTools}
-                                llms={allModels}
-                                slms={allSLMModels as never}
-                                workflow={workflow}
-                                agent={agent}
-                                nodeId={selectedNode?.id}
-                                allPrompts={allPrompts as PromptResponse[]}
-                                promptsLoading={promptsLoading}
-                                llmModelsLoading={llmModelsLoading}
-                                slmModelsLoading={slmModelsLoading}
-                                messageBrokers={messageBrokers ?? []}
-                                setSelfLearning={setSelfLearning}
-                                onRefetch={refetchApiTools}
-                                onRefetchIntelligence={() => {
-                                    refetchLLM();
-                                    refetchSLM();
-                                }}
-                                onRefetchPrompt={onRefetchPrompt}
-                                allConnectors={allConnectors ?? []}
-                                onRefetchConnector={refetchConnectors}
-                                connectorsLoading={fetchingConnectors ?? false}
-                            />
-                        </div>
-                        <div className="mt-6 bottom-gradient-border pb-4">
-                            <MessagePublisher
-                                title="Output Broadcasting"
-                                detailButtonLabel="Add Output Broadcasting"
-                                viewLabel="View Output Broadcasting"
-                                agent={agent}
-                                messagePublisher={outputBroadcasting}
-                                messageBrokers={messageBrokers ?? []}
-                                isReadOnly={isReadOnly}
-                                workflowId={params?.workflow_id as string}
-                                setMessagePublisher={setOutputBroadcasting}
-                            />
-                        </div>
+                    {/* Hidden retry count */}
+                    <div hidden>
+                        <Input label="Retry Count" type="number" defaultValue={5} />
+                    </div>
+                </div>
 
-                        <div className="mt-6" hidden>
-                            <Input label="Retry Count" type="number" defaultValue={5} />
-                        </div>
-                    </div>
-                    <div className="space-y-6">
-                        <div className="flex items-center gap-x-2">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Checkbox
-                                            disabled={agent?.isReusableAgentSelected || isReadOnly}
-                                            checked={saveAsReusableAgent}
-                                            onCheckedChange={e => setSaveAsReusableAgent(!!e)}
-                                        />
-                                    </TooltipTrigger>
-                                    {isReadOnly && (
-                                        <TooltipContent side="left" align="center">
-                                            You don&apos;t have permission to modify
-                                        </TooltipContent>
-                                    )}
-                                </Tooltip>
-                            </TooltipProvider>
-                            <p className="text-md font-medium text-gray-400">Save as reusable agent</p>
-                        </div>
-                    </div>
-                    <div className="agent-form-footer flex gap-x-3 justify-end pb-4">
-                        <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
-                            Cancel
-                        </Button>
-                        <Button variant="primary" onClick={handleSaveNodeData}>
-                            Save
-                        </Button>
-                    </div>
+                {/* Sticky footer — always visible at the bottom of the panel */}
+                <div className="agent-form-footer shrink-0 flex gap-x-3 justify-end pt-3 pb-1 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                    <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
+                        Cancel
+                    </Button>
+                    <Button variant="primary" onClick={handleSaveNodeData}>
+                        Save
+                    </Button>
                 </div>
             </div>
         </React.Fragment>

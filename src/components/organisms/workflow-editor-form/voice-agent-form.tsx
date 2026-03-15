@@ -19,7 +19,6 @@ import {
     ISharedItem,
 } from '@/models';
 import { Node, useReactFlow } from '@xyflow/react';
-import { Boxes } from 'lucide-react';
 
 import { useParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -30,6 +29,7 @@ import { CallTransfer } from '@/components/molecules/call-transfer/call-transfer
 import { McpConfigurationData } from '@/app/workspace/[wid]/mcp-configurations/components/mcp-configuration-table-container';
 import { useApp } from '@/context/app-context';
 import { GuardrailSelector } from '@/app/editor/[wid]/[workflow_id]/components/guardrail-selector';
+import { PanelSection } from '@/app/editor/[wid]/[workflow_id]/components/panel-section';
 import { EditorPanelAgentProps } from '@/app/editor/[wid]/[workflow_id]/components/editor-panel';
 import { promptService } from '@/services';
 import { useGuardrailQuery } from '@/hooks/use-common';
@@ -556,48 +556,62 @@ export const VoiceAgentForm = ({
                     </p>
                 </div>
             </div>
-            <div className="agent-form-wrapper group">
-                <div
-                    className={cn(
-                        'agent-form pr-1 flex flex-col gap-y-6 h-[calc(100vh-270px)] overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700',
-                        {
-                            hidden:
-                                fetchingPrompts ||
-                                fetchingApiTools ||
-                                fetchingModels ||
-                                fetchingSLMModels ||
-                                fetchingSTSModels ||
-                                fetchingIntellisense ||
-                                fetchingGuardrails,
-                        }
-                    )}
-                >
-                    <div className="flex flex-col gap-y-5 pb-4 bottom-gradient-border">
-                        <Input
-                            label="Name"
-                            placeholder="Name of the agent"
-                            value={agentName ?? ''}
-                            onChange={e => setAgentName(e.target.value)}
-                        />
-                        <Textarea
-                            label="Description"
-                            placeholder="Outline the specific tasks and responsibilities you expect this agent to handle"
-                            rows={7}
-                            value={description ?? ''}
-                            onChange={e => setDescription(e.target.value)}
-                        />
-                        <PromptSelector
-                            agent={agent}
-                            prompt={prompt}
-                            intellisenseOptions={intellisenseOptions.flatMap(group => group.options)}
-                            loadingIntellisense={loadingIntellisense}
-                            setPrompt={setPrompt}
-                            allPrompts={allPrompts as PromptResponse[]}
-                            isReadonly={isReadOnly}
-                            promptsLoading={promptsLoading}
-                            onRefetch={onRefetchPrompt}
-                            onPromptChange={onPromptChange}
-                        />
+            <div
+                className={cn('group flex flex-col h-[calc(100vh-210px)]', {
+                    hidden:
+                        fetchingPrompts ||
+                        fetchingApiTools ||
+                        fetchingModels ||
+                        fetchingSLMModels ||
+                        fetchingSTSModels ||
+                        fetchingIntellisense ||
+                        fetchingGuardrails,
+                })}
+            >
+                {/* Scrollable sections */}
+                <div className="agent-form pr-1 flex flex-col gap-y-2 flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700">
+
+                    {/* Prompt Instruction */}
+                    <PanelSection
+                        key={`prompt-${selectedNode.id}`}
+                        title="Prompt Instruction"
+                        isConfigured={!!prompt}
+                    >
+                        <div className="flex flex-col gap-y-4">
+                            <Input
+                                label="Name"
+                                placeholder="Name of the agent"
+                                value={agentName ?? ''}
+                                onChange={e => setAgentName(e.target.value)}
+                            />
+                            <Textarea
+                                label="Description"
+                                placeholder="Outline the specific tasks and responsibilities you expect this agent to handle"
+                                rows={5}
+                                value={description ?? ''}
+                                onChange={e => setDescription(e.target.value)}
+                            />
+                            <PromptSelector
+                                agent={agent}
+                                prompt={prompt}
+                                intellisenseOptions={intellisenseOptions.flatMap(group => group.options)}
+                                loadingIntellisense={loadingIntellisense}
+                                setPrompt={setPrompt}
+                                allPrompts={allPrompts as PromptResponse[]}
+                                isReadonly={isReadOnly}
+                                promptsLoading={promptsLoading}
+                                onRefetch={onRefetchPrompt}
+                                onPromptChange={onPromptChange}
+                            />
+                        </div>
+                    </PanelSection>
+
+                    {/* Intelligence Source */}
+                    <PanelSection
+                        key={`intelligence-${selectedNode.id}`}
+                        title="Intelligence Source"
+                        isConfigured={!!voiceModal}
+                    >
                         <LanguageSelector
                             agent={agent}
                             isSlm={isSlm}
@@ -618,27 +632,45 @@ export const VoiceAgentForm = ({
                             onIntelligenceSourceChange={value => setSlm(value)}
                             disabledSourceTypes={[IntelligenceSourceType.LLM, IntelligenceSourceType.SLM]}
                         />
-                        <Textarea
-                            label="Caller Disclaimer Message"
-                            placeholder="Message played to the caller when the call is first connected."
-                            rows={5}
-                            value={callerDisclaimerMessage ?? ''}
-                            onChange={e => setCallerDisclaimerMessage(e.target.value)}
-                        />
-                        <Textarea
-                            label="Agent Greeting Message"
-                            placeholder="Greeting message played by the agent when joined the call."
-                            rows={5}
-                            value={agentGreetingMessage ?? ''}
-                            onChange={e => setAgentGreetingMessage(e.target.value)}
-                        />
-                        <Textarea
-                            label="Tone"
-                            placeholder="Please enter the Tone"
-                            rows={5}
-                            value={tone ?? ''}
-                            onChange={e => setTone(e.target.value)}
-                        />
+                    </PanelSection>
+
+                    {/* Voice Configuration */}
+                    <PanelSection
+                        key={`voice-config-${selectedNode.id}`}
+                        title="Voice Configuration"
+                        isConfigured={!!(agentGreetingMessage || callerDisclaimerMessage || tone)}
+                    >
+                        <div className="flex flex-col gap-y-4">
+                            <Textarea
+                                label="Caller Disclaimer Message"
+                                placeholder="Message played to the caller when the call is first connected."
+                                rows={3}
+                                value={callerDisclaimerMessage ?? ''}
+                                onChange={e => setCallerDisclaimerMessage(e.target.value)}
+                            />
+                            <Textarea
+                                label="Agent Greeting Message"
+                                placeholder="Greeting message played by the agent when joined the call."
+                                rows={3}
+                                value={agentGreetingMessage ?? ''}
+                                onChange={e => setAgentGreetingMessage(e.target.value)}
+                            />
+                            <Textarea
+                                label="Tone"
+                                placeholder="Please enter the Tone"
+                                rows={3}
+                                value={tone ?? ''}
+                                onChange={e => setTone(e.target.value)}
+                            />
+                        </div>
+                    </PanelSection>
+
+                    {/* Transcript Export */}
+                    <PanelSection
+                        key={`transcript-${selectedNode.id}`}
+                        title="Transcript Export"
+                        isConfigured={transcriptExport.isEnabled}
+                    >
                         <TranscriptExport
                             defaultEnabled={transcriptExport.isEnabled}
                             initialHeaders={transcriptExport.webhooks[0]?.headers ?? []}
@@ -656,34 +688,39 @@ export const VoiceAgentForm = ({
                                 });
                             }}
                         />
+                    </PanelSection>
+
+                    {/* Call Transfer */}
+                    <PanelSection
+                        key={`call-transfer-${selectedNode.id}`}
+                        title="Call Transfer"
+                        isConfigured={humanAgentCallTransferConfig.isEnabled}
+                    >
                         <CallTransfer
                             initialCallTransfer={humanAgentCallTransferConfig}
                             setHumanAgentCallTransferConfig={setHumanAgentCallTransferConfig}
                         />
-                    </div>
-                    <div className="flex flex-col gap-y-6 pb-4 bottom-gradient-border">
-                        <div className="flex flex-col gap-y-1">
-                            <div className="flex items-center gap-x-[10px]">
-                                <Boxes size={20} absoluteStrokeWidth={false} className="stroke-[1px]" />
-                                <p>Add Helper Tools</p>
-                            </div>
-                            <p className="text-xs font-normal text-gray-400">
-                                Select helper tools that required for this agent to run efferently.
-                            </p>
-                        </div>
-                        <div>
-                            <APISelector
-                                agent={agent}
-                                apis={apis}
-                                setApis={setApis}
-                                allApiTools={allApiTools as ApiToolResponseType[]}
-                                isReadonly={isReadOnly}
-                                apiLoading={apiLoading}
-                                onRefetch={refetchApiTools}
-                            />
-                        </div>
-                    </div>
-                    <div className="bottom-gradient-border pb-4" hidden>
+                    </PanelSection>
+
+                    {/* Helper Tools */}
+                    <PanelSection
+                        key={`tools-${selectedNode.id}`}
+                        title="Helper Tools"
+                        isConfigured={(apis?.length ?? 0) > 0}
+                    >
+                        <APISelector
+                            agent={agent}
+                            apis={apis}
+                            setApis={setApis}
+                            allApiTools={allApiTools as ApiToolResponseType[]}
+                            isReadonly={isReadOnly}
+                            apiLoading={apiLoading}
+                            onRefetch={refetchApiTools}
+                        />
+                    </PanelSection>
+
+                    {/* Guardrails (hidden per original) */}
+                    <div hidden>
                         <GuardrailSelector
                             allGuardrails={guardrailData ?? []}
                             guardrails={guardrails}
@@ -695,14 +732,16 @@ export const VoiceAgentForm = ({
                             onRefetch={refetchGuardrails}
                         />
                     </div>
-                    <div className="agent-form-footer flex gap-x-3 justify-end pb-4">
-                        <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
-                            Cancel
-                        </Button>
-                        <Button variant="primary" onClick={handleSaveNodeData}>
-                            Save
-                        </Button>
-                    </div>
+                </div>
+
+                {/* Sticky footer */}
+                <div className="agent-form-footer shrink-0 flex gap-x-3 justify-end pt-3 pb-1 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                    <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
+                        Cancel
+                    </Button>
+                    <Button variant="primary" onClick={handleSaveNodeData}>
+                        Save
+                    </Button>
                 </div>
             </div>
         </React.Fragment>

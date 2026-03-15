@@ -15,13 +15,12 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/atoms';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/atoms/collapsible';
+import { PanelSection } from '@/app/editor/[wid]/[workflow_id]/components/panel-section';
 import { cn } from '@/lib/utils';
 import { IWorkflowReplannerConfig, PromptTemplate } from '@/models';
 import { CustomNodeTypes, GuardrailBindingLevelType } from '@/enums';
 import { AgentType } from './agent-form';
 import { usePlannerReplanner } from '@/hooks/use-planner-replanner';
-import { ChevronDown } from 'lucide-react';
 import { EditorPanelAgentProps } from '@/app/editor/[wid]/[workflow_id]/components/editor-panel';
 
 export interface PlannerReplannerFormProps extends EditorPanelAgentProps {
@@ -91,66 +90,79 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                     </p>
                 </div>
             </div>
-            <div className="group">
-                <div
-                    className={cn(
-                        'agent-form pr-1 flex flex-col gap-y-6 h-[calc(100vh-270px)] overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700',
-                        {
-                            hidden: fetchingPrompts || fetchingModels || fetchingSLMModels || fetchingGuardrails,
-                        }
-                    )}
-                >
-                    <div className="flex flex-col gap-y-5 pb-4 bottom-gradient-border">
-                        <Input
-                            label="Name"
-                            placeholder="Name of the agent"
-                            value={agentName ?? ''}
-                            onChange={e => setAgentName(e.target.value)}
-                            readOnly={isReadOnly}
-                        />
-                        <Textarea
-                            label="Description"
-                            placeholder="Outline the specific tasks and responsibilities you expect this agent to handle"
-                            rows={7}
-                            value={description ?? ''}
-                            onChange={e => setDescription(e.target.value)}
-                            readOnly={isReadOnly}
-                        />
-                        <PromptSelector
-                            ref={promptRef}
-                            agent={undefined}
-                            prompt={prompt}
-                            setPrompt={setPrompt}
-                            allPrompts={allPrompts as PromptTemplate[]}
-                            isReadonly={isReadOnly}
-                            promptsLoading={promptsLoading}
-                            onRefetch={onRefetchPrompt}
-                        />
-                        <div className="flex flex-col gap-y-2 mt-6">
-                            <LanguageSelector
-                                isSlm={isSlm}
+            <div
+                className={cn('group flex flex-col h-[calc(100vh-210px)]', {
+                    hidden: fetchingPrompts || fetchingModels || fetchingSLMModels || fetchingGuardrails,
+                })}
+            >
+                {/* Scrollable sections */}
+                <div className="agent-form pr-1 flex flex-col gap-y-2 flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700">
+
+                    {/* Prompt Instruction */}
+                    <PanelSection
+                        key={`prompt-${selectedNode.id}`}
+                        title="Prompt Instruction"
+                        isConfigured={!!prompt}
+                    >
+                        <div className="flex flex-col gap-y-4">
+                            <Input
+                                label="Name"
+                                placeholder="Name of the agent"
+                                value={agentName ?? ''}
+                                onChange={e => setAgentName(e.target.value)}
+                                readOnly={isReadOnly}
+                            />
+                            <Textarea
+                                label="Description"
+                                placeholder="Outline the specific tasks and responsibilities you expect this agent to handle"
+                                rows={5}
+                                value={description ?? ''}
+                                onChange={e => setDescription(e.target.value)}
+                                readOnly={isReadOnly}
+                            />
+                            <PromptSelector
+                                ref={promptRef}
                                 agent={undefined}
-                                languageModel={languageModel}
-                                setLanguageModel={setLanguageModel}
-                                allModels={allModels}
-                                allSLMModels={allSLMModels as never}
-                                allSTSModels={[]}
+                                prompt={prompt}
+                                setPrompt={setPrompt}
+                                allPrompts={allPrompts as PromptTemplate[]}
                                 isReadonly={isReadOnly}
-                                llmModelsLoading={llmModelsLoading}
-                                slmModelsLoading={slmModelsLoading}
-                                onRefetch={() => {
-                                    refetchLLM();
-                                    refetchSLM();
-                                }}
-                                onIntelligenceSourceChange={value => setSlm(value)}
+                                promptsLoading={promptsLoading}
+                                onRefetch={onRefetchPrompt}
                             />
                         </div>
-                    </div>
+                    </PanelSection>
 
-                    <div
-                        className={cn('pb-4', {
-                            'bottom-gradient-border': nodeType === CustomNodeTypes.plannerNode,
-                        })}
+                    {/* Intelligence Source */}
+                    <PanelSection
+                        key={`intelligence-${selectedNode.id}`}
+                        title="Intelligence Source"
+                        isConfigured={!!languageModel}
+                    >
+                        <LanguageSelector
+                            isSlm={isSlm}
+                            agent={undefined}
+                            languageModel={languageModel}
+                            setLanguageModel={setLanguageModel}
+                            allModels={allModels}
+                            allSLMModels={allSLMModels as never}
+                            allSTSModels={[]}
+                            isReadonly={isReadOnly}
+                            llmModelsLoading={llmModelsLoading}
+                            slmModelsLoading={slmModelsLoading}
+                            onRefetch={() => {
+                                refetchLLM();
+                                refetchSLM();
+                            }}
+                            onIntelligenceSourceChange={value => setSlm(value)}
+                        />
+                    </PanelSection>
+
+                    {/* Guardrails */}
+                    <PanelSection
+                        key={`guardrails-${selectedNode.id}`}
+                        title="Guardrails"
+                        isConfigured={(guardrails?.length ?? 0) > 0}
                     >
                         <GuardrailSelector
                             agent={undefined}
@@ -163,10 +175,10 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                             setGuardrails={setGuardrails}
                             onRefetch={refetchGuardrails}
                         />
-                    </div>
+                    </PanelSection>
 
                     {nodeType === CustomNodeTypes.plannerNode && (
-                        <div className="flex items-center gap-x-2">
+                        <div className="flex items-center gap-x-2 px-1 py-1">
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -183,49 +195,46 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                                     )}
                                 </Tooltip>
                             </TooltipProvider>
-                            <p className="text-md font-medium text-gray-400">Enable Deterministic Execution</p>
+                            <p className="text-xs font-medium text-gray-400">Enable Deterministic Execution</p>
                         </div>
                     )}
 
                     {nodeType === CustomNodeTypes.rePlannerNode && (
-                        <Collapsible className="border border-gray-300 rounded-md dark:border-gray-700">
-                            <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
-                                    Advanced Configurations
-                                </span>
-                                <ChevronDown className="h-4 w-4 text-gray-500 transition-transform duration-200 data-[state=open]:rotate-180" />
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="px-4 pb-4 pt-2 space-y-4">
-                                <div>
-                                    <Input
-                                        label="Max Replan Attempts"
-                                        type="number"
-                                        min="1"
-                                        max="10"
-                                        placeholder="3"
-                                        value={maxReplanAttempts?.toString() ?? ''}
-                                        onChange={e => {
-                                            const value = e.target.value ? parseInt(e.target.value, 10) : undefined;
-                                            setMaxReplanAttempts(value);
-                                        }}
-                                        readOnly={isReadOnly}
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        Maximum number of replanning attempts allowed (default: 3)
-                                    </p>
-                                </div>
-                            </CollapsibleContent>
-                        </Collapsible>
+                        <PanelSection
+                            key={`advanced-${selectedNode.id}`}
+                            title="Advanced Configurations"
+                            isConfigured={!!maxReplanAttempts}
+                        >
+                            <div>
+                                <Input
+                                    label="Max Replan Attempts"
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    placeholder="3"
+                                    value={maxReplanAttempts?.toString() ?? ''}
+                                    onChange={e => {
+                                        const value = e.target.value ? parseInt(e.target.value, 10) : undefined;
+                                        setMaxReplanAttempts(value);
+                                    }}
+                                    readOnly={isReadOnly}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Maximum number of replanning attempts allowed (default: 3)
+                                </p>
+                            </div>
+                        </PanelSection>
                     )}
+                </div>
 
-                    <div className="agent-form-footer flex gap-x-3 justify-end pb-4">
-                        <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
-                            Cancel
-                        </Button>
-                        <Button variant="primary" onClick={handleSaveNodeData}>
-                            Save
-                        </Button>
-                    </div>
+                {/* Sticky footer */}
+                <div className="agent-form-footer shrink-0 flex gap-x-3 justify-end pt-3 pb-1 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                    <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
+                        Cancel
+                    </Button>
+                    <Button variant="primary" onClick={handleSaveNodeData}>
+                        Save
+                    </Button>
                 </div>
             </div>
         </React.Fragment>
