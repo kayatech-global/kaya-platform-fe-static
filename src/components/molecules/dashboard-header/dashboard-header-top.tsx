@@ -1,7 +1,7 @@
 import React from 'react';
 import { SidebarTrigger } from '../sidebar/sidebar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/atoms';
-import { BellDot, ChevronDown, Maximize, Moon, Sun } from 'lucide-react';
+import { BellDot, ChevronDown, Maximize, Moon, Search, Sun } from 'lucide-react';
 import { cn, goFullScreen } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/atoms/avatar';
 import { useTheme } from '@/theme';
@@ -58,6 +58,9 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
             <div className="right-section flex gap-x-8">
                 {!isMobile && (
                     <div className="section-one border-r border-r-blue-400 flex items-center gap-x-8 pr-8">
+                        <motion.div whileTap={{ scale: 0.9 }}>
+                            <Search width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
+                        </motion.div>
                         <motion.div
                             onClick={toggleTheme}
                             className="cursor-pointer p-2 rounded-full flex items-center justify-center"
