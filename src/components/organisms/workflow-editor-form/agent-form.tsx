@@ -1161,7 +1161,7 @@ export const AgentForm = ({
                     <PanelSection
                         key={`self-learning-${selectedNode.id}`}
                         title="Self Learning"
-                        isConfigured={!!selfLearning?.enabled}
+                        isConfigured={!!selfLearning?.enableLearning}
                     >
                         <SelfLearning
                             selfLearning={selfLearning}
@@ -1195,7 +1195,7 @@ export const AgentForm = ({
                     <PanelSection
                         key={`output-broadcasting-${selectedNode.id}`}
                         title="Output Broadcasting"
-                        isConfigured={!!outputBroadcasting?.isEnabled}
+                        isConfigured={!!outputBroadcasting}
                     >
                         <MessagePublisher
                             title="Output Broadcasting"
