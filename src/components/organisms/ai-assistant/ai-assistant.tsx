@@ -2,14 +2,13 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageSquare, X, Send, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/atoms/button';
 import { Textarea } from '@/components/atoms/textarea';
 import { Badge } from '@/components/atoms/badge';
 import { ScrollArea } from '@/components/atoms/scroll-area';
 import { useAuth } from '@/context/auth-context';
-import { useApp } from '@/context/app-context';
 import { useAssistantContext } from './use-assistant-context';
 import { useAssistantQueries } from './use-assistant-queries';
 import { AssistantMessage } from './assistant-message';
@@ -55,12 +54,14 @@ export const AIAssistant: React.FC<AssistantProps> = ({ className }) => {
   
   const pathname = usePathname();
   const { user } = useAuth();
-  const { workspaceContext } = useApp();
   
-  const { currentContext, isContextLoading } = useAssistantContext(pathname, workspaceContext);
+  const { currentContext, isContextLoading } = useAssistantContext(pathname, user);
   const { sendMessage, isQueryLoading } = useAssistantQueries();
   
-  const isAssistantEnabled = user && user.workspaces && user.workspaces.length > 0;
+  // Always show assistant when user is authenticated
+  const isAssistantEnabled = !!user;
+  
+  console.log('[v0] AIAssistant - user:', user ? 'present' : 'null', 'isAssistantEnabled:', isAssistantEnabled);
   
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

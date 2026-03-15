@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '@/context';
+import { IKeycloakUser } from '@/models';
 
 export interface PlatformContext {
     level: 'enterprise' | 'workspace' | 'workflow' | 'agent';
@@ -16,17 +16,9 @@ export interface PlatformContext {
     metadata?: Record<string, unknown>;
 }
 
-interface WorkspaceContext {
-    id: string;
-    name: string;
-    description?: string;
-    metadata?: Record<string, unknown>;
-}
-
-export function useAssistantContext(pathname: string, workspaceContext?: WorkspaceContext) {
+export function useAssistantContext(pathname: string, user: IKeycloakUser | null) {
     const [currentContext, setCurrentContext] = useState<PlatformContext | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const { user } = useAuth();
 
     const parsePathContext = useMemo(() => {
         const segments = pathname.split('/').filter(Boolean);
@@ -63,7 +55,7 @@ export function useAssistantContext(pathname: string, workspaceContext?: Workspa
                 return {
                     level: 'workflow' as const,
                     workspaceId,
-                    workspaceName: workspace?.name || workspaceContext?.name || 'Unknown Workspace',
+                    workspaceName: workspace?.name || 'Current Workspace',
                     workflowId,
                     path: pathname,
                     metadata: {
@@ -79,7 +71,7 @@ export function useAssistantContext(pathname: string, workspaceContext?: Workspa
                 return {
                     level: 'agent' as const,
                     workspaceId,
-                    workspaceName: workspace?.name || workspaceContext?.name || 'Unknown Workspace',
+                    workspaceName: workspace?.name || 'Current Workspace',
                     agentId,
                     path: pathname,
                     metadata: {
@@ -92,12 +84,12 @@ export function useAssistantContext(pathname: string, workspaceContext?: Workspa
             return {
                 level: 'workspace' as const,
                 workspaceId,
-                workspaceName: workspace?.name || workspaceContext?.name || 'Unknown Workspace',
+                workspaceName: workspace?.name || 'Current Workspace',
                 path: pathname,
                 metadata: {
                     workspaceRoles: workspace?.roles || [],
                     section: segments[2] || 'overview',
-                    workspaceDescription: workspace?.description || workspaceContext?.description,
+                    workspaceDescription: workspace?.description,
                 },
             };
         }
@@ -110,7 +102,7 @@ export function useAssistantContext(pathname: string, workspaceContext?: Workspa
             return {
                 level: 'workflow' as const,
                 workspaceId,
-                workspaceName: workspace?.name || 'Unknown Workspace',
+                workspaceName: workspace?.name || 'Current Workspace',
                 workflowId,
                 path: pathname,
                 metadata: {
@@ -130,7 +122,7 @@ export function useAssistantContext(pathname: string, workspaceContext?: Workspa
                 section: segments[0],
             },
         };
-    }, [pathname, user, workspaceContext]);
+    }, [pathname, user]);
 
     useEffect(() => {
         setIsLoading(true);
