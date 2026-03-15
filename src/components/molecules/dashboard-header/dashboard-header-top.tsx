@@ -1,7 +1,7 @@
 import React from 'react';
 import { SidebarTrigger } from '../sidebar/sidebar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/atoms';
-import { BellDot, ChevronDown, Maximize, Moon, Sun } from 'lucide-react';
+import { BellDot, ChevronDown, Maximize, Moon, Sun, Smile } from 'lucide-react';
 import { cn, goFullScreen } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/atoms/avatar';
 import { useTheme } from '@/theme';
@@ -11,6 +11,25 @@ import { useAuth } from '@/context';
 import { motion } from 'framer-motion';
 import useLocalStorage from '@/hooks/useLocalStorage';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
+import { toast } from 'sonner';
+
+const comedyJokes = [
+    "Why do programmers prefer dark mode? Because light attracts bugs!",
+    "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+    "Why don't scientists trust atoms? Because they make up everything!",
+    "I'm reading a book about anti-gravity. It's impossible to put down!",
+    "Why did the scarecrow win an award? He was outstanding in his field!",
+    "I used to hate facial hair, but then it grew on me.",
+    "What do you call a fake noodle? An impasta!",
+    "Why did the coffee file a police report? It got mugged!",
+    "I'm on a seafood diet. I see food and I eat it.",
+    "What do you call a bear with no teeth? A gummy bear!",
+    "Why don't eggs tell jokes? They'd crack each other up!",
+    "I told my computer I needed a break, and now it won't stop sending me vacation ads.",
+    "Why did the developer go broke? Because he used up all his cache!",
+    "There are only 10 types of people in the world: those who understand binary and those who don't.",
+    "A SQL query walks into a bar, walks up to two tables and asks, 'Can I join you?'",
+];
 
 interface DashboardHeaderTopProps extends DashboardHeaderProps {
     value: string;
@@ -24,6 +43,14 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
 
     const toggleTheme = () => {
         setTheme(theme === 'light' ? 'dark' : 'light');
+    };
+
+    const handleHappyClick = () => {
+        const randomJoke = comedyJokes[Math.floor(Math.random() * comedyJokes.length)];
+        toast.success(randomJoke, {
+            duration: 5000,
+            icon: '😂',
+        });
     };
 
     return (
@@ -58,6 +85,15 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
             <div className="right-section flex gap-x-8">
                 {!isMobile && (
                     <div className="section-one border-r border-r-blue-400 flex items-center gap-x-8 pr-8">
+                        <motion.button
+                            onClick={handleHappyClick}
+                            className="flex items-center gap-x-2 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+                            whileTap={{ scale: 0.95 }}
+                            whileHover={{ scale: 1.02 }}
+                        >
+                            <Smile className="text-white" size={18} />
+                            <span className="text-white text-sm font-medium">Happy Click</span>
+                        </motion.button>
                         <motion.div
                             onClick={toggleTheme}
                             className="cursor-pointer p-2 rounded-full flex items-center justify-center"
