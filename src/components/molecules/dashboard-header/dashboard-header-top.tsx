@@ -16,6 +16,34 @@ interface DashboardHeaderTopProps extends DashboardHeaderProps {
     value: string;
 }
 
+function InfoPopoverContent({ theme }: { theme: string }) {
+    const isLight = theme === 'light';
+    return (
+        <div className="flex flex-col items-center gap-y-3 px-4 py-4">
+            <Image
+                alt="kaya-logo"
+                width={80}
+                height={16}
+                src="/png/kaya-logo-light.png"
+                className={cn('opacity-90', isLight && 'invert')}
+            />
+            <div className={cn('w-full border-t', isLight ? 'border-gray-200' : 'border-blue-400/20')} />
+            <div className="flex w-full flex-col gap-y-2">
+                {([
+                    { label: 'Platform', value: 'KAYA AI Platform' },
+                    { label: 'Version', value: 'v2.4.0' },
+                    { label: 'Build', value: '2026.03.15' },
+                ] as const).map(({ label, value }) => (
+                    <div key={label} className="flex items-center justify-between">
+                        <span className={cn('text-xs', isLight ? 'text-gray-500' : 'text-gray-400')}>{label}</span>
+                        <span className={cn('text-xs font-medium', isLight ? 'text-gray-900' : 'text-white')}>{value}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) => {
     const { theme, setTheme } = useTheme();
     const { user } = useAuth();
@@ -120,30 +148,7 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                                                 : 'bg-[#0d1117] border-blue-400/30 shadow-black/40'
                                         )}
                                     >
-                                        <div className="flex flex-col items-center gap-y-3 px-4 py-4">
-                                            <Image
-                                                alt="kaya-logo"
-                                                width={80}
-                                                height={16}
-                                                src="/png/kaya-logo-light.png"
-                                                className="opacity-90"
-                                            />
-                                            <div className={cn('w-full border-t', theme === 'light' ? 'border-gray-200' : 'border-blue-400/20')} />
-                                            <div className="flex w-full flex-col gap-y-2">
-                                                <div className="flex items-center justify-between">
-                                                    <span className={cn('text-xs', theme === 'light' ? 'text-gray-500' : 'text-gray-400')}>Platform</span>
-                                                    <span className={cn('text-xs font-medium', theme === 'light' ? 'text-gray-900' : 'text-white')}>KAYA AI Platform</span>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <span className={cn('text-xs', theme === 'light' ? 'text-gray-500' : 'text-gray-400')}>Version</span>
-                                                    <span className={cn('text-xs font-medium', theme === 'light' ? 'text-gray-900' : 'text-white')}>v2.4.0</span>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <span className={cn('text-xs', theme === 'light' ? 'text-gray-500' : 'text-gray-400')}>Build</span>
-                                                    <span className={cn('text-xs font-medium', theme === 'light' ? 'text-gray-900' : 'text-white')}>2026.03.15</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <InfoPopoverContent theme={theme} />
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -167,30 +172,7 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                                                 : 'bg-[#0d1117] border-blue-400/30 shadow-black/40'
                                         )}
                                     >
-                                        <div className="flex flex-col items-center gap-y-3 px-4 py-4">
-                                            <Image
-                                                alt="kaya-logo"
-                                                width={80}
-                                                height={16}
-                                                src="/png/kaya-logo-light.png"
-                                                className="opacity-90"
-                                            />
-                                            <div className={cn('w-full border-t', theme === 'light' ? 'border-gray-200' : 'border-blue-400/20')} />
-                                            <div className="flex w-full flex-col gap-y-2">
-                                                <div className="flex items-center justify-between">
-                                                    <span className={cn('text-xs', theme === 'light' ? 'text-gray-500' : 'text-gray-400')}>Platform</span>
-                                                    <span className={cn('text-xs font-medium', theme === 'light' ? 'text-gray-900' : 'text-white')}>KAYA AI Platform</span>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <span className={cn('text-xs', theme === 'light' ? 'text-gray-500' : 'text-gray-400')}>Version</span>
-                                                    <span className={cn('text-xs font-medium', theme === 'light' ? 'text-gray-900' : 'text-white')}>v2.4.0</span>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <span className={cn('text-xs', theme === 'light' ? 'text-gray-500' : 'text-gray-400')}>Build</span>
-                                                    <span className={cn('text-xs font-medium', theme === 'light' ? 'text-gray-900' : 'text-white')}>2026.03.15</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <InfoPopoverContent theme={theme} />
                                     </motion.div>
                                 )}
                             </AnimatePresence>
