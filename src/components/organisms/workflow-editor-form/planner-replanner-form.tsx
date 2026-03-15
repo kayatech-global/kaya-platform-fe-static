@@ -91,7 +91,7 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                 </div>
             </div>
             <div
-                className={cn('group flex flex-col h-[calc(100vh-210px)]', {
+                className={cn('group flex flex-col h-full', {
                     hidden: fetchingPrompts || fetchingModels || fetchingSLMModels || fetchingGuardrails,
                 })}
             >
@@ -228,7 +228,7 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                 </div>
 
                 {/* Sticky footer */}
-                <div className="agent-form-footer shrink-0 flex gap-x-3 justify-end pt-3 pb-1 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                <div className="agent-form-footer shrink-0 flex gap-x-3 justify-end pt-3 pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-[0_-2px_8px_0_rgba(0,0,0,0.06)]">
                     <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
                         Cancel
                     </Button>
