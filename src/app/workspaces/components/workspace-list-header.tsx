@@ -64,7 +64,7 @@ const WorkspaceListHeader = ({
     return (
         <div className="realm-header bg-[rgba(255,255,255,0.6)] px-6 h-[52px] flex items-center justify-between backdrop-blur-[7px] rounded-t-lg border-b border-b-gray-300 dark:bg-[rgba(31,41,55,0.8)] dark:backdrop-blur-[7px] dark:border-b-gray-700">
             <div className="flex flex-col sm:flex-row gap-2 items-center">
-                <p className="text-md font-medium text-gray-800 dark:text-white">Workspaces</p>
+                <p className="text-md font-medium text-gray-800 dark:text-white">Workspaces Management</p>
                 <MultiSelect
                     options={metadataCollection?.map(x => ({ label: x, value: x } as IOption))}
                     value={metadataOption || null}
