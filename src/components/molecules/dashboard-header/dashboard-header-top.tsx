@@ -102,13 +102,10 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                             <BellDot width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
                         </motion.div>
                         <div ref={zapRef} className="relative">
-                            <motion.div whileTap={{ scale: 0.9 }} onClick={() => {
-                                console.log("[v0] Zap icon clicked, current zapOpen:", zapOpen);
-                                setZapOpen((prev) => !prev);
-                            }}>
+                            <motion.div whileTap={{ scale: 0.9 }} onClick={() => setZapOpen((prev) => !prev)}>
                                 <Zap width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
                             </motion.div>
-                            {console.log("[v0] zapOpen state:", zapOpen)}
+                            
                             <AnimatePresence>
                                 {zapOpen && (
                                     <motion.div
@@ -147,13 +144,10 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                             </AnimatePresence>
                         </div>
                         <div ref={infoRef} className="relative">
-                            <motion.div whileTap={{ scale: 0.9 }} onClick={() => {
-                                console.log("[v0] Info icon clicked, current infoOpen:", infoOpen);
-                                setInfoOpen((prev) => !prev);
-                            }}>
+                            <motion.div whileTap={{ scale: 0.9 }} onClick={() => setInfoOpen((prev) => !prev)}>
                                 <Info width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
                             </motion.div>
-                            {console.log("[v0] infoOpen state:", infoOpen)}
+                            
                             <AnimatePresence>
                                 {infoOpen && (
                                     <motion.div
