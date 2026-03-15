@@ -1124,7 +1124,7 @@ export const AgentForm = ({
                     <PanelSection
                         key={`human-input-${selectedNode.id}`}
                         title="Human Input"
-                        isConfigured={!!humanInput?.isHumanInput}
+                        isConfigured={!!humanInput?.enableHumanInput}
                     >
                         <HumanInput
                             humanInput={humanInput}
