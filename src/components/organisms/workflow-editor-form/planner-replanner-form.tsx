@@ -36,7 +36,7 @@ export type PlannerReplannerAgent = {
 } & AgentType;
 
 export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
-    const { isReadOnly } = props;
+    const { isReadOnly, selectedNode } = props;
     const {
         fetchingPrompts,
         fetchingModels,
