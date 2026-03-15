@@ -1,7 +1,7 @@
 import React from 'react';
 import { SidebarTrigger } from '../sidebar/sidebar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/atoms';
-import { BellDot, ChevronDown, Maximize, Moon, Sun } from 'lucide-react';
+import { BellDot, ChevronDown, Maximize, Moon, Search, Sun } from 'lucide-react';
 import { cn, goFullScreen } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/atoms/avatar';
 import { useTheme } from '@/theme';
@@ -78,6 +78,9 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                             </motion.div>
                         </motion.div>
                         <motion.div whileTap={{ scale: 0.9 }}>
+                            <Search width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
+                        </motion.div>
+                        <motion.div whileTap={{ scale: 0.9 }}>
                             <BellDot width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
                         </motion.div>
                         <motion.div whileTap={{ scale: 0.9 }}>
@@ -132,6 +135,13 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                                                         <Moon className="text-gray-200" size={18} />
                                                     )}
                                                 </motion.div>
+                                            </motion.div>
+                                            <motion.div whileTap={{ scale: 0.9 }}>
+                                                <Search
+                                                    width={20}
+                                                    height={20}
+                                                    className="text-gray-700 dark:text-gray-200 stroke-[1.8px] cursor-pointer"
+                                                />
                                             </motion.div>
                                             <motion.div whileTap={{ scale: 0.9 }}>
                                                 <Maximize
