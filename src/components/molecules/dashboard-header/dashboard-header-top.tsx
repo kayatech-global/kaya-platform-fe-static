@@ -113,7 +113,12 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: -6, scale: 0.97 }}
                                         transition={{ duration: 0.15, ease: 'easeOut' }}
-                                        className="absolute right-0 top-8 z-50 w-52 rounded-lg border border-blue-400/30 bg-[#0d1117] shadow-xl shadow-black/40"
+                                        className={cn(
+                                            'absolute right-0 top-8 z-50 w-52 rounded-lg border shadow-xl',
+                                            theme === 'light'
+                                                ? 'bg-white border-gray-200 shadow-gray-200/60'
+                                                : 'bg-[#0d1117] border-blue-400/30 shadow-black/40'
+                                        )}
                                     >
                                         <div className="flex flex-col items-center gap-y-3 px-4 py-4">
                                             <Image
@@ -123,19 +128,19 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                                                 src="/png/kaya-logo-light.png"
                                                 className="opacity-90"
                                             />
-                                            <div className="w-full border-t border-blue-400/20" />
+                                            <div className={cn('w-full border-t', theme === 'light' ? 'border-gray-200' : 'border-blue-400/20')} />
                                             <div className="flex w-full flex-col gap-y-2">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs text-gray-400">Platform</span>
-                                                    <span className="text-xs font-medium text-white">KAYA AI Platform</span>
+                                                    <span className={cn('text-xs', theme === 'light' ? 'text-gray-500' : 'text-gray-400')}>Platform</span>
+                                                    <span className={cn('text-xs font-medium', theme === 'light' ? 'text-gray-900' : 'text-white')}>KAYA AI Platform</span>
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs text-gray-400">Version</span>
-                                                    <span className="text-xs font-medium text-white">v2.4.0</span>
+                                                    <span className={cn('text-xs', theme === 'light' ? 'text-gray-500' : 'text-gray-400')}>Version</span>
+                                                    <span className={cn('text-xs font-medium', theme === 'light' ? 'text-gray-900' : 'text-white')}>v2.4.0</span>
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs text-gray-400">Build</span>
-                                                    <span className="text-xs font-medium text-white">2026.03.15</span>
+                                                    <span className={cn('text-xs', theme === 'light' ? 'text-gray-500' : 'text-gray-400')}>Build</span>
+                                                    <span className={cn('text-xs font-medium', theme === 'light' ? 'text-gray-900' : 'text-white')}>2026.03.15</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -155,7 +160,12 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: -6, scale: 0.97 }}
                                         transition={{ duration: 0.15, ease: 'easeOut' }}
-                                        className="absolute right-0 top-8 z-50 w-52 rounded-lg border border-blue-400/30 bg-[#0d1117] shadow-xl shadow-black/40"
+                                        className={cn(
+                                            'absolute right-0 top-8 z-50 w-52 rounded-lg border shadow-xl',
+                                            theme === 'light'
+                                                ? 'bg-white border-gray-200 shadow-gray-200/60'
+                                                : 'bg-[#0d1117] border-blue-400/30 shadow-black/40'
+                                        )}
                                     >
                                         <div className="flex flex-col items-center gap-y-3 px-4 py-4">
                                             <Image
@@ -165,19 +175,19 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                                                 src="/png/kaya-logo-light.png"
                                                 className="opacity-90"
                                             />
-                                            <div className="w-full border-t border-blue-400/20" />
+                                            <div className={cn('w-full border-t', theme === 'light' ? 'border-gray-200' : 'border-blue-400/20')} />
                                             <div className="flex w-full flex-col gap-y-2">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs text-gray-400">Platform</span>
-                                                    <span className="text-xs font-medium text-white">KAYA AI Platform</span>
+                                                    <span className={cn('text-xs', theme === 'light' ? 'text-gray-500' : 'text-gray-400')}>Platform</span>
+                                                    <span className={cn('text-xs font-medium', theme === 'light' ? 'text-gray-900' : 'text-white')}>KAYA AI Platform</span>
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs text-gray-400">Version</span>
-                                                    <span className="text-xs font-medium text-white">v2.4.0</span>
+                                                    <span className={cn('text-xs', theme === 'light' ? 'text-gray-500' : 'text-gray-400')}>Version</span>
+                                                    <span className={cn('text-xs font-medium', theme === 'light' ? 'text-gray-900' : 'text-white')}>v2.4.0</span>
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs text-gray-400">Build</span>
-                                                    <span className="text-xs font-medium text-white">2026.03.15</span>
+                                                    <span className={cn('text-xs', theme === 'light' ? 'text-gray-500' : 'text-gray-400')}>Build</span>
+                                                    <span className={cn('text-xs font-medium', theme === 'light' ? 'text-gray-900' : 'text-white')}>2026.03.15</span>
                                                 </div>
                                             </div>
                                         </div>
