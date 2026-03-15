@@ -25,7 +25,7 @@ export const BREADCRUMB_LABELS_LEVEL_4: Record<string, string> = {
 
 /** Page title by path (for getPageTitle) */
 export const PAGE_TITLE_BY_PATH: Record<string, string> = {
-    workspaces: 'Workspace Management',
+    workspaces: 'Workspaces Management',
     usage: 'Usage',
     learnings: 'Learning Records',
     'api-configurations': 'API Configurations',
