@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google';
 
 import { ThemeProvider } from '@/theme';
 import { AuthProvider, QueryProvider } from '@/context';
+import { AIAssistant } from '@/components/organisms/ai-assistant';
 import './globals.css';
 import 'remixicon/fonts/remixicon.css';
 import { AppContextProvider } from '@/context/app-context';
@@ -29,7 +30,10 @@ const RootLayout = ({
                 <QueryProvider dehydratedState={undefined}>
                     <AppContextProvider>
                         <AuthProvider>
-                            <ThemeProvider defaultTheme="light">{children}</ThemeProvider>
+                            <ThemeProvider defaultTheme="light">
+                                {children}
+                                <AIAssistant />
+                            </ThemeProvider>
                         </AuthProvider>
                     </AppContextProvider>
                 </QueryProvider>
