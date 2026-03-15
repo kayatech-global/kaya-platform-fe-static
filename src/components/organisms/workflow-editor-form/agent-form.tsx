@@ -910,7 +910,7 @@ export const AgentForm = ({
                 </div>
             </div>
             <div
-                className={cn('group flex flex-col h-full', {
+                className={cn('group flex flex-col flex-1 min-h-0', {
                     hidden:
                         fetchingPrompts ||
                         fetchingApiTools ||
