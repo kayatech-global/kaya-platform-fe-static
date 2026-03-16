@@ -82,7 +82,6 @@ export const GuardrailsAPISelector = ({
                 values={getModelFromReusableAgent()}
                 imagePath="/png/api.png"
                 imageType="png"
-                imageWidth="70"
                 description={
                     description ?? 'Select the Guardrails APIs for efficient agent performance and task handling'
                 }

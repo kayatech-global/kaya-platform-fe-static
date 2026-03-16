@@ -256,7 +256,6 @@ export const PromptSelector = React.forwardRef<PromptSelectorRef, PromptSelector
                     labelClassName={labelClassName}
                     values={getPromptFromReusableAgent()}
                     imagePath="/png/empty_selection.png"
-                    imageWidth="120"
                     imageType="png"
                     description={
                         description ??

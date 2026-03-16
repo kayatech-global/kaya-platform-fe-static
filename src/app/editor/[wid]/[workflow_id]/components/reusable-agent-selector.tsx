@@ -500,7 +500,6 @@ export const ReusableAgentSelector = ({
                 }
                 imagePath="/png/select_reusable_agent.png"
                 imageType="png"
-                imageWidth="80"
                 description='Select a reusable agent from the saved list to auto-fill the fields below. Click "Add
                         Reusable Agent" to see available agents.'
                 footer={

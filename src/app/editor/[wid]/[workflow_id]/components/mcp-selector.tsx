@@ -219,7 +219,6 @@ export const MCPSelector = ({
                 values={getMcpSelectionItems(agent, mcpServers)}
                 imagePath="/png/api_empty.png"
                 imageType="png"
-                imageWidth="120"
                 description="Select the Model Context Protocol servers that will be used with your agent."
                 footer={
                     mcpServers.length > 0 && !agent?.isReusableAgentSelected ? (

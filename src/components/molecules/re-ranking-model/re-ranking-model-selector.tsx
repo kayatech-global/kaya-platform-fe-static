@@ -198,7 +198,6 @@ export const ReRankingModelSelector = ({
                 labelClassName={labelClassName}
                 values={getReRanking()}
                 imagePath="/png/empty_state_re_ranking.png"
-                imageWidth="120"
                 imageType="png"
                 description={
                     description ??

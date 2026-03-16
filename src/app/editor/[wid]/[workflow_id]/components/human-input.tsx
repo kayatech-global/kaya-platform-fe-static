@@ -41,6 +41,7 @@ export interface HumanInputRef {
 
 export interface HumanInputProps {
     isReadOnly?: boolean;
+    label?: string;
     humanInput: INodeHumanInput | undefined;
     agent?: AgentType;
     messageBrokers: IMessageBroker[];
@@ -350,7 +351,7 @@ const FormBody = (props: MessageTopicFormBodyProps) => {
 };
 
 export const HumanInput = forwardRef<HumanInputRef, HumanInputProps>((props, ref) => {
-    const { agent, humanInput, isReadOnly } = props;
+    const { agent, humanInput, isReadOnly, label } = props;
 
     // Use the existing hook instead of local state
     const {
@@ -386,11 +387,10 @@ export const HumanInput = forwardRef<HumanInputRef, HumanInputProps>((props, ref
     return (
         <>
             <DetailItemInput
-                label="Human Review"
+                label={label ?? 'Human Review'}
                 values={undefined}
                 imagePath="/png/knowledge_empty.png"
                 imageType="png"
-                imageWidth="100"
                 description="No human review option configured. Please use 'Enable Human Review' to enable the human feedback"
                 other={
                     humanInput ? (

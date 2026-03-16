@@ -345,7 +345,6 @@ export const GraphRagConfigSelector = forwardRef<GraphRagSelectorRef, GraphRagSe
                     values={getModelFromReusableAgent()}
                     imagePath="/png/empty-state-kg.png"
                     imageType="png"
-                    imageWidth="120"
                     description="Select graph RAG configurations for enhanced knowledge retrieval"
                     footer={
                         graphRags?.length && !agent?.isReusableAgentSelected ? (

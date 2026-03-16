@@ -355,7 +355,6 @@ export const ExecutableFunctionSelector = ({
                 values={getModelFromReusableAgent()}
                 imagePath="/png/api_empty.png"
                 imageType="png"
-                imageWidth="120"
                 description={description ?? 'Select the Functions for efficient agent performance and task handling'}
                 footer={
                     functions?.length && !agent?.isReusableAgentSelected ? (

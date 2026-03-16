@@ -60,7 +60,6 @@ export const RetrievalPicker = forwardRef<RetrievalPickerRef, RetrievalPickerPro
                         values={undefined}
                         imagePath="/png/select_reusable_agent.png"
                         imageType="png"
-                        imageWidth="80"
                         description={description}
                         footer={
                             <Button variant="link" disabled={disabled} onClick={onRetrieval}>

@@ -204,7 +204,6 @@ export const DatabaseConnectionSelector = ({
                 labelClassName={labelClassName}
                 values={getDatabase()}
                 imagePath="/png/database_empty.png"
-                imageWidth="120"
                 imageType="png"
                 description={
                     description ??

@@ -200,6 +200,28 @@ export type McpToolResponseType = {
     configurations: IConfiguration;
 };
 
+type AgentSection =
+    | 'prompt'
+    | 'intelligence'
+    | 'tools'
+    | 'human'
+    | 'guardrails'
+    | 'selflearning'
+    | 'broadcasting'
+    | 'structured'
+    | 'custom';
+
+const SectionGroupLabel = ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <p
+        className={cn(
+            'text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-1',
+            className
+        )}
+    >
+        {children}
+    </p>
+);
+
 type ReusableAgentPayloadType = {
     name: string;
     description: string;
@@ -286,6 +308,11 @@ export const AgentForm = ({
     const [customAttributes, setCustomAttributes] = useState<string>('');
     const [selectedConnector, setSelectedConnector] = useState<IConnectorForm[] | undefined>();
     const [structuredOutput, setStructuredOutput] = useState<StructuredOutputType>({ enabled: false, data: [] });
+    const [openSection, setOpenSection] = useState<AgentSection | null>(null);
+
+    const toggleSection = (section: AgentSection) => {
+        setOpenSection(prev => (prev === section ? null : section));
+    };
 
     const params = useParams();
     const { trigger, setSelectedNodeId, setTrigger, setGuardrailStore } = useDnD();
@@ -960,40 +987,47 @@ export const AgentForm = ({
                         />
                     </div>
 
+                    {/* Name & Description — always visible above accordions */}
+                    <div className="flex flex-col gap-y-3 pb-1">
+                        <Input
+                            label="Name"
+                            placeholder="Name of the agent"
+                            value={agent?.isReusableAgentSelected ? agent.name : (agentName ?? '')}
+                            onChange={e => setAgentName(e.target.value)}
+                            disabled={agent?.isReusableAgentSelected}
+                        />
+                        <Textarea
+                            label="Description"
+                            placeholder="Outline the specific tasks and responsibilities you expect this agent to handle"
+                            rows={3}
+                            value={agent?.isReusableAgentSelected ? agent.description : (description ?? '')}
+                            onChange={e => setDescription(e.target.value)}
+                            disabled={agent?.isReusableAgentSelected}
+                        />
+                    </div>
+
+                    <SectionGroupLabel>Core</SectionGroupLabel>
+
                     {/* Prompt Instruction */}
                     <PanelSection
                         key={`prompt-${selectedNode.id}`}
                         title="Prompt Instruction"
                         isConfigured={!!prompt || !!agent?.prompt?.id}
+                        isOpen={openSection === 'prompt'}
+                        onToggle={() => toggleSection('prompt')}
                     >
-                        <div className="flex flex-col gap-y-4">
-                            <Input
-                                label="Name"
-                                placeholder="Name of the agent"
-                                value={agent?.isReusableAgentSelected ? agent.name : (agentName ?? '')}
-                                onChange={e => setAgentName(e.target.value)}
-                                disabled={agent?.isReusableAgentSelected}
-                            />
-                            <Textarea
-                                label="Description"
-                                placeholder="Outline the specific tasks and responsibilities you expect this agent to handle"
-                                rows={5}
-                                value={agent?.isReusableAgentSelected ? agent.description : (description ?? '')}
-                                onChange={e => setDescription(e.target.value)}
-                                disabled={agent?.isReusableAgentSelected}
-                            />
-                            <PromptSelector
-                                ref={promptRef}
-                                agent={agent}
-                                prompt={prompt}
-                                setPrompt={setPrompt}
-                                allPrompts={allPrompts as PromptResponse[]}
-                                isReadonly={isReadOnly}
-                                promptsLoading={promptsLoading}
-                                onRefetch={onRefetchPrompt}
-                                onPromptChange={onPromptChange}
-                            />
-                        </div>
+                        <PromptSelector
+                            ref={promptRef}
+                            label=""
+                            agent={agent}
+                            prompt={prompt}
+                            setPrompt={setPrompt}
+                            allPrompts={allPrompts as PromptResponse[]}
+                            isReadonly={isReadOnly}
+                            promptsLoading={promptsLoading}
+                            onRefetch={onRefetchPrompt}
+                            onPromptChange={onPromptChange}
+                        />
                     </PanelSection>
 
                     {/* Intelligence Source */}
@@ -1001,8 +1035,11 @@ export const AgentForm = ({
                         key={`intelligence-${selectedNode.id}`}
                         title="Intelligence Source"
                         isConfigured={!!languageModel || !!agent?.languageModal?.modelId}
+                        isOpen={openSection === 'intelligence'}
+                        onToggle={() => toggleSection('intelligence')}
                     >
                         <LanguageSelector
+                            label=""
                             isSlm={isSlm}
                             agent={agent}
                             languageModel={languageModel}
@@ -1033,6 +1070,8 @@ export const AgentForm = ({
                             (selectedConnector?.length ?? 0) > 0 ||
                             (executableFunctions?.length ?? 0) > 0
                         }
+                        isOpen={openSection === 'tools'}
+                        onToggle={() => toggleSection('tools')}
                     >
                         <div className="flex flex-col gap-y-3">
                             <InputDataConnectContainer
@@ -1109,13 +1148,18 @@ export const AgentForm = ({
                         </div>
                     </PanelSection>
 
+                    <SectionGroupLabel className="mt-1">Behavior</SectionGroupLabel>
+
                     {/* Human Input */}
                     <PanelSection
                         key={`human-input-${selectedNode.id}`}
                         title="Human Input"
                         isConfigured={!!humanInput?.enableHumanInput}
+                        isOpen={openSection === 'human'}
+                        onToggle={() => toggleSection('human')}
                     >
                         <HumanInput
+                            label=""
                             humanInput={humanInput}
                             messageBrokers={messageBrokers ?? []}
                             agent={agent}
@@ -1130,8 +1174,11 @@ export const AgentForm = ({
                         key={`guardrails-${selectedNode.id}`}
                         title="Guardrails"
                         isConfigured={(guardrails?.length ?? 0) > 0}
+                        isOpen={openSection === 'guardrails'}
+                        onToggle={() => toggleSection('guardrails')}
                     >
                         <GuardrailSelector
+                            label=""
                             agent={agent}
                             allGuardrails={guardrailData ?? []}
                             guardrails={guardrails}
@@ -1151,8 +1198,11 @@ export const AgentForm = ({
                         key={`self-learning-${selectedNode.id}`}
                         title="Self Learning"
                         isConfigured={!!selfLearning?.enableLearning}
+                        isOpen={openSection === 'selflearning'}
+                        onToggle={() => toggleSection('selflearning')}
                     >
                         <SelfLearning
+                            label=""
                             selfLearning={selfLearning}
                             isReadOnly={isReadOnly}
                             apis={apis}
@@ -1180,14 +1230,18 @@ export const AgentForm = ({
                         />
                     </PanelSection>
 
+                    <SectionGroupLabel className="mt-1">Output</SectionGroupLabel>
+
                     {/* Output Broadcasting */}
                     <PanelSection
                         key={`output-broadcasting-${selectedNode.id}`}
                         title="Output Broadcasting"
                         isConfigured={!!outputBroadcasting}
+                        isOpen={openSection === 'broadcasting'}
+                        onToggle={() => toggleSection('broadcasting')}
                     >
                         <MessagePublisher
-                            title="Output Broadcasting"
+                            title=""
                             detailButtonLabel="Add Output Broadcasting"
                             viewLabel="View Output Broadcasting"
                             agent={agent}
@@ -1204,6 +1258,8 @@ export const AgentForm = ({
                         key={`structured-output-${selectedNode.id}`}
                         title="Structured Output"
                         isConfigured={!!structuredOutput?.enabled}
+                        isOpen={openSection === 'structured'}
+                        onToggle={() => toggleSection('structured')}
                     >
                         <StructuredOutputCreator
                             agent={agent}
@@ -1217,6 +1273,8 @@ export const AgentForm = ({
                         key={`custom-attributes-${selectedNode.id}`}
                         title="Custom Attributes"
                         isConfigured={enableCustomAttributes && customAttributes.trim().length > 0}
+                        isOpen={openSection === 'custom'}
+                        onToggle={() => toggleSection('custom')}
                     >
                         <div className="flex flex-col gap-y-3">
                             <div className="flex gap-x-3 items-start">
@@ -1259,12 +1317,21 @@ export const AgentForm = ({
                         </div>
                     </PanelSection>
 
-                    {/* Save as Reusable Agent */}
-                    <div className="flex items-center gap-x-2 px-1 py-1">
+                    {/* Hidden retry count */}
+                    <div hidden>
+                        <Input label="Retry Count" type="number" defaultValue={5} />
+                    </div>
+                </div>
+
+                {/* Sticky footer — always visible at the bottom of the panel */}
+                <div className="agent-form-footer shrink-0 pt-3 pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-[0_-2px_8px_0_rgba(0,0,0,0.06)]">
+                    {/* Save as reusable agent */}
+                    <div className="flex items-center gap-x-2 mb-3 px-1">
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Checkbox
+                                        id="save-reusable-footer"
                                         disabled={agent?.isReusableAgentSelected || isReadOnly}
                                         checked={saveAsReusableAgent}
                                         onCheckedChange={e => setSaveAsReusableAgent(!!e)}
@@ -1277,23 +1344,21 @@ export const AgentForm = ({
                                 )}
                             </Tooltip>
                         </TooltipProvider>
-                        <p className="text-xs font-medium text-gray-400">Save as reusable agent</p>
+                        <label
+                            htmlFor="save-reusable-footer"
+                            className="text-xs font-medium text-gray-500 dark:text-gray-400 cursor-pointer"
+                        >
+                            Save as reusable agent
+                        </label>
                     </div>
-
-                    {/* Hidden retry count */}
-                    <div hidden>
-                        <Input label="Retry Count" type="number" defaultValue={5} />
+                    <div className="flex gap-x-3 justify-end">
+                        <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
+                            Cancel
+                        </Button>
+                        <Button variant="primary" onClick={handleSaveNodeData}>
+                            Save
+                        </Button>
                     </div>
-                </div>
-
-                {/* Sticky footer — always visible at the bottom of the panel */}
-                <div className="agent-form-footer shrink-0 flex gap-x-3 justify-end pt-3 pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-[0_-2px_8px_0_rgba(0,0,0,0.06)]">
-                    <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
-                        Cancel
-                    </Button>
-                    <Button variant="primary" onClick={handleSaveNodeData}>
-                        Save
-                    </Button>
                 </div>
             </div>
         </div>

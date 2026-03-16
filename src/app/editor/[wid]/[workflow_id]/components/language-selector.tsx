@@ -165,7 +165,6 @@ export const LanguageSelector = ({
                 values={getModelFromReusableAgent()}
                 imagePath="/png/empty_selection.png"
                 imageType="svg"
-                imageWidth="100"
                 description={
                     description ??
                     "No intelligence source has been selected. Please use 'Add an Intelligence Source' to enable the agent's responses."

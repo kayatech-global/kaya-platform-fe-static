@@ -88,7 +88,6 @@ export const GuardrailSelectorTrigger: React.FC<GuardrailSelectorTriggerProps> =
             labelClassName={labelClassName}
             values={guardrailsList}
             imagePath="/png/guardrails.png"
-            imageWidth="120"
             imageType="png"
             description={
                 description ??

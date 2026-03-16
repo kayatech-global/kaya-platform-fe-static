@@ -276,7 +276,6 @@ export const ConnectorSelector = (props: ConnectorSelectorProps) => {
                 values={getModelFromReusableAgent()}
                 imagePath="/png/api_empty.png"
                 imageType="png"
-                imageWidth="120"
                 description={description ?? 'Select the Connectors for efficient agent performance and task handling'}
                 footer={
                     connectors?.length && !agent?.isReusableAgentSelected && !isReadonly ? (

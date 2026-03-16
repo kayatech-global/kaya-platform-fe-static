@@ -210,7 +210,6 @@ export const MessageBrokerTopicSelector = (props: MessageBrokerTopicSelectorProp
                 label={detailLabel}
                 imagePath={imagePath}
                 imageType="png"
-                imageWidth="100"
                 description={description}
                 footer={
                     workflowTrigger && !agent?.isReusableAgentSelected && !isReadonly ? (

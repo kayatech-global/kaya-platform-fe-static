@@ -263,7 +263,6 @@ export const GuardrailsModelSelector = ({
                 values={getModelFromReusableAgent(agent, guardrailsModels, isSelfLearning, allGuardrailsModels)}
                 imagePath="/png/guardrails.png"
                 imageType="png"
-                imageWidth="100"
                 description={
                     description ?? 'Select the Guardrails Models for efficient agent performance and task handling'
                 }

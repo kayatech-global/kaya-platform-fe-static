@@ -671,7 +671,6 @@ export const VectorRagSelector = forwardRef<VectorRagSelectorRef, VectorRagSelec
                         values={getModelFromReusableAgent()}
                         imagePath="/png/empty-state-rag.png"
                         imageType="png"
-                        imageWidth="120"
                         description="Select vector RAG configurations for enhanced retrieval capabilities"
                         footer={renderMainFooter()}
                     />

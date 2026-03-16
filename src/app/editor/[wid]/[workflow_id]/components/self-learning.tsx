@@ -77,6 +77,7 @@ export interface SelfLearningRef {
 
 export interface SelfLearningProps {
     isReadOnly?: boolean;
+    label?: string;
     nodeId?: string;
     apis: API[] | undefined;
     workflow?: IWorkflowGraphResponse;
@@ -630,7 +631,6 @@ curl --request POST \
                                     onModalChange={async () => await trigger(`embedding`)}
                                     onRefetch={() => refetchEmbedding?.()}
                                     onEmbeddingChange={onEmbeddingChange}
-                                    imageWidth="70"
                                 />
                             </div>
                         )}
@@ -1476,7 +1476,7 @@ curl --request POST \
 };
 
 export const SelfLearning = forwardRef<SelfLearningRef, SelfLearningProps>((props, ref) => {
-    const { agent, selfLearning, workflow, isReadOnly } = props;
+    const { agent, selfLearning, workflow, isReadOnly, label } = props;
     const {
         isValid,
         feedbackUrl,
@@ -1547,11 +1547,10 @@ export const SelfLearning = forwardRef<SelfLearningRef, SelfLearningProps>((prop
     return (
         <>
             <DetailItemInput
-                label="Self Learning"
+                label={label ?? 'Self Learning'}
                 values={getModelFromReusableAgent}
                 imagePath="/png/knowledge_empty.png"
                 imageType="png"
-                imageWidth="100"
                 description="Set up how your agent learns from interactions, including selecting learning sources and enabling feedback"
                 other={
                     selfLearning ? (

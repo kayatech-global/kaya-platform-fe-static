@@ -29,7 +29,6 @@ interface EmbeddingSelectorProps {
     onEmbeddingChange?: (embedding: IEmbedding | undefined) => void;
     onModalChange?: (open: boolean) => void;
     onRefetch: () => void;
-    imageWidth?: string;
 }
 
 export const EmbeddingModelSelector = ({
@@ -45,7 +44,6 @@ export const EmbeddingModelSelector = ({
     onRefetch,
     onEmbeddingChange,
     onModalChange,
-    imageWidth,
 }: EmbeddingSelectorProps) => {
     const [allSearchableEmbeddings, setAllSearchableEmbeddings] = useState<IEmbedding[]>(allEmbeddings);
     const [checkedItemId, setCheckedItemId] = useState<string>();
@@ -200,7 +198,6 @@ export const EmbeddingModelSelector = ({
                 labelClassName={labelClassName}
                 values={getEmbedding()}
                 imagePath="/png/empty_state_embedding.png"
-                imageWidth={imageWidth ?? "120"}
                 imageType="png"
                 description={
                     description ??

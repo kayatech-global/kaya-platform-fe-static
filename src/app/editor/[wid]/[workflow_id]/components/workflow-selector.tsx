@@ -157,7 +157,6 @@ export const WorkflowSelector = ({
                 labelClassName={labelClassName}
                 values={getWorkflowValue()}
                 imagePath="/png/empty_selection.png"
-                imageWidth="120"
                 imageType="png"
                 description={'Select a workflow to configure its settings and view details.'}
                 hideDescription={hideDescription}

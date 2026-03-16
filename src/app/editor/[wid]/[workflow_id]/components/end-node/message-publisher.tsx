@@ -212,7 +212,6 @@ export const MessagePublisher = forwardRef<MessagePublisherRef, MessagePublisher
                 values={getPublisherFromReusableAgent()}
                 imagePath="/png/knowledge_empty.png"
                 imageType="png"
-                imageWidth="100"
                 description={
                     props.description ??
                     "No output broadcasting has been configured. Please use 'Add Output Broadcasting' to add one."

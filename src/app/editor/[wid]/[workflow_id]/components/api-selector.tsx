@@ -355,7 +355,6 @@ export const APISelector: React.FC<APISelectorProps> = ({
                 values={getModelFromReusableAgent()}
                 imagePath="/png/api_empty.png"
                 imageType="png"
-                imageWidth="120"
                 description={description ?? 'Select the APIs for efficient agent performance and task handling'}
                 footer={
                     apis?.length && !agent?.isReusableAgentSelected ? (
