@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { useParams } from 'next/navigation';
 import { useMutation, useQueryClient } from 'react-query';
 import { toast } from 'sonner';
 import { FetchError, logger } from '@/utils';
@@ -19,11 +18,10 @@ import {
     useSLMQuery,
     useVectorRagQuery,
 } from './use-common';
-import { vectorRagService } from '@/services';
+
 import { prepareVectorRagApiBody, transformVectorRagToForm } from '@/utils/vector-rag-utils';
 
 export const useVectorRagConfiguration = (props?: IHookProps) => {
-    const params = useParams();
     const queryClient = useQueryClient();
 
     const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -71,7 +69,7 @@ export const useVectorRagConfiguration = (props?: IHookProps) => {
         if (!completed && currentStep === 3) {
             setCompleted(true);
         }
-    }, [currentStep]);
+    }, [currentStep, completed]);
 
     const { isFetching } = useVectorRagQuery({
         props,
@@ -112,7 +110,14 @@ export const useVectorRagConfiguration = (props?: IHookProps) => {
     } = usePromptQuery<PromptResponse>({ queryKey: 'prompts' });
 
     const { mutate: mutateCreate, isLoading: creating } = useMutation(
-        (data: IVectorRag) => vectorRagService.create<IVectorRag>(data, params.wid as string),
+        async (data: IVectorRag) => {
+            const stored = localStorage.getItem('mock_vector_rag_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            const newConfig = { ...data, id: `vector-rag-${Date.now()}` };
+            configs.push(newConfig);
+            localStorage.setItem('mock_vector_rag_data', JSON.stringify(configs));
+            return newConfig;
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -130,8 +135,17 @@ export const useVectorRagConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateUpdate, isLoading: updating } = useMutation(
-        ({ data, id }: { data: IVectorRag; id: string }) =>
-            vectorRagService.update<IVectorRag>(data, params.wid as string, id),
+        async ({ data, id }: { data: IVectorRag; id: string }) => {
+            const stored = localStorage.getItem('mock_vector_rag_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const index = configs.findIndex((x: any) => x.id === id);
+            if (index > -1) {
+                configs[index] = { ...configs[index], ...data, id };
+                localStorage.setItem('mock_vector_rag_data', JSON.stringify(configs));
+            }
+            return { data: configs[index], id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -149,7 +163,14 @@ export const useVectorRagConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateDelete } = useMutation(
-        async ({ id }: { id: string }) => await vectorRagService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_vector_rag_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const filtered = configs.filter((x: any) => x.id !== id);
+            localStorage.setItem('mock_vector_rag_data', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 queryClient.invalidateQueries(QueryKeyType.VECTOR_RAG);

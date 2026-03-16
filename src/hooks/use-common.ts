@@ -268,6 +268,30 @@ const MOCK_VARIABLE_DATA: IVariable[] = [
     },
 ];
 
+const MOCK_VECTOR_RAG_DATA: IVectorRag[] = [
+    {
+        id: 'vector-rag-1',
+        name: 'Standard Vector RAG',
+        description: 'Default vector RAG configuration',
+        configurations: {
+            ragVariant: 'STANDARD_RAG',
+            retrievals: [],
+        },
+    },
+];
+
+const MOCK_GRAPH_RAG_DATA: IGraphRag[] = [
+    {
+        id: 'graph-rag-1',
+        name: 'Standard Graph RAG',
+        description: 'Default graph RAG configuration',
+        configurations: {
+            graphRagType: 'STANDARD_RAG',
+            retrievals: [],
+        },
+    },
+];
+
 export const useIntellisense = () => {
     const { token } = useAuth();
     const [allIntellisenseValues, setAllIntellisenseValues] = useState<string[]>([]);
@@ -792,13 +816,22 @@ export const useVectorRagQuery = <T = IVectorRag, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.VECTOR_RAG,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_vector_rag_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_VECTOR_RAG_DATA;
+                }
+            }
+            localStorage.setItem('mock_vector_rag_data', JSON.stringify(MOCK_VECTOR_RAG_DATA));
+            return MOCK_VECTOR_RAG_DATA as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -823,13 +856,22 @@ export const useGraphRagQuery = <T = IGraphRag, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.GRAPH_RAG,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_graph_rag_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_GRAPH_RAG_DATA;
+                }
+            }
+            localStorage.setItem('mock_graph_rag_data', JSON.stringify(MOCK_GRAPH_RAG_DATA));
+            return MOCK_GRAPH_RAG_DATA as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,

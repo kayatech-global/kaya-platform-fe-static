@@ -133,34 +133,34 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
                 icon: 'Braces',
                 isSingleLink: true,
             },
-            // {
-            //     id: 'knowledge-source-configs',
-            //     title: 'Configure Knowledge Sources',
-            //     url: '#',
-            //     icon: 'HardDriveDownload',
-            //     items: [
-            //         {
-            //             id: 'vector_rag',
-            //             title: 'Add Vector RAG',
-            //             url: '/workspace/[wid]/knowledge-source-configs/vector-rag-configurations',
-            //             isDisabled: false,
-            //             disabledMessage: 'Vector RAG not enabled for the sandbox license',
-            //         },
-            //         {
-            //             id: 'graph_rag',
-            //             title: 'Add Graph RAG',
-            //             url: '/workspace/[wid]/knowledge-source-configs/graph-rag-configurations',
-            //             isDisabled: false,
-            //             disabledMessage: 'Graph RAG not enabled for the sandbox license',
-            //         },
+            {
+                id: 'knowledge-source-configs',
+                title: 'Configure Knowledge Sources',
+                url: '#',
+                icon: 'HardDriveDownload',
+                items: [
+                    {
+                        id: 'vector_rag',
+                        title: 'Add Vector RAG',
+                        url: '/workspace/[wid]/knowledge-source-configs/vector-rag-configurations',
+                        isDisabled: false,
+                        disabledMessage: 'Vector RAG not enabled for the sandbox license',
+                    },
+                    {
+                        id: 'graph_rag',
+                        title: 'Add Graph RAG',
+                        url: '/workspace/[wid]/knowledge-source-configs/graph-rag-configurations',
+                        isDisabled: false,
+                        disabledMessage: 'Graph RAG not enabled for the sandbox license',
+                    },
 
-            //         // {
-            //         //     id: 'memory_story',
-            //         //     title: 'Add Memory Store',
-            //         //     url: '/workspace/[wid]/knowledge-source-configs/memory-store-configurations',
-            //         // },
-            //     ],
-            // },
+                    //         // {
+                    //         //     id: 'memory_story',
+                    //         //     title: 'Add Memory Store',
+                    //         //     url: '/workspace/[wid]/knowledge-source-configs/memory-store-configurations',
+                    //         // },
+                ],
+            },
             // {
             //     id: 'connection_configs',
             //     title: 'Configure Connections',
