@@ -7,14 +7,12 @@ import { isNullOrEmpty } from '@/lib/utils';
 import { ILLMConfigForm, ILLMForm, IProvider, IProviderConfig, IHookProps } from '@/models';
 import { FetchError, logger } from '@/utils';
 import { Database, Link, TrendingDownIcon, TrendingUpIcon, Unplug } from 'lucide-react';
-import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useInView } from 'react-intersection-observer';
 import { useMutation, useQueryClient } from 'react-query';
 import { toast } from 'sonner';
 import { useLLMQuery, usePlatformQuery, useVaultQuery } from './use-common';
-import { llmService } from '@/services';
 
 const initWorkspaceDataCardInfo: DashboardDataCardProps[] = [
     {
@@ -77,7 +75,6 @@ const activityData: ActivityProps[] = [
 ];
 
 export const useLlmConfiguration = (props?: IHookProps) => {
-    const params = useParams();
     const { intelligentSource, setIntelligentSource } = useApp();
     const [llmConfigurationDataCardInfo] = useState<DashboardDataCardProps[]>(
         initWorkspaceDataCardInfo
@@ -88,6 +85,16 @@ export const useLlmConfiguration = (props?: IHookProps) => {
     const [llmConfigurations, setLlmConfigurations] = useState<ILLMConfigForm[]>([]);
     const [isOpen, setOpen] = useState<boolean>(false);
     const [secrets, setSecrets] = useState<OptionModel[]>([]);
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        setValue,
+        watch,
+        formState: { errors, isValid },
+        control,
+    } = useForm<ILLMConfigForm>({ mode: 'all' });
 
     useEffect(() => {
         if (!isOpen) {
@@ -111,7 +118,7 @@ export const useLlmConfiguration = (props?: IHookProps) => {
                 timeout: null,
             });
         }
-    }, [isOpen]);
+    }, [isOpen, reset]);
 
     const { isFetching } = useLLMQuery({
         props,
@@ -179,23 +186,20 @@ export const useLlmConfiguration = (props?: IHookProps) => {
         setLlmConfigurations(data);
     };
 
-    const {
-        register,
-        handleSubmit,
-        reset,
-        setValue,
-        watch,
-        formState: { errors, isValid },
-        control,
-    } = useForm<ILLMConfigForm>({ mode: 'all' });
-
     const { ref } = useInView({
         threshold: 0.5,
         rootMargin: '100px',
     });
 
     const { mutate: mutateCreate, isLoading: creating } = useMutation(
-        (data: ILLMForm) => llmService.create<ILLMForm>(data, params.wid as string),
+        async (data: ILLMForm) => {
+            const stored = localStorage.getItem('mock_llm_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            const newConfig = { ...data, id: `mock-llm-${Date.now()}` };
+            configs.push(newConfig);
+            localStorage.setItem('mock_llm_configs', JSON.stringify(configs));
+            return newConfig;
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -213,7 +217,16 @@ export const useLlmConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateUpdate, isLoading: updating } = useMutation(
-        ({ data, id }: { data: ILLMForm; id: string }) => llmService.update<ILLMForm>(data, params.wid as string, id),
+        async ({ data, id }: { data: ILLMForm; id: string }) => {
+            const stored = localStorage.getItem('mock_llm_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            const index = configs.findIndex((x: ILLMForm) => x.id === id);
+            if (index > -1) {
+                configs[index] = { ...data, id };
+                localStorage.setItem('mock_llm_configs', JSON.stringify(configs));
+            }
+            return { data: configs[index], id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -231,7 +244,13 @@ export const useLlmConfiguration = (props?: IHookProps) => {
     );
 
     const { mutateAsync: mutateDeleteLlm } = useMutation(
-        async ({ id }: { id: string }) => await llmService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_llm_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            const filtered = configs.filter((x: ILLMForm) => x.id !== id);
+            localStorage.setItem('mock_llm_configs', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 queryClient.invalidateQueries(QueryKeyType.LLM);

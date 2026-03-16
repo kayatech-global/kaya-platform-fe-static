@@ -4,17 +4,15 @@ import { QueryKeyType } from '@/enums';
 import { ActivityColorCode } from '@/enums/activity-color-code-type';
 import { isNullOrEmpty } from '@/lib/utils';
 import { FormRule, IHookProps, IVault, IVaultForm } from '@/models';
-import { vaultService } from '@/services';
-import { FetchError, logger } from '@/utils';
 import { validateField } from '@/utils/validation';
 import { Unplug, Database, Link, TrendingUpIcon, TrendingDownIcon } from 'lucide-react';
-import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useInView } from 'react-intersection-observer';
 import { useMutation, useQueryClient } from 'react-query';
 import { toast } from 'sonner';
 import { useVaultQuery } from './use-common';
+import { FetchError, logger } from '@/utils';
 
 const initWorkspaceDataCardInfo: DashboardDataCardProps[] = [
     {
@@ -85,7 +83,6 @@ const secretDescriptionValidation = {
 };
 
 export const useVault = (props?: IHookProps) => {
-    const params = useParams();
     const queryClient = useQueryClient();
     const [isOpen, setOpen] = useState<boolean>(false);
     const [apiConfigurationDataCardInfo] = useState<DashboardDataCardProps[]>(
@@ -137,37 +134,56 @@ export const useVault = (props?: IHookProps) => {
         isError: createIsError,
         isLoading: creating,
         isSuccess,
-    } = useMutation((data: IVault) => vaultService.create<IVault>(data, params.wid as string), {
-        onSuccess: data => {
-            if (props?.onRefetch) {
-                props.onRefetch();
-            }
-            if (props?.onChange) {
-                const fakeEvent = {
-                    target: {
-                        value: data?.keyName,
-                        name: props?.data ?? '',
-                    },
-                } as React.ChangeEvent<HTMLSelectElement>;
+    } = useMutation(
+        async (data: IVault) => {
+            const stored = localStorage.getItem('mock_vault_data');
+            const vault = stored ? JSON.parse(stored) : [];
+            const newSecret = { ...data, id: `mock-vault-${Date.now()}` };
+            vault.push(newSecret);
+            localStorage.setItem('mock_vault_data', JSON.stringify(vault));
+            return newSecret;
+        },
+        {
+            onSuccess: data => {
+                if (props?.onRefetch) {
+                    props.onRefetch();
+                }
+                if (props?.onChange) {
+                    const fakeEvent = {
+                        target: {
+                            value: data?.keyName,
+                            name: props?.data ?? '',
+                        },
+                    } as React.ChangeEvent<HTMLSelectElement>;
 
-                props?.onChange(fakeEvent);
-            }
-            queryClient.invalidateQueries(QueryKeyType.VAULT);
-            setOpen(false);
-            toast.success('Vault saved successfully');
-        },
-        onError: (error: FetchError) => {
-            toast.error(error?.message);
-            logger.error('Error creating Vault:', error?.message);
-        },
-    });
+                    props?.onChange(fakeEvent);
+                }
+                queryClient.invalidateQueries(QueryKeyType.VAULT);
+                setOpen(false);
+                toast.success('Vault saved successfully');
+            },
+            onError: (error: FetchError) => {
+                toast.error(error?.message);
+                logger.error('Error creating Vault:', error?.message);
+            },
+        }
+    );
 
     const {
         mutate: mutateUpdateVault,
         isError: updateIsError,
         isLoading: updating,
     } = useMutation(
-        ({ data, id }: { data: IVault; id: string }) => vaultService.update<IVault>(data, params.wid as string, id),
+        async ({ data, id }: { data: IVault; id: string }) => {
+            const stored = localStorage.getItem('mock_vault_data');
+            const vault = stored ? JSON.parse(stored) : [];
+            const index = vault.findIndex((x: IVault) => x.id === id);
+            if (index > -1) {
+                vault[index] = { ...vault[index], ...data, id };
+                localStorage.setItem('mock_vault_data', JSON.stringify(vault));
+            }
+            return { data: vault[index], id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -185,7 +201,13 @@ export const useVault = (props?: IHookProps) => {
     );
 
     const { mutate: mutateDeleteVault } = useMutation(
-        async ({ id }: { id: string }) => await vaultService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_vault_data');
+            const vault = stored ? JSON.parse(stored) : [];
+            const filtered = vault.filter((x: IVault) => x.id !== id);
+            localStorage.setItem('mock_vault_data', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {

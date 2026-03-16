@@ -48,59 +48,59 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
                 icon: 'Cloud',
                 isSingleLink: true,
             },
-            // {
-            //     id: 'guardrails',
-            //     title: 'Guardrails',
-            //     url: '#',
-            //     icon: 'ShieldCheck',
-            //     items: [
-            //         {
-            //             id: 'setup-guardrails',
-            //             title: 'Setup Guardrails',
-            //             url: '/workspace/[wid]/guardrails/setup-guardrails',
-            //         },
-            //         {
-            //             id: 'guardrails-api-configurations',
-            //             title: 'Guardrails API Configurations',
-            //             url: '/workspace/[wid]/guardrails/guardrails-api-configurations',
-            //             isDisabled: true,
-            //             disabledMessage: 'Guardrails API Configurations are not enabled for this workspace',
-            //         },
-            //         {
-            //             id: 'guardrails-model-configurations',
-            //             title: 'Guardrails Model Configurations',
-            //             url: '/workspace/[wid]/guardrails/guardrails-model-configurations',
-            //         },
-            //     ],
-            //     // isSingleLink: true,
-            //     // isDisabled: false,
-            //     // disabledMessage: 'Guardrails not enabled for the sandbox license',
-            // },
-            // {
-            //     id: 'language_model_configs',
-            //     title: 'Configure Intelligence Sources',
-            //     url: '#',
-            //     icon: 'CloudSnow',
-            //     items: [
-            //         {
-            //             id: 'llm_configurations',
-            //             title: 'Add LLM Configurations',
-            //             url: '/workspace/[wid]/intelligence-source-configs/llm-configurations',
-            //         },
-            //         {
-            //             id: 'slm_configurations',
-            //             title: 'Add SLM Configurations',
-            //             url: '/workspace/[wid]/intelligence-source-configs/slm-configurations',
-            //         },
-            //         {
-            //             id: 'sts_configurations',
-            //             title: 'Add STS Configurations',
-            //             url: '/workspace/[wid]/intelligence-source-configs/sts-configurations',
-            //             // isDisabled: true,
-            //             // disabledMessage: 'STS Configurations not enabled for the sandbox license',
-            //         },
-            //     ],
-            // },
+            {
+                id: 'guardrails',
+                title: 'Guardrails',
+                url: '#',
+                icon: 'ShieldCheck',
+                items: [
+                    {
+                        id: 'setup-guardrails',
+                        title: 'Setup Guardrails',
+                        url: '/workspace/[wid]/guardrails/setup-guardrails',
+                    },
+                    {
+                        id: 'guardrails-api-configurations',
+                        title: 'Guardrails API Configurations',
+                        url: '/workspace/[wid]/guardrails/guardrails-api-configurations',
+                        isDisabled: true,
+                        disabledMessage: 'Guardrails API Configurations are not enabled for this workspace',
+                    },
+                    {
+                        id: 'guardrails-model-configurations',
+                        title: 'Guardrails Model Configurations',
+                        url: '/workspace/[wid]/guardrails/guardrails-model-configurations',
+                    },
+                ],
+                // isSingleLink: true,
+                // isDisabled: false,
+                // disabledMessage: 'Guardrails not enabled for the sandbox license',
+            },
+            {
+                id: 'language_model_configs',
+                title: 'Configure Intelligence Sources',
+                url: '#',
+                icon: 'CloudSnow',
+                items: [
+                    {
+                        id: 'llm_configurations',
+                        title: 'Add LLM Configurations',
+                        url: '/workspace/[wid]/intelligence-source-configs/llm-configurations',
+                    },
+                    {
+                        id: 'slm_configurations',
+                        title: 'Add SLM Configurations',
+                        url: '/workspace/[wid]/intelligence-source-configs/slm-configurations',
+                    },
+                    {
+                        id: 'sts_configurations',
+                        title: 'Add STS Configurations',
+                        url: '/workspace/[wid]/intelligence-source-configs/sts-configurations',
+                        // isDisabled: true,
+                        // disabledMessage: 'STS Configurations not enabled for the sandbox license',
+                    },
+                ],
+            },
             // {
             //     id: 'language_enhancers_configs',
             //     title: 'Configure Intelligence Enhancers',
@@ -119,13 +119,13 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
             //         },
             //     ],
             // },
-            // {
-            //     id: 'vault',
-            //     title: 'Add Vaults or Secure Your Secrets',
-            //     url: '/workspace/[wid]/vault',
-            //     icon: 'Vault',
-            //     isSingleLink: true,
-            // },
+            {
+                id: 'vault',
+                title: 'Add Vaults or Secure Your Secrets',
+                url: '/workspace/[wid]/vault',
+                icon: 'Vault',
+                isSingleLink: true,
+            },
             // {
             //     id: 'variables',
             //     title: 'Set Workspace Variables',

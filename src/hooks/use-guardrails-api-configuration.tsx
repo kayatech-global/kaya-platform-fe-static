@@ -5,16 +5,12 @@ import { useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { IGuardrailConfigForm, IAuthorization, IHookProps, ToolGuardrailAPI } from '@/models';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { useParams } from 'next/navigation';
-import { useAuth } from '@/context';
 import { GuardrailsApiConfigurationData } from '@/app/workspace/[wid]/guardrails/guardrails-api-configurations/components/guardrails-api-configuration-table-container';
-import { $fetch, FetchError, logger } from '@/utils';
-import { isNullOrEmpty, resolveTriggerQuery } from '@/lib/utils';
+import { logger } from '@/utils';
+import { isNullOrEmpty } from '@/lib/utils';
 import { toast } from 'sonner';
 import { AuthorizationType } from '@/enums';
 import { ActivityColorCode } from '@/enums/activity-color-code-type';
-import { useVaultQuery } from './use-common';
 
 export enum HeaderType {
     ApiHeader,
@@ -89,66 +85,30 @@ const activityData: ActivityProps[] = [
     },
 ];
 
-const retrieveAllGuardrailsApiConfigurationsForWorkspace = async (workspaceId: number | string) => {
-    const response = await $fetch<ToolGuardrailAPI[]>(`/workspaces/${workspaceId}/tools/guardrails-api`, {
-        method: 'GET',
-        headers: {
-            'x-workspace-id': workspaceId.toString(),
+const MOCK_GUARDRAIL_API_CONFIGS: ToolGuardrailAPI[] = [
+    {
+        id: 'mock-gr-api-1',
+        name: 'OpenAI Content Filter',
+        description: 'Mock OpenAI content filtering API',
+        configurations: {
+            url: 'https://api.openai.com/v1/moderations',
+            method: 'POST',
+            guardrailType: 'CONTENT_MODERATION',
+            guardrailApiProvider: 'OpenAI',
+            headers: [{ name: 'Authorization', value: 'Bearer {{OPENAI_API_KEY}}', isSecret: true, dataType: 'string' }],
+            payload: JSON.stringify({ input: { type: 'string', description: 'Input text to moderate' } }),
+            authorization: { authType: AuthorizationType.Empty, meta: {} },
+            promotedVariables: '{}',
         },
-    });
+    },
+];
 
-    return response.data;
-};
-
-const createGuardrailsRecord = async (data: ToolGuardrailAPI, workspaceId: number | string) => {
-    const response = await $fetch<ToolGuardrailAPI>(`/workspaces/${workspaceId}/tools/guardrails-api`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-            'x-workspace-id': workspaceId.toString(),
-        },
-    });
-    return response.data;
-};
-
-const updateGuardrailsRecord = async (data: ToolGuardrailAPI, workspaceId: number | string, id: string) => {
-    const response = await $fetch<ToolGuardrailAPI>(
-        `/workspaces/${workspaceId}/tools/guardrails-api/${id}`,
-        {
-            method: 'PUT',
-            body: JSON.stringify(data),
-            headers: {
-                'x-workspace-id': workspaceId.toString(),
-            },
-        },
-        {
-            denyRedirectOnForbidden: true,
-        }
-    );
-    return response.data;
-};
-
-const deleteGuardrailsRecord = async (workspaceId: number | string, id: string) => {
-    const response = await $fetch(
-        `/workspaces/${workspaceId}/tools/guardrails-api/${id}`,
-        {
-            method: 'DELETE',
-            headers: {
-                'x-workspace-id': workspaceId.toString(),
-            },
-        },
-        {
-            denyRedirectOnForbidden: true,
-        }
-    );
-    return response.data;
-};
+const MOCK_SECRETS: OptionModel[] = [
+    { name: 'OPENAI_API_KEY', value: 'OPENAI_API_KEY' },
+    { name: 'AZURE_CONTENT_SAFETY_KEY', value: 'AZURE_CONTENT_SAFETY_KEY' },
+];
 
 export const useGuardrailsApiConfiguration = (props?: IHookProps) => {
-    const params = useParams();
-    const { token } = useAuth();
-    const queryClient = useQueryClient();
-    const [loading, setLoading] = useState<boolean>(false);
     const [guardrailsApiConfigurationDataCardInfo] = useState<
         DashboardDataCardProps[]
     >(initWorkspaceDataCardInfo);
@@ -159,57 +119,7 @@ export const useGuardrailsApiConfiguration = (props?: IHookProps) => {
         []
     );
     const [isOpen, setOpen] = useState<boolean>(false);
-    const [secrets, setSecrets] = useState<OptionModel[]>([]);
-
-    useEffect(() => {
-        if (!isOpen) {
-            reset({
-                id: undefined,
-                apiHeaders: [],
-                apiMethod: '',
-                guardrailType: '',
-                apiName: '',
-                payloadFormat: '',
-                description: '',
-                payloads: [{ name: '', dataType: 'string', value: '' }],
-                authorization: {
-                    authType: AuthorizationType.Empty,
-                    meta: { headerName: '', headerValue: '', password: '', token: '', username: '' },
-                },
-                isReadOnly: undefined,
-                promotedVariables: [{ name: '', dataType: 'string', value: '' }],
-            });
-        }
-    }, [isOpen]);
-
-    const { isFetching } = useQuery(
-        'guardrails-apis',
-        () => retrieveAllGuardrailsApiConfigurationsForWorkspace(params.wid as string),
-        {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
-            refetchOnWindowFocus: false,
-            onSuccess: data => {
-                mapAllGuardrailsApis(data);
-            },
-            onError: () => {
-                setGuardrailsApiConfigurationTableData([]);
-                setGuardrailsApiConfigurations([]);
-            },
-        }
-    );
-
-    const { refetch, isLoading: loadingSecrets } = useVaultQuery({
-        onSuccess: data => {
-            const mapData = data?.map(x => ({
-                name: x.keyName as string,
-                value: x.keyName as string,
-            }));
-            setSecrets([...mapData]);
-        },
-        onError: () => {
-            setSecrets([]);
-        },
-    });
+    const [secrets] = useState<OptionModel[]>(MOCK_SECRETS);
 
     const mapAllGuardrailsApis = (arr: ToolGuardrailAPI[]) => {
         const data = arr.map((x: ToolGuardrailAPI) => ({
@@ -231,6 +141,25 @@ export const useGuardrailsApiConfiguration = (props?: IHookProps) => {
         setGuardrailsApiConfigurations(data);
     };
 
+    useEffect(() => {
+        const stored = localStorage.getItem('mock_guardrail_apis');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                mapAllGuardrailsApis(parsed);
+            } catch {
+                mapAllGuardrailsApis(MOCK_GUARDRAIL_API_CONFIGS);
+            }
+        } else {
+            mapAllGuardrailsApis(MOCK_GUARDRAIL_API_CONFIGS);
+        }
+    }, []);
+
+    const saveToLocalStorage = (data: ToolGuardrailAPI[]) => {
+        localStorage.setItem('mock_guardrail_apis', JSON.stringify(data));
+        mapAllGuardrailsApis(data);
+    };
+
     const {
         register,
         handleSubmit,
@@ -246,6 +175,27 @@ export const useGuardrailsApiConfiguration = (props?: IHookProps) => {
             promotedVariables: [{ name: '', dataType: 'string', value: '' }],
         },
     });
+
+    useEffect(() => {
+        if (!isOpen) {
+            reset({
+                id: undefined,
+                apiHeaders: [],
+                apiMethod: '',
+                guardrailType: '',
+                apiName: '',
+                payloadFormat: '',
+                description: '',
+                payloads: [{ name: '', dataType: 'string', value: '' }],
+                authorization: {
+                    authType: AuthorizationType.Empty,
+                    meta: { headerName: '', headerValue: '', password: '', token: '', username: '' },
+                },
+                isReadOnly: undefined,
+                promotedVariables: [{ name: '', dataType: 'string', value: '' }],
+            });
+        }
+    }, [isOpen, reset]);
 
     const {
         fields: apiHeaders,
@@ -293,58 +243,88 @@ export const useGuardrailsApiConfiguration = (props?: IHookProps) => {
         });
     };
 
-    const { isLoading: createIsLoading, mutate: mutateCreate } = useMutation(
-        (data: ToolGuardrailAPI) => createGuardrailsRecord(data, params.wid as string),
-        {
-            onSuccess: () => {
-                if (props?.onRefetch) {
-                    props.onRefetch();
-                }
-                queryClient.invalidateQueries('guardrails-apis');
-                setLoading(false);
-                setOpen(false);
-                toast.success('Guardrails API saved successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error creating Guardrails API:', error?.message);
-            },
-        }
-    );
+    const isFetching = false;
+    const loadingSecrets = false;
+    const createIsLoading = false;
+    const updateIsLoading = false;
 
-    const { isLoading: updateIsLoading, mutate: mutateUpdate } = useMutation(
-        ({ data, id }: { data: ToolGuardrailAPI; id: string }) =>
-            updateGuardrailsRecord(data, params.wid as string, id),
-        {
-            onSuccess: () => {
-                if (props?.onRefetch) {
-                    props.onRefetch();
-                }
-                queryClient.invalidateQueries('guardrails-apis');
-                setLoading(false);
-                setOpen(false);
-                toast.success('Guardrails API updated successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error updating Guardrails API:', error?.message);
-            },
-        }
-    );
+    const refetch = async () => {
+        logger.log('Mock vault refetch called');
+    };
 
-    const { mutate: mutateDeleteGuardrailsApi } = useMutation(
-        async ({ id }: { id: string }) => await deleteGuardrailsRecord(params.wid as string, id),
-        {
-            onSuccess: () => {
-                queryClient.invalidateQueries('guardrails-apis');
-                toast.success('Guardrails API deleted successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error deleting Guardrails API:', error?.message);
-            },
-        }
-    );
+    const mutateCreate = (data: ToolGuardrailAPI) => {
+        const newApi = { ...data, id: Math.random().toString(36).substr(2, 9) };
+        const updated = [
+            ...guardrailsApiConfigurations.map(x => ({
+                id: x.id,
+                name: x.apiName,
+                description: x.description,
+                isReadOnly: x.isReadOnly,
+                configurations: {
+                    url: x.apiUrl,
+                    method: x.apiMethod,
+                    guardrailType: x.guardrailType,
+                    guardrailApiProvider: x.guardrailApiProvider,
+                    headers: x.apiHeaders,
+                    payload: x.payloadOutput,
+                    authorization: x.authorization,
+                    promotedVariables: x.promotedVariables,
+                }
+            }) as unknown as ToolGuardrailAPI),
+            newApi
+        ];
+        saveToLocalStorage(updated);
+        setOpen(false);
+        toast.success('Guardrails API saved successfully (Mock)');
+    };
+
+    const mutateUpdate = ({ data, id }: { data: ToolGuardrailAPI; id: string }) => {
+        const updated = guardrailsApiConfigurations.map(x => {
+            if (x.id === id) return { ...data, id };
+            return {
+                id: x.id,
+                name: x.apiName,
+                description: x.description,
+                isReadOnly: x.isReadOnly,
+                configurations: {
+                    url: x.apiUrl,
+                    method: x.apiMethod,
+                    guardrailType: x.guardrailType,
+                    guardrailApiProvider: x.guardrailApiProvider,
+                    headers: x.apiHeaders,
+                    payload: x.payloadOutput,
+                    authorization: x.authorization,
+                    promotedVariables: x.promotedVariables,
+                }
+            } as unknown as ToolGuardrailAPI;
+        });
+        saveToLocalStorage(updated);
+        setOpen(false);
+        toast.success('Guardrails API updated successfully (Mock)');
+    };
+
+    const mutateDeleteGuardrailsApi = ({ id }: { id: string }) => {
+        const updated = guardrailsApiConfigurations
+            .filter(x => x.id !== id)
+            .map(x => ({
+                id: x.id,
+                name: x.apiName,
+                description: x.description,
+                isReadOnly: x.isReadOnly,
+                configurations: {
+                    url: x.apiUrl,
+                    method: x.apiMethod,
+                    guardrailType: x.guardrailType,
+                    guardrailApiProvider: x.guardrailApiProvider,
+                    headers: x.apiHeaders,
+                    payload: x.payloadOutput,
+                    authorization: x.authorization,
+                    promotedVariables: x.promotedVariables,
+                }
+            }) as unknown as ToolGuardrailAPI);
+        saveToLocalStorage(updated);
+        toast.success('Guardrails API deleted successfully (Mock)');
+    };
 
     const onEdit = (id: string) => {
         if (id) {
@@ -498,7 +478,6 @@ export const useGuardrailsApiConfiguration = (props?: IHookProps) => {
     const buttonText = () => {
         if (isFetching) return 'Please Wait';
         if (createIsLoading || updateIsLoading) return 'Saving';
-        if (loading) return 'Verifying';
         return 'Save';
     };
 

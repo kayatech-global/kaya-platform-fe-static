@@ -32,38 +32,90 @@ import {
     PromptTemplate,
     ToolAPI,
 } from '@/models';
-import {
-    agentService,
-    apiService,
-    connectorService,
-    databaseService,
-    embeddingModelService,
-    executableFunctionService,
-    graphRagService,
-    guardrailBindingService,
-    guardrailModelService,
-    guardrailService,
-    llmService,
-    mcpService,
-    messageBrokerService,
-    platformService,
-    promptService,
-    reRankingModelService,
-    slmService,
-    stsService,
-    variableService,
-    vaultService,
-    vectorRagService,
-} from '@/services';
-import { FetchError, logger } from '@/utils';
-import { useParams } from 'next/navigation';
-import { useMemo, useRef, useState } from 'react';
-import { useMutation, useQuery } from 'react-query';
+import { logger } from '@/utils';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
 import { toast } from 'sonner';
 import { IMCPBody } from './use-mcp-configuration';
 
-export const useIntellisense = (workflowId?: string) => {
-    const params = useParams();
+const MOCK_LLM_PROVIDERS = [
+    {
+        id: 'openai',
+        value: 'openai',
+        name: 'OpenAI',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'gpt-4o', value: 'gpt-4o', description: 'GPT-4o' },
+            { id: 'gpt-4-turbo', value: 'gpt-4-turbo', description: 'GPT-4 Turbo' },
+            { id: 'gpt-3.5-turbo', value: 'gpt-3.5-turbo', description: 'GPT-3.5 Turbo' },
+        ],
+    },
+    {
+        id: 'anthropic',
+        value: 'anthropic',
+        name: 'Anthropic',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'claude-3-5-sonnet-20240620', value: 'claude-3-5-sonnet-20240620', description: 'Claude 3.5 Sonnet' },
+            { id: 'claude-3-opus-20240229', value: 'claude-3-opus-20240229', description: 'Claude 3 Opus' },
+        ],
+    },
+    {
+        id: 'google',
+        value: 'google',
+        name: 'Google',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'gemini-1.5-pro', value: 'gemini-1.5-pro', description: 'Gemini 1.5 Pro' },
+            { id: 'gemini-1.5-flash', value: 'gemini-1.5-flash', description: 'Gemini 1.5 Flash' },
+        ],
+    },
+];
+
+const MOCK_LLM_CONFIGS: ILLMForm[] = [
+    {
+        id: 'mock-llm-1',
+        name: 'Default OpenAI',
+        provider: 'openai',
+        modelName: 'gpt-4o',
+        apiKeyReference: 'vault:openai-api-key',
+        configurations: {
+            description: 'Mock OpenAI Configuration',
+            apiAuthorization: 'Bearer sk-...',
+            maxTokens: 4096,
+            temperature: 0.7,
+            baseUrl: 'https://api.openai.com/v1',
+            customerHeaders: [],
+            providerConfig: {
+                id: 'openai',
+                value: 'openai',
+                description: 'OpenAI',
+                logo: {},
+            },
+        },
+    },
+];
+
+const MOCK_VAULT_DATA: IVault[] = [
+    {
+        id: 'mock-vault-1',
+        keyName: 'openai-api-key',
+        description: 'OpenAI API Key for demonstrations',
+        keyValue: 'sk-mock-key-12345',
+        isActive: true,
+        isReadOnly: false,
+    },
+    {
+        id: 'mock-vault-2',
+        keyName: 'anthropic-api-key',
+        description: 'Anthropic API Key for demonstrations',
+        keyValue: 'sk-ant-mock-key-67890',
+        isActive: true,
+        isReadOnly: false,
+    },
+];
+
+export const useIntellisense = () => {
     const { token } = useAuth();
     const [allIntellisenseValues, setAllIntellisenseValues] = useState<string[]>([]);
 
@@ -156,67 +208,52 @@ export const useIntellisense = (workflowId?: string) => {
 };
 
 export const useGuardrail = () => {
-    const params = useParams();
     const { setTriggerGuardrailBinding } = useApp();
     const guardrailRef = useRef<GuardrailSelectorRef>(null);
     const [loading, setLoading] = useState<boolean>(false);
+    const [guardrails, setGuardrails] = useState<IGuardrailSetup[]>([]);
 
-    const {
-        mutate,
-        data: guardrails,
-        isLoading: guardrailsLoading,
-    } = useMutation(() => guardrailService.get<IGuardrailSetup[]>(params.wid as string), {
-        onSuccess: () => {
-            setLoading(false);
-        },
-        onError: (error: FetchError) => {
-            toast.error(error?.message);
-            logger.error('Failed to fetch guardrails:', error?.message);
-            setLoading(false);
-        },
-    });
-
-    const { mutateAsync: mutateWorkspaceUpdate } = useMutation(
-        async ({ data }: { data: IGuardrailBindingRequest }) =>
-            await guardrailBindingService.manage(data, params.wid as string),
-        {
-            onSuccess: () => {
-                toast.success('Workspace guardrails associated successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error while workspace guardrail associating:', error?.message);
-                setLoading(false);
-            },
+    useEffect(() => {
+        const stored = localStorage.getItem('mock_guardrails');
+        if (stored) {
+            try {
+                setGuardrails(JSON.parse(stored));
+            } catch {
+                setGuardrails([]);
+            }
         }
-    );
+    }, []);
 
-    const { mutateAsync: mutateWorkflowUpdate } = useMutation(
-        async ({ data }: { data: IGuardrailBindingRequest }) =>
-            await guardrailBindingService.workflow(data, params.wid as string, params.workflow_id as string),
-        {
-            onSuccess: () => {
-                toast.success('Workflow guardrails associated successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error while workflow guardrail associating:', error?.message);
-                setLoading(false);
-            },
-        }
-    );
+    const guardrailsLoading = false;
 
     const onGuardrail = () => {
         if (guardrailRef?.current) {
             setLoading(true);
             guardrailRef.current.onOpen();
-            mutate();
+            // In mock mode, we just load from localStorage
+            const stored = localStorage.getItem('mock_guardrails');
+            if (stored) setGuardrails(JSON.parse(stored));
+            setLoading(false);
         }
     };
 
     const onRefetch = () => {
-        mutate();
+        const stored = localStorage.getItem('mock_guardrails');
+        if (stored) setGuardrails(JSON.parse(stored));
     };
+
+    const mutateWorkspaceUpdate = async ({ data }: { data: IGuardrailBindingRequest }) => {
+        logger.log('Mock workspace guardrail association:', data);
+        toast.success('Workspace guardrails associated successfully (Mock)');
+        return { data: {} };
+    };
+
+    const mutateWorkflowUpdate = async ({ data }: { data: IGuardrailBindingRequest }) => {
+        logger.log('Mock workflow guardrail association:', data);
+        toast.success('Workflow guardrails associated successfully (Mock)');
+        return { data: {} };
+    };
+
 
     const onWorkspaceGuardrailsChange = async (items: string[] | undefined) => {
         await mutateWorkspaceUpdate({ data: { guardrailIds: items ?? [] } });
@@ -224,7 +261,7 @@ export const useGuardrail = () => {
     };
 
     const onWorkflowGuardrailsChange = async (items: string[] | undefined) => {
-        await mutateWorkflowUpdate({ data: { workflowId: params.workflow_id as string, guardrailIds: items ?? [] } });
+        await mutateWorkflowUpdate({ data: { workflowId: '', guardrailIds: items ?? [] } });
     };
 
     return {
@@ -321,13 +358,19 @@ export const usePlatformQuery = <TSelected = IPlatformConfiguration>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const { token } = useAuth();
-
     return useQuery<IPlatformConfiguration, any, TSelected>(
         queryKey ?? QueryKeyType.PLATFORM_CONFIG,
-        async () => ({} as any),
+        async () => {
+            return {
+                llmProviders: JSON.stringify(MOCK_LLM_PROVIDERS),
+                slmProviders: '[]',
+                speechToSpeechModelProviders: '[]',
+                embeddingModelProviders: '[]',
+                rerankingModelProviders: '[]',
+            } as IPlatformConfiguration;
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -350,14 +393,22 @@ export const useVaultQuery = ({
     onSuccess?: (data: IVault[]) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
-
     return useQuery(
         queryKey ?? QueryKeyType.VAULT,
-        async () => [] as IVault[],
+        async () => {
+            const stored = localStorage.getItem('mock_vault_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_VAULT_DATA;
+                }
+            }
+            localStorage.setItem('mock_vault_data', JSON.stringify(MOCK_VAULT_DATA));
+            return MOCK_VAULT_DATA;
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             onSuccess: data => onSuccess?.(data),
             onError: e => {
@@ -379,7 +430,6 @@ export const usePromptQuery = <T = PromptTemplate>({
     onSuccess?: (data: T[]) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery(queryKey ?? QueryKeyType.PROMPT, async () => [] as T[], {
@@ -406,14 +456,23 @@ export const useLLMQuery = <T = ILLMForm, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.LLM,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_llm_configs');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_LLM_CONFIGS;
+                }
+            }
+            localStorage.setItem('mock_llm_configs', JSON.stringify(MOCK_LLM_CONFIGS));
+            return MOCK_LLM_CONFIGS as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -438,7 +497,6 @@ export const useSLMQuery = <T = ISLMForm, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -470,7 +528,6 @@ export const useSTSQuery = <T = ISTSForm, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -502,7 +559,6 @@ export const useApiQuery = <T = ToolAPI, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -534,7 +590,6 @@ export const useMcpQuery = <T = IMCPBody, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -566,7 +621,6 @@ export const useVectorRagQuery = <T = IVectorRag, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -598,7 +652,6 @@ export const useGraphRagQuery = <T = IGraphRag, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -630,7 +683,6 @@ export const useConnectorQuery = <T = IConnectorForm, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -662,7 +714,6 @@ export const useExecutableFunctionQuery = <T = ExecutableFunctionAPI, TSelected 
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -694,7 +745,6 @@ export const useVariableQuery = <T = IVariable, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -728,7 +778,6 @@ export const useDatabaseQuery = <T = IDatabase, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -761,7 +810,6 @@ export const useEmbeddingModelQuery = <T = IEmbedding, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -793,7 +841,6 @@ export const useReRankingModelQuery = <T = IReRanking, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -825,7 +872,6 @@ export const useAgentQuery = <T = Agent, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -857,7 +903,6 @@ export const useMessageBrokerQuery = <T = IMessageBroker, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -889,12 +934,14 @@ export const useGuardrailModelQuery = <T = IGuardrailModelConfig, TSelected = T[
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.GUARDRAIL_MODEL,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_guardrail_models');
+            return (stored ? JSON.parse(stored) : []) as T[];
+        },
         {
             enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
@@ -921,12 +968,14 @@ export const useGuardrailQuery = <T = IGuardrailSetup, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.GUARDRAIL,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_guardrails');
+            return (stored ? JSON.parse(stored) : []) as T[];
+        },
         {
             enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
@@ -943,17 +992,14 @@ export const useGuardrailQuery = <T = IGuardrailSetup, TSelected = T[]>({
 export const useGuardrailBindingQuery = ({
     props,
     queryKey,
-    workflowId,
     onSuccess,
     onError,
 }: {
     props?: IHookProps;
     queryKey?: string;
-    workflowId?: string;
     onSuccess?: (data: IGuardrailBinding[]) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery(
