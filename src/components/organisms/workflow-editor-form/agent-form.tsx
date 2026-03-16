@@ -1324,9 +1324,9 @@ export const AgentForm = ({
                 </div>
 
                 {/* Sticky footer — always visible at the bottom of the panel */}
-                <div className="agent-form-footer shrink-0 pt-3 pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-[0_-2px_8px_0_rgba(0,0,0,0.06)]">
+                <div className="agent-form-footer shrink-0 px-3 pt-3 pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-[0_-2px_8px_0_rgba(0,0,0,0.06)]">
                     {/* Save as reusable agent */}
-                    <div className="flex items-center gap-x-2 mb-3 px-1">
+                    <div className="flex items-center gap-x-2 mb-3">
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>

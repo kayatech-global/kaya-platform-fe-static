@@ -28,6 +28,8 @@ import { GuardrailBindingLevelType, IntelligenceSourceType } from '@/enums';
 import { CallTransfer } from '@/components/molecules/call-transfer/call-transfer';
 import { McpConfigurationData } from '@/app/workspace/[wid]/mcp-configurations/components/mcp-configuration-table-container';
 import { useApp } from '@/context/app-context';
+
+type VoiceSection = 'prompt' | 'intelligence' | 'voiceconfig' | 'transcript' | 'calltransfer' | 'tools';
 import { GuardrailSelector } from '@/app/editor/[wid]/[workflow_id]/components/guardrail-selector';
 import { PanelSection } from '@/app/editor/[wid]/[workflow_id]/components/panel-section';
 import { EditorPanelAgentProps } from '@/app/editor/[wid]/[workflow_id]/components/editor-panel';
@@ -544,6 +546,11 @@ export const VoiceAgentForm = ({
         fetchingIntellisense ||
         fetchingGuardrails;
 
+    const [openSection, setOpenSection] = useState<VoiceSection | null>(null);
+    const toggleSection = (section: VoiceSection) => {
+        setOpenSection(prev => (prev === section ? null : section));
+    };
+
     return (
         <div className="flex flex-col flex-1 min-h-0">
             <div className={cn("flex-1 flex items-center justify-center", { hidden: !isLoading })}>
@@ -560,11 +567,111 @@ export const VoiceAgentForm = ({
                 {/* Scrollable sections */}
                 <div className="agent-form pr-1 flex flex-col gap-y-2 flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700">
 
+                    {/* Name & Description — always visible above accordions */}
+                    <div className="flex flex-col gap-y-3 pb-1">
+                        <Input
+                            label="Name"
+                            placeholder="Name of the agent"
+                            value={agentName ?? ''}
+                            onChange={e => setAgentName(e.target.value)}
+                        />
+                        <Textarea
+                            label="Description"
+                            placeholder="Outline the specific tasks and responsibilities you expect this agent to handle"
+                            rows={3}
+                            value={description ?? ''}
+                            onChange={e => setDescription(e.target.value)}
+                        />
+                    </div>
+
                     {/* Prompt Instruction */}
                     <PanelSection
                         key={`prompt-${selectedNode.id}`}
                         title="Prompt Instruction"
                         isConfigured={!!prompt}
+                        isOpen={openSection === 'prompt'}
+                        onToggle={() => toggleSection('prompt')}
+                    >
+                        <PromptSelector
+                            label=""
+                            agent={agent}
+                            prompt={prompt}
+                            intellisenseOptions={intellisenseOptions.flatMap(group => group.options)}
+                            loadingIntellisense={loadingIntellisense}
+                            setPrompt={setPrompt}
+                            allPrompts={allPrompts as PromptResponse[]}
+                            isReadonly={isReadOnly}
+                            promptsLoading={promptsLoading}
+                            onRefetch={onRefetchPrompt}
+                            onPromptChange={onPromptChange}
+                        />
+                    </PanelSection>
+
+                    {/* Intelligence Source */}
+                    <PanelSection
+                        key={`intelligence-${selectedNode.id}`}
+                        title="Intelligence Source"
+                        isConfigured={!!voiceModal}
+                        isOpen={openSection === 'intelligence'}
+                        onToggle={() => toggleSection('intelligence')}
+                    >
+                        <LanguageSelector
+                            label=""
+                            agent={agent}
+                            isSlm={isSlm}
+                            languageModel={voiceModal}
+                            setLanguageModel={setVoiceModal}
+                            allModels={allModels}
+                            allSLMModels={allSLMModels as never}
+                            allSTSModels={allSTSModels as never}
+                            isReadonly={isReadOnly}
+                            llmModelsLoading={llmModelsLoading}
+                            slmModelsLoading={slmModelsLoading}
+                            stsModelsLoading={stsModelsLoading}
+                            onRefetch={() => {
+                                refetchLLM();
+                                refetchSLM();
+                                refetchSTS();
+                            }}
+                            onIntelligenceSourceChange={value => setSlm(value)}
+                            disabledSourceTypes={[IntelligenceSourceType.LLM, IntelligenceSourceType.SLM]}
+                        />
+                    </PanelSection>
+
+                    {/* Voice Configuration */}
+                    <PanelSection
+                        key={`voice-config-${selectedNode.id}`}
+                        title="Voice Configuration"
+                        isConfigured={!!(agentGreetingMessage || callerDisclaimerMessage || tone)}
+                        isOpen={openSection === 'voiceconfig'}
+                        onToggle={() => toggleSection('voiceconfig')}
+                    >
+
+                    {/* Transcript Export */}
+                    <PanelSection
+                        key={`transcript-${selectedNode.id}`}
+                        title="Transcript Export"
+                        isConfigured={transcriptExport.isEnabled}
+                        isOpen={openSection === 'transcript'}
+                        onToggle={() => toggleSection('transcript')}
+                    >
+
+                    {/* Call Transfer */}
+                    <PanelSection
+                        key={`call-transfer-${selectedNode.id}`}
+                        title="Call Transfer"
+                        isConfigured={humanAgentCallTransferConfig.isEnabled}
+                        isOpen={openSection === 'calltransfer'}
+                        onToggle={() => toggleSection('calltransfer')}
+                    >
+
+                    {/* Helper Tools */}
+                    <PanelSection
+                        key={`tools-${selectedNode.id}`}
+                        title="Helper Tools"
+                        isConfigured={(apis?.length ?? 0) > 0}
+                        isOpen={openSection === 'tools'}
+                        onToggle={() => toggleSection('tools')}
                     >
                         <div className="flex flex-col gap-y-4">
                             <Input
@@ -724,7 +831,7 @@ export const VoiceAgentForm = ({
                 </div>
 
                 {/* Sticky footer */}
-                <div className="agent-form-footer shrink-0 flex gap-x-3 justify-end pt-3 pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-[0_-2px_8px_0_rgba(0,0,0,0.06)]">
+                <div className="agent-form-footer shrink-0 flex gap-x-3 justify-end px-3 pt-3 pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-[0_-2px_8px_0_rgba(0,0,0,0.06)]">
                     <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
                         Cancel
                     </Button>

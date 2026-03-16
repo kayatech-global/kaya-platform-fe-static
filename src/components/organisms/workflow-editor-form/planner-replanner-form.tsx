@@ -22,6 +22,9 @@ import { CustomNodeTypes, GuardrailBindingLevelType } from '@/enums';
 import { AgentType } from './agent-form';
 import { usePlannerReplanner } from '@/hooks/use-planner-replanner';
 import { EditorPanelAgentProps } from '@/app/editor/[wid]/[workflow_id]/components/editor-panel';
+import { useState } from 'react';
+
+type PlannerSection = 'prompt' | 'intelligence' | 'guardrails' | 'advanced';
 
 export interface PlannerReplannerFormProps extends EditorPanelAgentProps {
     selectedNode: Node;
@@ -78,6 +81,11 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
 
     const isLoading = fetchingPrompts || fetchingModels || fetchingSLMModels || fetchingGuardrails;
 
+    const [openSection, setOpenSection] = useState<PlannerSection | null>(null);
+    const toggleSection = (section: PlannerSection) => {
+        setOpenSection(prev => (prev === section ? null : section));
+    };
+
     return (
         <div className="flex flex-col flex-1 min-h-0">
             <div className={cn("flex-1 flex items-center justify-center", { hidden: !isLoading })}>
@@ -94,39 +102,44 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                 {/* Scrollable sections */}
                 <div className="agent-form pr-1 flex flex-col gap-y-2 flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700">
 
+                    {/* Name & Description — always visible above accordions */}
+                    <div className="flex flex-col gap-y-3 pb-1">
+                        <Input
+                            label="Name"
+                            placeholder="Name of the agent"
+                            value={agentName ?? ''}
+                            onChange={e => setAgentName(e.target.value)}
+                            readOnly={isReadOnly}
+                        />
+                        <Textarea
+                            label="Description"
+                            placeholder="Outline the specific tasks and responsibilities you expect this agent to handle"
+                            rows={3}
+                            value={description ?? ''}
+                            onChange={e => setDescription(e.target.value)}
+                            readOnly={isReadOnly}
+                        />
+                    </div>
+
                     {/* Prompt Instruction */}
                     <PanelSection
                         key={`prompt-${selectedNode.id}`}
                         title="Prompt Instruction"
                         isConfigured={!!prompt}
+                        isOpen={openSection === 'prompt'}
+                        onToggle={() => toggleSection('prompt')}
                     >
-                        <div className="flex flex-col gap-y-4">
-                            <Input
-                                label="Name"
-                                placeholder="Name of the agent"
-                                value={agentName ?? ''}
-                                onChange={e => setAgentName(e.target.value)}
-                                readOnly={isReadOnly}
-                            />
-                            <Textarea
-                                label="Description"
-                                placeholder="Outline the specific tasks and responsibilities you expect this agent to handle"
-                                rows={5}
-                                value={description ?? ''}
-                                onChange={e => setDescription(e.target.value)}
-                                readOnly={isReadOnly}
-                            />
-                            <PromptSelector
-                                ref={promptRef}
-                                agent={undefined}
-                                prompt={prompt}
-                                setPrompt={setPrompt}
-                                allPrompts={allPrompts as PromptTemplate[]}
-                                isReadonly={isReadOnly}
-                                promptsLoading={promptsLoading}
-                                onRefetch={onRefetchPrompt}
-                            />
-                        </div>
+                        <PromptSelector
+                            ref={promptRef}
+                            label=""
+                            agent={undefined}
+                            prompt={prompt}
+                            setPrompt={setPrompt}
+                            allPrompts={allPrompts as PromptTemplate[]}
+                            isReadonly={isReadOnly}
+                            promptsLoading={promptsLoading}
+                            onRefetch={onRefetchPrompt}
+                        />
                     </PanelSection>
 
                     {/* Intelligence Source */}
@@ -134,8 +147,11 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                         key={`intelligence-${selectedNode.id}`}
                         title="Intelligence Source"
                         isConfigured={!!languageModel}
+                        isOpen={openSection === 'intelligence'}
+                        onToggle={() => toggleSection('intelligence')}
                     >
                         <LanguageSelector
+                            label=""
                             isSlm={isSlm}
                             agent={undefined}
                             languageModel={languageModel}
@@ -159,8 +175,11 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                         key={`guardrails-${selectedNode.id}`}
                         title="Guardrails"
                         isConfigured={(guardrails?.length ?? 0) > 0}
+                        isOpen={openSection === 'guardrails'}
+                        onToggle={() => toggleSection('guardrails')}
                     >
                         <GuardrailSelector
+                            label=""
                             agent={undefined}
                             allGuardrails={guardrailData ?? []}
                             guardrails={guardrails}
@@ -200,6 +219,8 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                             key={`advanced-${selectedNode.id}`}
                             title="Advanced Configurations"
                             isConfigured={!!maxReplanAttempts}
+                            isOpen={openSection === 'advanced'}
+                            onToggle={() => toggleSection('advanced')}
                         >
                             <div>
                                 <Input
@@ -224,7 +245,7 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                 </div>
 
                 {/* Sticky footer */}
-                <div className="agent-form-footer shrink-0 flex gap-x-3 justify-end pt-3 pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-[0_-2px_8px_0_rgba(0,0,0,0.06)]">
+                <div className="agent-form-footer shrink-0 flex gap-x-3 justify-end px-3 pt-3 pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-[0_-2px_8px_0_rgba(0,0,0,0.06)]">
                     <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)}>
                         Cancel
                     </Button>

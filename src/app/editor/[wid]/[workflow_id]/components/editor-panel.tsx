@@ -148,7 +148,7 @@ export const EditorPanel = (props: EditorPanelProps) => {
                 </p>
                 <NodeSnippetSection surroundingNodeImages={surroundingNodeImages} />
             </div>
-            <div className="editor-fields flex-1 min-h-0 overflow-hidden flex flex-col">
+            <div className="editor-fields flex-1 min-h-0 flex flex-col">
                 {(selectedNodeInfo.type === CustomNodeTypes.agentNode ||
                     selectedNodeInfo.type === CustomNodeTypes.decisionNode ||
                     selectedNodeInfo.type === CustomNodeTypes.loaderNode ||
