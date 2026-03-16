@@ -101,6 +101,17 @@ const generateColumns = (onEditButtonClick: (id: string) => void, onDelete: (id:
             },
         },
         {
+            accessorKey: 'apiMethod',
+            enableSorting: true,
+            header() {
+                return <div className="w-full text-left">API Method</div>;
+            },
+            cell({ row }) {
+                const method = row.getValue<string>('apiMethod');
+                return <div>{method ? method.toUpperCase() : '-'}</div>;
+            },
+        },
+        {
             accessorKey: 'apiUrl',
             enableSorting: false,
             header() {
