@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
 import { useMutation, useQueryClient } from 'react-query';
 import { IHookProps, IMessageBroker, IMessageBrokerConfiguration, IMessageBrokerConfigurationMeta } from '@/models';
 import { FetchError, logger } from '@/utils';
@@ -11,10 +10,9 @@ import { OptionModel } from '@/components';
 import { AuthenticationType, MessageBrokerProviderType, MessageBrokerTopicType, QueryKeyType } from '@/enums';
 import { v4 as uuidv4 } from 'uuid';
 import { useIntellisense, useMessageBrokerQuery, usePlatformQuery, useVaultQuery } from './use-common';
-import { messageBrokerService } from '@/services';
+
 
 export const useMessageBroker = (props?: IHookProps) => {
-    const params = useParams();
     const queryClient = useQueryClient();
     const [isOpen, setOpen] = useState<boolean>(false);
     const [isEdit, setEdit] = useState<boolean>(false);
@@ -82,9 +80,10 @@ export const useMessageBroker = (props?: IHookProps) => {
 
     useEffect(() => {
         const provider = watch('provider');
+        const id = watch('id');
         clearErrors('configurations.clusterUrl');
         if (isEdit) {
-            const obj = messageBrokers.find(x => x.id === watch('id'));
+            const obj = messageBrokers.find(x => x.id === id);
             if (obj && provider === obj.provider) {
                 setValue('configurations.authenticationType', obj?.configurations?.authenticationType);
             } else {
@@ -141,7 +140,14 @@ export const useMessageBroker = (props?: IHookProps) => {
     });
 
     const { isLoading: creating, mutate: mutateCreate } = useMutation(
-        (data: IMessageBroker) => messageBrokerService.create<IMessageBroker>(data, params.wid as string),
+        async (data: IMessageBroker) => {
+            const stored = localStorage.getItem('mock_message_broker_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            const newConfig = { ...data, id: `mb-${Date.now()}` };
+            configs.push(newConfig);
+            localStorage.setItem('mock_message_broker_data', JSON.stringify(configs));
+            return newConfig;
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -159,8 +165,16 @@ export const useMessageBroker = (props?: IHookProps) => {
     );
 
     const { isLoading: updating, mutate: mutateUpdate } = useMutation(
-        ({ data, id }: { data: IMessageBroker; id: string }) =>
-            messageBrokerService.update<IMessageBroker>(data, params.wid as string, id),
+        async ({ data, id }: { data: IMessageBroker; id: string }) => {
+            const stored = localStorage.getItem('mock_message_broker_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            const index = configs.findIndex((x: any) => x.id === id);
+            if (index > -1) {
+                configs[index] = { ...configs[index], ...data, id };
+                localStorage.setItem('mock_message_broker_data', JSON.stringify(configs));
+            }
+            return { data: configs[index], id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -180,7 +194,13 @@ export const useMessageBroker = (props?: IHookProps) => {
     );
 
     const { mutate: mutateDelete } = useMutation(
-        async ({ id }: { id: string }) => await messageBrokerService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_message_broker_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            const filtered = configs.filter((x: any) => x.id !== id);
+            localStorage.setItem('mock_message_broker_data', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 queryClient.invalidateQueries(QueryKeyType.MESSAGE_BROKER);

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
 import { useMutation, useQueryClient } from 'react-query';
 import { useForm } from 'react-hook-form';
 import { TableDataType } from '@/app/workspace/[wid]/configure-connections/databases/components/database-table';
@@ -11,11 +10,10 @@ import { DATABASE_LIST } from '@/constants';
 import { DatabaseItemType, DatabaseProviderType, QueryKeyType } from '@/enums';
 import { OptionModel } from '@/components';
 import { useDatabaseQuery, useVaultQuery } from './use-common';
-import { databaseService } from '@/services';
+
 import { REDSHIFT_AUTH } from '@/app/workspace/[wid]/configure-connections/databases/components/database-types/redshift-extras';
 
 export const useDatabase = (props?: IHookProps) => {
-    const params = useParams();
     const queryClient = useQueryClient();
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [isEdit, setEdit] = useState<boolean>(false);
@@ -70,17 +68,52 @@ export const useDatabase = (props?: IHookProps) => {
                 },
             });
         }
-    }, [isOpen]);
+    }, [isOpen, reset]);
+
+    const { isFetching, data } = useDatabaseQuery({
+        props,
+        onSuccess: data => {
+            const mapData = data?.map(x => ({
+                id: x.id as string,
+                name: x.name,
+                connectorSource: x.type as DatabaseItemType,
+                lastSync: x.updatedAt as string,
+                isReadOnly: x?.isReadOnly,
+            }));
+            setDatabaseData([...mapData]);
+            setDatabases([...mapData]);
+        },
+        onError: () => {
+            setDatabaseData([]);
+            setDatabases([]);
+        },
+    });
+
+    const { refetch, isLoading: loadingSecrets } = useVaultQuery({
+        onSuccess: data => {
+            const mapData = data?.map(x => ({
+                name: x.keyName as string,
+                value: x.keyName as string,
+            }));
+            setSecrets([...mapData]);
+        },
+        onError: () => {
+            setSecrets([]);
+        },
+    });
 
     useEffect(() => {
-        if (isEdit && watch('type')) {
-            const obj = data?.find(x => x.id === watch('id'));
+        const type = watch('type');
+        const id = watch('id');
+        if (isEdit && type) {
+            const obj = data?.find(x => x.id === id);
             if (obj) {
+                // ... (rest of the logic)
                 const providerByKey = getEnumValueByKey(
                     obj.configurations.provider,
                     DatabaseProviderType
                 ) as DatabaseProviderType;
-                const providers = DATABASE_LIST.find(x => x.type === watch('type'))?.providers;
+                const providers = DATABASE_LIST.find(x => x.type === type)?.providers;
                 const currentProvider = providers?.includes(providerByKey);
                 setValue('configurations.provider', currentProvider ? providerByKey : '');
                 setValue('configurations.endpoint', currentProvider ? obj.configurations.endpoint : '');
@@ -177,67 +210,47 @@ export const useDatabase = (props?: IHookProps) => {
                 'configurations.ssl',
             ]);
         }
-    }, [watch('type'), isEdit]);
+    }, [watch, isEdit, setValue, data, clearErrors]);
 
     useEffect(() => {
-        if (!isEdit && isOpen && watch('configurations.provider') && watch('configurations.provider') !== '') {
-            if (watch('configurations.provider') === DatabaseProviderType.PGVECTOR) {
+        const provider = watch('configurations.provider');
+        if (!isEdit && isOpen && provider && provider !== '') {
+            if (provider === DatabaseProviderType.PGVECTOR) {
                 setValue('configurations.port', 5432);
-            } else if (watch('configurations.provider') === DatabaseProviderType.POSTGRESQL) {
+            } else if (provider === DatabaseProviderType.POSTGRESQL) {
                 setValue('configurations.port', 5432);
-            } else if (watch('configurations.provider') === DatabaseProviderType.MYSQL) {
+            } else if (provider === DatabaseProviderType.MYSQL) {
                 setValue('configurations.port', 3306);
-            } else if (watch('configurations.provider') === DatabaseProviderType.REDSHIFT) {
+            } else if (provider === DatabaseProviderType.REDSHIFT) {
                 setValue('configurations.port', 5439);
             }
         }
-    }, [watch('configurations.provider'), isEdit, isOpen]);
+    }, [watch, isEdit, isOpen, setValue]);
 
-    const { isFetching, data } = useDatabaseQuery({
-        props,
-        onSuccess: data => {
-            const mapData = data?.map(x => ({
-                id: x.id as string,
-                name: x.name,
-                connectorSource: x.type as DatabaseItemType,
-                lastSync: x.updatedAt as string,
-                isReadOnly: x?.isReadOnly,
-            }));
-            setDatabaseData([...mapData]);
-            setDatabases([...mapData]);
-        },
-        onError: () => {
-            setDatabaseData([]);
-            setDatabases([]);
-        },
-    });
-
-    const { refetch, isLoading: loadingSecrets } = useVaultQuery({
-        onSuccess: data => {
-            const mapData = data?.map(x => ({
-                name: x.keyName as string,
-                value: x.keyName as string,
-            }));
-            setSecrets([...mapData]);
-        },
-        onError: () => {
-            setSecrets([]);
-        },
-    });
+    const watchType = watch('type');
 
     const selectedDatabase = useMemo(() => {
-        if (watch('type')) {
-            return DATABASE_LIST.find(x => x.type === watch('type'));
+        if (watchType) {
+            return DATABASE_LIST.find(x => x.type === watchType);
         }
         return undefined;
-    }, [watch('type')]);
+    }, [watchType]);
+
+    const watchIsReadOnly = watch('isReadOnly');
 
     const isReadOnly = useMemo(() => {
-        return !!watch('isReadOnly');
-    }, [watch('isReadOnly')]);
+        return !!watchIsReadOnly;
+    }, [watchIsReadOnly]);
 
     const { isLoading: creating, mutate: mutateCreate } = useMutation(
-        (data: IDatabase) => databaseService.create<IDatabase>(data, params.wid as string),
+        async (data: IDatabase) => {
+            const stored = localStorage.getItem('mock_database_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            const newConfig = { ...data, id: `db-${Date.now()}` };
+            configs.push(newConfig);
+            localStorage.setItem('mock_database_data', JSON.stringify(configs));
+            return newConfig;
+        },
         {
             onSuccess: data => {
                 if (props?.hookForm?.formName && props?.hookForm?.setValue) {
@@ -258,8 +271,17 @@ export const useDatabase = (props?: IHookProps) => {
     );
 
     const { isLoading: updating, mutate: mutateUpdate } = useMutation(
-        ({ data, id }: { data: IDatabase; id: string }) =>
-            databaseService.update<IDatabase>(data, params.wid as string, id),
+        async ({ data, id }: { data: IDatabase; id: string }) => {
+            const stored = localStorage.getItem('mock_database_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const index = configs.findIndex((x: any) => x.id === id);
+            if (index > -1) {
+                configs[index] = { ...configs[index], ...data, id };
+                localStorage.setItem('mock_database_data', JSON.stringify(configs));
+            }
+            return { data: configs[index], id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -277,7 +299,14 @@ export const useDatabase = (props?: IHookProps) => {
     );
 
     const { mutate: mutateDelete } = useMutation(
-        async ({ id }: { id: string }) => await databaseService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_database_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const filtered = configs.filter((x: any) => x.id !== id);
+            localStorage.setItem('mock_database_data', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {

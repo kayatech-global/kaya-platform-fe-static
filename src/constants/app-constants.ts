@@ -161,33 +161,33 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
                     //         // },
                 ],
             },
-            // {
-            //     id: 'connection_configs',
-            //     title: 'Configure Connections',
-            //     url: '#',
-            //     icon: 'Plug',
-            //     items: [
-            //         {
-            //             id: 'databases',
-            //             title: 'Create and Manage Databases',
-            //             url: '/workspace/[wid]/configure-connections/databases',
-            //             isDisabled: false,
-            //             disabledMessage: 'Databases not enabled for the sandbox license',
-            //         },
-            //         {
-            //             id: 'connectors',
-            //             title: 'Setup Data Connectors',
-            //             url: '/workspace/[wid]/configure-connections/connectors',
-            //             isDisabled: false,
-            //             disabledMessage: 'Data connector are not enabled for this workspace',
-            //         },
-            //         {
-            //             id: 'message-broker',
-            //             title: 'Setup Message Brokers',
-            //             url: '/workspace/[wid]/configure-connections/setup-message-broker',
-            //         },
-            //     ],
-            // },
+            {
+                id: 'connection_configs',
+                title: 'Configure Connections',
+                url: '#',
+                icon: 'Plug',
+                items: [
+                    {
+                        id: 'databases',
+                        title: 'Create and Manage Databases',
+                        url: '/workspace/[wid]/configure-connections/databases',
+                        isDisabled: false,
+                        disabledMessage: 'Databases not enabled for the sandbox license',
+                    },
+                    {
+                        id: 'connectors',
+                        title: 'Setup Data Connectors',
+                        url: '/workspace/[wid]/configure-connections/connectors',
+                        isDisabled: false,
+                        disabledMessage: 'Data connector are not enabled for this workspace',
+                    },
+                    {
+                        id: 'message-broker',
+                        title: 'Setup Message Brokers',
+                        url: '/workspace/[wid]/configure-connections/setup-message-broker',
+                    },
+                ],
+            },
         ],
     },
     {

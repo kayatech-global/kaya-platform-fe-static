@@ -292,6 +292,61 @@ const MOCK_GRAPH_RAG_DATA: IGraphRag[] = [
     },
 ];
 
+const MOCK_DATABASE_DATA: IDatabase[] = [
+    {
+        id: 'db-1',
+        name: 'Main PostgreSQL',
+        description: 'Primary database for user data',
+        type: 'Relational Database',
+        configurations: {
+            provider: 'POSTGRESQL',
+            host: 'localhost',
+            port: 5432,
+            databaseName: 'postgres',
+            userName: 'postgres',
+            password: 'password',
+        },
+        updatedAt: new Date().toISOString(),
+        isReadOnly: false,
+    },
+];
+
+const MOCK_CONNECTOR_DATA: IConnectorForm[] = [
+    {
+        id: 'connector-1',
+        name: 'Pega Connector',
+        description: 'Connects to Pega Systems',
+        type: 'pega' as any,
+        configurations: {
+            authorization: {
+                authType: 'No Authorization' as any,
+            },
+        },
+        isReadOnly: false,
+    },
+];
+
+const MOCK_MESSAGE_BROKER_DATA: IMessageBroker[] = [
+    {
+        id: 'mb-1',
+        name: 'Kafka Broker',
+        description: 'Main Kafka instance for events',
+        provider: 'kafka_apache',
+        configurations: {
+            clusterUrl: 'localhost:9092',
+            authenticationType: 'None' as any,
+            topics: [
+                {
+                    id: 'topic-1',
+                    title: 'user_events',
+                    topicType: 'Inbound' as any,
+                    requestStructure: '{}',
+                },
+            ],
+        },
+    },
+];
+
 export const useIntellisense = () => {
     const { token } = useAuth();
     const [allIntellisenseValues, setAllIntellisenseValues] = useState<string[]>([]);
@@ -544,6 +599,10 @@ export const usePlatformQuery = <TSelected = IPlatformConfiguration>({
                 speechToSpeechModelProviders: JSON.stringify(MOCK_STS_PROVIDERS),
                 embeddingModelProviders: JSON.stringify(MOCK_EMBEDDING_PROVIDERS),
                 rerankingModelProviders: JSON.stringify(MOCK_RERANKING_PROVIDERS),
+                messageQueueProviders: JSON.stringify([
+                    { id: 'kafka_apache', value: 'Apache Kafka' },
+                    { id: 'aws_msk_provisioned', value: 'AWS MSK Provisioned' },
+                ]),
             } as IPlatformConfiguration;
         },
         {
@@ -900,7 +959,18 @@ export const useConnectorQuery = <T = IConnectorForm, TSelected = T[]>({
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.CONNECTORS,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_connector_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_CONNECTOR_DATA;
+                }
+            }
+            localStorage.setItem('mock_connector_data', JSON.stringify(MOCK_CONNECTOR_DATA));
+            return MOCK_CONNECTOR_DATA as unknown as T[];
+        },
         {
             enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
@@ -1004,7 +1074,18 @@ export const useDatabaseQuery = <T = IDatabase, TSelected = T[]>({
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.DATABASE,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_database_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_DATABASE_DATA;
+                }
+            }
+            localStorage.setItem('mock_database_data', JSON.stringify(MOCK_DATABASE_DATA));
+            return MOCK_DATABASE_DATA as unknown as T[];
+        },
         {
             enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
@@ -1147,7 +1228,18 @@ export const useMessageBrokerQuery = <T = IMessageBroker, TSelected = T[]>({
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.MESSAGE_BROKER,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_message_broker_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_MESSAGE_BROKER_DATA;
+                }
+            }
+            localStorage.setItem('mock_message_broker_data', JSON.stringify(MOCK_MESSAGE_BROKER_DATA));
+            return MOCK_MESSAGE_BROKER_DATA as unknown as T[];
+        },
         {
             enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
