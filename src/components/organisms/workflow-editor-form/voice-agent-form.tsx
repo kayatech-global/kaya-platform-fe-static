@@ -28,8 +28,6 @@ import { GuardrailBindingLevelType, IntelligenceSourceType } from '@/enums';
 import { CallTransfer } from '@/components/molecules/call-transfer/call-transfer';
 import { McpConfigurationData } from '@/app/workspace/[wid]/mcp-configurations/components/mcp-configuration-table-container';
 import { useApp } from '@/context/app-context';
-
-type VoiceSection = 'prompt' | 'intelligence' | 'voiceconfig' | 'transcript' | 'calltransfer' | 'tools';
 import { GuardrailSelector } from '@/app/editor/[wid]/[workflow_id]/components/guardrail-selector';
 import { PanelSection } from '@/app/editor/[wid]/[workflow_id]/components/panel-section';
 import { EditorPanelAgentProps } from '@/app/editor/[wid]/[workflow_id]/components/editor-panel';
@@ -546,11 +544,6 @@ export const VoiceAgentForm = ({
         fetchingIntellisense ||
         fetchingGuardrails;
 
-    const [openSection, setOpenSection] = useState<VoiceSection | null>(null);
-    const toggleSection = (section: VoiceSection) => {
-        setOpenSection(prev => (prev === section ? null : section));
-    };
-
     return (
         <div className="flex flex-col flex-1 min-h-0">
             <div className={cn("flex-1 flex items-center justify-center", { hidden: !isLoading })}>
@@ -589,8 +582,6 @@ export const VoiceAgentForm = ({
                         key={`prompt-${selectedNode.id}`}
                         title="Prompt Instruction"
                         isConfigured={!!prompt}
-                        isOpen={openSection === 'prompt'}
-                        onToggle={() => toggleSection('prompt')}
                     >
                         <PromptSelector
                             label=""
@@ -612,8 +603,6 @@ export const VoiceAgentForm = ({
                         key={`intelligence-${selectedNode.id}`}
                         title="Intelligence Source"
                         isConfigured={!!voiceModal}
-                        isOpen={openSection === 'intelligence'}
-                        onToggle={() => toggleSection('intelligence')}
                     >
                         <LanguageSelector
                             label=""
@@ -643,8 +632,6 @@ export const VoiceAgentForm = ({
                         key={`voice-config-${selectedNode.id}`}
                         title="Voice Configuration"
                         isConfigured={!!(agentGreetingMessage || callerDisclaimerMessage || tone)}
-                        isOpen={openSection === 'voiceconfig'}
-                        onToggle={() => toggleSection('voiceconfig')}
                     >
 
                     {/* Transcript Export */}
@@ -652,8 +639,6 @@ export const VoiceAgentForm = ({
                         key={`transcript-${selectedNode.id}`}
                         title="Transcript Export"
                         isConfigured={transcriptExport.isEnabled}
-                        isOpen={openSection === 'transcript'}
-                        onToggle={() => toggleSection('transcript')}
                     >
 
                     {/* Call Transfer */}
@@ -661,8 +646,6 @@ export const VoiceAgentForm = ({
                         key={`call-transfer-${selectedNode.id}`}
                         title="Call Transfer"
                         isConfigured={humanAgentCallTransferConfig.isEnabled}
-                        isOpen={openSection === 'calltransfer'}
-                        onToggle={() => toggleSection('calltransfer')}
                     >
 
                     {/* Helper Tools */}
@@ -670,8 +653,6 @@ export const VoiceAgentForm = ({
                         key={`tools-${selectedNode.id}`}
                         title="Helper Tools"
                         isConfigured={(apis?.length ?? 0) > 0}
-                        isOpen={openSection === 'tools'}
-                        onToggle={() => toggleSection('tools')}
                     >
                         <div className="flex flex-col gap-y-4">
                             <Input

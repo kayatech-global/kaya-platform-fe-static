@@ -200,17 +200,6 @@ export type McpToolResponseType = {
     configurations: IConfiguration;
 };
 
-type AgentSection =
-    | 'prompt'
-    | 'intelligence'
-    | 'tools'
-    | 'human'
-    | 'guardrails'
-    | 'selflearning'
-    | 'broadcasting'
-    | 'structured'
-    | 'custom';
-
 const SectionGroupLabel = ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <p
         className={cn(
@@ -308,12 +297,6 @@ export const AgentForm = ({
     const [customAttributes, setCustomAttributes] = useState<string>('');
     const [selectedConnector, setSelectedConnector] = useState<IConnectorForm[] | undefined>();
     const [structuredOutput, setStructuredOutput] = useState<StructuredOutputType>({ enabled: false, data: [] });
-    const [openSection, setOpenSection] = useState<AgentSection | null>(null);
-
-    const toggleSection = (section: AgentSection) => {
-        setOpenSection(prev => (prev === section ? null : section));
-    };
-
     const params = useParams();
     const { trigger, setSelectedNodeId, setTrigger, setGuardrailStore } = useDnD();
     const { syncTools } = useSyncPrompt();
@@ -1013,8 +996,6 @@ export const AgentForm = ({
                         key={`prompt-${selectedNode.id}`}
                         title="Prompt Instruction"
                         isConfigured={!!prompt || !!agent?.prompt?.id}
-                        isOpen={openSection === 'prompt'}
-                        onToggle={() => toggleSection('prompt')}
                     >
                         <PromptSelector
                             ref={promptRef}
@@ -1035,8 +1016,6 @@ export const AgentForm = ({
                         key={`intelligence-${selectedNode.id}`}
                         title="Intelligence Source"
                         isConfigured={!!languageModel || !!agent?.languageModal?.modelId}
-                        isOpen={openSection === 'intelligence'}
-                        onToggle={() => toggleSection('intelligence')}
                     >
                         <LanguageSelector
                             label=""
@@ -1070,8 +1049,6 @@ export const AgentForm = ({
                             (selectedConnector?.length ?? 0) > 0 ||
                             (executableFunctions?.length ?? 0) > 0
                         }
-                        isOpen={openSection === 'tools'}
-                        onToggle={() => toggleSection('tools')}
                     >
                         <div className="flex flex-col gap-y-3">
                             <InputDataConnectContainer
@@ -1155,8 +1132,6 @@ export const AgentForm = ({
                         key={`human-input-${selectedNode.id}`}
                         title="Human Input"
                         isConfigured={!!humanInput?.enableHumanInput}
-                        isOpen={openSection === 'human'}
-                        onToggle={() => toggleSection('human')}
                     >
                         <HumanInput
                             label=""
@@ -1174,8 +1149,6 @@ export const AgentForm = ({
                         key={`guardrails-${selectedNode.id}`}
                         title="Guardrails"
                         isConfigured={(guardrails?.length ?? 0) > 0}
-                        isOpen={openSection === 'guardrails'}
-                        onToggle={() => toggleSection('guardrails')}
                     >
                         <GuardrailSelector
                             label=""
@@ -1198,8 +1171,6 @@ export const AgentForm = ({
                         key={`self-learning-${selectedNode.id}`}
                         title="Self Learning"
                         isConfigured={!!selfLearning?.enableLearning}
-                        isOpen={openSection === 'selflearning'}
-                        onToggle={() => toggleSection('selflearning')}
                     >
                         <SelfLearning
                             label=""
@@ -1237,8 +1208,6 @@ export const AgentForm = ({
                         key={`output-broadcasting-${selectedNode.id}`}
                         title="Output Broadcasting"
                         isConfigured={!!outputBroadcasting}
-                        isOpen={openSection === 'broadcasting'}
-                        onToggle={() => toggleSection('broadcasting')}
                     >
                         <MessagePublisher
                             title=""
@@ -1258,8 +1227,6 @@ export const AgentForm = ({
                         key={`structured-output-${selectedNode.id}`}
                         title="Structured Output"
                         isConfigured={!!structuredOutput?.enabled}
-                        isOpen={openSection === 'structured'}
-                        onToggle={() => toggleSection('structured')}
                     >
                         <StructuredOutputCreator
                             agent={agent}
@@ -1273,8 +1240,6 @@ export const AgentForm = ({
                         key={`custom-attributes-${selectedNode.id}`}
                         title="Custom Attributes"
                         isConfigured={enableCustomAttributes && customAttributes.trim().length > 0}
-                        isOpen={openSection === 'custom'}
-                        onToggle={() => toggleSection('custom')}
                     >
                         <div className="flex flex-col gap-y-3">
                             <div className="flex gap-x-3 items-start">

@@ -22,9 +22,6 @@ import { CustomNodeTypes, GuardrailBindingLevelType } from '@/enums';
 import { AgentType } from './agent-form';
 import { usePlannerReplanner } from '@/hooks/use-planner-replanner';
 import { EditorPanelAgentProps } from '@/app/editor/[wid]/[workflow_id]/components/editor-panel';
-import { useState } from 'react';
-
-type PlannerSection = 'prompt' | 'intelligence' | 'guardrails' | 'advanced';
 
 export interface PlannerReplannerFormProps extends EditorPanelAgentProps {
     selectedNode: Node;
@@ -81,11 +78,6 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
 
     const isLoading = fetchingPrompts || fetchingModels || fetchingSLMModels || fetchingGuardrails;
 
-    const [openSection, setOpenSection] = useState<PlannerSection | null>(null);
-    const toggleSection = (section: PlannerSection) => {
-        setOpenSection(prev => (prev === section ? null : section));
-    };
-
     return (
         <div className="flex flex-col flex-1 min-h-0">
             <div className={cn("flex-1 flex items-center justify-center", { hidden: !isLoading })}>
@@ -126,8 +118,6 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                         key={`prompt-${selectedNode.id}`}
                         title="Prompt Instruction"
                         isConfigured={!!prompt}
-                        isOpen={openSection === 'prompt'}
-                        onToggle={() => toggleSection('prompt')}
                     >
                         <PromptSelector
                             ref={promptRef}
@@ -147,8 +137,6 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                         key={`intelligence-${selectedNode.id}`}
                         title="Intelligence Source"
                         isConfigured={!!languageModel}
-                        isOpen={openSection === 'intelligence'}
-                        onToggle={() => toggleSection('intelligence')}
                     >
                         <LanguageSelector
                             label=""
@@ -175,8 +163,6 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                         key={`guardrails-${selectedNode.id}`}
                         title="Guardrails"
                         isConfigured={(guardrails?.length ?? 0) > 0}
-                        isOpen={openSection === 'guardrails'}
-                        onToggle={() => toggleSection('guardrails')}
                     >
                         <GuardrailSelector
                             label=""
@@ -219,8 +205,6 @@ export const PlannerReplannerForm = (props: PlannerReplannerFormProps) => {
                             key={`advanced-${selectedNode.id}`}
                             title="Advanced Configurations"
                             isConfigured={!!maxReplanAttempts}
-                            isOpen={openSection === 'advanced'}
-                            onToggle={() => toggleSection('advanced')}
                         >
                             <div>
                                 <Input
