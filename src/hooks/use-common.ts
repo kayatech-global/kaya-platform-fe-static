@@ -251,6 +251,23 @@ const MOCK_RERANKING_CONFIGS: IReRanking[] = [
     },
 ];
 
+const MOCK_VARIABLE_DATA: IVariable[] = [
+    {
+        id: 'var-1',
+        name: 'CUSTOMER_NAME',
+        dataType: 'string',
+        description: 'The name of the customer',
+        isReadOnly: false,
+    },
+    {
+        id: 'var-2',
+        name: 'ORDER_ID',
+        dataType: 'number',
+        description: 'The ID of the order',
+        isReadOnly: true,
+    },
+];
+
 export const useIntellisense = () => {
     const { token } = useAuth();
     const [allIntellisenseValues, setAllIntellisenseValues] = useState<string[]>([]);
@@ -899,13 +916,22 @@ export const useVariableQuery = <T = IVariable, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.VARIABLE,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_variable_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_VARIABLE_DATA;
+                }
+            }
+            localStorage.setItem('mock_variable_data', JSON.stringify(MOCK_VARIABLE_DATA));
+            return MOCK_VARIABLE_DATA as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,

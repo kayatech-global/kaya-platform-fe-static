@@ -126,13 +126,13 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
                 icon: 'Vault',
                 isSingleLink: true,
             },
-            // {
-            //     id: 'variables',
-            //     title: 'Set Workspace Variables',
-            //     url: '/workspace/[wid]/variables',
-            //     icon: 'Braces',
-            //     isSingleLink: true,
-            // },
+            {
+                id: 'variables',
+                title: 'Set Workspace Variables',
+                url: '/workspace/[wid]/variables',
+                icon: 'Braces',
+                isSingleLink: true,
+            },
             // {
             //     id: 'knowledge-source-configs',
             //     title: 'Configure Knowledge Sources',
