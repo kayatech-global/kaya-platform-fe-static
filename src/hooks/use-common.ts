@@ -215,6 +215,42 @@ const MOCK_EMBEDDING_CONFIGS: IEmbedding[] = [
     },
 ];
 
+const MOCK_RERANKING_PROVIDERS = [
+    {
+        id: 'cohere-rerank',
+        value: 'cohere',
+        name: 'Cohere Rerank',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'rerank-english-v3.0', value: 'rerank-english-v3.0', description: 'Rerank English v3.0' },
+            { id: 'rerank-multilingual-v3.0', value: 'rerank-multilingual-v3.0', description: 'Rerank Multilingual v3.0' },
+        ],
+    },
+    {
+        id: 'jina-rerank',
+        value: 'jina',
+        name: 'Jina AI Rerank',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'jina-reranker-v2-base-multilingual', value: 'jina-reranker-v2-base-multilingual', description: 'Jina Reranker v2 Base Multilingual' },
+        ],
+    },
+];
+
+const MOCK_RERANKING_CONFIGS: IReRanking[] = [
+    {
+        id: 'mock-reranking-1',
+        name: 'Default Cohere Rerank',
+        description: 'Mock Cohere Reranking Configuration',
+        provider: 'cohere',
+        modelName: 'rerank-english-v3.0',
+        configurations: {
+            apiKey: 'sk-mock-key-abc',
+            baseURL: 'https://api.cohere.ai/v1',
+        },
+    },
+];
+
 export const useIntellisense = () => {
     const { token } = useAuth();
     const [allIntellisenseValues, setAllIntellisenseValues] = useState<string[]>([]);
@@ -466,7 +502,7 @@ export const usePlatformQuery = <TSelected = IPlatformConfiguration>({
                 slmProviders: JSON.stringify(MOCK_SLM_PROVIDERS),
                 speechToSpeechModelProviders: JSON.stringify(MOCK_STS_PROVIDERS),
                 embeddingModelProviders: JSON.stringify(MOCK_EMBEDDING_PROVIDERS),
-                rerankingModelProviders: '[]',
+                rerankingModelProviders: JSON.stringify(MOCK_RERANKING_PROVIDERS),
             } as IPlatformConfiguration;
         },
         {
@@ -968,13 +1004,22 @@ export const useReRankingModelQuery = <T = IReRanking, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.RE_RANKING_MODEL,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_reranking_configs');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_RERANKING_CONFIGS;
+                }
+            }
+            localStorage.setItem('mock_reranking_configs', JSON.stringify(MOCK_RERANKING_CONFIGS));
+            return MOCK_RERANKING_CONFIGS as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
