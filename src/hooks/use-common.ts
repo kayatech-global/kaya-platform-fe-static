@@ -186,6 +186,35 @@ const MOCK_STS_CONFIGS: ISTSForm[] = [
     },
 ];
 
+const MOCK_EMBEDDING_PROVIDERS = [
+    {
+        id: 'openai-embedding',
+        value: 'openai',
+        name: 'OpenAI Embedding',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'text-embedding-3-small', value: 'text-embedding-3-small', description: 'Text Embedding 3 Small' },
+            { id: 'text-embedding-3-large', value: 'text-embedding-3-large', description: 'Text Embedding 3 Large' },
+            { id: 'text-embedding-ada-002', value: 'text-embedding-ada-002', description: 'Text Embedding Ada 002' },
+        ],
+    },
+];
+
+const MOCK_EMBEDDING_CONFIGS: IEmbedding[] = [
+    {
+        id: 'mock-embedding-1',
+        name: 'Default OpenAI Embedding',
+        description: 'Mock OpenAI Embedding Configuration',
+        provider: 'openai',
+        modelName: 'text-embedding-3-small',
+        configurations: {
+            apiKey: 'sk-mock-key-123',
+            dimensions: 1536,
+            baseURL: 'https://api.openai.com/v1',
+        },
+    },
+];
+
 export const useIntellisense = () => {
     const { token } = useAuth();
     const [allIntellisenseValues, setAllIntellisenseValues] = useState<string[]>([]);
@@ -436,7 +465,7 @@ export const usePlatformQuery = <TSelected = IPlatformConfiguration>({
                 llmProviders: JSON.stringify(MOCK_LLM_PROVIDERS),
                 slmProviders: JSON.stringify(MOCK_SLM_PROVIDERS),
                 speechToSpeechModelProviders: JSON.stringify(MOCK_STS_PROVIDERS),
-                embeddingModelProviders: '[]',
+                embeddingModelProviders: JSON.stringify(MOCK_EMBEDDING_PROVIDERS),
                 rerankingModelProviders: '[]',
             } as IPlatformConfiguration;
         },
@@ -899,13 +928,22 @@ export const useEmbeddingModelQuery = <T = IEmbedding, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.EMBEDDING_MODEL,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_embedding_configs');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_EMBEDDING_CONFIGS;
+                }
+            }
+            localStorage.setItem('mock_embedding_configs', JSON.stringify(MOCK_EMBEDDING_CONFIGS));
+            return MOCK_EMBEDDING_CONFIGS as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,

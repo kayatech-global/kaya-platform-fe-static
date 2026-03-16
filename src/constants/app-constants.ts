@@ -101,24 +101,24 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
                     },
                 ],
             },
-            // {
-            //     id: 'language_enhancers_configs',
-            //     title: 'Configure Intelligence Enhancers',
-            //     url: '#',
-            //     icon: 'Zap',
-            //     items: [
-            //         {
-            //             id: 'embedding_models',
-            //             title: 'Add Embedding Models',
-            //             url: '/workspace/[wid]/intelligence-enhancers/embedding-models',
-            //         },
-            //         {
-            //             id: 're-ranking_models',
-            //             title: 'Add Re-ranking Models',
-            //             url: '/workspace/[wid]/intelligence-enhancers/re-ranking-models',
-            //         },
-            //     ],
-            // },
+            {
+                id: 'language_enhancers_configs',
+                title: 'Configure Intelligence Enhancers',
+                url: '#',
+                icon: 'Zap',
+                items: [
+                    {
+                        id: 'embedding_models',
+                        title: 'Add Embedding Models',
+                        url: '/workspace/[wid]/intelligence-enhancers/embedding-models',
+                    },
+                    {
+                        id: 're-ranking_models',
+                        title: 'Add Re-ranking Models',
+                        url: '/workspace/[wid]/intelligence-enhancers/re-ranking-models',
+                    },
+                ],
+            },
             {
                 id: 'vault',
                 title: 'Add Vaults or Secure Your Secrets',
