@@ -115,6 +115,77 @@ const MOCK_VAULT_DATA: IVault[] = [
     },
 ];
 
+const MOCK_SLM_PROVIDERS = [
+    {
+        id: 'phi-3',
+        value: 'phi-3',
+        name: 'Microsoft Phi-3',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'phi-3-mini', value: 'phi-3-mini', description: 'Phi-3 Mini' },
+            { id: 'phi-3-medium', value: 'phi-3-medium', description: 'Phi-3 Medium' },
+        ],
+    },
+];
+
+const MOCK_SLM_CONFIGS: ISLMForm[] = [
+    {
+        id: 'mock-slm-1',
+        name: 'Default Phi-3',
+        provider: 'phi-3',
+        modelName: 'phi-3-mini',
+        configurations: {
+            description: 'Mock Phi-3 Configuration',
+            temperature: 0.5,
+            baseUrl: 'http://localhost:11434',
+            apiAuthorization: '',
+            customRuntime: false,
+            tokenLimit: null as unknown as number,
+            providerConfig: {
+                id: 'phi-3',
+                value: 'phi-3',
+                description: 'Microsoft Phi-3',
+                logo: {},
+            },
+        },
+    },
+];
+
+const MOCK_STS_PROVIDERS = [
+    {
+        id: 'openai-sts',
+        value: 'openai',
+        name: 'OpenAI TTS/STT',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'tts-1', value: 'tts-1', description: 'OpenAI TTS-1' },
+            { id: 'whisper-1', value: 'whisper-1', description: 'OpenAI Whisper-1' },
+        ],
+    },
+];
+
+const MOCK_STS_CONFIGS: ISTSForm[] = [
+    {
+        id: 'mock-sts-1',
+        name: 'Default OpenAI STS',
+        provider: 'openai',
+        modelName: 'tts-1',
+        description: 'Mock OpenAI Speech configuration',
+        configurations: {
+            tone: 'neutral',
+            voice: 'alloy',
+            language: 'en',
+            temperature: 0.7,
+            providerConfig: {
+                id: 'openai-sts',
+                value: 'openai',
+                description: 'OpenAI TTS/STT',
+                logo: {},
+            },
+        },
+    },
+];
+
 export const useIntellisense = () => {
     const { token } = useAuth();
     const [allIntellisenseValues, setAllIntellisenseValues] = useState<string[]>([]);
@@ -363,8 +434,8 @@ export const usePlatformQuery = <TSelected = IPlatformConfiguration>({
         async () => {
             return {
                 llmProviders: JSON.stringify(MOCK_LLM_PROVIDERS),
-                slmProviders: '[]',
-                speechToSpeechModelProviders: '[]',
+                slmProviders: JSON.stringify(MOCK_SLM_PROVIDERS),
+                speechToSpeechModelProviders: JSON.stringify(MOCK_STS_PROVIDERS),
                 embeddingModelProviders: '[]',
                 rerankingModelProviders: '[]',
             } as IPlatformConfiguration;
@@ -497,13 +568,22 @@ export const useSLMQuery = <T = ISLMForm, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.SLM,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_slm_configs');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_SLM_CONFIGS;
+                }
+            }
+            localStorage.setItem('mock_slm_configs', JSON.stringify(MOCK_SLM_CONFIGS));
+            return MOCK_SLM_CONFIGS as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -528,13 +608,22 @@ export const useSTSQuery = <T = ISTSForm, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.STS,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_sts_configs');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_STS_CONFIGS;
+                }
+            }
+            localStorage.setItem('mock_sts_configs', JSON.stringify(MOCK_STS_CONFIGS));
+            return MOCK_STS_CONFIGS as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
