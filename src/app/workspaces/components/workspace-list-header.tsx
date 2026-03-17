@@ -7,6 +7,8 @@ import WorkspaceForm from './workspace-form';
 import { useAuth } from '@/context';
 import { IOption, ISearch } from '@/models';
 import { useForm } from 'react-hook-form';
+import { Activity } from 'lucide-react';
+import KayaStatusModal from './kaya-status-modal';
 
 interface WorkspaceListHeaderProps {
     metadataOption: IOption | null;
@@ -38,6 +40,7 @@ const WorkspaceListHeader = ({
     const { isSuperAdmin } = useAuth();
     const { register, handleSubmit } = useForm<ISearch>({ mode: 'onChange' });
     const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+    const [statusModalOpen, setStatusModalOpen] = useState(false);
 
     const handleCreate = () => {
         setOpenNewWorkspaceForm(true);
@@ -93,12 +96,21 @@ const WorkspaceListHeader = ({
                 />
                 {isSuperAdmin && (
                     <div className="data-table-header-button flex gap-x-3">
+                        <Button
+                            onClick={() => setStatusModalOpen(true)}
+                            size={'sm'}
+                            variant={'outline'}
+                            leadingIcon={<Activity size={14} />}
+                        >
+                            KAYA Status
+                        </Button>
                         <Button onClick={() => handleCreate()} size={'sm'}>
                             New Workspace
                         </Button>
                     </div>
                 )}
             </div>
+            <KayaStatusModal open={statusModalOpen} onOpenChange={setStatusModalOpen} />
             <Dialog open={openNewWorkspaceForm} onOpenChange={setOpenNewWorkspaceForm}>
                 <DialogContent className="max-w-[unset] w-[550px]">
                     <DialogHeader>
