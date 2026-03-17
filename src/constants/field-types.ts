@@ -43,6 +43,9 @@ export const FIELD_TYPES_TEXT = [
     'preferred_role',
     'credential_provider',
     'clusterIdentifier',
+    'prompt',
+    'template',
+    'model',
 ];
 export const FIELD_TYPE_REGION = ['region'];
 export const FIELD_TYPE_HOST = ['host'];
@@ -50,4 +53,4 @@ export const FIELD_TYPE_PORT = ['port'];
 export const FIELD_TYPE_AUTHENTICATION_TYPE_MESSAGE_BROKER = ['authenticationType'];
 export const FIELD_TYPE_AUTHENTICATION_TYPE_GUARDRAILS = ['authenticationType'];
 
-export const FIELD_TYPE_NUMBER = ['phoneNumber'];
+export const FIELD_TYPE_NUMBER = ['phoneNumber', 'temperature'];

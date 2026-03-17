@@ -9,30 +9,34 @@ import { WorkflowEnvConfigFormBase } from '@/models/workflow-pull.model';
 import { OptionModel } from '@/components/atoms';
 import { getFieldLabel } from '@/utils/field-label-converter';
 
+import { IntellisenseCategory } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
+
 interface IConfigurationSectionProps {
     configIndex: number;
     fieldIndex: number;
     watch: UseFormWatch<WorkflowEnvConfigFormBase>;
-    control: Control<WorkflowEnvConfigFormBase>;
     errors: FieldErrors<WorkflowEnvConfigFormBase>;
     setValue: UseFormSetValue<WorkflowEnvConfigFormBase>;
     register: UseFormRegister<WorkflowEnvConfigFormBase>;
     secrets: OptionModel[];
     refetchSecrets: () => void;
     loadingSecrets: boolean;
+    intellisenseOptions?: IntellisenseCategory[];
+    control: Control<WorkflowEnvConfigFormBase>;
 }
 
 export const ConfigurationSection = ({
     configIndex,
     fieldIndex,
     watch,
-    control,
     errors,
     setValue,
     register,
     secrets,
     refetchSecrets,
     loadingSecrets,
+    intellisenseOptions,
+    control,
 }: IConfigurationSectionProps) => {
     return (
         <div className="border border-blue-200 dark:border-gray-600 border-dashed pb-4 flex flex-col gap-y-4 rounded-md p-2">
@@ -50,7 +54,6 @@ export const ConfigurationSection = ({
                 <IncomingValueField value={watch(`configs.${configIndex}.fields.${fieldIndex}.meta.incomingValue`)} />
                 <FinalValueField
                     value={watch(`configs.${configIndex}.fields.${fieldIndex}.meta.finalValue`)}
-                    control={control}
                     watch={watch}
                     configIndex={configIndex}
                     fieldIndex={fieldIndex}
@@ -60,9 +63,10 @@ export const ConfigurationSection = ({
                     secrets={secrets}
                     refetchSecrets={refetchSecrets}
                     loadingSecrets={loadingSecrets}
+                    intellisenseOptions={intellisenseOptions}
+                    control={control}
                 />
             </div>
         </div>
     );
 };
-//

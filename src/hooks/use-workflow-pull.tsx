@@ -2,10 +2,8 @@
 import { useForm } from 'react-hook-form';
 import {
     FieldMeta,
-    IEnvSpecificValuePayload,
     IPullTypeIdentifierResponse,
     IWorkflowComparisonResponse,
-    IWorkflowDeploymentExecution,
     IWorkflowPullType,
     WorkflowEnvConfigFieldForm,
     WorkflowEnvConfigFormBase,
@@ -16,17 +14,14 @@ import { IStep } from '@/components/organisms/stepper/stepper';
 import { PullTypeStep } from '@/app/workspace/[wid]/workflow-registry/components/pull-type-step';
 import { DifferencesStep } from '@/app/workspace/[wid]/workflow-registry/components/workflow-comparison';
 import { ConfigurationStep } from '@/app/workspace/[wid]/workflow-registry/components/configuration-step';
-import { FetchError, logger } from '@/utils';
 import { useMutation, useQuery } from 'react-query';
-import { useParams } from 'next/navigation';
-import { toast } from 'sonner';
 import { PullingStep } from '@/app/workspace/[wid]/workflow-registry/components/pulling-step';
 import { OptionModel } from '@/components';
-import { useApp } from '@/context/app-context';
 import { useVaultQuery } from './use-common';
-import { registryService, workflowService } from '@/services';
-import { ArtifactApproachType, QueryKeyType } from '@/enums';
+import { ArtifactApproachType } from '@/enums';
 import { isNullOrEmpty } from '@/lib/utils';
+import { mock_configurations } from '@/app/workspace/[wid]/workflow-registry/mock_data';
+import { IntellisenseTools } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
 
 interface WorkflowNameHistory {
     name: string;
@@ -56,17 +51,12 @@ const PULL_TYPES_CONSTANT: IWorkflowPullType[] = [
 const sanitizeMarkdownString = (input: string): string => {
     if (!input) return '';
     let cleaned = input.trim();
-    // 1. Remove accidental wrapping quotes
     if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
         cleaned = cleaned.slice(1, -1);
     }
-    // 2. Replace escaped newlines \\n → real newline
-    cleaned = cleaned.replace(/\\n/g, '\n');
-    // 3. Replace escaped quotes \" → "
-    cleaned = cleaned.replace(/\\"/g, '"');
-    // 4. Convert double backslashes \\ → \
-    cleaned = cleaned.replace(/\\\\/g, '\\');
-    // 5. Trim again for safety
+    cleaned = cleaned.replaceAll(String.raw`\n`, '\n');
+    cleaned = cleaned.replaceAll(String.raw`\"`, '"');
+    cleaned = cleaned.replaceAll(String.raw`\\`, '\\');
     return cleaned.trim();
 };
 
@@ -94,7 +84,6 @@ export const useWorkflowPull = ({
     const [workflowComparisonData, setWorkflowComparisonData] = useState<IWorkflowComparisonResponse>();
     const [secrets, setSecrets] = useState<OptionModel[]>([]);
 
-    // states to keep track of data receive success or not
     const [pullTypeReceivedSuccessfully, setPullTypeReceivedSuccessfully] = useState(false);
     const [pullTypeReceivedFailedMessage, setPullTypeReceivedFailedMessage] = useState<string | undefined>(undefined);
     const [workflowComparisonReceivedSuccessfully, setWorkflowComparisonReceivedSuccessfully] = useState(false);
@@ -103,11 +92,7 @@ export const useWorkflowPull = ({
     const [workflowDeploymentExecutionSuccess, setWorkflowDeploymentExecutionSuccess] = useState(false);
     const [validating, setValidating] = useState<boolean>(false);
     const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
-    // Make sure to clear history when submit
     const [nameHistory, setNameHistory] = useState<WorkflowNameHistory[]>([]);
-
-    const params = useParams();
-    const { intelligentSource } = useApp();
 
     const {
         control,
@@ -146,59 +131,63 @@ export const useWorkflowPull = ({
         return true;
     }, [pullTypeReceivedFailedMessage]);
 
+    const migrationStrategy = watch('migrationStrategy');
+
     const isNewStrategy = useMemo(() => {
-        if (watch('migrationStrategy') === ArtifactApproachType.CREATE_AS_NEW) {
+        if (migrationStrategy === ArtifactApproachType.CREATE_AS_NEW) {
             return true;
         }
         return false;
-    }, [watch('migrationStrategy')]);
+    }, [migrationStrategy]);
 
     const isCloneStrategy = useMemo(() => {
-        if (watch('migrationStrategy') === ArtifactApproachType.CLONE) {
+        if (migrationStrategy === ArtifactApproachType.CLONE) {
             return true;
         }
         return false;
-    }, [watch('migrationStrategy')]);
+    }, [migrationStrategy]);
 
     const { refetch: refetchWorkflowPullType, isFetching: pullTypeLoading } = useQuery(
-        [QueryKeyType.WORKFLOW_PULL_TYPE, artifactPath, artifactVersion],
-        () => registryService.validate(params.wid as string, artifactPath as string, artifactVersion as string),
+        ['mock_pull_type', artifactPath, artifactVersion],
+        async () => {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return {
+                sessionId: 'mock-session-' + Date.now(),
+                migrationStrategies: [ArtifactApproachType.CREATE_AS_NEW, ArtifactApproachType.OVERWRITE_EXISTING],
+                errors: []
+            } as IPullTypeIdentifierResponse;
+        },
         {
             enabled: false,
             retry: false,
             refetchOnWindowFocus: false,
-            onSuccess: data => {
-                setPullType(data);
-                const errorStrategies = new Set(data?.errors?.map(err => err.migrationStrategy) ?? []);
-                const firstValidStrategy = data?.migrationStrategies?.find(strategy => !errorStrategies.has(strategy));
-                setValue('migrationStrategy', firstValidStrategy);
-                setTimeout(async () => {
-                    await trigger('workflowName', { shouldFocus: false });
-                    await trigger('migrationStrategy', { shouldFocus: true });
-                    clearErrors(['migrationStrategy', 'workflowName']);
-                }, 100);
+            onSuccess: pullValidationResponse => {
+                setPullType(pullValidationResponse);
+                setValue('migrationStrategy', ArtifactApproachType.CREATE_AS_NEW);
                 setPullTypeReceivedSuccessfully(true);
+                if (pullValidationResponse?.errors && pullValidationResponse.errors.length > 0) {
+                    setPullTypeReceivedFailedMessage(pullValidationResponse.errors[0]?.message || 'Validation failed');
+                }
             },
-            onError: (error: FetchError) => {
-                setPullTypeReceivedFailedMessage(error?.message);
-                console.error('Failed to fetch workflow pull type', error?.message);
+            onError: (error: any) => {
+                setPullTypeReceivedFailedMessage(error?.message || 'Failed to fetch pull type');
             },
         }
     );
 
     const { refetch: refetchWorkflowComparisonType, isFetching: workflowComparisonLoading } = useQuery(
-        [QueryKeyType.WORKFLOW_COMPARISON, artifactPath, artifactVersion, pullType?.sessionId],
-        () =>
-            registryService.diff(
-                params.wid as string,
-                artifactPath as string,
-                artifactVersion as string,
-                pullType?.sessionId as string
-            ),
+        ['mock_workflow_diff', artifactPath, artifactVersion],
+        async () => {
+             await new Promise(resolve => setTimeout(resolve, 500));
+             return {
+                 comparisonOutput: '### Mock Diff\n- Changed agent prompt\n- Added new variable',
+                 currentPublishGraph: { nodes: [], edges: [] },
+                 incomingPublishGraph: { nodes: [], edges: [] }
+             };
+        },
         {
             enabled: false,
             refetchOnWindowFocus: false,
-            retry: false,
             onSuccess: data => {
                 setWorkflowComparisonData({
                     comparisonOutput: sanitizeMarkdownString(data.comparisonOutput),
@@ -208,95 +197,40 @@ export const useWorkflowPull = ({
                 setWorkflowComparisonReceivedSuccessfully(true);
                 setCurrentStep(2);
             },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                console.error('Failed to fetch comparison data', error?.message);
-            },
         }
     );
 
     const { refetch: refetchWorkflowEnvSpecificValues, isFetching: workflowEnvSpecificValuesLoading } = useQuery(
-        [
-            QueryKeyType.WORKFLOW_ENV_SPECIFIC_VALUES,
-            artifactPath,
-            artifactVersion,
-            pullType?.sessionId,
-            watch('migrationStrategy'),
-        ],
-        () =>
-            registryService.configurations(
-                params.wid as string,
-                artifactPath as string,
-                artifactVersion as string,
-                pullType?.sessionId as string,
-                watch('migrationStrategy')
-            ),
+        ['mock_workflow_configs', artifactPath, artifactVersion],
+        async () => {
+             await new Promise(resolve => setTimeout(resolve, 500));
+             return mock_configurations as WorkflowEnvConfigItemForm[];
+        },
         {
             enabled: false,
             refetchOnWindowFocus: false,
-            retry: false,
             onSuccess: data => {
                 const mappedData = mapData(data);
                 setValue('configs', mappedData);
-                trigger('configs')
-                    .then(() => {
-                        setEnvSpecificDataRetrievedSuccessfully(true);
-                        setCurrentStep(3);
-                    })
-                    .catch(error => {
-                        logger.error('Failed to trigger validation:', error);
-                    });
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                console.error('Failed to fetch comparison data', error?.message);
+                trigger('configs').then(() => {
+                    setEnvSpecificDataRetrievedSuccessfully(true);
+                    setCurrentStep(3);
+                });
             },
         }
     );
 
     const { isLoading: workflowEnvSpecificValuesPostLoading, mutateAsync: mutateEnvSpecificData } = useMutation(
-        ({
-            data,
-            workspaceId,
-            artifactPath,
-            artifactVersion,
-        }: {
-            data: IEnvSpecificValuePayload;
-            workspaceId: string;
-            artifactPath: string;
-            artifactVersion: string;
-        }) => registryService.createConfigurations(data, workspaceId, artifactPath, artifactVersion),
-        {
-            onSuccess: () => {
-                setEnvSpecificDataPostedSuccessfully(true);
-            },
-            onError: (error: FetchError) => {
-                toast.error('Workflow pull failed. Please try again');
-                logger.error('Error updating environment specific data:', error?.message);
-            },
+        async () => {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            setEnvSpecificDataPostedSuccessfully(true);
         }
     );
 
     const { isLoading: workflowDeploymentExecutionLoading, mutateAsync: executeWorkflowMutation } = useMutation(
-        ({
-            data,
-            workspaceId,
-            artifactPath,
-            artifactVersion,
-        }: {
-            data: IWorkflowDeploymentExecution;
-            workspaceId: string;
-            artifactPath: string;
-            artifactVersion: string;
-        }) => registryService.execute(data, workspaceId, artifactPath, artifactVersion),
-        {
-            onSuccess: () => {
-                setWorkflowDeploymentExecutionSuccess(true);
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error updating environment specific data:', error?.message);
-            },
+        async () => {
+            await new Promise(resolve => setTimeout(resolve, 800));
+            setWorkflowDeploymentExecutionSuccess(true);
         }
     );
 
@@ -313,14 +247,46 @@ export const useWorkflowPull = ({
         },
     });
 
+    // Intellisense Fetching (Mocked)
+    const { data: allIntellisense } = useQuery(
+        'mock_intellisense',
+        async () => {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            return {
+                agents: { shared: [{ name: 'Math Tutor' }, { name: 'Coder' }] },
+                api: { shared: [{ name: 'Google Search' }, { name: 'Weather API' }] },
+                variables: { shared: [{ name: 'user_id' }, { name: 'session_token' }] },
+                mcp: { shared: [{ name: 'Tool A' }] },
+                rag: { shared: [{ name: 'Doc Search' }] },
+                graphRag: { shared: [{ name: 'Graph Search' }] },
+                connectors: { shared: [{ name: 'Postgres' }] },
+                executableFunction: { shared: [{ name: 'Format JSON' }] },
+            };
+        }
+    );
+
+    const intellisenseOptions = useMemo(() => {
+        if (!allIntellisense) return [];
+
+        const mapToOptions = (items: any[], tool: string) => 
+            items?.filter(i => i.name).map(i => ({ label: i.name, value: `${tool}:${i.name}` })) || [];
+
+        return [
+            { name: 'Agents', options: mapToOptions(allIntellisense.agents?.shared, IntellisenseTools.Agent) },
+            { name: 'APIs', options: mapToOptions(allIntellisense.api?.shared, IntellisenseTools.API) },
+            { name: 'Variables', options: mapToOptions(allIntellisense.variables?.shared, IntellisenseTools.Variable) },
+            { name: 'MCPs', options: mapToOptions(allIntellisense.mcp?.shared, IntellisenseTools.MCP) },
+            { name: 'Vector RAGs', options: mapToOptions(allIntellisense.rag?.shared, IntellisenseTools.VectorRAG) },
+            { name: 'Graph RAGs', options: mapToOptions(allIntellisense.graphRag?.shared, IntellisenseTools.GraphRAG) },
+            { name: 'Database Connectors', options: mapToOptions(allIntellisense.connectors?.shared, IntellisenseTools.DatabaseConnector) },
+            { name: 'Executable Functions', options: mapToOptions(allIntellisense.executableFunction?.shared, IntellisenseTools.ExecutableFunction) },
+        ];
+    }, [allIntellisense]);
+
     const validateWorkflowName = async (value: string) => {
         if (value) {
-            if (value.startsWith(' ')) {
-                return 'No leading spaces in workflow name';
-            }
-            if (value.endsWith(' ')) {
-                return 'No trailing spaces in workflow name';
-            }
+            if (value.startsWith(' ')) return 'No leading spaces in workflow name';
+            if (value.endsWith(' ')) return 'No trailing spaces in workflow name';
 
             if (value.trim() !== '') {
                 const history = nameHistory?.find(x => x.name === value.trim());
@@ -334,29 +300,19 @@ export const useWorkflowPull = ({
         return true;
     };
 
-    const handleWorkflowCheckResult = (value: string, result: { isAvailable: boolean }) => {
-        setNameHistory(prevHistory => [...prevHistory, { name: value.trim(), isDirty: !result?.isAvailable }]);
-        if (!result?.isAvailable) {
-            setError('workflowName', {
-                type: 'manual',
-                message: `Workflow '${value}' already exists, please enter a different name`,
-            });
-        } else {
-            clearErrors('workflowName');
-        }
-    };
-
     const validateWorkspaceNameByFetch = (value: string) => {
         setValidating(true);
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
-        }
+        if (debounceTimer) clearTimeout(debounceTimer);
 
         const timer = setTimeout(async () => {
-            await workflowService
-                .check(params.wid as string, value)
-                .then(result => handleWorkflowCheckResult(value, result))
-                .finally(() => setValidating(false));
+            const isAvailable = value.toLowerCase() !== 'taken';
+            setNameHistory(prev => [...prev, { name: value.trim(), isDirty: !isAvailable }]);
+            if (!isAvailable) {
+                setError('workflowName', { type: 'manual', message: `Workflow '${value}' already exists` });
+            } else {
+                clearErrors('workflowName');
+            }
+            setValidating(false);
         }, 1000);
         setDebounceTimer(timer);
     };
@@ -369,7 +325,7 @@ export const useWorkflowPull = ({
             icon: 'ri-install-fill',
             body: (
                 <PullTypeStep
-                    migrationStrategy={watch('migrationStrategy')}
+                    migrationStrategy={migrationStrategy}
                     pullTypes={pullTypes}
                     isLoading={pullTypeLoading}
                     pullTypeReceivedFailedMessage={pullTypeReceivedFailedMessage}
@@ -414,6 +370,7 @@ export const useWorkflowPull = ({
                     refetchSecrets={refetchSecrets}
                     loadingSecrets={loadingSecrets}
                     trigger={trigger}
+                    intellisenseOptions={intellisenseOptions}
                 />
             ),
             isDisabled: isCloneStrategy,
@@ -437,48 +394,28 @@ export const useWorkflowPull = ({
 
     const getWorkflowComparisonData = () => {
         if (workflowComparisonReceivedSuccessfully === false) {
-            if (intelligentSource) {
-                refetchWorkflowComparisonType();
-                return;
-            } else {
-                setCurrentStep(2);
-                return;
-            }
+            refetchWorkflowComparisonType();
+        } else {
+            setCurrentStep(2);
         }
-        setCurrentStep(2); // if workflowComparisonReceivedSuccessfully === true set the step from here
     };
 
     const getEnvSpecificValueData = () => {
         if (envSpecificDataRetrievedSuccessfully === false) {
             refetchWorkflowEnvSpecificValues();
-            return;
+        } else {
+            setCurrentStep(3);
         }
-        setCurrentStep(3);
     };
 
     const postEnvSpecificValueData = async () => {
-        await mutateEnvSpecificData({
-            data: { items: watch('configs'), sessionId: pullType?.sessionId as string },
-            workspaceId: params.wid as string,
-            artifactPath: artifactPath as string,
-            artifactVersion: artifactVersion as string,
-        });
+        await mutateEnvSpecificData();
         await postExecuteData();
     };
 
     const postExecuteData = async () => {
         if (watch('migrationStrategy')) {
-            await executeWorkflowMutation({
-                data: {
-                    sessionId: pullType?.sessionId as string,
-                    migrationStrategy: watch('migrationStrategy') as ArtifactApproachType,
-                    workflowName:
-                        watch('migrationStrategy') === ArtifactApproachType.CLONE ? watch('workflowName') : undefined,
-                },
-                workspaceId: params.wid as string,
-                artifactPath: artifactPath as string,
-                artifactVersion: artifactVersion as string,
-            });
+            await executeWorkflowMutation();
         }
     };
 
@@ -489,23 +426,18 @@ export const useWorkflowPull = ({
         }
 
         if (watch('migrationStrategy') === ArtifactApproachType.OVERWRITE_EXISTING && currentStep === 1) {
-            // fetch the workflow comparison cz we're moving into 2 step
             getWorkflowComparisonData();
             return;
         }
 
         if (isCloneStrategy && currentStep === 1) {
             const isWorkflowNameValid = await trigger('workflowName', { shouldFocus: true });
-            if (!isWorkflowNameValid) {
-                return;
-            }
-            // for clone we can directly move to configuration step cz there is no comparison needed, but we need to fetch env specific values in advance
+            if (!isWorkflowNameValid) return;
             setEnvSpecificDataPostedSuccessfully(true);
             postExecuteData();
             setCurrentStep(4);
         }
         if (currentStep === 2) {
-            // fetch env variables cz we're moving into 3 step
             getEnvSpecificValueData();
             return;
         }
@@ -514,52 +446,34 @@ export const useWorkflowPull = ({
             postEnvSpecificValueData();
             setCurrentStep(4);
         }
-
-        // handle final step first
-        if (currentStep === 4) {
-            // post do the deployment
-            return;
-        }
     };
 
     const handleBack = () => {
-        // If CREATE_AS_NEW was used and we're coming back from step 3 → jump to step 1
         if (isNewStrategy && currentStep === 3) {
             setCurrentStep(1);
             return;
         }
-
-        if (currentStep > 1) {
-            setCurrentStep(currentStep - 1);
-        }
+        if (currentStep > 1) setCurrentStep(currentStep - 1);
     };
 
     const onCancel = () => {
         const isSuccess = envSpecificDataPostedSuccessfully && workflowDeploymentExecutionSuccess;
-        // resetting parent states
         setArtifactPath(null);
         setArtifactVersion(null);
-
-        //
         setCurrentStep(1);
         reset({ configs: [], migrationStrategy: undefined, workflowName: undefined });
         setPullType(undefined);
         setWorkflowComparisonData(undefined);
-
-        // resetting tracking states
         setPullTypeReceivedSuccessfully(false);
         setWorkflowComparisonReceivedSuccessfully(false);
         setEnvSpecificDataRetrievedSuccessfully(false);
         setEnvSpecificDataPostedSuccessfully(false);
         setWorkflowDeploymentExecutionSuccess(false);
         setPullTypeReceivedFailedMessage(undefined);
-
         setIsOpen(false);
         setValidating(false);
         setNameHistory([]);
-        if (isSuccess) {
-            refetch();
-        }
+        if (isSuccess) refetch();
     };
 
     const mapData = (data: WorkflowEnvConfigItemForm[]): WorkflowEnvConfigItemForm[] => {
@@ -569,16 +483,14 @@ export const useWorkflowPull = ({
             type: item.type,
             fields: item.fields.map((f: WorkflowEnvConfigFieldForm) => {
                 const isEmptyFinalValue = !f.meta.finalValue || String(f.meta.finalValue).trim() === '';
-
                 return {
                     name: f.name,
                     meta: {
-                        // copy the meta object fully
                         ...f.meta,
                         initFinalValue: f.meta.finalValue,
                         finalValue: f.meta.finalValue ?? '',
                     } as FieldMeta,
-                    readOnly: !isEmptyFinalValue, // default locked in UI
+                    readOnly: !isEmptyFinalValue,
                 };
             }),
             reference: item.reference,
@@ -613,5 +525,8 @@ export const useWorkflowPull = ({
         pullTypeReceivedFailedMessage,
         validating,
         validateWorkflowName,
+        intellisenseOptions,
     };
 };
+
+

@@ -10,9 +10,10 @@ import { useAccordionInitialValidation } from '@/hooks/use-wf-pull-accordion-ini
 import { useAccordionValidationState } from '@/hooks/use-wf-pull-accordion-validation-state';
 import { HeaderConfigurationSection } from './header-configuration-section';
 
+import { IntellisenseCategory } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
+
 interface WorkflowConfigureAccordionProps {
     watch: UseFormWatch<WorkflowEnvConfigFormBase>;
-    control: Control<WorkflowEnvConfigFormBase>;
     errors: FieldErrors<WorkflowEnvConfigFormBase>;
     setValue: UseFormSetValue<WorkflowEnvConfigFormBase>;
     register: UseFormRegister<WorkflowEnvConfigFormBase>;
@@ -20,11 +21,12 @@ interface WorkflowConfigureAccordionProps {
     refetchSecrets: () => void;
     loadingSecrets: boolean;
     trigger: UseFormTrigger<WorkflowEnvConfigFormBase>;
+    intellisenseOptions?: IntellisenseCategory[];
+    control: Control<WorkflowEnvConfigFormBase>;
 }
 
 export const WorkflowConfigureAccordion = ({
     watch,
-    control,
     errors,
     setValue,
     register,
@@ -32,6 +34,8 @@ export const WorkflowConfigureAccordion = ({
     refetchSecrets,
     loadingSecrets,
     trigger,
+    intellisenseOptions,
+    control,
 }: WorkflowConfigureAccordionProps) => {
     const configs = watch('configs');
     const [openAccordions, setOpenAccordions] = useState<string[]>([]);
@@ -96,7 +100,6 @@ export const WorkflowConfigureAccordion = ({
                                         key={`${config.id}-field-${fieldIndex}`}
                                         configIndex={configIndex}
                                         fieldIndex={fieldIndex}
-                                        control={control}
                                         watch={watch}
                                         errors={errors}
                                         setValue={setValue}
@@ -104,6 +107,8 @@ export const WorkflowConfigureAccordion = ({
                                         secrets={secrets}
                                         refetchSecrets={refetchSecrets}
                                         loadingSecrets={loadingSecrets}
+                                        intellisenseOptions={intellisenseOptions}
+                                        control={control}
                                     />
                                 );
                             })}
@@ -112,7 +117,6 @@ export const WorkflowConfigureAccordion = ({
                                 <HeaderConfigurationSection
                                     configIndex={configIndex}
                                     fieldIndexes={headerFieldIndexes}
-                                    control={control}
                                     watch={watch}
                                     errors={errors}
                                     setValue={setValue}
@@ -120,6 +124,8 @@ export const WorkflowConfigureAccordion = ({
                                     secrets={secrets}
                                     refetchSecrets={refetchSecrets}
                                     loadingSecrets={loadingSecrets}
+                                    intellisenseOptions={intellisenseOptions}
+                                    control={control}
                                 />
                             )}
                         </div>
