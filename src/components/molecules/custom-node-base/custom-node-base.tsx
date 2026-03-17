@@ -2,6 +2,7 @@
 
 import React, { ReactNode, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Check, X, Loader2, GitBranch } from 'lucide-react';
 
 import { cn, hexToRgba } from '@/lib/utils';
 import { CustomHandle } from '../custom-handle/custom-handle';
@@ -13,6 +14,8 @@ type handleConfig = {
     showTarget: boolean;
     showSource: boolean;
 };
+
+export type NodeExecutionStatus = 'idle' | 'running' | 'success' | 'error';
 
 export interface CustomNodeProps {
     id: string;
@@ -34,6 +37,8 @@ export interface CustomNodeProps {
     customTitle?: string;
     hoverCard?: ReactNode;
     lineageStep?: number;
+    executionStatus?: NodeExecutionStatus;
+    showLineageBadge?: boolean;
 }
 
 export const CustomNodeBase = ({
@@ -50,6 +55,8 @@ export const CustomNodeBase = ({
     customTitle,
     hoverCard,
     lineageStep,
+    executionStatus = 'idle',
+    showLineageBadge = false,
 }: CustomNodeProps) => {
     const [isAnimating, setIsAnimating] = useState(false);
     const [isActive, setIsActive] = useState(false);
@@ -131,7 +138,12 @@ export const CustomNodeBase = ({
                         <motion.div
                             style={{ background: isActive ? activeColor : color }}
                             className={cn(
-                                'node-tile rounded-lg h-[85px] w-[85px] border node-border z-20 flex items-center justify-center'
+                                'node-tile rounded-lg h-[85px] w-[85px] border node-border z-20 flex items-center justify-center relative',
+                                {
+                                    'ring-2 ring-offset-2 ring-green-500': executionStatus === 'success',
+                                    'ring-2 ring-offset-2 ring-red-500': executionStatus === 'error',
+                                    'ring-2 ring-offset-2 ring-blue-500 animate-pulse': executionStatus === 'running',
+                                }
                             )}
                             initial={{ top: 0, left: 0 }}
                             animate={{
@@ -156,6 +168,34 @@ export const CustomNodeBase = ({
                                     variants={iconAnimationVariants}
                                     animate={isAnimating ? 'animate' : 'idle'}
                                 />
+                            )}
+
+                            {/* Execution Status Badge */}
+                            {executionStatus !== 'idle' && (
+                                <div
+                                    className={cn(
+                                        'absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center shadow-md z-30',
+                                        {
+                                            'bg-green-500': executionStatus === 'success',
+                                            'bg-red-500': executionStatus === 'error',
+                                            'bg-blue-500': executionStatus === 'running',
+                                        }
+                                    )}
+                                >
+                                    {executionStatus === 'success' && <Check size={14} className="text-white" />}
+                                    {executionStatus === 'error' && <X size={14} className="text-white" />}
+                                    {executionStatus === 'running' && <Loader2 size={14} className="text-white animate-spin" />}
+                                </div>
+                            )}
+
+                            {/* Data Lineage Badge */}
+                            {showLineageBadge && (
+                                <div
+                                    className="absolute -bottom-2 -left-2 w-5 h-5 rounded-full bg-teal-500 flex items-center justify-center shadow-md z-30"
+                                    title="Data lineage tracking enabled"
+                                >
+                                    <GitBranch size={12} className="text-white" />
+                                </div>
                             )}
                         </motion.div>
                     ) : (

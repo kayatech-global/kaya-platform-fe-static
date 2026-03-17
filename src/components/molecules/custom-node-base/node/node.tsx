@@ -318,6 +318,8 @@ export const Node: React.FC<NodeProps> = ({ id, data, type }) => {
                 iconType="icon"
                 showTitle
                 customTitle={data?.name as string}
+                executionStatus={(data?.executionStatus as 'idle' | 'running' | 'success' | 'error') ?? 'idle'}
+                showLineageBadge={data?.lineageEnabled !== false}
             />
         );
     }
