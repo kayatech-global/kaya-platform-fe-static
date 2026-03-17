@@ -222,7 +222,7 @@ export default function ToolExecutorConfigPage() {
     const currentTab = TABS.find(t => t.id === activeTab)!;
 
     return (
-        <div className="min-h-screen bg-background flex flex-col">
+        <div className="dark min-h-screen bg-background flex flex-col">
             <PageHeader />
             <TabBar active={activeTab} onChange={setActiveTab} />
             <TabDescription tab={currentTab} />
