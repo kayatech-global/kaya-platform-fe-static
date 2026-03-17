@@ -647,6 +647,22 @@ export const usePlatformQuery = <TSelected = IPlatformConfiguration>({
                     { id: 'kafka_apache', value: 'Apache Kafka' },
                     { id: 'aws_msk_provisioned', value: 'AWS MSK Provisioned' },
                 ]),
+                promptFrameworks: JSON.stringify([
+                    {
+                        type: 'few-shot',
+                        title: 'Few-Shot Prompting',
+                        description: 'Provides a few examples to guide the model',
+                        fields: ['Instruction', 'Examples', 'Input'],
+                        instructions: 'Start with a clear instruction, then provide 2-3 examples of input-output pairs, and finally the actual input.',
+                    },
+                    {
+                        type: 'chain-of-thought',
+                        title: 'Chain-of-Thought',
+                        description: 'Encourages the model to show its reasoning',
+                        fields: ['Instruction', 'Context', 'Question'],
+                        instructions: 'Ask the model to think step-by-step to arrive at the answer.',
+                    },
+                ]),
             } as IPlatformConfiguration;
         },
         {

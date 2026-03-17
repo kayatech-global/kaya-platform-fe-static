@@ -1,16 +1,13 @@
 import { OptimizePromptProps } from '@/app/workspace/[wid]/prompt-templates/components/optimize-prompt';
 import { IEnhanceForm } from '@/models';
-import { promptService } from '@/services';
-import { FetchError, logger } from '@/utils';
-import { useParams } from 'next/navigation';
+import { logger } from '@/utils';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useMutation, useQueryClient } from 'react-query';
+import { useQueryClient } from 'react-query';
 import { toast } from 'sonner';
 import { usePlatformQuery } from './use-common';
 
 export const useOptimizePrompt = (props: OptimizePromptProps) => {
-    const params = useParams();
     const { intelligentSource, setOpenModal, onInsertClick } = props;
     const queryClient = useQueryClient();
     const [allIntellisenseValues, setAllIntellisenseValues] = useState<string[]>(props?.allIntellisenseValues ?? []);
@@ -60,20 +57,17 @@ export const useOptimizePrompt = (props: OptimizePromptProps) => {
     }, [platformConfig]);
 
     // Mutation
-    const { isLoading, mutate } = useMutation(
-        (data: IEnhanceForm) => promptService.enhance(data, params.wid as string),
-        {
-            onSuccess: data => {
-                setResponseContent(data?.replace(/{{|}}/g, ''));
-                // Invalidate the platform-config so changes propagate
-                queryClient.invalidateQueries('platform-config');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error enhancing prompt:', error?.message);
-            },
-        }
-    );
+    const { isLoading, mutate } = {
+        isLoading: false,
+        mutate: (data: IEnhanceForm) => {
+            // Mock enhancement logic
+            const frameworkTitle = data.promptFramework?.title ?? 'Framework';
+            const enhanced = `[ENHANCED PROMPT based on ${frameworkTitle}]\n\nOriginal: ${data.currentPrompt}\n\nThis is a mocked enhancement for demonstration purposes.`;
+            setResponseContent(enhanced.replaceAll(/{{|}}/g, ''));
+            queryClient.invalidateQueries('platform-config');
+            toast.success('Prompt enhanced successfully (Mock)');
+        },
+    };
 
     const onHandleSubmit = (data: IEnhanceForm) => {
         try {

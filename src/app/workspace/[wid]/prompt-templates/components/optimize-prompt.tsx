@@ -14,12 +14,12 @@ import { validateField } from '@/utils/validation';
 import { MoveRight } from 'lucide-react';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { Controller } from 'react-hook-form';
-import MonacoEditor from './monaco-editor';
+import MonacoEditor, { IntellisenseCategory } from './monaco-editor';
 import { IPlatformSettingData } from '@/models';
 
 export interface OptimizePromptProps {
     editorContent: string;
-    intellisenseOptions: never[];
+    intellisenseOptions: IntellisenseCategory[];
     loadingIntellisense: boolean;
     intelligentSource: IPlatformSettingData | undefined;
     setOpenModal: Dispatch<SetStateAction<boolean>>;
@@ -52,36 +52,28 @@ export const OptimizePrompt = (props: OptimizePromptProps) => {
 
     useEffect(() => {
         setValue('currentPrompt', props.editorContent);
-    }, []);
+    }, [props.editorContent, setValue]);
 
     useEffect(() => {
-        const initial = (watch('currentPrompt') ?? '').replace(/{{|}}/g, '');
+        const watchedPrompt = watch('currentPrompt');
+        const initial = (watchedPrompt ?? '').replaceAll(/{{|}}/g, '');
         setEditorContent(initial);
+    }, [watch]);
 
-        // tell RHF this new value is “touched” and should be validated immediately:
-        // setValue('currentPrompt', initial, {
-        //     shouldValidate: true,
-        //     shouldTouch: true,
-        //     shouldDirty: true,
-        // });
-
-        // if you want to be super-sure:
-        // trigger('currentPrompt');
-    }, [watch('currentPrompt')]);
-
+    const promptFrameworkOption = watch('promptFrameworkOption.value');
     const instructions = useMemo(() => {
-        if (watch('promptFrameworkOption.value') && watch('promptFrameworkOption.value') !== '' && promptFrameworks) {
-            return promptFrameworks?.find(x => x.type === watch('promptFrameworkOption.value'))?.instructions;
+        if (promptFrameworkOption && promptFrameworkOption !== '' && promptFrameworks) {
+            return promptFrameworks?.find(x => x.type === promptFrameworkOption)?.instructions;
         }
         return null;
-    }, [watch('promptFrameworkOption'), promptFrameworks]);
+    }, [promptFrameworkOption, promptFrameworks]);
 
     const wrapMatchingWords = (value: string) => {
         let result = value;
         for (const word of [...allIntellisenseValues].sort((a, b) => b.length - a.length)) {
-            const esc = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const re = new RegExp(`\\b${esc}\\b`, 'g');
-            result = result.replace(re, `{{${word}}}`);
+            const esc = word.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+            const re = new RegExp(String.raw`\b${esc}\b`, 'g');
+            result = result.replaceAll(re, `{{${word}}}`);
         }
         return result;
     };
