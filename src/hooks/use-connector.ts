@@ -7,14 +7,12 @@ import { DatabaseItemType, IConnectorAuthorizationType, QueryKeyType } from '@/e
 import { getEnumKeyByValue, isNullOrEmpty } from '@/lib/utils';
 import { ConnectorType, IConnectorForm, IHookProps, ISharedItem } from '@/models';
 import { FetchError, logger } from '@/utils';
-import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useInView } from 'react-intersection-observer';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { toast } from 'sonner';
 import { useConnectorQuery, useDatabaseQuery, useVaultQuery } from './use-common';
-import { connectorService, promptService } from '@/services';
 
 export const connectorLogo = {
     [ConnectorType.Pega]: '/png/connectors/pega.png',
@@ -39,7 +37,6 @@ export const defaultConnectorValues: IConnectorForm = {
 };
 
 export const useConnector = (props?: IHookProps) => {
-    const params = useParams();
     const { token } = useAuth();
     const queryClient = useQueryClient();
     const { intelligentSource } = useApp();
@@ -105,57 +102,75 @@ export const useConnector = (props?: IHookProps) => {
         isLoading: loadingIntellisense,
         data: allIntellisense,
         refetch: refetchVariables,
-    } = useQuery('intellisense', () => promptService.intellisense(params.wid as string), {
-        enabled: !!token,
-        refetchOnWindowFocus: false,
-        select: data => ({
-            api: data?.tools?.api?.shared
-                ?.filter((tool: ISharedItem) => tool?.name)
-                ?.map((tool: ISharedItem) => ({
-                    label: tool.name,
-                    value: `${IntellisenseTools.API}:${tool.name}`,
-                })),
-            mcp:
-                data?.tools?.mcp?.shared
-                    ?.filter((tool: ISharedItem) => tool?.selected_tools?.length != 0)
-                    ?.flatMap(
-                        (tool: ISharedItem) =>
-                            tool.selected_tools?.map((selectedTool: string) => ({
-                                label: `${selectedTool}`,
-                                value: `${IntellisenseTools.MCP}:${selectedTool}`,
-                            })) ?? []
-                    ) ?? [],
-            rag: data?.tools?.rag?.shared
-                ?.filter((tool: ISharedItem) => tool?.name)
-                ?.map((tool: ISharedItem) => ({
-                    label: tool.name,
-                    value: `${IntellisenseTools.VectorRAG}:${tool.name}`,
-                })),
-            graphRag: data?.tools?.graphRag?.shared
-                ?.filter((tool: ISharedItem) => tool?.name)
-                ?.map((tool: ISharedItem) => ({
-                    label: tool.name,
-                    value: `${IntellisenseTools.GraphRAG}:${tool.name}`,
-                })),
-            variables: data?.variables?.shared
-                ?.filter((variable: ISharedItem) => variable?.name)
-                ?.map((variable: ISharedItem) => ({
-                    label: variable.name,
-                    value: `${IntellisenseTools.Variable}:${variable.name}`,
-                    type: variable.type,
-                })),
-            agents: data?.agents?.shared
-                ?.filter((agent: ISharedItem) => agent?.name)
-                ?.map((agent: ISharedItem) => ({
-                    label: agent.name,
-                    value: `${IntellisenseTools.Agent}:${agent.name}`,
-                })),
+    } = useQuery(
+        'intellisense',
+        async () => ({
+            tools: { api: { shared: [] }, mcp: { shared: [] }, rag: { shared: [] }, graphRag: { shared: [] } },
+            variables: { shared: [] },
+            agents: { shared: [] },
         }),
-    });
+        {
+            enabled: !!token,
+            refetchOnWindowFocus: false,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            select: (data: any) => ({
+                api: data?.tools?.api?.shared
+                    ?.filter((tool: ISharedItem) => tool?.name)
+                    ?.map((tool: ISharedItem) => ({
+                        label: tool.name,
+                        value: `${IntellisenseTools.API}:${tool.name}`,
+                    })),
+                mcp:
+                    data?.tools?.mcp?.shared
+                        ?.filter((tool: ISharedItem) => tool?.selected_tools?.length != 0)
+                        ?.flatMap(
+                            (tool: ISharedItem) =>
+                                tool.selected_tools?.map((selectedTool: string) => ({
+                                    label: `${selectedTool}`,
+                                    value: `${IntellisenseTools.MCP}:${selectedTool}`,
+                                })) ?? []
+                        ) ?? [],
+                rag: data?.tools?.rag?.shared
+                    ?.filter((tool: ISharedItem) => tool?.name)
+                    ?.map((tool: ISharedItem) => ({
+                        label: tool.name,
+                        value: `${IntellisenseTools.VectorRAG}:${tool.name}`,
+                    })),
+                graphRag: data?.tools?.graphRag?.shared
+                    ?.filter((tool: ISharedItem) => tool?.name)
+                    ?.map((tool: ISharedItem) => ({
+                        label: tool.name,
+                        value: `${IntellisenseTools.GraphRAG}:${tool.name}`,
+                    })),
+                variables: data?.variables?.shared
+                    ?.filter((variable: ISharedItem) => variable?.name)
+                    ?.map((variable: ISharedItem) => ({
+                        label: variable.name,
+                        value: `${IntellisenseTools.Variable}:${variable.name}`,
+                        type: variable.type,
+                    })),
+                agents: data?.agents?.shared
+                    ?.filter((agent: ISharedItem) => agent?.name)
+                    ?.map((agent: ISharedItem) => ({
+                        label: agent.name,
+                        value: `${IntellisenseTools.Agent}:${agent.name}`,
+                    })),
+            }),
+        }
+    );
 
     const { isLoading: updateIsLoading, mutate: mutateUpdate } = useMutation(
-        ({ data, id }: { data: IConnectorForm; id: string }) =>
-            connectorService.update<IConnectorForm>(data, params.wid as string, id),
+        async ({ data, id }: { data: IConnectorForm; id: string }) => {
+            const stored = localStorage.getItem('mock_connector_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const index = configs.findIndex((x: any) => x.id === id);
+            if (index > -1) {
+                configs[index] = { ...configs[index], ...data, id };
+                localStorage.setItem('mock_connector_data', JSON.stringify(configs));
+            }
+            return { data: configs[index], id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -174,7 +189,14 @@ export const useConnector = (props?: IHookProps) => {
     );
 
     const { isLoading: createIsLoading, mutate: mutateCreate } = useMutation(
-        (data: IConnectorForm) => connectorService.create<IConnectorForm>(data, params.wid as string),
+        async (data: IConnectorForm) => {
+            const stored = localStorage.getItem('mock_connector_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            const newConfig = { ...data, id: `connector-${Date.now()}` };
+            configs.push(newConfig);
+            localStorage.setItem('mock_connector_data', JSON.stringify(configs));
+            return newConfig;
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -193,7 +215,14 @@ export const useConnector = (props?: IHookProps) => {
     );
 
     const { mutate: mutateDeleteConnector } = useMutation(
-        async ({ id }: { id: string }) => await connectorService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_connector_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const filtered = configs.filter((x: any) => x.id !== id);
+            localStorage.setItem('mock_connector_data', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 queryClient.invalidateQueries(QueryKeyType.CONNECTORS);

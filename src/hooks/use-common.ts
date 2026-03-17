@@ -32,38 +32,366 @@ import {
     PromptTemplate,
     ToolAPI,
 } from '@/models';
-import {
-    agentService,
-    apiService,
-    connectorService,
-    databaseService,
-    embeddingModelService,
-    executableFunctionService,
-    graphRagService,
-    guardrailBindingService,
-    guardrailModelService,
-    guardrailService,
-    llmService,
-    mcpService,
-    messageBrokerService,
-    platformService,
-    promptService,
-    reRankingModelService,
-    slmService,
-    stsService,
-    variableService,
-    vaultService,
-    vectorRagService,
-} from '@/services';
-import { FetchError, logger } from '@/utils';
-import { useParams } from 'next/navigation';
-import { useMemo, useRef, useState } from 'react';
-import { useMutation, useQuery } from 'react-query';
+import { logger } from '@/utils';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
 import { toast } from 'sonner';
 import { IMCPBody } from './use-mcp-configuration';
 
-export const useIntellisense = (workflowId?: string) => {
-    const params = useParams();
+const MOCK_LLM_PROVIDERS = [
+    {
+        id: 'openai',
+        value: 'openai',
+        name: 'OpenAI',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'gpt-4o', value: 'gpt-4o', description: 'GPT-4o' },
+            { id: 'gpt-4-turbo', value: 'gpt-4-turbo', description: 'GPT-4 Turbo' },
+            { id: 'gpt-3.5-turbo', value: 'gpt-3.5-turbo', description: 'GPT-3.5 Turbo' },
+        ],
+    },
+    {
+        id: 'anthropic',
+        value: 'anthropic',
+        name: 'Anthropic',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'claude-3-5-sonnet-20240620', value: 'claude-3-5-sonnet-20240620', description: 'Claude 3.5 Sonnet' },
+            { id: 'claude-3-opus-20240229', value: 'claude-3-opus-20240229', description: 'Claude 3 Opus' },
+        ],
+    },
+    {
+        id: 'google',
+        value: 'google',
+        name: 'Google',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'gemini-1.5-pro', value: 'gemini-1.5-pro', description: 'Gemini 1.5 Pro' },
+            { id: 'gemini-1.5-flash', value: 'gemini-1.5-flash', description: 'Gemini 1.5 Flash' },
+        ],
+    },
+];
+
+const MOCK_LLM_CONFIGS: ILLMForm[] = [
+    {
+        id: 'mock-llm-1',
+        name: 'Default OpenAI',
+        provider: 'openai',
+        modelName: 'gpt-4o',
+        apiKeyReference: 'vault:openai-api-key',
+        configurations: {
+            description: 'Mock OpenAI Configuration',
+            apiAuthorization: 'Bearer sk-...',
+            maxTokens: 4096,
+            temperature: 0.7,
+            baseUrl: 'https://api.openai.com/v1',
+            customerHeaders: [],
+            providerConfig: {
+                id: 'openai',
+                value: 'openai',
+                description: 'OpenAI',
+                logo: {},
+            },
+        },
+    },
+];
+
+const MOCK_VAULT_DATA: IVault[] = [
+    {
+        id: 'mock-vault-1',
+        keyName: 'openai-api-key',
+        description: 'OpenAI API Key for demonstrations',
+        keyValue: 'sk-mock-key-12345',
+        isActive: true,
+        isReadOnly: false,
+    },
+    {
+        id: 'mock-vault-2',
+        keyName: 'anthropic-api-key',
+        description: 'Anthropic API Key for demonstrations',
+        keyValue: 'sk-ant-mock-key-67890',
+        isActive: true,
+        isReadOnly: false,
+    },
+];
+
+const MOCK_SLM_PROVIDERS = [
+    {
+        id: 'phi-3',
+        value: 'phi-3',
+        name: 'Microsoft Phi-3',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'phi-3-mini', value: 'phi-3-mini', description: 'Phi-3 Mini' },
+            { id: 'phi-3-medium', value: 'phi-3-medium', description: 'Phi-3 Medium' },
+        ],
+    },
+];
+
+const MOCK_SLM_CONFIGS: ISLMForm[] = [
+    {
+        id: 'mock-slm-1',
+        name: 'Default Phi-3',
+        provider: 'phi-3',
+        modelName: 'phi-3-mini',
+        configurations: {
+            description: 'Mock Phi-3 Configuration',
+            temperature: 0.5,
+            baseUrl: 'http://localhost:11434',
+            apiAuthorization: '',
+            customRuntime: false,
+            tokenLimit: null as unknown as number,
+            providerConfig: {
+                id: 'phi-3',
+                value: 'phi-3',
+                description: 'Microsoft Phi-3',
+                logo: {},
+            },
+        },
+    },
+];
+
+const MOCK_STS_PROVIDERS = [
+    {
+        id: 'openai-sts',
+        value: 'openai',
+        name: 'OpenAI TTS/STT',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'tts-1', value: 'tts-1', description: 'OpenAI TTS-1' },
+            { id: 'whisper-1', value: 'whisper-1', description: 'OpenAI Whisper-1' },
+        ],
+    },
+];
+
+const MOCK_STS_CONFIGS: ISTSForm[] = [
+    {
+        id: 'mock-sts-1',
+        name: 'Default OpenAI STS',
+        provider: 'openai',
+        modelName: 'tts-1',
+        description: 'Mock OpenAI Speech configuration',
+        configurations: {
+            tone: 'neutral',
+            voice: 'alloy',
+            language: 'en',
+            temperature: 0.7,
+            providerConfig: {
+                id: 'openai-sts',
+                value: 'openai',
+                description: 'OpenAI TTS/STT',
+                logo: {},
+            },
+        },
+    },
+];
+
+const MOCK_EMBEDDING_PROVIDERS = [
+    {
+        id: 'openai-embedding',
+        value: 'openai',
+        name: 'OpenAI Embedding',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'text-embedding-3-small', value: 'text-embedding-3-small', description: 'Text Embedding 3 Small' },
+            { id: 'text-embedding-3-large', value: 'text-embedding-3-large', description: 'Text Embedding 3 Large' },
+            { id: 'text-embedding-ada-002', value: 'text-embedding-ada-002', description: 'Text Embedding Ada 002' },
+        ],
+    },
+];
+
+const MOCK_EMBEDDING_CONFIGS: IEmbedding[] = [
+    {
+        id: 'mock-embedding-1',
+        name: 'Default OpenAI Embedding',
+        description: 'Mock OpenAI Embedding Configuration',
+        provider: 'openai',
+        modelName: 'text-embedding-3-small',
+        configurations: {
+            apiKey: 'sk-mock-key-123',
+            dimensions: 1536,
+            baseURL: 'https://api.openai.com/v1',
+        },
+    },
+];
+
+const MOCK_RERANKING_PROVIDERS = [
+    {
+        id: 'cohere-rerank',
+        value: 'cohere',
+        name: 'Cohere Rerank',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'rerank-english-v3.0', value: 'rerank-english-v3.0', description: 'Rerank English v3.0' },
+            { id: 'rerank-multilingual-v3.0', value: 'rerank-multilingual-v3.0', description: 'Rerank Multilingual v3.0' },
+        ],
+    },
+    {
+        id: 'jina-rerank',
+        value: 'jina',
+        name: 'Jina AI Rerank',
+        logo: { dark: '', light: '' },
+        models: [
+            { id: 'jina-reranker-v2-base-multilingual', value: 'jina-reranker-v2-base-multilingual', description: 'Jina Reranker v2 Base Multilingual' },
+        ],
+    },
+];
+
+const MOCK_RERANKING_CONFIGS: IReRanking[] = [
+    {
+        id: 'mock-reranking-1',
+        name: 'Default Cohere Rerank',
+        description: 'Mock Cohere Reranking Configuration',
+        provider: 'cohere',
+        modelName: 'rerank-english-v3.0',
+        configurations: {
+            apiKey: 'sk-mock-key-abc',
+            baseURL: 'https://api.cohere.ai/v1',
+        },
+    },
+];
+
+const MOCK_VARIABLE_DATA: IVariable[] = [
+    {
+        id: 'var-1',
+        name: 'CUSTOMER_NAME',
+        dataType: 'string',
+        description: 'The name of the customer',
+        isReadOnly: false,
+    },
+    {
+        id: 'var-2',
+        name: 'ORDER_ID',
+        dataType: 'number',
+        description: 'The ID of the order',
+        isReadOnly: true,
+    },
+];
+
+const MOCK_VECTOR_RAG_DATA: IVectorRag[] = [
+    {
+        id: 'vector-rag-1',
+        name: 'Standard Vector RAG',
+        description: 'Default vector RAG configuration',
+        configurations: {
+            ragVariant: 'STANDARD_RAG',
+            retrievals: [],
+        },
+    },
+];
+
+const MOCK_GRAPH_RAG_DATA: IGraphRag[] = [
+    {
+        id: 'graph-rag-1',
+        name: 'Standard Graph RAG',
+        description: 'Default graph RAG configuration',
+        configurations: {
+            graphRagType: 'STANDARD_RAG',
+            retrievals: [],
+        },
+    },
+];
+
+const MOCK_DATABASE_DATA: IDatabase[] = [
+    {
+        id: 'db-1',
+        name: 'Main PostgreSQL',
+        description: 'Primary database for user data',
+        type: 'Relational Database',
+        configurations: {
+            provider: 'POSTGRESQL',
+            host: 'localhost',
+            port: 5432,
+            databaseName: 'postgres',
+            userName: 'postgres',
+            password: 'password',
+        },
+        updatedAt: new Date().toISOString(),
+        isReadOnly: false,
+    },
+];
+
+const MOCK_CONNECTOR_DATA: IConnectorForm[] = [
+    {
+        id: 'connector-1',
+        name: 'Pega Connector',
+        description: 'Connects to Pega Systems',
+        type: 'pega' as any,
+        configurations: {
+            authorization: {
+                authType: 'No Authorization' as any,
+            },
+        },
+        isReadOnly: false,
+    },
+];
+
+const MOCK_MESSAGE_BROKER_DATA: IMessageBroker[] = [
+    {
+        id: 'mb-1',
+        name: 'Kafka Broker',
+        description: 'Main Kafka instance for events',
+        provider: 'kafka_apache',
+        configurations: {
+            clusterUrl: 'localhost:9092',
+            authenticationType: 'None' as any,
+            topics: [
+                {
+                    id: 'topic-1',
+                    title: 'user_events',
+                    topicType: 'Inbound' as any,
+                    requestStructure: '{}',
+                },
+            ],
+        },
+    },
+];
+
+const MOCK_PROMPT_DATA: PromptTemplate[] = [
+    {
+        id: 'prompt-1',
+        name: 'Technical Support Prompt',
+        description: 'Guided prompt for technical support agents',
+        configurations: {
+            prompt_template: 'You are a technical support agent. Help the user with their issue: {{user_input}}'
+        }
+    },
+    {
+        id: 'prompt-2',
+        name: 'Creative Writer Prompt',
+        description: 'Prompt for creative writing assistance',
+        configurations: {
+            prompt_template: 'You are a creative writer. Write a story about: {{topic}}'
+        }
+    }
+];
+
+const MOCK_AGENT_DATA: Agent[] = [
+    {
+        id: 'agent-1',
+        name: 'Tech Support Bot',
+        description: 'Handles technical support queries',
+        type: 'agent_node',
+        configurations: {
+            humanInput: {
+                enableHumanInput: false,
+                instruction: '',
+                enableBroker: false,
+                option: 'Message Broker' as any,
+                topicProducer: { messageBrokerId: '', topicId: '', requestStructure: '' },
+                topicConsumer: { messageBrokerId: '', topicId: '', requestStructure: '' },
+            },
+            rags: [],
+            guardrails: [],
+        },
+        llmId: 'mock-llm-1',
+        promptTemplateId: 'prompt-1',
+        tools: [],
+    }
+];
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const useIntellisense = (_workflowId?: string) => {
     const { token } = useAuth();
     const [allIntellisenseValues, setAllIntellisenseValues] = useState<string[]>([]);
 
@@ -156,67 +484,52 @@ export const useIntellisense = (workflowId?: string) => {
 };
 
 export const useGuardrail = () => {
-    const params = useParams();
     const { setTriggerGuardrailBinding } = useApp();
     const guardrailRef = useRef<GuardrailSelectorRef>(null);
     const [loading, setLoading] = useState<boolean>(false);
+    const [guardrails, setGuardrails] = useState<IGuardrailSetup[]>([]);
 
-    const {
-        mutate,
-        data: guardrails,
-        isLoading: guardrailsLoading,
-    } = useMutation(() => guardrailService.get<IGuardrailSetup[]>(params.wid as string), {
-        onSuccess: () => {
-            setLoading(false);
-        },
-        onError: (error: FetchError) => {
-            toast.error(error?.message);
-            logger.error('Failed to fetch guardrails:', error?.message);
-            setLoading(false);
-        },
-    });
-
-    const { mutateAsync: mutateWorkspaceUpdate } = useMutation(
-        async ({ data }: { data: IGuardrailBindingRequest }) =>
-            await guardrailBindingService.manage(data, params.wid as string),
-        {
-            onSuccess: () => {
-                toast.success('Workspace guardrails associated successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error while workspace guardrail associating:', error?.message);
-                setLoading(false);
-            },
+    useEffect(() => {
+        const stored = localStorage.getItem('mock_guardrails');
+        if (stored) {
+            try {
+                setGuardrails(JSON.parse(stored));
+            } catch {
+                setGuardrails([]);
+            }
         }
-    );
+    }, []);
 
-    const { mutateAsync: mutateWorkflowUpdate } = useMutation(
-        async ({ data }: { data: IGuardrailBindingRequest }) =>
-            await guardrailBindingService.workflow(data, params.wid as string, params.workflow_id as string),
-        {
-            onSuccess: () => {
-                toast.success('Workflow guardrails associated successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error while workflow guardrail associating:', error?.message);
-                setLoading(false);
-            },
-        }
-    );
+    const guardrailsLoading = false;
 
     const onGuardrail = () => {
         if (guardrailRef?.current) {
             setLoading(true);
             guardrailRef.current.onOpen();
-            mutate();
+            // In mock mode, we just load from localStorage
+            const stored = localStorage.getItem('mock_guardrails');
+            if (stored) setGuardrails(JSON.parse(stored));
+            setLoading(false);
         }
     };
 
     const onRefetch = () => {
-        mutate();
+        const stored = localStorage.getItem('mock_guardrails');
+        if (stored) setGuardrails(JSON.parse(stored));
     };
+
+    const mutateWorkspaceUpdate = async ({ data }: { data: IGuardrailBindingRequest }) => {
+        logger.log('Mock workspace guardrail association:', data);
+        toast.success('Workspace guardrails associated successfully (Mock)');
+        return { data: {} };
+    };
+
+    const mutateWorkflowUpdate = async ({ data }: { data: IGuardrailBindingRequest }) => {
+        logger.log('Mock workflow guardrail association:', data);
+        toast.success('Workflow guardrails associated successfully (Mock)');
+        return { data: {} };
+    };
+
 
     const onWorkspaceGuardrailsChange = async (items: string[] | undefined) => {
         await mutateWorkspaceUpdate({ data: { guardrailIds: items ?? [] } });
@@ -224,7 +537,7 @@ export const useGuardrail = () => {
     };
 
     const onWorkflowGuardrailsChange = async (items: string[] | undefined) => {
-        await mutateWorkflowUpdate({ data: { workflowId: params.workflow_id as string, guardrailIds: items ?? [] } });
+        await mutateWorkflowUpdate({ data: { workflowId: '', guardrailIds: items ?? [] } });
     };
 
     return {
@@ -321,13 +634,39 @@ export const usePlatformQuery = <TSelected = IPlatformConfiguration>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const { token } = useAuth();
-
     return useQuery<IPlatformConfiguration, any, TSelected>(
         queryKey ?? QueryKeyType.PLATFORM_CONFIG,
-        async () => ({} as any),
+        async () => {
+            return {
+                llmProviders: JSON.stringify(MOCK_LLM_PROVIDERS),
+                slmProviders: JSON.stringify(MOCK_SLM_PROVIDERS),
+                speechToSpeechModelProviders: JSON.stringify(MOCK_STS_PROVIDERS),
+                embeddingModelProviders: JSON.stringify(MOCK_EMBEDDING_PROVIDERS),
+                rerankingModelProviders: JSON.stringify(MOCK_RERANKING_PROVIDERS),
+                messageQueueProviders: JSON.stringify([
+                    { id: 'kafka_apache', value: 'Apache Kafka' },
+                    { id: 'aws_msk_provisioned', value: 'AWS MSK Provisioned' },
+                ]),
+                promptFrameworks: JSON.stringify([
+                    {
+                        type: 'few-shot',
+                        title: 'Few-Shot Prompting',
+                        description: 'Provides a few examples to guide the model',
+                        fields: ['Instruction', 'Examples', 'Input'],
+                        instructions: 'Start with a clear instruction, then provide 2-3 examples of input-output pairs, and finally the actual input.',
+                    },
+                    {
+                        type: 'chain-of-thought',
+                        title: 'Chain-of-Thought',
+                        description: 'Encourages the model to show its reasoning',
+                        fields: ['Instruction', 'Context', 'Question'],
+                        instructions: 'Ask the model to think step-by-step to arrive at the answer.',
+                    },
+                ]),
+            } as IPlatformConfiguration;
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -350,14 +689,22 @@ export const useVaultQuery = ({
     onSuccess?: (data: IVault[]) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
-
     return useQuery(
         queryKey ?? QueryKeyType.VAULT,
-        async () => [] as IVault[],
+        async () => {
+            const stored = localStorage.getItem('mock_vault_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_VAULT_DATA;
+                }
+            }
+            localStorage.setItem('mock_vault_data', JSON.stringify(MOCK_VAULT_DATA));
+            return MOCK_VAULT_DATA;
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             onSuccess: data => onSuccess?.(data),
             onError: e => {
@@ -379,10 +726,20 @@ export const usePromptQuery = <T = PromptTemplate>({
     onSuccess?: (data: T[]) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
-    return useQuery(queryKey ?? QueryKeyType.PROMPT, async () => [] as T[], {
+    return useQuery(queryKey ?? QueryKeyType.PROMPT, async () => {
+        const stored = localStorage.getItem('mock_prompt_data');
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch {
+                return MOCK_PROMPT_DATA;
+            }
+        }
+        localStorage.setItem('mock_prompt_data', JSON.stringify(MOCK_PROMPT_DATA));
+        return MOCK_PROMPT_DATA as unknown as T[];
+    }, {
         enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
         refetchOnWindowFocus: false,
         onSuccess: data => onSuccess?.(data),
@@ -406,14 +763,23 @@ export const useLLMQuery = <T = ILLMForm, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.LLM,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_llm_configs');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_LLM_CONFIGS;
+                }
+            }
+            localStorage.setItem('mock_llm_configs', JSON.stringify(MOCK_LLM_CONFIGS));
+            return MOCK_LLM_CONFIGS as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -438,14 +804,22 @@ export const useSLMQuery = <T = ISLMForm, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.SLM,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_slm_configs');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_SLM_CONFIGS;
+                }
+            }
+            localStorage.setItem('mock_slm_configs', JSON.stringify(MOCK_SLM_CONFIGS));
+            return MOCK_SLM_CONFIGS as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -470,14 +844,22 @@ export const useSTSQuery = <T = ISTSForm, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.STS,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_sts_configs');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_STS_CONFIGS;
+                }
+            }
+            localStorage.setItem('mock_sts_configs', JSON.stringify(MOCK_STS_CONFIGS));
+            return MOCK_STS_CONFIGS as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -502,7 +884,6 @@ export const useApiQuery = <T = ToolAPI, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -534,7 +915,6 @@ export const useMcpQuery = <T = IMCPBody, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -566,14 +946,22 @@ export const useVectorRagQuery = <T = IVectorRag, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.VECTOR_RAG,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_vector_rag_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_VECTOR_RAG_DATA;
+                }
+            }
+            localStorage.setItem('mock_vector_rag_data', JSON.stringify(MOCK_VECTOR_RAG_DATA));
+            return MOCK_VECTOR_RAG_DATA as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -598,14 +986,22 @@ export const useGraphRagQuery = <T = IGraphRag, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.GRAPH_RAG,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_graph_rag_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_GRAPH_RAG_DATA;
+                }
+            }
+            localStorage.setItem('mock_graph_rag_data', JSON.stringify(MOCK_GRAPH_RAG_DATA));
+            return MOCK_GRAPH_RAG_DATA as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -630,12 +1026,22 @@ export const useConnectorQuery = <T = IConnectorForm, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.CONNECTORS,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_connector_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_CONNECTOR_DATA;
+                }
+            }
+            localStorage.setItem('mock_connector_data', JSON.stringify(MOCK_CONNECTOR_DATA));
+            return MOCK_CONNECTOR_DATA as unknown as T[];
+        },
         {
             enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
@@ -662,7 +1068,6 @@ export const useExecutableFunctionQuery = <T = ExecutableFunctionAPI, TSelected 
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
@@ -694,14 +1099,22 @@ export const useVariableQuery = <T = IVariable, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.VARIABLE,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_variable_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_VARIABLE_DATA;
+                }
+            }
+            localStorage.setItem('mock_variable_data', JSON.stringify(MOCK_VARIABLE_DATA));
+            return MOCK_VARIABLE_DATA as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -728,12 +1141,22 @@ export const useDatabaseQuery = <T = IDatabase, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.DATABASE,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_database_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_DATABASE_DATA;
+                }
+            }
+            localStorage.setItem('mock_database_data', JSON.stringify(MOCK_DATABASE_DATA));
+            return MOCK_DATABASE_DATA as unknown as T[];
+        },
         {
             enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
@@ -761,14 +1184,22 @@ export const useEmbeddingModelQuery = <T = IEmbedding, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.EMBEDDING_MODEL,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_embedding_configs');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_EMBEDDING_CONFIGS;
+                }
+            }
+            localStorage.setItem('mock_embedding_configs', JSON.stringify(MOCK_EMBEDDING_CONFIGS));
+            return MOCK_EMBEDDING_CONFIGS as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -793,14 +1224,22 @@ export const useReRankingModelQuery = <T = IReRanking, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
-    const { token } = useAuth();
-
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.RE_RANKING_MODEL,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_reranking_configs');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_RERANKING_CONFIGS;
+                }
+            }
+            localStorage.setItem('mock_reranking_configs', JSON.stringify(MOCK_RERANKING_CONFIGS));
+            return MOCK_RERANKING_CONFIGS as unknown as T[];
+        },
         {
-            enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
+            enabled: resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
             select,
             onSuccess,
@@ -825,12 +1264,22 @@ export const useAgentQuery = <T = Agent, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.AGENT,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_agent_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_AGENT_DATA;
+                }
+            }
+            localStorage.setItem('mock_agent_data', JSON.stringify(MOCK_AGENT_DATA));
+            return MOCK_AGENT_DATA as unknown as T[];
+        },
         {
             enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
@@ -857,12 +1306,22 @@ export const useMessageBrokerQuery = <T = IMessageBroker, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.MESSAGE_BROKER,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_message_broker_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_MESSAGE_BROKER_DATA;
+                }
+            }
+            localStorage.setItem('mock_message_broker_data', JSON.stringify(MOCK_MESSAGE_BROKER_DATA));
+            return MOCK_MESSAGE_BROKER_DATA as unknown as T[];
+        },
         {
             enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
@@ -889,12 +1348,14 @@ export const useGuardrailModelQuery = <T = IGuardrailModelConfig, TSelected = T[
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.GUARDRAIL_MODEL,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_guardrail_models');
+            return (stored ? JSON.parse(stored) : []) as T[];
+        },
         {
             enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
@@ -921,12 +1382,14 @@ export const useGuardrailQuery = <T = IGuardrailSetup, TSelected = T[]>({
     onSuccess?: (data: TSelected) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.GUARDRAIL,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_guardrails');
+            return (stored ? JSON.parse(stored) : []) as T[];
+        },
         {
             enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
@@ -943,17 +1406,14 @@ export const useGuardrailQuery = <T = IGuardrailSetup, TSelected = T[]>({
 export const useGuardrailBindingQuery = ({
     props,
     queryKey,
-    workflowId,
     onSuccess,
     onError,
 }: {
     props?: IHookProps;
     queryKey?: string;
-    workflowId?: string;
     onSuccess?: (data: IGuardrailBinding[]) => void;
     onError?: (error: any) => void;
 } = {}) => {
-    const params = useParams();
     const { token } = useAuth();
 
     return useQuery(

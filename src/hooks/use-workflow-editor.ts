@@ -424,7 +424,7 @@ export const useWorkflowEditor = () => {
     };
 
     const validatePrompt = (currentData: any) => {
-        const result = allPrompts?.find(prompt => prompt.id === currentData?.id);
+        const result = allPrompts?.find((prompt: any) => prompt.id === currentData?.id);
         if (
             result &&
             (currentData?.name !== result?.name ||

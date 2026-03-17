@@ -215,7 +215,9 @@ export const useGuardrailConfiguration = (props?: IHookProps) => {
     const protectionModeErrorMessage = useMemo(() => {
         return (
             errors?.configurations?.enableSensitiveDataManagement?.message ||
-            errors?.configurations?.contentAndLanguageModeration?.message
+            errors?.configurations?.enableContentAndLanguageModeration?.message ||
+            errors?.configurations?.enablePromptInjectionDetection?.message ||
+            errors?.configurations?.enableHallucinationProtection?.message
         );
     }, [errors]);
 
@@ -359,7 +361,15 @@ export const useGuardrailConfiguration = (props?: IHookProps) => {
             return 'Invalid regex';
         }
     };
-    const validateProtection = (value: boolean) => (value ? true : 'At least one protection must be selected');
+    const validateProtection = () => {
+        const config = getValues('configurations');
+        const isAnyEnabled =
+            config.enableSensitiveDataManagement ||
+            config.enableContentAndLanguageModeration ||
+            config.enablePromptInjectionDetection ||
+            config.enableHallucinationProtection;
+        return isAnyEnabled ? true : 'At least one protection must be selected';
+    };
 
     return {
         isFetching,

@@ -15,7 +15,8 @@ import { AuthenticationType, WorkflowPullReferenceType } from '@/enums';
 import { cn, validateSpaces, validateUrlRegEx } from '@/lib/utils';
 import { WorkflowEnvConfigFormBase } from '@/models/workflow-pull.model';
 import React, { useMemo } from 'react';
-import { FieldErrors, UseFormRegister, UseFormWatch } from 'react-hook-form';
+import { Control, FieldErrors, UseFormRegister, UseFormWatch } from 'react-hook-form';
+import MonacoEditor, { IntellisenseCategory } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
 
 interface IFieldMapper {
     configIndex: number;
@@ -30,6 +31,8 @@ interface IFieldMapper {
     defaultPlaceholder?: string;
     defaultPropertyName?: string;
     restrictVaultKey?: boolean;
+    intellisenseOptions?: IntellisenseCategory[];
+    control: Control<WorkflowEnvConfigFormBase>;
 }
 
 export const FieldMapper = ({
@@ -45,6 +48,7 @@ export const FieldMapper = ({
     defaultPlaceholder,
     defaultPropertyName,
     restrictVaultKey,
+    intellisenseOptions = [],
 }: IFieldMapper) => {
     const fieldName = watch(`configs.${configIndex}.fields.${fieldIndex}.name`);
     const fieldType = watch(`configs.${configIndex}.type`);
@@ -63,6 +67,21 @@ export const FieldMapper = ({
             (fieldType === 'executableFunctions' && fieldName === 'lambdaExecutionRoleArn')
         );
     }, [fieldType, fieldReference, fieldName]);
+
+    const isMatched = useMemo(() => {
+        return (
+            FIELD_TYPES_URL.includes(fieldName) ||
+            FIELD_TYPE_SECRETS.includes(fieldName) ||
+            FIELD_TYPES_TEXT.includes(fieldName) ||
+            FIELD_TYPE_REGION.includes(fieldName) ||
+            FIELD_TYPE_HOST.includes(fieldName) ||
+            FIELD_TYPE_PORT.includes(fieldName) ||
+            (FIELD_TYPE_AUTHENTICATION_TYPE_MESSAGE_BROKER.includes(fieldName) && fieldType === 'broker') ||
+            (FIELD_TYPE_AUTHENTICATION_TYPE_GUARDRAILS.includes(fieldName) && fieldType === 'guardrails') ||
+            FIELD_TYPE_NUMBER.includes(fieldName) ||
+            fieldName?.startsWith('header--')
+        );
+    }, [fieldName, fieldType]);
 
     return (
         <>
@@ -203,24 +222,47 @@ export const FieldMapper = ({
                             )}
                         </>
                     ) : (
-                        <Input
-                            {...register(`configs.${configIndex}.fields.${fieldIndex}.meta.finalValue`, {
-                                required: {
-                                    value: fieldType !== 'executableFunctions',
-                                    message: `Please enter ${propertyName}`,
-                                },
-                                validate: value => validateSpaces(value, propertyName),
-                            })}
-                            disabled={watch(`configs.${configIndex}.fields.${fieldIndex}.readOnly`)}
-                            value={value}
-                            placeholder={defaultPlaceholder}
-                            isDestructive={!!fieldError}
-                            supportiveText={fieldError}
-                            autoComplete="off"
-                            className={cn({
-                                'truncate pr-24': watch(`configs.${configIndex}.fields.${fieldIndex}.readOnly`),
-                            })}
-                        />
+                        <>
+                            {fieldName === 'template' || fieldName === 'prompt' ? (
+                                <div className="min-h-[120px] rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                    <MonacoEditor
+                                        value={value}
+                                        onChange={(val: string) =>
+                                            register(
+                                                `configs.${configIndex}.fields.${fieldIndex}.meta.finalValue`
+                                            ).onChange({
+                                                target: {
+                                                    value: val,
+                                                    name: `configs.${configIndex}.fields.${fieldIndex}.meta.finalValue`,
+                                                },
+                                            })
+                                        }
+                                        disabled={watch(`configs.${configIndex}.fields.${fieldIndex}.readOnly`)}
+                                        intellisenseData={intellisenseOptions}
+                                        onRefetchVariables={async () => {}}
+                                    />
+                                </div>
+                            ) : (
+                                <Input
+                                    {...register(`configs.${configIndex}.fields.${fieldIndex}.meta.finalValue`, {
+                                        required: {
+                                            value: fieldType !== 'executableFunctions',
+                                            message: `Please enter ${propertyName}`,
+                                        },
+                                        validate: value => validateSpaces(value, propertyName),
+                                    })}
+                                    disabled={watch(`configs.${configIndex}.fields.${fieldIndex}.readOnly`)}
+                                    value={value}
+                                    placeholder={defaultPlaceholder}
+                                    isDestructive={!!fieldError}
+                                    supportiveText={fieldError}
+                                    autoComplete="off"
+                                    className={cn({
+                                        'truncate pr-24': watch(`configs.${configIndex}.fields.${fieldIndex}.readOnly`),
+                                    })}
+                                />
+                            )}
+                        </>
                     )}
                 </>
             )}
@@ -376,6 +418,23 @@ export const FieldMapper = ({
                         />
                     )}
                 </>
+            )}
+            {!isMatched && (
+                <Input
+                    {...register(`configs.${configIndex}.fields.${fieldIndex}.meta.finalValue`, {
+                        required: { value: true, message: `Please enter ${propertyName}` },
+                        validate: value => validateSpaces(value, propertyName),
+                    })}
+                    disabled={watch(`configs.${configIndex}.fields.${fieldIndex}.readOnly`)}
+                    value={value}
+                    placeholder={defaultPlaceholder}
+                    isDestructive={!!fieldError}
+                    supportiveText={fieldError}
+                    autoComplete="off"
+                    className={cn({
+                        'truncate pr-24': watch(`configs.${configIndex}.fields.${fieldIndex}.readOnly`),
+                    })}
+                />
             )}
         </>
     );

@@ -13,14 +13,12 @@ import { areObjectsEqual } from '@/lib/utils';
 import { CustomNodeTypes } from '@/enums';
 import { IGuardrailBinding } from '@/models';
 import { useApp } from '@/context/app-context';
-import { useParams } from 'next/navigation';
 import dagre from '@dagrejs/dagre';
 import { toast } from 'sonner';
 import { useGuardrailBindingQuery } from './use-common';
 import { useUndoRedo } from './use-undo-redo';
 
 export const usePlayground = (visualGraphData?: VisualGraphDataType) => {
-    const params = useParams();
     const { trigger, recentUsed, setTrigger, setRecentUsed } = useDnD();
     const { triggerGuardrailBinding, guardrailBinding, setGuardrailBinding } = useApp();
     // actual workflow node
@@ -75,7 +73,6 @@ export const usePlayground = (visualGraphData?: VisualGraphDataType) => {
     }, [visualGraphData, nodes, edges]);
 
     const { status: bindingStatus, refetch: refetchGuardrailBinding } = useGuardrailBindingQuery({
-        workflowId: params.workflow_id as string | undefined,
         onSuccess: data => {
             setGuardrailBinding(data);
             updateNodes(nodes, data);

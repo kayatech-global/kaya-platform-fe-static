@@ -9,30 +9,34 @@ import { WorkflowEnvConfigFormBase } from '@/models/workflow-pull.model';
 import { FormFieldGroup, OptionModel } from '@/components/atoms';
 import { Info } from 'lucide-react';
 
+import { IntellisenseCategory } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
+
 interface IHeaderConfigurationSectionProps {
     configIndex: number;
     fieldIndexes: number[];
     watch: UseFormWatch<WorkflowEnvConfigFormBase>;
-    control: Control<WorkflowEnvConfigFormBase>;
     errors: FieldErrors<WorkflowEnvConfigFormBase>;
     setValue: UseFormSetValue<WorkflowEnvConfigFormBase>;
     register: UseFormRegister<WorkflowEnvConfigFormBase>;
     secrets: OptionModel[];
     refetchSecrets: () => void;
     loadingSecrets: boolean;
+    intellisenseOptions?: IntellisenseCategory[];
+    control: Control<WorkflowEnvConfigFormBase>;
 }
 
 export const HeaderConfigurationSection = ({
     configIndex,
     fieldIndexes,
     watch,
-    control,
     errors,
     setValue,
     register,
     secrets,
     refetchSecrets,
     loadingSecrets,
+    intellisenseOptions,
+    control,
 }: IHeaderConfigurationSectionProps) => {
     const generateLabel = (value: string) => {
         const result = value.replace(/^header--/, '');
@@ -50,11 +54,11 @@ export const HeaderConfigurationSection = ({
                 configuration
             </div>
             {/* list */}
-            {fieldIndexes?.map((fieldIndex, index) => (
+            {fieldIndexes?.map(fieldIndex => (
                 <FormFieldGroup
                     showSeparator={false}
                     title={generateLabel(watch(`configs.${configIndex}.fields.${fieldIndex}.name`))}
-                    key={index}
+                    key={fieldIndex}
                 >
                     <div className="col-span-1 sm:col-span-2 flex flex-col gap-y-4">
                         <CurrentValueField
@@ -65,7 +69,6 @@ export const HeaderConfigurationSection = ({
                         />
                         <FinalValueField
                             value={watch(`configs.${configIndex}.fields.${fieldIndex}.meta.finalValue`)}
-                            control={control}
                             watch={watch}
                             configIndex={configIndex}
                             fieldIndex={fieldIndex}
@@ -75,6 +78,8 @@ export const HeaderConfigurationSection = ({
                             secrets={secrets}
                             refetchSecrets={refetchSecrets}
                             loadingSecrets={loadingSecrets}
+                            intellisenseOptions={intellisenseOptions}
+                            control={control}
                         />
                     </div>
                 </FormFieldGroup>

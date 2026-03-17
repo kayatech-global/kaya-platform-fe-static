@@ -6,18 +6,21 @@ import { WorkflowEnvConfigFormBase } from '@/models/workflow-pull.model';
 import { FieldMapper } from './field-mapper';
 import { OptionModel } from '@/components/atoms';
 
+import { IntellisenseCategory } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
+
 interface IFinalValueFieldProps {
     value: string;
     configIndex: number;
     fieldIndex: number;
     watch: UseFormWatch<WorkflowEnvConfigFormBase>;
-    control: Control<WorkflowEnvConfigFormBase>;
     errors: FieldErrors<WorkflowEnvConfigFormBase>;
     setValue: UseFormSetValue<WorkflowEnvConfigFormBase>;
     register: UseFormRegister<WorkflowEnvConfigFormBase>;
     secrets: OptionModel[];
     refetchSecrets: () => void;
     loadingSecrets: boolean;
+    intellisenseOptions?: IntellisenseCategory[];
+    control: Control<WorkflowEnvConfigFormBase>;
 }
 
 export const FinalValueField = ({
@@ -31,6 +34,8 @@ export const FinalValueField = ({
     secrets,
     refetchSecrets,
     loadingSecrets,
+    intellisenseOptions,
+    control,
 }: IFinalValueFieldProps) => {
     const finalValue = watch(`configs.${configIndex}.fields.${fieldIndex}.meta.finalValue`);
     const initFinalValue = watch(`configs.${configIndex}.fields.${fieldIndex}.meta.initFinalValue`);
@@ -53,6 +58,8 @@ export const FinalValueField = ({
                     secrets={secrets}
                     refetchSecrets={refetchSecrets}
                     loadingSecrets={loadingSecrets}
+                    intellisenseOptions={intellisenseOptions}
+                    control={control}
                 />
                 <div className="flex items-center ml-1 gap-x-1">
                     {isOverridden && !fieldError && (

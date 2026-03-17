@@ -15,7 +15,7 @@ import {
     RequestToolType,
     IEmbedding,
 } from '@/models';
-import { IWorkspaceUserResponse } from '@/models/workspace.model';
+// import { IWorkspaceUserResponse } from '@/models/workspace.model';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
@@ -23,19 +23,20 @@ import { Category, Variable } from './use-condition-completion';
 import { OptionModel } from '@/components';
 import { useEmbeddingModelQuery, useIntellisense } from './use-common';
 import { useQuery } from 'react-query';
-import { $fetch } from '@/utils';
+// import { $fetch } from '@/utils';
 
-const fetchAuthorMails = async (workspaceId: string): Promise<string[]> => {
-    const response = await $fetch<IWorkspaceUserResponse[]>(`/workspaces/${workspaceId}/users?role=2`, {
-        method: 'GET',
-        headers: {
-            'x-workspace-id': workspaceId,
-        },
-    });
-
-    // Extract emails from the response
-    const emails = (response.data || []).map(user => user.email);
-    return emails;
+const fetchAuthorMails = async (): Promise<string[]> => {
+    const MOCK_EMAILS = ['admin@example.com', 'user1@example.com', 'user2@example.com'];
+    const stored = localStorage.getItem('mock_admin_emails');
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch {
+            return MOCK_EMAILS;
+        }
+    }
+    localStorage.setItem('mock_admin_emails', JSON.stringify(MOCK_EMAILS));
+    return MOCK_EMAILS;
 };
 
 export enum HeaderType {
@@ -118,7 +119,7 @@ export const useSelfLearning = (props: SelfLearningProps) => {
         isLoading: loadingAdminEmails,
         data: adminEmails,
         refetch: refetchAdminEmails,
-    } = useQuery('adminEmails', async () => await fetchAuthorMails(params.wid as string), {
+    } = useQuery('adminEmails', async () => await fetchAuthorMails(), {
         enabled: true,
         refetchOnWindowFocus: false,
         onError: error => {

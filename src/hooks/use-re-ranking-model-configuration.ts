@@ -4,17 +4,14 @@ import { isNullOrEmpty } from '@/lib/utils';
 import { IProvider, IHookProps } from '@/models';
 import { IReRanking } from '@/models/re-ranking.models';
 import { FetchError, logger } from '@/utils';
-import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from 'react-query';
 import { toast } from 'sonner';
 import { usePlatformQuery, useReRankingModelQuery, useVaultQuery } from './use-common';
 import { QueryKeyType } from '@/enums';
-import { reRankingModelService } from '@/services';
 
 export const useReRankingModelConfiguration = (props?: IHookProps) => {
-    const params = useParams();
     const queryClient = useQueryClient();
     const [reRankingTableData, setReRankingTableData] = useState<ReRankingData[]>([]);
     const [reRankings, setReRankings] = useState<ReRankingData[]>([]);
@@ -22,6 +19,7 @@ export const useReRankingModelConfiguration = (props?: IHookProps) => {
     const [isEdit, setEdit] = useState<boolean>(false);
     const [secrets, setSecrets] = useState<OptionModel[]>([]);
     const [providers, setProviders] = useState<IProvider[]>([]);
+
     const {
         register,
         handleSubmit,
@@ -48,7 +46,7 @@ export const useReRankingModelConfiguration = (props?: IHookProps) => {
                 modelNameOption: undefined,
             });
         }
-    }, [isOpen]);
+    }, [isOpen, reset]);
 
     const { isFetching } = useReRankingModelQuery({
         props,
@@ -86,7 +84,14 @@ export const useReRankingModelConfiguration = (props?: IHookProps) => {
     });
 
     const { mutate: mutateCreate, isLoading: creating } = useMutation(
-        (data: IReRanking) => reRankingModelService.create<IReRanking>(data, params.wid as string),
+        async (data: IReRanking) => {
+            const stored = localStorage.getItem('mock_reranking_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            const newConfig = { ...data, id: `mock-reranking-${Date.now()}` };
+            configs.push(newConfig);
+            localStorage.setItem('mock_reranking_configs', JSON.stringify(configs));
+            return newConfig;
+        },
         {
             onSuccess: data => {
                 if (props?.hookForm?.formName && props?.hookForm?.setValue) {
@@ -107,8 +112,17 @@ export const useReRankingModelConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateUpdate, isLoading: updating } = useMutation(
-        ({ data, id }: { data: IReRanking; id: string }) =>
-            reRankingModelService.update<IReRanking>(data, params.wid as string, id),
+        async ({ data, id }: { data: IReRanking; id: string }) => {
+            const stored = localStorage.getItem('mock_reranking_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const index = configs.findIndex((x: any) => x.id === id);
+            if (index > -1) {
+                configs[index] = { ...configs[index], ...data, id };
+                localStorage.setItem('mock_reranking_configs', JSON.stringify(configs));
+            }
+            return { data: configs[index], id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -126,7 +140,14 @@ export const useReRankingModelConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateDelete } = useMutation(
-        async ({ id }: { id: string }) => await reRankingModelService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_reranking_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const filtered = configs.filter((x: any) => x.id !== id);
+            localStorage.setItem('mock_reranking_configs', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 queryClient.invalidateQueries(QueryKeyType.RE_RANKING_MODEL);

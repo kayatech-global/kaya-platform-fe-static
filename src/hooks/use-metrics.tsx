@@ -21,9 +21,8 @@ import {
     IWorkflowExecutionFilters,
     IWorkflowSummeryExecution,
 } from '@/models';
-import { metricsService } from '@/services';
+import { mock_api_executions, mock_llm_executions, mock_overall_metrics, mock_recent_activity, mock_slm_executions, mock_workflow_executions_summary } from '@/app/workspace/[wid]/metrics-and-analytics/mock_metrics_data';
 import { Coins, Database, Disc } from 'lucide-react';
-import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useInfiniteQuery, useQuery } from 'react-query';
@@ -64,7 +63,6 @@ const initWorkspaceDataCardInfo: DashboardDataCardProps[] = [
 ];
 
 export const useMetrics = () => {
-    const params = useParams();
     const { token } = useAuth();
     const [workspaceDataCardInfo, setWorkspaceDataCardInfo] =
         useState<DashboardDataCardProps[]>(initWorkspaceDataCardInfo);
@@ -79,7 +77,13 @@ export const useMetrics = () => {
 
     const { isFetching } = useQuery(
         QueryKeyType.OVERALL_METRIC_USAGE,
-        () => metricsService.overallMetrics(params.wid as string),
+        () => ({
+            overallMetrics: mock_overall_metrics,
+            llmExecutions: mock_llm_executions,
+            slmExecutions: mock_slm_executions,
+            apiExecutions: mock_api_executions,
+            workflowExecution: mock_workflow_executions_summary,
+        }),
         {
             enabled: !!token,
             refetchOnWindowFocus: false,
@@ -202,8 +206,8 @@ export const useMetrics = () => {
 
     const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
         'recent-activity',
-        ({ pageParam = 1 }) => {
-            return metricsService.recentActivity(params.wid as string, 50, pageParam);
+        () => {
+            return mock_recent_activity;
         },
         {
             enabled: !!token,

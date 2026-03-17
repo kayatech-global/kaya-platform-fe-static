@@ -6,14 +6,12 @@ import { isNullOrEmpty } from '@/lib/utils';
 import { ISTSConfigForm, ISTSForm, IProvider, IProviderConfig, IHookProps, STSModelConfigurations } from '@/models';
 import { FetchError, logger } from '@/utils';
 import { Database, Link, TrendingDownIcon, TrendingUpIcon, Unplug } from 'lucide-react';
-import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useInView } from 'react-intersection-observer';
 import { useMutation, useQueryClient } from 'react-query';
 import { toast } from 'sonner';
 import { usePlatformQuery, useSTSQuery, useVaultQuery } from './use-common';
-import { stsService } from '@/services';
 
 const initWorkspaceDataCardInfo: DashboardDataCardProps[] = [
     {
@@ -76,7 +74,6 @@ const activityData: ActivityProps[] = [
 ];
 
 export const useStsConfiguration = (props?: IHookProps) => {
-    const params = useParams();
     const [stsConfigurationDataCardInfo] = useState<DashboardDataCardProps[]>(
         initWorkspaceDataCardInfo
     );
@@ -86,6 +83,16 @@ export const useStsConfiguration = (props?: IHookProps) => {
     const [stsConfigurations, setStsConfigurations] = useState<ISTSConfigForm[]>([]);
     const [isOpen, setOpen] = useState<boolean>(false);
     const [secrets, setSecrets] = useState<OptionModel[]>([]);
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        setValue,
+        watch,
+        formState: { errors, isValid },
+        control,
+    } = useForm<ISTSConfigForm>({ mode: 'all' });
 
     useEffect(() => {
         if (!isOpen) {
@@ -106,7 +113,7 @@ export const useStsConfiguration = (props?: IHookProps) => {
                 awsSecretKey: undefined,
             });
         }
-    }, [isOpen]);
+    }, [isOpen, reset]);
 
     const { isFetching } = useSTSQuery({
         props,
@@ -164,23 +171,20 @@ export const useStsConfiguration = (props?: IHookProps) => {
         setStsConfigurations(data);
     };
 
-    const {
-        register,
-        handleSubmit,
-        reset,
-        setValue,
-        watch,
-        formState: { errors, isValid },
-        control,
-    } = useForm<ISTSConfigForm>({ mode: 'all' });
-
     const { ref } = useInView({
         threshold: 0.5,
         rootMargin: '100px',
     });
 
     const { mutate: mutateCreate, isLoading: creating } = useMutation(
-        (data: ISTSForm) => stsService.create<ISTSForm>(data, params.wid as string),
+        async (data: ISTSForm) => {
+            const stored = localStorage.getItem('mock_sts_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            const newConfig = { ...data, id: `mock-sts-${Date.now()}` };
+            configs.push(newConfig);
+            localStorage.setItem('mock_sts_configs', JSON.stringify(configs));
+            return newConfig;
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -198,7 +202,16 @@ export const useStsConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateUpdate, isLoading: updating } = useMutation(
-        ({ data, id }: { data: ISTSForm; id: string }) => stsService.update<ISTSForm>(data, params.wid as string, id),
+        async ({ data, id }: { data: ISTSForm; id: string }) => {
+            const stored = localStorage.getItem('mock_sts_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            const index = configs.findIndex((x: ISTSForm) => x.id === id);
+            if (index > -1) {
+                configs[index] = { ...configs[index], ...data, id };
+                localStorage.setItem('mock_sts_configs', JSON.stringify(configs));
+            }
+            return { data: configs[index], id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -216,7 +229,13 @@ export const useStsConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateDeleteSts } = useMutation(
-        async ({ id }: { id: string }) => await stsService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_sts_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            const filtered = configs.filter((x: ISTSForm) => x.id !== id);
+            localStorage.setItem('mock_sts_configs', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 queryClient.invalidateQueries(QueryKeyType.STS);

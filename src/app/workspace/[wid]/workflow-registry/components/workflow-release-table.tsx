@@ -14,7 +14,6 @@ import { WorkflowSaveType } from '@/enums';
 export interface WorkflowReleaseTableProps {
     workflowArtifactData: IArtifactWorkflow[];
     onWorkflowArtifactFilter: (filter: IArtifactWorkflow | null) => void;
-    onDeploy: (workflowId: string, artifactVersion: string, token: string) => Promise<void>;
     getWorkflowArtifactVersion: (workflowId: string, workflowName: string, artifactPath: string) => void;
     loadingArtifactVersion: boolean;
     loadingRow: string | null;
@@ -113,7 +112,6 @@ const generateColumns = (
 export const WorkflowReleaseTable = ({
     workflowArtifactData,
     onWorkflowArtifactFilter,
-    onDeploy,
     getWorkflowArtifactVersion,
     loadingRow,
     workflowVersions,
@@ -181,7 +179,6 @@ export const WorkflowReleaseTable = ({
                         <div className="ml-20">
                             <WorkflowReleaseSubTable
                                 workflowReleases={versions ?? []}
-                                onDeploy={onDeploy}
                                 refetch={refetch}
                             />
                         </div>

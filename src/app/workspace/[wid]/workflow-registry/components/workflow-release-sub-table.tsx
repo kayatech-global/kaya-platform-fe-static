@@ -8,12 +8,11 @@ import React, { Dispatch, SetStateAction, useState, useEffect } from 'react';
 import { WorkflowReleaseNote } from './workflow-release-note';
 import { IArtifactWorkflowVersions } from '@/models';
 import { useMutation } from 'react-query';
-import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { WorkflowDeploymentWizard } from './workflow-pull-wizard';
 import { useAuth } from '@/context/auth-context';
 import { WorkflowEnvironmentConfiguration } from './workflow-environment-configuration';
-import { registryService } from '@/services';
+import { mock_release_notes } from '../mock_data';
 
 interface WorkflowReleaseSubTableProps {
     workflowReleases: IArtifactWorkflowVersions[];
@@ -27,56 +26,57 @@ interface WorkflowReleaseSubTableProps {
 export const WorkflowReleaseSubTable = ({
     workflowReleases,
     refetch,
-}: Omit<WorkflowReleaseSubTableProps, 'openReleaseNoteModal' | 'setOpenReleaseNoteModal' | 'releaseNote'>) => {
+}: Omit<WorkflowReleaseSubTableProps, 'openReleaseNoteModal' | 'setOpenReleaseNoteModal' | 'releaseNote' | 'onDeploy'>) => {
     const { isWorkspaceAdmin } = useAuth();
     const [isOpenDeployWizardModal, setIsOpenDeployWizardModal] = useState(false);
     const [isOpenEnvVariableModal, setIsOpenEnvVariableModal] = useState<boolean>(false);
     const [openReleaseNoteModal, setOpenReleaseNoteModal] = useState(false);
     const [releaseNote, setReleaseNote] = useState<string | null>(null);
-    const [artifactVersion, setArtifactVersion] = useState<string | null>(null);
-    const [artifactPath, setArtifactPath] = useState<string | null>(null);
-
-    const params = useParams();
+    const [selectedArtifactVersion, setSelectedArtifactVersion] = useState<string | null>(null);
+    const [selectedArtifactPath, setSelectedArtifactPath] = useState<string | null>(null);
 
     const { mutate, isLoading, reset } = useMutation({
-        mutationFn: ({ artifactPath, artifactVersion }: { artifactPath: string; artifactVersion: string }) =>
-            registryService.releaseNote(params.wid as string, artifactPath, artifactVersion),
+        mutationFn: async ({ artifactPath, artifactVersion }: { artifactPath: string; artifactVersion: string }) => {
+            // Mocking API delay
+            await new Promise(resolve => setTimeout(resolve, 600));
+            const note = mock_release_notes[artifactPath]?.[artifactVersion];
+            return note || "No release notes available for this version.";
+        },
         onSuccess: data => {
-            const noteContent = typeof data === 'string' ? data : data.data;
-            setReleaseNote(noteContent);
+            setReleaseNote(data);
         },
         onError: () => {
             toast.warning('Error generating release note');
         },
     });
 
-    const generateReleaseNote = (artifactPath: string, artifactVersion: string) => {
-        setArtifactVersion(artifactVersion);
-        setArtifactPath(artifactPath);
+    const generateReleaseNote = (path: string, version: string) => {
+        setSelectedArtifactVersion(version);
+        setSelectedArtifactPath(path);
         setOpenReleaseNoteModal(true);
-        mutate({ artifactPath, artifactVersion });
+        mutate({ artifactPath: path, artifactVersion: version });
     };
 
     useEffect(() => {
         // Clear state when modal is closed
         if (!openReleaseNoteModal) {
             setReleaseNote(null);
-            setArtifactVersion(null);
-            setArtifactPath(null);
+            setSelectedArtifactVersion(null);
+            setSelectedArtifactPath(null);
             reset();
         }
     }, [openReleaseNoteModal, reset]);
 
-    const handleOnPullWorkflow = (artifactPath: string, artifactVersion: string) => {
+    const handleOnPullWorkflow = (path: string, version: string) => {
         setIsOpenDeployWizardModal(true);
-        setArtifactVersion(artifactVersion);
-        setArtifactPath(artifactPath);
+        setSelectedArtifactVersion(version);
+        setSelectedArtifactPath(path);
     };
 
-    const generateWorkflowVariables = (artifactPath: string, artifactVersion: string) => {
+    const generateWorkflowVariables = (path: string, version: string) => {
         setIsOpenEnvVariableModal(true);
-        setArtifactVersion(artifactVersion);
-        setArtifactPath(artifactPath);
+        setSelectedArtifactVersion(version);
+        setSelectedArtifactPath(path);
     };
 
     const generateColumns = () => {
@@ -259,16 +259,16 @@ export const WorkflowReleaseSubTable = ({
             <WorkflowReleaseNote
                 isOpen={openReleaseNoteModal}
                 setOpen={setOpenReleaseNoteModal}
-                artifactVersion={artifactVersion}
+                artifactVersion={selectedArtifactVersion}
                 note={releaseNote}
                 isFetching={isLoading}
             />
             {/* workflow deployment wizard modal */}
             <WorkflowDeploymentWizard
-                artifactVersion={artifactVersion}
-                setArtifactVersion={setArtifactVersion}
-                artifactPath={artifactPath}
-                setArtifactPath={setArtifactPath}
+                artifactVersion={selectedArtifactVersion}
+                setArtifactVersion={setSelectedArtifactVersion}
+                artifactPath={selectedArtifactPath}
+                setArtifactPath={setSelectedArtifactPath}
                 isOpen={isOpenDeployWizardModal}
                 setIsOpen={setIsOpenDeployWizardModal}
                 refetch={refetch}
@@ -276,8 +276,8 @@ export const WorkflowReleaseSubTable = ({
             {/* workflow environment variable modal */}
             <WorkflowEnvironmentConfiguration
                 open={isOpenEnvVariableModal}
-                artifactPath={artifactPath}
-                artifactVersion={artifactVersion}
+                artifactPath={selectedArtifactPath}
+                artifactVersion={selectedArtifactVersion}
                 setOpen={setIsOpenEnvVariableModal}
             />
         </>

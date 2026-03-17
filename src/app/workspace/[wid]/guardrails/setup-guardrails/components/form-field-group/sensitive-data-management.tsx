@@ -70,7 +70,7 @@ export const SensitiveDataManagement = (props: GuardrailsFormProps) => {
                 setValue('configurations.sensitiveDataManagement.guardrailModelId', '');
             }
         }
-    }, [isEdit, guardrailsModelConfigs]);
+    }, [isEdit, guardrailsModelConfigs, setValue]);
 
     useEffect(() => {
         if (isEdit && watch('configurations.sensitiveDataManagement.guardrailModelId')) {
@@ -81,7 +81,7 @@ export const SensitiveDataManagement = (props: GuardrailsFormProps) => {
                 setGuardrailsModelConfigs([{ ...guardrailModel } as never]);
             }
         }
-    }, [isEdit, guardrailsModels]);
+    }, [isEdit, guardrailsModels, getValues, watch]);
 
     const setClassification = async (index: number, value: string) => {
         const result = microsoftPresidioFields?.find(x => x.value === value)?.meta;
@@ -150,7 +150,15 @@ export const SensitiveDataManagement = (props: GuardrailsFormProps) => {
                         <Switch
                             disabled={isEdit && isReadOnly}
                             checked={field.value}
-                            onCheckedChange={field.onChange}
+                            onCheckedChange={val => {
+                                field.onChange(val);
+                                trigger([
+                                    'configurations.enableSensitiveDataManagement',
+                                    'configurations.enableContentAndLanguageModeration',
+                                    'configurations.enablePromptInjectionDetection',
+                                    'configurations.enableHallucinationProtection',
+                                ]);
+                            }}
                         />
                     )}
                 />

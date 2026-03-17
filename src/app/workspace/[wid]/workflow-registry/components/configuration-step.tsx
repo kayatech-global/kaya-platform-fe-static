@@ -8,8 +8,9 @@ import { Alert } from '@/components/atoms/alert';
 import { OptionModel } from '@/components';
 import {AlertVariant} from "@/enums";
 
+import { IntellisenseCategory } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
+
 interface ConfigurationStepProps {
-    control: Control<WorkflowEnvConfigFormBase>;
     errors: FieldErrors<WorkflowEnvConfigFormBase>;
     watch: UseFormWatch<WorkflowEnvConfigFormBase>;
     setValue: UseFormSetValue<WorkflowEnvConfigFormBase>;
@@ -18,10 +19,11 @@ interface ConfigurationStepProps {
     refetchSecrets: () => void;
     loadingSecrets: boolean;
     trigger: UseFormTrigger<WorkflowEnvConfigFormBase>;
+    intellisenseOptions?: IntellisenseCategory[];
+    control: Control<WorkflowEnvConfigFormBase>;
 }
 
 export const ConfigurationStep = ({
-    control,
     errors,
     watch,
     setValue,
@@ -30,6 +32,8 @@ export const ConfigurationStep = ({
     refetchSecrets,
     loadingSecrets,
     trigger,
+    intellisenseOptions,
+    control,
 }: ConfigurationStepProps) => {
     return (
         <div className="flex flex-col gap-y-4">
@@ -58,12 +62,13 @@ export const ConfigurationStep = ({
                     register={register}
                     setValue={setValue}
                     watch={watch}
-                    control={control}
                     errors={errors}
                     secrets={secrets}
                     refetchSecrets={refetchSecrets}
                     loadingSecrets={loadingSecrets}
                     trigger={trigger}
+                    intellisenseOptions={intellisenseOptions}
+                    control={control}
                 />
             ) : (
                 <div className="py-8">

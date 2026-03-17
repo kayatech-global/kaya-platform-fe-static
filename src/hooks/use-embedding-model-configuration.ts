@@ -4,16 +4,13 @@ import { EmbeddingProviderType, QueryKeyType } from '@/enums';
 import { isNullOrEmpty } from '@/lib/utils';
 import { IEmbedding, IProvider, IHookProps } from '@/models';
 import { FetchError, logger } from '@/utils';
-import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from 'react-query';
 import { toast } from 'sonner';
 import { useEmbeddingModelQuery, usePlatformQuery, useVaultQuery } from './use-common';
-import { embeddingModelService } from '@/services';
 
 export const useEmbeddingModelConfiguration = (props?: IHookProps) => {
-    const params = useParams();
     const queryClient = useQueryClient();
     const [embeddingTableData, setEmbeddingTableData] = useState<EmbeddingData[]>([]);
     const [embeddings, setEmbeddings] = useState<EmbeddingData[]>([]);
@@ -21,6 +18,7 @@ export const useEmbeddingModelConfiguration = (props?: IHookProps) => {
     const [isEdit, setEdit] = useState<boolean>(false);
     const [secrets, setSecrets] = useState<OptionModel[]>([]);
     const [providers, setProviders] = useState<IProvider[]>([]);
+
     const {
         register,
         handleSubmit,
@@ -52,11 +50,12 @@ export const useEmbeddingModelConfiguration = (props?: IHookProps) => {
                 modelNameOption: undefined,
             });
         }
-    }, [isOpen]);
+    }, [isOpen, reset]);
 
+    const providerValue = watch('provider');
     useEffect(() => {
         unregister('configurations.apiKey', { keepValue: true });
-    }, [watch('provider')]);
+    }, [providerValue, unregister]);
 
     const { isFetching } = useEmbeddingModelQuery({
         props,
@@ -94,7 +93,14 @@ export const useEmbeddingModelConfiguration = (props?: IHookProps) => {
     });
 
     const { mutate: mutateCreate, isLoading: creating } = useMutation(
-        (data: IEmbedding) => embeddingModelService.create<IEmbedding>(data, params.wid as string),
+        async (data: IEmbedding) => {
+            const stored = localStorage.getItem('mock_embedding_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            const newConfig = { ...data, id: `mock-embedding-${Date.now()}` };
+            configs.push(newConfig);
+            localStorage.setItem('mock_embedding_configs', JSON.stringify(configs));
+            return newConfig;
+        },
         {
             onSuccess: data => {
                 if (props?.hookForm?.formName && props?.hookForm?.setValue) {
@@ -115,8 +121,17 @@ export const useEmbeddingModelConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateUpdate, isLoading: updating } = useMutation(
-        ({ data, id }: { data: IEmbedding; id: string }) =>
-            embeddingModelService.update<IEmbedding>(data, params.wid as string, id),
+        async ({ data, id }: { data: IEmbedding; id: string }) => {
+            const stored = localStorage.getItem('mock_embedding_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const index = configs.findIndex((x: any) => x.id === id);
+            if (index > -1) {
+                configs[index] = { ...configs[index], ...data, id };
+                localStorage.setItem('mock_embedding_configs', JSON.stringify(configs));
+            }
+            return { data: configs[index], id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -134,7 +149,14 @@ export const useEmbeddingModelConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateDelete } = useMutation(
-        async ({ id }: { id: string }) => await embeddingModelService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_embedding_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const filtered = configs.filter((x: any) => x.id !== id);
+            localStorage.setItem('mock_embedding_configs', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 queryClient.invalidateQueries(QueryKeyType.EMBEDDING_MODEL);

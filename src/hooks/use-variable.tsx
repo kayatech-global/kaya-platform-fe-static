@@ -4,15 +4,13 @@ import { ActivityColorCode } from '@/enums/activity-color-code-type';
 import { isNullOrEmpty } from '@/lib/utils';
 import { IHookProps, IVariable } from '@/models';
 import { FetchError, logger } from '@/utils';
-import { useParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useInView } from 'react-intersection-observer';
 import { useMutation, useQueryClient } from 'react-query';
 import { toast } from 'sonner';
 import { useVariableQuery } from './use-common';
 import { QueryKeyType } from '@/enums';
-import { variableService } from '@/services';
 
 const activityData: ActivityProps[] = [
     {
@@ -42,7 +40,6 @@ const activityData: ActivityProps[] = [
 ];
 
 export const useVariable = (props?: IHookProps) => {
-    const params = useParams();
     const queryClient = useQueryClient();
     const [isOpen, setOpen] = useState<boolean>(false);
     const [isEdit, setEdit] = useState<boolean>(false);
@@ -104,7 +101,14 @@ export const useVariable = (props?: IHookProps) => {
     });
 
     const { mutate: mutateVariable, isLoading: creating } = useMutation(
-        (data: IVariable) => variableService.create<IVariable>(data, params.wid as string),
+        async (data: IVariable) => {
+            const stored = localStorage.getItem('mock_variable_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            const newConfig = { ...data, id: `var-${Date.now()}` };
+            configs.push(newConfig);
+            localStorage.setItem('mock_variable_data', JSON.stringify(configs));
+            return newConfig;
+        },
         {
             onSuccess: data => {
                 setNewRecord(data);
@@ -123,8 +127,17 @@ export const useVariable = (props?: IHookProps) => {
     );
 
     const { mutate: mutateUpdateVariable, isLoading: updating } = useMutation(
-        ({ data, id }: { data: IVariable; id: string }) =>
-            variableService.update<IVariable>(data, params.wid as string, id),
+        async ({ data, id }: { data: IVariable; id: string }) => {
+            const stored = localStorage.getItem('mock_variable_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const index = configs.findIndex((x: any) => x.id === id);
+            if (index > -1) {
+                configs[index] = { ...configs[index], ...data, id };
+                localStorage.setItem('mock_variable_data', JSON.stringify(configs));
+            }
+            return { data: configs[index], id };
+        },
         {
             onSuccess: () => {
                 queryClient.invalidateQueries(QueryKeyType.VARIABLE);
@@ -139,7 +152,14 @@ export const useVariable = (props?: IHookProps) => {
     );
 
     const { mutate: mutateDeleteVariable } = useMutation(
-        async ({ id }: { id: string }) => await variableService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_variable_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const filtered = configs.filter((x: any) => x.id !== id);
+            localStorage.setItem('mock_variable_data', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 queryClient.invalidateQueries(QueryKeyType.VARIABLE);

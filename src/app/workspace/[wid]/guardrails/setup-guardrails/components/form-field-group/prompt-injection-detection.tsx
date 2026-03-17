@@ -9,7 +9,7 @@ import { GUARDRAIL_ACTION_OPTION, GUARDRAIL_MODERATION_MODE_OPTION } from '@/con
 import { GuardrailSensitiveDataManagementModeType } from '@/enums';
 
 export const PromptInjectionDetection = (props: GuardrailsFormProps) => {
-    const { isEdit, errors, control, isReadOnly, protectionModeErrorMessage, register, watch, validateProtection } =
+    const { isEdit, errors, control, isReadOnly, protectionModeErrorMessage, register, watch, trigger, validateProtection } =
         props;
 
     return (
@@ -20,7 +20,19 @@ export const PromptInjectionDetection = (props: GuardrailsFormProps) => {
                     control={control}
                     rules={{ validate: validateProtection }}
                     render={({ field }) => (
-                        <Switch disabled={true} checked={field.value} onCheckedChange={field.onChange} />
+                        <Switch
+                            disabled={isEdit && isReadOnly}
+                            checked={field.value}
+                            onCheckedChange={val => {
+                                field.onChange(val);
+                                trigger([
+                                    'configurations.enableSensitiveDataManagement',
+                                    'configurations.enableContentAndLanguageModeration',
+                                    'configurations.enablePromptInjectionDetection',
+                                    'configurations.enableHallucinationProtection',
+                                ]);
+                            }}
+                        />
                     )}
                 />
             }

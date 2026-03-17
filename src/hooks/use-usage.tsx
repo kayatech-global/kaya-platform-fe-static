@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from 'react-query';
 import { useAuth } from '@/context';
 import { IConsumption, IQuota, IWorkflowExecution, OverallUsage, OverallUsageResponse } from '@/models';
-import { ComponentType, DynamicQueryType, OverallUsageType, UnitPrefix, UnitType, UsageUnitType } from '@/enums';
+import { OverallUsageType, UnitPrefix, UnitType, UsageUnitType } from '@/enums';
 import { Coins, HardDrive, TrendingDownIcon, TrendingUpIcon } from 'lucide-react';
 import {
     convertToFullMonth,
@@ -28,123 +28,18 @@ import {
     TokenUsageData,
     WorkFlowExecutionData,
 } from '@/app/workspace/[wid]/usage/types/types';
-import { useParams } from 'next/navigation';
 import { ChartConfig } from '@/components/atoms/chart';
 import { IMonth } from '@/app/workspace/[wid]/usage/components/workflow-execution-chart-container';
 import { useTheme as useNextTheme } from 'next-themes';
-import { useApp } from '@/context/app-context';
-import { platformService, usageService } from '@/services';
+import { mock_consumption, mock_monthly_usage, mock_overall_usage, mock_workflow_executions } from '@/app/workspace/[wid]/usage/mock_data';
 
-const setErrorComponents = (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    error: any,
-    failedComponents: ComponentType[],
-    setFailedComponents: React.Dispatch<React.SetStateAction<ComponentType[]>>
-) => {
-    if (!failedComponents.includes(error.component)) {
-        setFailedComponents(prevValues => [...prevValues, error.component]);
-    }
-};
 
-const monthlyUsageResponse = async (workspaceId: string) => {
-    const monthlyUsage: IConsumption = {
-        tokens: undefined,
-        credits: undefined,
-    };
-
-    for (const type of [
-        DynamicQueryType.WORKSPACE_TOKEN_USAGE_BY_DATE_RANGE,
-        DynamicQueryType.WORKSPACE_CREDIT_USAGE_BY_DATE_RANGE,
-    ]) {
-        const from = moment().add(1, 'month').subtract(1, 'years').startOf('month').format('YYYY-MM-DDTHH:mm:ss.sss');
-        const to = moment().format('YYYY-MM-DDTHH:mm:ss.sss');
-        const consumptionResponse = await usageService.monthlyUsage(workspaceId, from, to, type);
-        if (type === DynamicQueryType.WORKSPACE_TOKEN_USAGE_BY_DATE_RANGE) {
-            monthlyUsage.tokens = consumptionResponse?.data?.tokens;
-        } else if (type === DynamicQueryType.WORKSPACE_CREDIT_USAGE_BY_DATE_RANGE) {
-            monthlyUsage.credits = consumptionResponse?.data?.credits;
-        }
-    }
-
-    return monthlyUsage;
-};
-
-const consumptionUsageResponse = async (workspaceId: string) => {
-    const consumption: IConsumption = {
-        storage: undefined,
-        tokens: undefined,
-        credits: undefined,
-    };
-
-    for (const type of [
-        DynamicQueryType.WORKSPACE_MONTHLY_STORAGE_USAGE,
-        DynamicQueryType.WORKSPACE_MONTHLY_CREDIT_USAGE,
-        DynamicQueryType.WORKSPACE_MONTHLY_TOKEN_USAGE,
-    ]) {
-        const consumptionResponse = await usageService.consumption(workspaceId, type);
-        if (type === DynamicQueryType.WORKSPACE_MONTHLY_STORAGE_USAGE) {
-            consumption.storage = consumptionResponse?.data?.storage;
-        } else if (type === DynamicQueryType.WORKSPACE_MONTHLY_TOKEN_USAGE) {
-            consumption.tokens = consumptionResponse?.data?.tokens;
-        } else if (type === DynamicQueryType.WORKSPACE_MONTHLY_CREDIT_USAGE) {
-            consumption.credits = consumptionResponse?.data?.credits;
-        }
-    }
-
-    return consumption;
-};
-
-const fetchOverallUsage = async (
-    workspaceId: string,
-    failedComponents: ComponentType[],
-    setFailedComponents: React.Dispatch<React.SetStateAction<ComponentType[]>>
-) => {
-    let response: OverallUsageResponse | null = null;
-    let consumptionResponse: IConsumption | null = null;
-    let monthlyUsageApiResponse: IConsumption | null = null;
-    let workflowExecutionApiResponse: IWorkflowExecution[] = [];
-    const workflowExecutionFrom = moment().startOf('month').format('YYYY-MM-DDTHH:mm:ss.sss');
-    const workflowExecutionTo = moment().format('YYYY-MM-DDTHH:mm:ss.sss');
-
-    const body = {
-        from: moment().subtract(1, 'months').startOf('month').format('YYYY-MM-DDTHH:mm:ss.sss'),
-        to: moment().add(1, 'months').startOf('month').format('YYYY-MM-DDTHH:mm:ss.sss'),
-        type: DynamicQueryType.PLATFORM_USAGE_SUMMERY_BY_DATE_RANGE,
-    };
-
-    try {
-        response = await platformService.usage(body, workspaceId);
-    } catch (error: unknown) {
-        setErrorComponents(error, failedComponents, setFailedComponents);
-    }
-
-    try {
-        consumptionResponse = await consumptionUsageResponse(workspaceId);
-    } catch (error: unknown) {
-        setErrorComponents(error, failedComponents, setFailedComponents);
-    }
-
-    try {
-        monthlyUsageApiResponse = await monthlyUsageResponse(workspaceId);
-    } catch (error: unknown) {
-        setErrorComponents(error, failedComponents, setFailedComponents);
-    }
-
-    try {
-        workflowExecutionApiResponse = await usageService.workflowExecution(
-            workspaceId,
-            workflowExecutionFrom,
-            workflowExecutionTo
-        );
-    } catch (error: unknown) {
-        setErrorComponents(error, failedComponents, setFailedComponents);
-    }
-
+const fetchOverallUsage = async () => {
     return {
-        overall: response,
-        consumption: consumptionResponse,
-        monthlyUsage: monthlyUsageApiResponse,
-        workflowExecutions: workflowExecutionApiResponse,
+        overall: mock_overall_usage,
+        consumption: mock_consumption,
+        monthlyUsage: mock_monthly_usage,
+        workflowExecutions: mock_workflow_executions,
     };
 };
 
@@ -326,9 +221,7 @@ const workflowExecutionInitialData = {
 };
 
 export const useUsage = () => {
-    const params = useParams();
     const { token } = useAuth();
-    const { failedComponents, setFailedComponents } = useApp();
     const { theme } = useNextTheme();
     const [workflowExecutionFrom, setWorkflowExecutionFrom] = useState<string>();
     const [workflowExecutionTo, setWorkflowExecutionTo] = useState<string>();
@@ -344,7 +237,7 @@ export const useUsage = () => {
 
     const { isFetching } = useQuery(
         'overall-usage',
-        () => fetchOverallUsage(params.wid as string, failedComponents, setFailedComponents),
+        () => fetchOverallUsage(),
         {
             enabled: !!token,
             refetchOnWindowFocus: false,
@@ -367,12 +260,7 @@ export const useUsage = () => {
 
     const { isFetching: isWorkflowFetching } = useQuery(
         ['workflow-execution', workflowExecutionFrom, workflowExecutionTo],
-        () =>
-            usageService.workflowExecution(
-                params.wid as string,
-                workflowExecutionFrom as string,
-                workflowExecutionTo as string
-            ),
+        () => mock_workflow_executions,
         {
             enabled: !!(workflowExecutionFrom && workflowExecutionTo),
             keepPreviousData: true,

@@ -9,9 +9,9 @@ import { ActivityProps, DashboardDataCardProps } from '@/components';
 import { ActivityColorCode } from '@/enums/activity-color-code-type';
 import { areObjectsEqual, isNullOrEmpty } from '@/lib/utils';
 import { Agent, IAgent, IAgentForm, IAllModel, IHookProps, IOption, IVariable, INodeHumanInput } from '@/models';
-import { FetchError, logger } from '@/utils';
+import { logger } from '@/utils';
 import { Unplug, Database, Link, TrendingUpIcon, TrendingDownIcon } from 'lucide-react';
-import { useParams } from 'next/navigation';
+// import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useInView } from 'react-intersection-observer';
@@ -35,7 +35,7 @@ import {
     useVariableQuery,
     useVectorRagQuery,
 } from './use-common';
-import { agentService } from '@/services';
+// import { agentService } from '@/services';
 
 const initWorkspaceDataCardInfo: DashboardDataCardProps[] = [
     {
@@ -81,9 +81,7 @@ const activityData: ActivityProps[] = [
         title: 'API Execution',
         description: (
             <div>
-                API Execution
-                {' '}
-                <span style={{ color: ActivityColorCode.Purple }}>AWS</span>
+                API Execution <span style={{ color: ActivityColorCode.Purple }}>AWS</span>
             </div>
         ),
         date: '2024/12/12',
@@ -108,9 +106,7 @@ const defaultHumanInput: INodeHumanInput = {
 
 export const useAgent = (props?: IHookProps) => {
     const { triggerGuardrailBinding, guardrailBinding, setGuardrailBinding } = useApp();
-    const [apiConfigurationDataCardInfo] = useState<DashboardDataCardProps[]>(
-        initWorkspaceDataCardInfo
-    );
+    const [apiConfigurationDataCardInfo] = useState<DashboardDataCardProps[]>(initWorkspaceDataCardInfo);
     const [agentConfigurationTableData, setAgentConfigurationTableData] = useState<AgentData[]>([]);
     const [agents, setAgents] = useState<AgentData[]>([]);
     const [agentDetails, setAgentDetails] = useState<Agent[]>([]);
@@ -122,7 +118,6 @@ export const useAgent = (props?: IHookProps) => {
     const [allIntellisenseValues, setAllIntellisenseValues] = useState<string[]>([]);
 
     const queryClient = useQueryClient();
-    const params = useParams();
 
     const {
         register,
@@ -160,13 +155,7 @@ export const useAgent = (props?: IHookProps) => {
                 connectors: undefined,
             });
         }
-    }, [isOpen]);
-
-    useEffect(() => {
-        if (triggerGuardrailBinding > 0) {
-            refetchBinding();
-        }
-    }, [triggerGuardrailBinding]);
+    }, [isOpen, reset]);
 
     const { isFetching } = useAgentQuery({
         props,
@@ -292,7 +281,6 @@ export const useAgent = (props?: IHookProps) => {
 
     const { isLoading: loadingBinding, refetch: refetchBinding } = useGuardrailBindingQuery({
         props,
-        workflowId: params.workflow_id as string | undefined,
         onSuccess: data => {
             setGuardrailBinding(data);
         },
@@ -300,6 +288,12 @@ export const useAgent = (props?: IHookProps) => {
             setGuardrailBinding(undefined);
         },
     });
+
+    useEffect(() => {
+        if (triggerGuardrailBinding > 0) {
+            refetchBinding();
+        }
+    }, [triggerGuardrailBinding, refetchBinding]);
 
     const mapAgents = (arr: Agent[]) => {
         const data = arr.map((x: Agent) => ({
@@ -331,7 +325,14 @@ export const useAgent = (props?: IHookProps) => {
     };
 
     const { isLoading: createIsLoading, mutate: mutateAgent } = useMutation(
-        (data: IAgent) => agentService.create<IAgent>(data, params.wid as string),
+        async (data: IAgent) => {
+            const stored = localStorage.getItem('mock_agent_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            const newConfig = { ...data, id: `agent-${Date.now()}` };
+            configs.push(newConfig);
+            localStorage.setItem('mock_agent_data', JSON.stringify(configs));
+            return newConfig;
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -343,35 +344,48 @@ export const useAgent = (props?: IHookProps) => {
                 setOpen(false);
                 toast.success('Agent saved successfully');
             },
-            onError: (error: FetchError) => {
-                if (error.status === 400) {
-                    const errorMessage = error?.message + '\n' + (error?.errors ? error?.errors?.join('\n') : '');
-                    const results = errorMessage.split('\n').map((item, index) => <div key={`error-line-${index}-${item}`}>{item}</div>);
-                    toast.error(results);
-                } else {
-                    toast.error(error?.message);
-                }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onError: (error: any) => {
+                toast.error(error?.message || 'Error creating agent');
                 logger.error('Error creating agent:', error?.message);
             },
         }
     );
 
     const { mutate: mutateDeleteAgent } = useMutation(
-        async ({ id }: { id: string }) => await agentService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_agent_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const filtered = configs.filter((x: any) => x.id !== id);
+            localStorage.setItem('mock_agent_data', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 queryClient.invalidateQueries(QueryKeyType.AGENT);
                 toast.success('Agent deleted successfully');
             },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onError: (error: any) => {
+                toast.error(error?.message || 'Error deleting agent');
                 logger.error('Error deleting agent:', error?.message);
             },
         }
     );
 
     const { isLoading: updateIsLoading, mutate: mutateUpdateAgent } = useMutation(
-        ({ data, id }: { data: IAgent; id: string }) => agentService.update<IAgent>(data, params.wid as string, id),
+        async ({ data, id }: { data: IAgent; id: string }) => {
+            const stored = localStorage.getItem('mock_agent_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const index = configs.findIndex((x: any) => x.id === id);
+            if (index > -1) {
+                configs[index] = { ...configs[index], ...data, id };
+                localStorage.setItem('mock_agent_data', JSON.stringify(configs));
+            }
+            return { data, id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -383,14 +397,9 @@ export const useAgent = (props?: IHookProps) => {
                 setOpen(false);
                 toast.success('Agent updated successfully');
             },
-            onError: (error: FetchError) => {
-                if (error.status === 400) {
-                    const errorMessage = error?.message + '\n' + (error?.errors ? error?.errors?.join('\n') : '');
-                    const results = errorMessage.split('\n').map((item, index) => <div key={`error-line-${index}-${item}`}>{item}</div>);
-                    toast.error(results);
-                } else {
-                    toast.error(error?.message);
-                }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onError: (error: any) => {
+                toast.error(error?.message || 'Error updating agent');
                 logger.error('Error updating agent:', error?.message);
             },
         }

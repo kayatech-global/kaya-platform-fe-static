@@ -1,10 +1,7 @@
-import { useAuth } from '@/context';
-import { QueryKeyType } from '@/enums';
-import { IArtifactWorkflow, IArtifactWorkflowVersions } from '@/models';
-import { registryService } from '@/services';
-import { useParams } from 'next/navigation';
+import { IArtifactWorkflow, IArtifactWorkflowVersions, IVersionResponse } from '@/models';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
+import { mock_artifacts, mock_artifact_versions } from '@/app/workspace/[wid]/workflow-registry/mock_data';
 
 export const useWorkflowRelease = () => {
     const [openReleaseNoteModal, setOpenReleaseNoteModal] = useState<boolean>(false);
@@ -15,15 +12,16 @@ export const useWorkflowRelease = () => {
     const [workflowVersions, setWorkflowVersions] = useState<Record<string, IArtifactWorkflowVersions[]>>({});
 
     const [loadingRow, setLoadingRow] = useState<string | null>(null);
-    const { token } = useAuth();
-    const params = useParams();
     const queryClient = useQueryClient();
 
     const { isFetching, refetch } = useQuery(
-        QueryKeyType.ARTIFACTS,
-        () => registryService.artifacts(params.wid as string),
+        'mock_artifacts',
+        async () => {
+            // Mocking API delay
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return mock_artifacts;
+        },
         {
-            enabled: !!token,
             refetchOnWindowFocus: false,
             onSuccess: data => {
                 const formattedWorkflowData: IArtifactWorkflow[] = data.map(d => {
@@ -47,8 +45,12 @@ export const useWorkflowRelease = () => {
     );
 
     const { isFetching: loadingArtifactVersion } = useQuery(
-        [QueryKeyType.ARTIFACT_VERSIONS, params.wid, 'dynamic-artifact'],
-        () => registryService.versions(params.wid as string, expandedArtifactPath),
+        ['mock_artifact_versions', 'dynamic-artifact'],
+        async () => {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            const versionsData = (mock_artifact_versions as Record<string, { versions: IVersionResponse[] }>)[expandedArtifactPath];
+            return versionsData || { versions: [] };
+        },
         {
             enabled: false,
         }
@@ -58,25 +60,23 @@ export const useWorkflowRelease = () => {
         setLoadingRow(workflowId);
         setExpandedArtifactPath(artifactPath);
 
-        // 1) fetch using queryClient.fetchQuery with the actual artifactPath
-        const cacheKey = [QueryKeyType.ARTIFACT_VERSIONS, params.wid, artifactPath];
+        const cacheKey = ['mock_artifact_versions', artifactPath];
 
-        // fetchQuery will return cached result if present & fresh; otherwise it will call the fetcher
-        // and also put it into the cache for future use.
-        const versionResponse = await queryClient.fetchQuery(cacheKey, () =>
-            registryService.versions(params.wid as string, artifactPath)
-        );
+        const versionResponse = await queryClient.fetchQuery(cacheKey, async () => {
+             await new Promise(resolve => setTimeout(resolve, 300));
+             const versionsData = (mock_artifact_versions as Record<string, { versions: IVersionResponse[] }>)[artifactPath];
+             return versionsData || { versions: [] };
+        });
 
-        const versions: IArtifactWorkflowVersions[] = versionResponse?.versions
+        const versions: IArtifactWorkflowVersions[] = (versionResponse?.versions || [])
             .sort((a, b) => {
                 const pa = a.version.split('.').map(Number);
                 const pb = b.version.split('.').map(Number);
 
-                // DESCENDING
                 return (
-                    pb[0] - pa[0] || // major
-                    pb[1] - pa[1] || // minor
-                    pb[2] - pa[2] // patch
+                    pb[0] - pa[0] || 
+                    pb[1] - pa[1] || 
+                    pb[2] - pa[2] 
                 );
             })
             .map(v => ({
@@ -109,7 +109,6 @@ export const useWorkflowRelease = () => {
     };
 
     const onDeploy = async (workflowId: string, artifactVersion: string, token: string) => {
-        // Implement deployment logic here
         console.log(`Deploying workflow ${workflowId} version ${artifactVersion} with token ${token}`);
     };
 
@@ -129,3 +128,4 @@ export const useWorkflowRelease = () => {
         refetch,
     };
 };
+

@@ -1,24 +1,38 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { IHookProps, IGuardrailModelConfig } from '@/models';
-import { useMutation, useQueryClient } from 'react-query';
-import { useParams } from 'next/navigation';
-import { FetchError, logger } from '@/utils';
+import { logger } from '@/utils';
 import { isNullOrEmpty } from '@/lib/utils';
 import { toast } from 'sonner';
-import { AuthenticationType, GuardrailApiConfigurationType, GuardrailModelProviderType, QueryKeyType } from '@/enums';
+import { AuthenticationType, GuardrailApiConfigurationType, GuardrailModelProviderType } from '@/enums';
 import { OptionModel } from '@/components';
-import { useGuardrailModelQuery, useVaultQuery } from './use-common';
-import { guardrailModelService } from '@/services';
+
+const MOCK_GUARDRAIL_MODEL_CONFIGS: IGuardrailModelConfig[] = [
+    {
+        id: 'mock-grm-1',
+        name: 'Microsoft Presidio Analyzer',
+        description: 'Mock Presidio analyzer service',
+        guardrailType: GuardrailApiConfigurationType.SENSITIVE_DATA_DETECTION,
+        provider: GuardrailModelProviderType.MICROSOFT_PRESIDIO,
+        configurations: {
+            analyzerServiceHost: 'http://localhost:5001/analyze',
+            anonymizerServiceHost: 'http://localhost:5001/anonymize',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any,
+    },
+];
+
+const MOCK_SECRETS: OptionModel[] = [
+    { name: 'GOOGLE_CREDENTIALS', value: 'GOOGLE_CREDENTIALS' },
+    { name: 'ANTHROPIC_API_KEY', value: 'ANTHROPIC_API_KEY' },
+];
 
 export const useGuardrailsModelConfiguration = (props?: IHookProps) => {
-    const params = useParams();
-    const queryClient = useQueryClient();
-    const [loading, setLoading] = useState<boolean>(false);
     const [guardrailsModelConfigTableData, setGuardrailsModelConfigTableData] = useState<IGuardrailModelConfig[]>([]);
+    const [guardrailsModelConfigs, setGuardrailsModelConfigs] = useState<IGuardrailModelConfig[]>([]);
     const [isOpen, setOpen] = useState<boolean>(false);
     const [isEdit, setEdit] = useState<boolean>(false);
-    const [secrets, setSecrets] = useState<OptionModel[]>([]);
+    const [secrets] = useState<OptionModel[]>(MOCK_SECRETS);
 
     const {
         register,
@@ -39,6 +53,29 @@ export const useGuardrailsModelConfiguration = (props?: IHookProps) => {
             },
         },
     });
+
+    useEffect(() => {
+        const stored = localStorage.getItem('mock_guardrail_models');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                setGuardrailsModelConfigs(parsed);
+                setGuardrailsModelConfigTableData(parsed);
+            } catch {
+                setGuardrailsModelConfigs(MOCK_GUARDRAIL_MODEL_CONFIGS);
+                setGuardrailsModelConfigTableData(MOCK_GUARDRAIL_MODEL_CONFIGS);
+            }
+        } else {
+            setGuardrailsModelConfigs(MOCK_GUARDRAIL_MODEL_CONFIGS);
+            setGuardrailsModelConfigTableData(MOCK_GUARDRAIL_MODEL_CONFIGS);
+        }
+    }, []);
+
+    const saveToLocalStorage = (data: IGuardrailModelConfig[]) => {
+        localStorage.setItem('mock_guardrail_models', JSON.stringify(data));
+        setGuardrailsModelConfigs(data);
+        setGuardrailsModelConfigTableData(data);
+    };
 
     useEffect(() => {
         if (!isOpen) {
@@ -62,88 +99,43 @@ export const useGuardrailsModelConfiguration = (props?: IHookProps) => {
                 search: undefined,
             });
         }
-    }, [isOpen]);
+    }, [isOpen, reset]);
 
-    const { isFetching, data: guardrailsModelConfigs } = useGuardrailModelQuery({
-        props,
-        onSuccess: data => {
-            setGuardrailsModelConfigTableData(data);
-        },
-        onError: () => {
-            setGuardrailsModelConfigTableData([]);
-        },
-    });
+    const isFetching = false;
+    const loadingSecrets = false;
+    const creating = false;
+    const updating = false;
 
-    const { refetch, isLoading: loadingSecrets } = useVaultQuery({
-        onSuccess: data => {
-            const mapData = data?.map(x => ({
-                name: x.keyName as string,
-                value: x.keyName as string,
-            }));
-            setSecrets([...mapData]);
-        },
-        onError: () => {
-            setSecrets([]);
-        },
-    });
+    const refetch = async () => {
+        logger.log('Mock vault refetch called');
+    };
 
-    const { isLoading: creating, mutate: mutateCreate } = useMutation(
-        (data: IGuardrailModelConfig) =>
-            guardrailModelService.create<IGuardrailModelConfig>(data, params.wid as string),
-        {
-            onSuccess: () => {
-                if (props?.onRefetch) {
-                    props.onRefetch();
-                }
-                queryClient.invalidateQueries(QueryKeyType.GUARDRAIL_MODEL);
-                setLoading(false);
-                setOpen(false);
-                toast.success('Guardrails model configuration saved successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error creating guardrails model configuration:', error?.message);
-            },
-        }
-    );
+    const mutateCreate = (data: IGuardrailModelConfig) => {
+        const newModel = { ...data, id: Math.random().toString(36).substring(2, 11) };
+        const updated = [...guardrailsModelConfigs, newModel];
+        saveToLocalStorage(updated);
+        setOpen(false);
+        toast.success('Guardrails model configuration saved successfully (Mock)');
+        if (props?.onRefetch) props.onRefetch();
+    };
 
-    const { isLoading: updating, mutate: mutateUpdate } = useMutation(
-        ({ data, id }: { data: IGuardrailModelConfig; id: string }) =>
-            guardrailModelService.update<IGuardrailModelConfig>(data, params.wid as string, id),
-        {
-            onSuccess: () => {
-                if (props?.onRefetch) {
-                    props.onRefetch();
-                }
-                queryClient.invalidateQueries(QueryKeyType.GUARDRAIL_MODEL);
-                setLoading(false);
-                setOpen(false);
-                toast.success('Guardrails model configuration updated successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error updating guardrails model configuration:', error?.message);
-            },
-        }
-    );
+    const mutateUpdate = ({ data, id }: { data: IGuardrailModelConfig; id: string }) => {
+        const updated = guardrailsModelConfigs.map(x => (x.id === id ? { ...data, id } : x));
+        saveToLocalStorage(updated);
+        setOpen(false);
+        toast.success('Guardrails model configuration updated successfully (Mock)');
+        if (props?.onRefetch) props.onRefetch();
+    };
 
-    const { mutate: mutateDelete } = useMutation(
-        async ({ id }: { id: string }) => await guardrailModelService.delete(id, params.wid as string),
-        {
-            onSuccess: () => {
-                queryClient.invalidateQueries(QueryKeyType.GUARDRAIL_MODEL);
-                toast.success('Guardrails model configuration deleted successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error deleting guardrails model configuration:', error?.message);
-            },
-        }
-    );
+    const mutateDelete = ({ id }: { id: string }) => {
+        const updated = guardrailsModelConfigs.filter(x => x.id !== id);
+        saveToLocalStorage(updated);
+        toast.success('Guardrails model configuration deleted successfully (Mock)');
+    };
 
     const onEdit = (id: string) => {
         if (id) {
-            const obj = guardrailsModelConfigs?.find(x => x.id === id);
+            const obj = guardrailsModelConfigs.find(x => x.id === id);
             if (obj) {
                 setValue('id', obj.id);
                 setValue('name', obj.name);
@@ -232,7 +224,6 @@ export const useGuardrailsModelConfiguration = (props?: IHookProps) => {
     const buttonText = () => {
         if (isFetching) return 'Please Wait';
         if (creating || updating) return 'Saving';
-        if (loading) return 'Verifying';
         return 'Save';
     };
 

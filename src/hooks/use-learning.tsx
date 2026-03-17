@@ -1,21 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import {useAuth} from '@/context';
-import {IFeedbackLearning, IFeedbackLearningMetadata, ILearningWorkflow} from '@/models';
-import {$fetch} from '@/utils';
-import {useParams, useSearchParams} from 'next/navigation';
 import {useEffect, useState} from 'react';
 import {useMutation, useQuery} from 'react-query';
-import {toQueryParams} from '@/lib/utils';
+import {useParams, useSearchParams} from 'next/navigation';
+import {useAuth} from '@/context';
+import {IFeedbackLearning, IFeedbackLearningMetadata, ILearningWorkflow} from '@/models';
+
+import { mock_learnings, mock_workflow_details } from '@/app/workspace/[wid]/learnings/mock_learning_data';
 
 // Fetch workflow details including agents
-const fetchWorkflowDetails = async (workspaceId: string, workflowId: string) => {
-    const response = await $fetch<any>(`/workspaces/${workspaceId}/workflows/${workflowId}`, {
-        method: 'GET',
-        headers: {
-            'x-workspace-id': workspaceId,
-        },
-    });
-    return response.data;
+const fetchWorkflowDetails = async (workflowId: string) => {
+    return mock_workflow_details[workflowId];
 };
 
 interface ILearningFilter {
@@ -26,122 +19,15 @@ interface ILearningFilter {
     limit?: number;
 }
 
-const approveFeedback = async (
-    workspaceId: string,
-    feedbackId: string,
-    workflowVariables?: Record<string, any>,
-    comment?: string
-) => {
-    const response = await $fetch<{ response: string }>(
-        `/workspaces/${workspaceId}/learning/feedback/${feedbackId}/authoring`,
-        {
-            method: 'POST',
-            headers: {
-                'x-workspace-id': workspaceId,
-            },
-            body: JSON.stringify({
-                feedbackId: feedbackId,
-                workflowVariables: workflowVariables || {},
-                comment: comment,
-            }),
-        }
-    );
 
-    return response.data;
-};
-
-const rejectFeedback = async (workspaceId: string, feedbackId: string, comment?: string) => {
-    // Placeholder endpoint for rejection
-    const response = await $fetch<{ response: string }>(
-        `/workspaces/${workspaceId}/learning/feedback/${feedbackId}/rejection`,
-        {
-            method: 'POST',
-            headers: {
-                'x-workspace-id': workspaceId,
-            },
-            body: JSON.stringify({
-                feedbackId: feedbackId,
-                comment: comment,
-            }),
-        }
-    );
-
-    return response.data;
-};
-
-const updateFeedback = async (
-    workspaceId: string,
-    feedbackId: string,
-    data: {
-        feedback: string;
-        rationale?: string;
-        metadata: IFeedbackLearningMetadata;
-        mustLearn: boolean,
-        approvalStatus: string,
-        comment: string
-    }
-) => {
-    const response = await $fetch<IFeedbackLearning>(`/workspaces/${workspaceId}/learning/feedback/${feedbackId}`, {
-        method: 'PUT',
-        headers: {
-            'x-workspace-id': workspaceId,
-        },
-        body: JSON.stringify({
-            id: feedbackId,
-            feedback: data.feedback,
-            rationale: data.rationale,
-            metadata: data.metadata,
-            mustLearn: data.mustLearn,
-            approvalStatus: data.approvalStatus,
-            comment: data.comment,
-        }),
-    });
-
-    return response.data;
-};
-
-const deleteFeedback = async (workspaceId: string, feedbackId: string) => {
-    const response = await $fetch<{ message: string }>(`/workspaces/${workspaceId}/learning/feedback/${feedbackId}`, {
-        method: 'DELETE',
-        headers: {
-            'x-workspace-id': workspaceId,
-        },
-    });
-
-    return response.data;
-};
-
-const unlinkFeedback = async (workspaceId: string, feedbackId: string) => {
-    const response = await $fetch<{ message: string }>(
-        `/workspaces/${workspaceId}/learning/feedback/group/feedback/${feedbackId}`,
-        {
-            method: 'DELETE',
-            headers: {
-                'x-workspace-id': workspaceId,
-            },
-        }
-    );
-
-    return response.data;
-};
-
-const fetchLearnings = async (workspaceId: string, params?: ILearningFilter) => {
-    const {workspace_id, ...restParams} = params || {};
-    const convertToQueryParams = toQueryParams(restParams);
-    const queryParams = convertToQueryParams ? `?${convertToQueryParams}` : '';
-    const response = await $fetch<IFeedbackLearning[]>(`/workspaces/${workspace_id}/learning/feedback${queryParams}`, {
-        method: 'GET',
-        headers: {
-            'x-workspace-id': workspaceId,
-        },
-    });
-    return response.data;
+const fetchLearnings = async () => {
+    return mock_learnings;
 };
 
 // Helper function to transform flat learnings into hierarchical structure
 const transformLearningsToHierarchy = (
     learnings: IFeedbackLearning[],
-    workflowDetails?: Record<string, any>
+    workflowDetails?: Record<string, { id: string, name: string }>
 ): ILearningWorkflow[] => {
     const workflowMap = new Map<string, ILearningWorkflow>();
 
@@ -190,24 +76,24 @@ export const useLearning = () => {
         });
     }, [searchParams]);
 
-    const {isFetching: loadingLearnings, refetch: refetchLearnings} = useQuery(
+    const {isFetching: loadingLearnings} = useQuery(
         ['learnings', params.wid, learningParams],
-        () => fetchLearnings(params.wid as string, {...learningParams, workspace_id: params.wid as string}),
+        () => fetchLearnings(),
         {
             enabled: !!token,
             refetchOnWindowFocus: false,
-            onSuccess: async data => {
+            onSuccess: data => {
                 setLearnings(data);
 
                 // Get unique workflow IDs from learnings
                 const uniqueWorkflowIds = [...new Set(data.map(l => l.workflowId))];
 
                 // Fetch workflow details for each unique workflow
-                const workflowDetailsMap: Record<string, any> = {};
-                await Promise.all(
+                const workflowDetailsMap: Record<string, { id: string, name: string }> = {};
+                Promise.all(
                     uniqueWorkflowIds.map(async workflowId => {
                         try {
-                            const details = await fetchWorkflowDetails(params.wid as string, workflowId);
+                            const details = await fetchWorkflowDetails(workflowId);
                             workflowDetailsMap[workflowId] = details;
                         } catch (error) {
                             console.error(`Failed to fetch workflow details for ${workflowId}:`, error);
@@ -227,74 +113,28 @@ export const useLearning = () => {
     );
 
     const {mutateAsync: approveAsync, isLoading: approvingFeedback} = useMutation(
-        ({
-             feedbackId,
-             workflowVariables,
-             comment,
-         }: {
-            feedbackId: string;
-            workflowVariables?: Record<string, any>;
-            comment?: string;
-        }) => approveFeedback(params.wid as string, feedbackId, workflowVariables, comment),
-        {
-            onSuccess: () => {
-                // Refetch learnings after successful approval
-                refetchLearnings();
-            },
-        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_params: { feedbackId: string; workflowVariables?: Record<string, unknown>; comment?: string }) => Promise.resolve()
     );
 
     const {mutateAsync: rejectAsync, isLoading: rejectingFeedback} = useMutation(
-        ({feedbackId, comment}: { feedbackId: string; comment?: string }) =>
-            rejectFeedback(params.wid as string, feedbackId, comment),
-        {
-            onSuccess: () => {
-                refetchLearnings();
-            },
-        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_params: { feedbackId: string; comment?: string }) => Promise.resolve()
     );
 
     const {mutateAsync: deleteAsync, isLoading: deletingFeedback} = useMutation(
-        (feedbackId: string) => deleteFeedback(params.wid as string, feedbackId),
-        {
-            onSuccess: () => {
-                // Refetch learnings after successful deletion
-                refetchLearnings();
-            },
-        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_feedbackId: string) => Promise.resolve()
     );
 
     const {mutateAsync: updateAsync, isLoading: updatingFeedback} = useMutation(
-        ({
-             feedbackId,
-             data,
-         }: {
-            feedbackId: string;
-            data: {
-                feedback: string;
-                rationale?: string;
-                metadata: IFeedbackLearningMetadata;
-                mustLearn: boolean,
-                approvalStatus: string,
-                comment: string
-            };
-        }) => updateFeedback(params.wid as string, feedbackId, data),
-        {
-            onSuccess: () => {
-                // Refetch learnings after successful update
-                refetchLearnings();
-            },
-        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_params: { feedbackId: string; data: { feedback: string; rationale?: string; metadata: IFeedbackLearningMetadata; mustLearn: boolean; approvalStatus: string; comment: string } }) => Promise.resolve()
     );
 
     const {mutateAsync: unlinkAsync, isLoading: unlinkingFeedback} = useMutation(
-        (feedbackId: string) => unlinkFeedback(params.wid as string, feedbackId),
-        {
-            onSuccess: () => {
-                // Refetch learnings after successful unlink
-                refetchLearnings();
-            },
-        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_feedbackId: string) => Promise.resolve()
     );
 
     return {

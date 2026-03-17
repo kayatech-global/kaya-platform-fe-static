@@ -22,9 +22,7 @@ const ExecutionStatusHeader = ({ status, progressPercentage }: ExecutionStatusHe
 
     return (
         <div className="flex items-baseline gap-2">
-            <h2 className="text-md font-medium text-gray-900">
-                {getStatusText()}
-            </h2>
+            <h2 className="text-md font-medium text-gray-900">{getStatusText()}</h2>
             <span className="text-lg text-gray-400">{progressPercentage}%</span>
         </div>
     );
@@ -38,8 +36,15 @@ interface ExecuteWorkflowStepProps {
     onMiniTrackerToggle?: (enabled: boolean) => void;
 }
 
-export const ExecuteWorkflowStep = ({ sessionId, onComplete, onCancel, enableMiniTracker = false, onMiniTrackerToggle }: ExecuteWorkflowStepProps) => {
-    const { progress, progressPercentage, isLoadingProgress, progressError, cancelExecution } = useExecutionConfiguration(sessionId);
+export const ExecuteWorkflowStep = ({
+    sessionId,
+    onComplete,
+    onCancel,
+    enableMiniTracker = false,
+    onMiniTrackerToggle,
+}: ExecuteWorkflowStepProps) => {
+    const { progress, progressPercentage, isLoadingProgress, progressError, cancelExecution } =
+        useExecutionConfiguration(sessionId);
     const hasCalledOnComplete = useRef(false);
 
     // Reset completion flag when sessionId changes
@@ -83,9 +88,7 @@ export const ExecuteWorkflowStep = ({ sessionId, onComplete, onCancel, enableMin
             <div className="flex flex-col items-center justify-center h-full gap-2 bg-red-50 border border-red-200 p-4 rounded-md">
                 <AlertCircle className="w-8 h-8 text-red-500" />
                 <p className="text-sm font-medium text-red-700">Failed to fetch execution progress</p>
-                <p className="text-xs text-red-600">
-                    {progressError instanceof Error ? progressError.message : 'Unknown error'}
-                </p>
+                <p className="text-xs text-red-600">Unknown error</p>
             </div>
         );
     }
@@ -106,10 +109,7 @@ export const ExecuteWorkflowStep = ({ sessionId, onComplete, onCancel, enableMin
                 {/* Header Section */}
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
-                        <ExecutionStatusHeader 
-                            status={progress.status} 
-                            progressPercentage={progressPercentage} 
-                        />
+                        <ExecutionStatusHeader status={progress.status} progressPercentage={progressPercentage} />
                         <div className="flex items-center gap-2">
                             <Network size={15} className="text-blue-500" />
                             <p className="text-xs text-blue-600 font-bold">{progress.testSuiteName}</p>
@@ -122,8 +122,12 @@ export const ExecuteWorkflowStep = ({ sessionId, onComplete, onCancel, enableMin
                             className={cn(
                                 'h-full rounded-full transition-all duration-1000 ease-in-out',
                                 progress.status === ExecutionSessionStatus.Failed && 'bg-red-500',
-                                progress.status !== ExecutionSessionStatus.Failed && progress.failed > 0 && 'bg-yellow-500',
-                                progress.status !== ExecutionSessionStatus.Failed && progress.failed === 0 && 'bg-blue-500'
+                                progress.status !== ExecutionSessionStatus.Failed &&
+                                    progress.failed > 0 &&
+                                    'bg-yellow-500',
+                                progress.status !== ExecutionSessionStatus.Failed &&
+                                    progress.failed === 0 &&
+                                    'bg-blue-500'
                             )}
                             style={{ width: `${progressPercentage}%` }}
                         />
@@ -155,7 +159,11 @@ export const ExecuteWorkflowStep = ({ sessionId, onComplete, onCancel, enableMin
                                             <Info size={14} className="text-gray-400 hover:text-gray-600 cursor-help" />
                                         </TooltipTrigger>
                                         <TooltipContent side="left" className="max-w-xs">
-                                            <p className="text-xs">Enable the mini execution progress tracker to monitor progress after closing this window. If not enabled, the execution will continue in the background, and progress can be viewed in the Execution table.</p>
+                                            <p className="text-xs">
+                                                Enable the mini execution progress tracker to monitor progress after
+                                                closing this window. If not enabled, the execution will continue in the
+                                                background, and progress can be viewed in the Execution table.
+                                            </p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
@@ -163,16 +171,18 @@ export const ExecuteWorkflowStep = ({ sessionId, onComplete, onCancel, enableMin
                                     <Switch
                                         id="mini-tracker-toggle"
                                         checked={enableMiniTracker}
-                                        onCheckedChange={(checked) => onMiniTrackerToggle?.(checked)}
+                                        onCheckedChange={checked => onMiniTrackerToggle?.(checked)}
                                     />
-                                    <label htmlFor="mini-tracker-toggle" className="text-xs text-gray-600 cursor-pointer">
+                                    <label
+                                        htmlFor="mini-tracker-toggle"
+                                        className="text-xs text-gray-600 cursor-pointer"
+                                    >
                                         Show Progress Monitor
                                     </label>
                                 </div>
                             </div>
                         </div>
                         {progress.items.map(item => {
-                            
                             const isCurrentlyRunning = item.index === progress.currentIndex;
                             const isPassed = item.status === ExecutionItemStatus.Passed;
                             const isFailed = item.status === ExecutionItemStatus.Failed;
@@ -220,9 +230,24 @@ export const ExecuteWorkflowStep = ({ sessionId, onComplete, onCancel, enableMin
                                                     {item.name ?? `Test Case ${item.index + 1}`}
                                                     {isCurrentlyRunning && (
                                                         <span className="inline-flex ml-1 text-[35px]">
-                                                            <span className="animate-[dotFade_1.4s_ease-in-out_infinite]" style={{ animationDelay: '0s' }}>.</span>
-                                                            <span className="animate-[dotFade_1.4s_ease-in-out_infinite]" style={{ animationDelay: '0.2s' }}>.</span>
-                                                            <span className="animate-[dotFade_1.4s_ease-in-out_infinite]" style={{ animationDelay: '0.4s' }}>.</span>
+                                                            <span
+                                                                className="animate-[dotFade_1.4s_ease-in-out_infinite]"
+                                                                style={{ animationDelay: '0s' }}
+                                                            >
+                                                                .
+                                                            </span>
+                                                            <span
+                                                                className="animate-[dotFade_1.4s_ease-in-out_infinite]"
+                                                                style={{ animationDelay: '0.2s' }}
+                                                            >
+                                                                .
+                                                            </span>
+                                                            <span
+                                                                className="animate-[dotFade_1.4s_ease-in-out_infinite]"
+                                                                style={{ animationDelay: '0.4s' }}
+                                                            >
+                                                                .
+                                                            </span>
                                                         </span>
                                                     )}
                                                 </span>
@@ -230,13 +255,18 @@ export const ExecuteWorkflowStep = ({ sessionId, onComplete, onCancel, enableMin
                                         </div>
                                     </div>
                                     {isCurrentlyRunning && (
-                                        
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                              <span className="text-xs px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full ml-2">
-                                                        Running
-                                                        </span>
-                                                        <span className='text-gray-400 font-thin'>|</span>
-                                            <Image src="/png/loading.gif" alt="Running" width={50} height={50} unoptimized />
+                                            <span className="text-xs px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full ml-2">
+                                                Running
+                                            </span>
+                                            <span className="text-gray-400 font-thin">|</span>
+                                            <Image
+                                                src="/png/loading.gif"
+                                                alt="Running"
+                                                width={50}
+                                                height={50}
+                                                unoptimized
+                                            />
                                         </div>
                                     )}
                                 </div>

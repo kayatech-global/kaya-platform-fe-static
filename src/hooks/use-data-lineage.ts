@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAuth } from '@/context';
 import {
     IDataLineage,
@@ -8,7 +9,7 @@ import {
     IDataLineageWorkflowFilter,
     IOption,
 } from '@/models';
-import { FetchError, logger } from '@/utils';
+import { logger } from '@/utils';
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
@@ -17,7 +18,11 @@ import { toast } from 'sonner';
 import { isNullOrEmpty } from '@/lib/utils';
 import { Edge, Node } from '@xyflow/react';
 import { CustomNodeTypes, QueryKeyType } from '@/enums';
-import { lineageService } from '@/services';
+import {
+    mock_lineage_linear,
+    mock_lineage_modular,
+    mock_lineage_workflows,
+} from '@/app/workspace/[wid]/data-lineage/mock_lineage_data';
 
 // For now instead of using the name from the backend, we are transforming the nodename to be more human-readable
 // After fixing the backend, we can remove this function
@@ -79,7 +84,7 @@ export const useDataLineage = () => {
 
     const { isFetching: loadingWorkflow, data: workflowOptions } = useQuery(
         [QueryKeyType.WORKFLOW_OPTIONS, params.wid],
-        () => lineageService.workflows(params.wid as string),
+        () => Promise.resolve(mock_lineage_workflows),
         {
             enabled: !!token,
             refetchOnWindowFocus: false,
@@ -89,7 +94,7 @@ export const useDataLineage = () => {
 
     const { isFetching: loadingData } = useQuery(
         [QueryKeyType.WORKFLOWS, params.wid, workflowParams],
-        () => lineageService.workflows(params.wid as string, workflowParams),
+        () => Promise.resolve(mock_lineage_workflows),
         {
             enabled: !!token,
             refetchOnWindowFocus: false,
@@ -109,17 +114,10 @@ export const useDataLineage = () => {
         isLoading: loadingModular,
         data: modular,
     } = useMutation(
-        async ({
-            sessionId,
-            executionId,
-            workflowId,
-        }: {
-            sessionId: string;
-            executionId: string;
-            workflowId: string;
-        }) => await lineageService.modular(params.wid as string, sessionId, executionId, workflowId),
+        async ({ executionId }: { sessionId: string; executionId: string; workflowId: string }) =>
+            Promise.resolve(mock_lineage_modular[executionId]),
         {
-            onError: (error: FetchError) => {
+            onError: (error: any) => {
                 toast.error(error?.message);
                 logger.error('Error fetching modular:', error?.message);
             },
@@ -131,17 +129,10 @@ export const useDataLineage = () => {
         isLoading: loadingLinear,
         data: linearData,
     } = useMutation(
-        async ({
-            sessionId,
-            executionId,
-            workflowId,
-        }: {
-            sessionId: string;
-            executionId: string;
-            workflowId: string;
-        }) => await lineageService.linear(params.wid as string, sessionId, executionId, workflowId),
+        async ({ executionId }: { sessionId: string; executionId: string; workflowId: string }) =>
+            Promise.resolve(mock_lineage_linear[executionId]),
         {
-            onError: (error: FetchError) => {
+            onError: (error: any) => {
                 toast.error(error?.message);
                 logger.error('Error fetching linear:', error?.message);
             },

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from 'react-query';
 import { GraphRagTableData } from '@/app/workspace/[wid]/knowledge-source-configs/graph-rag-configurations/components/graph-rag-configuration-table';
@@ -18,10 +17,9 @@ import {
     useReRankingModelQuery,
     useSLMQuery,
 } from './use-common';
-import { graphRagService } from '@/services';
+
 
 export const useGraphRagConfiguration = (props?: IHookProps) => {
-    const params = useParams();
     const queryClient = useQueryClient();
 
     const [graphRagConfigs, setGraphRagConfigs] = useState<GraphRagTableData[]>([]);
@@ -62,13 +60,13 @@ export const useGraphRagConfiguration = (props?: IHookProps) => {
             setCompleted(false);
             setEdit(false);
         }
-    }, [isOpen]);
+    }, [isOpen, reset]);
 
     useEffect(() => {
         if (!completed && currentStep === 3) {
             setCompleted(true);
         }
-    }, [currentStep]);
+    }, [currentStep, completed]);
 
     const { isFetching } = useGraphRagQuery({
         props,
@@ -113,7 +111,14 @@ export const useGraphRagConfiguration = (props?: IHookProps) => {
     } = usePromptQuery<PromptResponse>({ queryKey: 'prompts' });
 
     const { mutate: mutateCreate, isLoading: creating } = useMutation(
-        (data: IGraphRag) => graphRagService.create<IGraphRag>(data, params.wid as string),
+        async (data: IGraphRag) => {
+            const stored = localStorage.getItem('mock_graph_rag_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            const newConfig = { ...data, id: `graph-rag-${Date.now()}` };
+            configs.push(newConfig);
+            localStorage.setItem('mock_graph_rag_data', JSON.stringify(configs));
+            return newConfig;
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -131,8 +136,17 @@ export const useGraphRagConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateUpdate, isLoading: updating } = useMutation(
-        ({ data, id }: { data: IGraphRag; id: string }) =>
-            graphRagService.update<IGraphRag>(data, params.wid as string, id),
+        async ({ data, id }: { data: IGraphRag; id: string }) => {
+            const stored = localStorage.getItem('mock_graph_rag_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const index = configs.findIndex((x: any) => x.id === id);
+            if (index > -1) {
+                configs[index] = { ...configs[index], ...data, id };
+                localStorage.setItem('mock_graph_rag_data', JSON.stringify(configs));
+            }
+            return { data: configs[index], id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -150,7 +164,14 @@ export const useGraphRagConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateDelete } = useMutation(
-        async ({ id }: { id: string }) => await graphRagService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_graph_rag_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const filtered = configs.filter((x: any) => x.id !== id);
+            localStorage.setItem('mock_graph_rag_data', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 queryClient.invalidateQueries(QueryKeyType.GRAPH_RAG);

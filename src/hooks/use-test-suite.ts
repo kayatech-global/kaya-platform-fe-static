@@ -1,20 +1,51 @@
-import { useMutation, useQuery } from 'react-query';
-import { $fetch, logger} from '@/utils';
-import { ITestSuite, ITestSuiteListItem, ITestSuiteDetailResponse } from '@/models/test-studio.model';
-import { useParams } from 'next/navigation';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useCallback } from 'react';
+import { logger } from '@/utils';
+import { ITestSuite, ITestSuiteListItem, ITestSuiteDetailResponse } from '@/models/test-studio.model';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { mapTestSuiteToPayload, mapDetailResponseToTestSuite } from '@/app/workspace/[wid]/test-studio/utils/test-suite-mapper';
+import { mapDetailResponseToTestSuite } from '@/app/workspace/[wid]/test-studio/utils/test-suite-mapper';
+import {
+    MOCK_TEST_SUITES,
+    MOCK_TEST_SUITE_DETAILS,
+    MOCK_TEST_SUITES_STORAGE_KEY,
+} from '@/app/workspace/[wid]/test-studio/mock/mock_test_suite_data';
+
+// ─── localStorage helpers ────────────────────────────────────────────────────
+
+const loadSuites = (): ITestSuiteListItem[] => {
+    try {
+        const stored = localStorage.getItem(MOCK_TEST_SUITES_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : [...MOCK_TEST_SUITES];
+    } catch {
+        return [...MOCK_TEST_SUITES];
+    }
+};
+
+const saveSuites = (suites: ITestSuiteListItem[]) => {
+    localStorage.setItem(MOCK_TEST_SUITES_STORAGE_KEY, JSON.stringify(suites));
+};
+
+const getDetailFromStorage = (id: string): ITestSuiteDetailResponse | null => {
+    const suites = loadSuites();
+    const suite = suites.find(s => s.id === id);
+    if (!suite) return null;
+    // Check for overridden detail first, fall back to mock detail
+    const stored = localStorage.getItem(`mock_test_suite_detail_${id}`);
+    if (stored) return JSON.parse(stored);
+    return MOCK_TEST_SUITE_DETAILS[id] ?? null;
+};
+
+// ─── Hook ──────────────────────────────────────────────────────────────────
 
 export const useTestSuite = () => {
-    const params = useParams();
-
     const [isTestSuiteDrawerOpen, setIsTestSuiteDrawerOpen] = useState(false);
     const [isTestSuiteEdit, setIsTestSuiteEdit] = useState(false);
-    const [allTestSuites, setAllTestSuites] = useState<ITestSuiteListItem[]>([]);
-    const [unfilteredTestSuites, setUnfilteredTestSuites] = useState<ITestSuiteListItem[]>([]);
+    const [allTestSuites, setAllTestSuites] = useState<ITestSuiteListItem[]>(loadSuites);
+    const [unfilteredTestSuites, setUnfilteredTestSuites] = useState<ITestSuiteListItem[]>(loadSuites);
     const [isFetchingTestSuite, setIsFetchingTestSuite] = useState(false);
+    const [isLoadingTestSuits] = useState(false);
+    const [errorTestSuits] = useState<Error | null>(null);
 
     const {
         register,
@@ -44,131 +75,101 @@ export const useTestSuite = () => {
         control,
         name: 'testDataSets',
     });
-    const fetchTestSuitsForWorkSpace = async (workspaceId: string) => {
-        const response = await $fetch<ITestSuiteListItem[]>(`/workspaces/${workspaceId}/teststudio/test-suites`, {
-            method: 'GET',
-            headers: {
-                'x-workspace-id': workspaceId,
-            },
-        });
-        return response.data;
+
+    const refetchAllTestSuits = () => {
+        const suites = loadSuites();
+        setAllTestSuites(suites);
+        setUnfilteredTestSuites(suites);
     };
 
-    const fetchTestSuiteById = async (workspaceId: string, testSuiteId: string) => {
-        const response = await $fetch<ITestSuiteDetailResponse>(
-            `/workspaces/${workspaceId}/teststudio/test-suites/${testSuiteId}`,
-            {
-                method: 'GET',
-                headers: { 'x-workspace-id': workspaceId },
-            }
-        );
-        return response.data;
-    };
+    // ─── Mock CRUD ──────────────────────────────────────────────────────────
 
-    const deleteTestSuite = async (workspaceId: string, testSuitId: string) => {
-        const response = await $fetch<ITestSuite[]>(`/workspaces/${workspaceId}/teststudio/test-suites/${testSuitId}`, {
-            method: 'DELETE',
-            headers: {
-                'x-workspace-id': workspaceId,
-            },
-        });
-        return response.data;
-    };
+    const isDeletingTestSuit = false;
+    const isCreatingTestSuite = false;
+    const isUpdatingTestSuite = false;
 
-    const createTestSuite = async (workspaceId: string, data: ITestSuite) => {
-        const payload = mapTestSuiteToPayload(data);
-        const response = await $fetch<ITestSuite>(`/workspaces/${workspaceId}/teststudio/test-suites`, {
-            method: 'POST',
-            headers: {
-                'x-workspace-id': workspaceId,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-        });
-        return response.data;
-    };
-
-    const updateTestSuite = async (workspaceId: string, testSuiteId: string, data: ITestSuite) => {
-        const payload = mapTestSuiteToPayload(data);
-        const response = await $fetch<ITestSuite>(`/workspaces/${workspaceId}/teststudio/test-suites/${testSuiteId}`, {
-            method: 'PUT',
-            headers: {
-                'x-workspace-id': workspaceId,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-        });
-        return response.data;
-    };
-
-    const {
-        isLoading: isLoadingTestSuits,
-        error: errorTestSuits,
-        refetch: refetchAllTestSuits,
-    } = useQuery('getTestSuites', () => fetchTestSuitsForWorkSpace(params.wid as string), {
-        onSuccess: (data: ITestSuiteListItem[]) => {
-            setUnfilteredTestSuites(data);
-            setAllTestSuites(data);
-        },
-        onError: error => {
-            logger.error(error);
-        },
-    });
-
-    const { mutate: mutateDeleteTestSuit, isLoading: isDeletingTestSuit } = useMutation(
-        'deleteTestSuite',
-        async ({ id }: { id: string }) => await deleteTestSuite(params.wid as string, id),
-        {
-            onSuccess: () => {
-                toast.success('Test-suite Deleted Successfully!');
-                refetchAllTestSuits();
-            },
-            onError: () => {
-                toast.error('Unable to delete Test-suite');
-            },
+    const mutateDeleteTestSuit = ({ id }: { id: string }) => {
+        try {
+            const suites = loadSuites().filter(s => s.id !== id);
+            saveSuites(suites);
+            localStorage.removeItem(`mock_test_suite_detail_${id}`);
+            toast.success('Test-suite Deleted Successfully!');
+            refetchAllTestSuits();
+        } catch (err) {
+            logger.error('Delete test suite error:', err);
+            toast.error('Unable to delete Test-suite');
         }
-    );
+    };
 
-    const { mutate: mutateCreateTestSuite, isLoading: isCreatingTestSuite } = useMutation(
-        'createTestSuite',
-        async (data: ITestSuite) => await createTestSuite(params.wid as string, data),
-        {
-            onSuccess: () => {
-                toast.success('Test Suite Created Successfully!');
-                setIsTestSuiteDrawerOpen(false);
-                reset();
-                refetchAllTestSuits();
-            },
-            onError: (error) => {
-                logger.error('Create test suite error:', error);
-                toast.error('Unable to create Test Suite');
-            },
+    const mutateCreateTestSuite = (data: ITestSuite) => {
+        try {
+            const suites = loadSuites();
+            const id = `mock-ts-${Date.now()}`;
+            const newItem: ITestSuiteListItem = {
+                id,
+                name: data.name,
+                description: data.description || '',
+                workflowId: data.workflowId || '',
+                workflowVersion: data.workflowVersion || 1,
+                workflowName: data.workflowName || '',
+                configurations: {},
+                creationSource: data.creationSource || 'manual',
+                version: 1,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                workspaceId: 1,
+                testDataSetsCount: data.testDataSets?.length ?? 0,
+            };
+            suites.push(newItem);
+            saveSuites(suites);
+            toast.success('Test Suite Created Successfully!');
+            setIsTestSuiteDrawerOpen(false);
+            reset();
+            refetchAllTestSuits();
+        } catch (err) {
+            logger.error('Create test suite error:', err);
+            toast.error('Unable to create Test Suite');
         }
-    );
+    };
 
-    const { mutate: mutateUpdateTestSuite, isLoading: isUpdatingTestSuite } = useMutation(
-        'updateTestSuite',
-        async ({ id, data }: { id: string; data: ITestSuite }) =>
-            await updateTestSuite(params.wid as string, id, data),
-        {
-            onSuccess: () => {
-                toast.success('Test Suite Updated Successfully!');
-                setIsTestSuiteDrawerOpen(false);
-                reset();
-                refetchAllTestSuits();
-            },
-            onError: (error) => {
-                logger.error('Update test suite error:', error);
-                toast.error('Unable to update Test Suite');
-            },
+    const mutateUpdateTestSuite = ({ id, data }: { id: string; data: ITestSuite }) => {
+        try {
+            const suites = loadSuites().map(s =>
+                s.id === id
+                    ? {
+                          ...s,
+                          name: data.name,
+                          description: data.description || '',
+                          workflowId: data.workflowId || s.workflowId,
+                          workflowName: data.workflowName || s.workflowName,
+                          workflowVersion: data.workflowVersion || s.workflowVersion,
+                          updatedAt: new Date().toISOString(),
+                          testDataSetsCount: data.testDataSets?.length ?? s.testDataSetsCount,
+                      }
+                    : s
+            );
+            saveSuites(suites);
+            toast.success('Test Suite Updated Successfully!');
+            setIsTestSuiteDrawerOpen(false);
+            reset();
+            refetchAllTestSuits();
+        } catch (err) {
+            logger.error('Update test suite error:', err);
+            toast.error('Unable to update Test Suite');
         }
-    );
+    };
+
+    // ─── Handlers ───────────────────────────────────────────────────────────
 
     const onEdit = async (id: string) => {
         if (!id) return;
         setIsFetchingTestSuite(true);
         try {
-            const detail = await fetchTestSuiteById(params.wid as string, id);
+            const detail = getDetailFromStorage(id);
+            if (!detail) {
+                toast.error('Test suite not found');
+                return;
+            }
             const formData = mapDetailResponseToTestSuite(detail);
             setValue('id', detail.id);
             setValue('name', formData.name ?? '');
@@ -180,8 +181,8 @@ export const useTestSuite = () => {
             setValue('toolMockConfigs', formData.toolMockConfigs || []);
             setValue('workflowVersion', formData.workflowVersion);
             setValue('creationSource', formData.creationSource);
-        } catch (error) {
-            logger.error('Failed to fetch test suite:', error);
+        } catch (err) {
+            logger.error('Failed to fetch test suite:', err);
             toast.error('Failed to load test suite details');
         } finally {
             setIsFetchingTestSuite(false);
@@ -190,13 +191,14 @@ export const useTestSuite = () => {
 
     const fetchTestSuiteForView = useCallback(async (id: string): Promise<Partial<ITestSuite> | null> => {
         try {
-            const detail = await fetchTestSuiteById(params.wid as string, id);
+            const detail = getDetailFromStorage(id);
+            if (!detail) return null;
             return { id: detail.id, ...mapDetailResponseToTestSuite(detail) };
-        } catch (error) {
-            logger.error('Failed to fetch test suite for view:', error);
+        } catch (err) {
+            logger.error('Failed to fetch test suite for view:', err);
             return null;
         }
-    }, [params.wid]);
+    }, []);
 
     const onCreate = (formData: ITestSuite) => {
         mutateCreateTestSuite(formData);
@@ -238,7 +240,6 @@ export const useTestSuite = () => {
             mutateDeleteTestSuit({ id });
         }
     };
-
 
     return {
         allTestSuits: allTestSuites,

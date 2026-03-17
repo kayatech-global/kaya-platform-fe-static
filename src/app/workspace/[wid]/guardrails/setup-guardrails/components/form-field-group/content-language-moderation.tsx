@@ -49,7 +49,19 @@ export const ContentLanguageModeration = (props: GuardrailsFormProps) => {
                     control={control}
                     rules={{ validate: validateProtection }}
                     render={({ field }) => (
-                        <Switch disabled={true} checked={field.value} onCheckedChange={field.onChange} />
+                        <Switch
+                            disabled={isEdit && isReadOnly}
+                            checked={field.value}
+                            onCheckedChange={val => {
+                                field.onChange(val);
+                                trigger([
+                                    'configurations.enableSensitiveDataManagement',
+                                    'configurations.enableContentAndLanguageModeration',
+                                    'configurations.enablePromptInjectionDetection',
+                                    'configurations.enableHallucinationProtection',
+                                ]);
+                            }}
+                        />
                     )}
                 />
             }

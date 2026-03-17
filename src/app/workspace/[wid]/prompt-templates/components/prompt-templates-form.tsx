@@ -18,7 +18,7 @@ import {
     UseFormTrigger,
     UseFormWatch,
 } from 'react-hook-form';
-import MonacoEditor from './monaco-editor';
+import MonacoEditor, { IntellisenseCategory } from './monaco-editor';
 import OptimizePrompt from './optimize-prompt';
 
 interface PromptTemplateFormProps {
@@ -30,11 +30,10 @@ interface PromptTemplateFormProps {
     rows?: number;
     isOpenModal: boolean;
     editorContent: string;
-    intellisenseOptions: never[];
+    intellisenseOptions: IntellisenseCategory[];
     loadingIntellisense: boolean;
     isEnhance?: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    control: Control<IPromptTemplateForm, any>;
+    control: Control<IPromptTemplateForm>;
     intelligentSource: IPlatformSettingData | undefined;
     isMaximize?: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;

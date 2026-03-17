@@ -6,14 +6,12 @@ import { isNullOrEmpty } from '@/lib/utils';
 import { IProvider, IProviderConfig, ISLMForm, IHookProps } from '@/models';
 import { FetchError, logger } from '@/utils';
 import { Database, Link, TrendingDownIcon, TrendingUpIcon, Unplug } from 'lucide-react';
-import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useInView } from 'react-intersection-observer';
 import { useMutation, useQueryClient } from 'react-query';
 import { toast } from 'sonner';
 import { usePlatformQuery, useSLMQuery, useVaultQuery } from './use-common';
-import { slmService } from '@/services';
 
 const initWorkspaceDataCardInfo: DashboardDataCardProps[] = [
     {
@@ -74,7 +72,6 @@ const activityData: ActivityProps[] = [
 ];
 
 export const useSlmConfiguration = (props?: IHookProps) => {
-    const params = useParams();
     const [slmConfigurationDataCardInfo] = useState<DashboardDataCardProps[]>(initWorkspaceDataCardInfo);
     const queryClient = useQueryClient();
     const [slmConfigurationTableData, setSlmConfigurationTableData] = useState<SlmConfigurationData[]>([]);
@@ -82,6 +79,16 @@ export const useSlmConfiguration = (props?: IHookProps) => {
     const [slmConfigurations, setSlmConfigurations] = useState<ISLMForm[]>([]);
     const [isOpen, setOpen] = useState<boolean>(false);
     const [secrets, setSecrets] = useState<OptionModel[]>([]);
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        setValue,
+        watch,
+        formState: { errors, isValid },
+        control,
+    } = useForm<ISLMForm>({ mode: 'all' });
 
     useEffect(() => {
         if (!isOpen) {
@@ -91,22 +98,27 @@ export const useSlmConfiguration = (props?: IHookProps) => {
                 modelName: '',
                 provider: '',
                 configurations: {
-                    description: '',
-                    providerConfig: undefined,
+                    description: 'Mock Phi-3 Configuration',
+                    temperature: 0.5,
+                    baseUrl: 'http://localhost:11434',
                     apiAuthorization: '',
-                    temperature: undefined,
-                    baseUrl: '',
+                    customRuntime: false,
+                    tokenLimit: null as unknown as number,
+                    providerConfig: {
+                        id: 'phi-3',
+                        value: 'phi-3',
+                        description: 'Microsoft Phi-3',
+                        logo: {},
+                    },
                     accessKey: undefined,
                     secretKey: undefined,
                     region: undefined,
-                    customRuntime: false,
-                    tokenLimit: undefined,
                 },
                 isReadOnly: undefined,
                 modelNameOption: undefined,
             });
         }
-    }, [isOpen]);
+    }, [isOpen, reset]);
 
     const { isFetching } = useSLMQuery({
         props,
@@ -147,23 +159,20 @@ export const useSlmConfiguration = (props?: IHookProps) => {
         setSlmConfigurations(arr);
     };
 
-    const {
-        register,
-        handleSubmit,
-        reset,
-        setValue,
-        watch,
-        formState: { errors, isValid },
-        control,
-    } = useForm<ISLMForm>({ mode: 'all' });
-
     const { ref } = useInView({
         threshold: 0.5,
         rootMargin: '100px',
     });
 
     const { mutate: mutateCreate, isLoading: creating } = useMutation(
-        (data: ISLMForm) => slmService.create<ISLMForm>(data, params.wid as string),
+        async (data: ISLMForm) => {
+            const stored = localStorage.getItem('mock_slm_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            const newConfig = { ...data, id: `mock-slm-${Date.now()}` };
+            configs.push(newConfig);
+            localStorage.setItem('mock_slm_configs', JSON.stringify(configs));
+            return newConfig;
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -181,7 +190,17 @@ export const useSlmConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateUpdate, isLoading: updating } = useMutation(
-        ({ data, id }: { data: ISLMForm; id: string }) => slmService.update<ISLMForm>(data, params.wid as string, id),
+        async ({ data, id }: { data: ISLMForm; id: string }) => {
+            const stored = localStorage.getItem('mock_slm_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const index = configs.findIndex((x: any) => x.id === id);
+            if (index > -1) {
+                configs[index] = { ...configs[index], ...data, id };
+                localStorage.setItem('mock_slm_configs', JSON.stringify(configs));
+            }
+            return { data: configs[index], id };
+        },
         {
             onSuccess: () => {
                 if (props?.onRefetch) {
@@ -199,7 +218,14 @@ export const useSlmConfiguration = (props?: IHookProps) => {
     );
 
     const { mutate: mutateDeleteSlm } = useMutation(
-        async ({ id }: { id: string }) => await slmService.delete(id, params.wid as string),
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_slm_configs');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const filtered = configs.filter((x: any) => x.id !== id);
+            localStorage.setItem('mock_slm_configs', JSON.stringify(filtered));
+            return { id };
+        },
         {
             onSuccess: () => {
                 queryClient.invalidateQueries(QueryKeyType.SLM);

@@ -1,23 +1,22 @@
-import { IntellisenseTools } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
+import {
+    IntellisenseTools,
+} from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
 import { PromptTemplateData } from '@/app/workspace/[wid]/prompt-templates/components/prompt-templates-table-container';
 import { ActivityProps, DashboardDataCardProps } from '@/components';
-import { useAuth } from '@/context';
 import { useApp } from '@/context/app-context';
 import { ActivityColorCode } from '@/enums/activity-color-code-type';
 import { isNullOrEmpty } from '@/lib/utils';
 import { IHookProps, IPromptTemplate, IPromptTemplateForm, ISharedItem, PromptTemplate } from '@/models';
-import { FetchError, logger } from '@/utils';
+import { logger } from '@/utils';
 import { Unplug, Database, Link, TrendingUpIcon, TrendingDownIcon } from 'lucide-react';
-import { useParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { useInView } from 'react-intersection-observer';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { toast } from 'sonner';
 import { useIntelligenceSource } from './use-intelligence-source';
-import { promptService } from '@/services';
 import { usePromptQuery } from './use-common';
 import { QueryKeyType } from '@/enums';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useInView } from 'react-intersection-observer';
+import { useQuery, useQueryClient } from 'react-query';
 
 export enum HeaderType {
     ApiHeader,
@@ -69,9 +68,7 @@ const activityData: ActivityProps[] = [
         title: 'API Execution',
         description: (
             <div>
-                API Execution
-                {' '}
-                <span style={{ color: ActivityColorCode.Purple }}>AWS</span>
+                API Execution <span style={{ color: ActivityColorCode.Purple }}>AWS</span>
             </div>
         ),
         date: '2024/12/12',
@@ -86,12 +83,8 @@ const activityData: ActivityProps[] = [
 ];
 
 export const usePromptTemplate = (props?: IHookProps) => {
-    const params = useParams();
     const queryClient = useQueryClient();
-    const { token } = useAuth();
-    const [promptTemplateConfigurationDataCardInfo] = useState<
-        DashboardDataCardProps[]
-    >(initWorkspaceDataCardInfo);
+    const [promptTemplateConfigurationDataCardInfo] = useState<DashboardDataCardProps[]>(initWorkspaceDataCardInfo);
     const [promptTemplateConfigurationTableData, setPromptTemplateConfigurationTableData] = useState<
         PromptTemplateData[]
     >([]);
@@ -119,22 +112,43 @@ export const usePromptTemplate = (props?: IHookProps) => {
         control,
     } = useForm<IPromptTemplateForm>({ mode: 'all' });
 
+    const wrapMatchingWords = useCallback((value: string): string => {
+        if (!value) return value;
+
+        const sortedWords = [...allIntellisenseValues].sort((a, b) => b.length - a.length);
+
+        for (const word of sortedWords) {
+            const escapedWord = word.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+            const regex = new RegExp(String.raw`\b${escapedWord}\b`, 'g');
+            value = value.replaceAll(regex, `{{${word}}}`);
+        }
+
+        return value;
+    }, [allIntellisenseValues]);
+
+    const handleEditorContentChange = useCallback(async (value: string) => {
+        const updatedValue = wrapMatchingWords(value);
+        setValue('prompt', updatedValue, { shouldTouch: true });
+        await trigger('prompt');
+    }, [wrapMatchingWords, setValue, trigger]);
+
     useEffect(() => {
         if (!isOpen) {
             reset({ id: undefined, prompt: '', promptDescription: '', promptKey: '', isReadOnly: undefined });
             resetField('prompt');
         }
-    }, [isOpen]);
+    }, [isOpen, reset, resetField]);
 
     useEffect(() => {
         (async () => {
             await handleEditorContentChange(editorContent);
         })();
-    }, [editorContent, allIntellisenseValues]);
+    }, [editorContent, allIntellisenseValues, handleEditorContentChange]);
 
+    const watchedPrompt = watch('prompt');
     useEffect(() => {
-        const initialContent = watch('prompt') ?? '';
-        const formattedInitialContent = initialContent.replace(/{{|}}/g, '');
+        const initialContent = watchedPrompt ?? '';
+        const formattedInitialContent = initialContent.replaceAll(/{{|}}/g, '');
         setEditorContent(formattedInitialContent);
 
         setValue('prompt', initialContent, {
@@ -142,60 +156,59 @@ export const usePromptTemplate = (props?: IHookProps) => {
             shouldTouch: true,
             shouldDirty: true,
         });
-    }, [watch('prompt')]);
+    }, [watchedPrompt, setValue]);
 
-    const { isLoading: createIsLoading, mutate: mutatePromptTemplate } = useMutation(
-        (data: IPromptTemplate) => promptService.create<IPromptTemplate>(data, params.wid as string),
-        {
-            onSuccess: () => {
-                if (props?.onRefetch) {
-                    props.onRefetch();
-                }
-                queryClient.invalidateQueries(QueryKeyType.PROMPT);
-                setLoading(false);
-                setOpen(false);
-                toast.success('Prompt Template saved successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error creating prompt template:', error?.message);
-            },
-        }
-    );
+    const { isLoading: createIsLoading, mutate: mutatePromptTemplate } = {
+        isLoading: false,
+        mutate: (data: IPromptTemplate) => {
+            const stored = localStorage.getItem('mock_prompt_data');
+            const currentData = stored ? JSON.parse(stored) : [];
+            const newPrompt = {
+                ...data,
+                id: Math.random().toString(36).substring(2, 11),
+            };
+            const updated = [...currentData, newPrompt];
+            localStorage.setItem('mock_prompt_data', JSON.stringify(updated));
 
-    const { isLoading: updateIsLoading, mutate: mutateUpdatePromptTemplate } = useMutation(
-        ({ data, id }: { data: IPromptTemplate; id: string }) =>
-            promptService.update<IPromptTemplate>(data, params.wid as string, id),
-        {
-            onSuccess: () => {
-                if (props?.onRefetch) {
-                    props.onRefetch();
-                }
-                queryClient.invalidateQueries(QueryKeyType.PROMPT);
-                setLoading(false);
-                setOpen(false);
-                toast.success('Prompt Template updated successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error updating prompt template:', error?.message);
-            },
-        }
-    );
+            if (props?.onRefetch) {
+                props.onRefetch();
+            }
+            queryClient.invalidateQueries(QueryKeyType.PROMPT);
+            setLoading(false);
+            setOpen(false);
+            toast.success('Prompt Template saved successfully (Mock)');
+        },
+    };
 
-    const { mutate: mutateDeletePromptTemplate } = useMutation(
-        async ({ id }: { id: string }) => await promptService.delete(id, params.wid as string),
-        {
-            onSuccess: () => {
-                queryClient.invalidateQueries(QueryKeyType.PROMPT);
-                toast.success('Prompt Template deleted successfully');
-            },
-            onError: (error: FetchError) => {
-                toast.error(error?.message);
-                logger.error('Error deleting Prompt Template:', error?.message);
-            },
-        }
-    );
+    const { isLoading: updateIsLoading, mutate: mutateUpdatePromptTemplate } = {
+        isLoading: false,
+        mutate: ({ data, id }: { data: IPromptTemplate; id: string }) => {
+            const stored = localStorage.getItem('mock_prompt_data');
+            const currentData = stored ? JSON.parse(stored) : [];
+            const updated = currentData.map((item: PromptTemplate) => (item.id === id ? { ...item, ...data } : item));
+            localStorage.setItem('mock_prompt_data', JSON.stringify(updated));
+
+            if (props?.onRefetch) {
+                props.onRefetch();
+            }
+            queryClient.invalidateQueries(QueryKeyType.PROMPT);
+            setLoading(false);
+            setOpen(false);
+            toast.success('Prompt Template updated successfully (Mock)');
+        },
+    };
+
+    const { mutate: mutateDeletePromptTemplate } = {
+        mutate: ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_prompt_data');
+            const currentData = stored ? JSON.parse(stored) : [];
+            const updated = currentData.filter((item: PromptTemplate) => item.id !== id);
+            localStorage.setItem('mock_prompt_data', JSON.stringify(updated));
+
+            queryClient.invalidateQueries(QueryKeyType.PROMPT);
+            toast.success('Prompt Template deleted successfully (Mock)');
+        },
+    };
 
     const onEdit = (id: string) => {
         if (id) {
@@ -262,73 +275,129 @@ export const usePromptTemplate = (props?: IHookProps) => {
         isLoading: loadingIntellisense,
         data: allIntellisense,
         refetch: refetchVariables,
-    } = useQuery('intellisense', () => promptService.intellisense(params.wid as string), {
-        enabled: !!token,
-        refetchOnWindowFocus: false,
-        select: data => ({
-            api: data?.tools?.api?.shared
-                ?.filter((tool: ISharedItem) => tool?.name)
-                ?.map((tool: ISharedItem) => ({
-                    label: tool.name,
-                    value: `${IntellisenseTools.API}:${tool.name}`,
-                })),
-            mcp:
-                data?.tools?.mcp?.shared
-                    ?.filter((tool: ISharedItem) => tool?.selected_tools?.length != 0)
-                    ?.flatMap(
-                        (tool: ISharedItem) =>
-                            tool.selected_tools?.map((selectedTool: string) => ({
-                                label: `${selectedTool}`,
-                                value: `${IntellisenseTools.MCP}:${selectedTool}`,
-                            })) || []
-                    ) || [],
-            rag: data?.tools?.rag?.shared
-                ?.filter((tool: ISharedItem) => tool?.name)
-                ?.map((tool: ISharedItem) => ({
-                    label: tool.name,
-                    value: `${IntellisenseTools.VectorRAG}:${tool.name}`,
-                })),
-            graphRag: data?.tools?.graphRag?.shared
-                ?.filter((tool: ISharedItem) => tool?.name)
-                ?.map((tool: ISharedItem) => ({
-                    label: tool.name,
-                    value: `${IntellisenseTools.GraphRAG}:${tool.name}`,
-                })),
-            variables: data?.variables?.shared
-                ?.filter((variable: ISharedItem) => variable?.name)
-                ?.map((variable: ISharedItem) => ({
-                    label: variable.name,
-                    value: `${IntellisenseTools.Variable}:${variable.name}`,
-                })),
-            agents: data?.agents?.shared
-                ?.filter((agent: ISharedItem) => agent?.name)
-                ?.map((agent: ISharedItem) => ({
-                    label: agent.name,
-                    value: `${IntellisenseTools.Agent}:${agent.name}`,
-                })),
-            connectors: data?.connectors?.shared
-                ?.filter((connector: ISharedItem) => connector?.name)
-                ?.map((connector: ISharedItem) => ({
-                    label: connector.name,
-                    value: `${IntellisenseTools.DatabaseConnector}:${connector.name}`,
-                })),
-            executableFunctions: data?.tools?.executableFunction?.shared
-                ?.filter((func: ISharedItem) => func?.name)
-                ?.map((func: ISharedItem) => ({
-                    label: func.name,
-                    value: `${IntellisenseTools.ExecutableFunction}:${func.name}`,
-                })),
-        }),
-    });
+    } = useQuery(
+        'intellisense',
+        () => {
+            // Mock intellisense data
+            return {
+                tools: {
+                    api: {
+                        shared: [
+                            { id: '1', name: 'GetCustomerDetails', description: 'Returns customer information' },
+                            { id: '2', name: 'ProcessPayment', description: 'Initiates a payment transaction' },
+                            { id: '3', name: 'SendNotification', description: 'Sends a push notification' },
+                        ],
+                    },
+                    mcp: {
+                        shared: [
+                            {
+                                id: '4',
+                                name: 'GoogleSearch',
+                                description: 'Search the web using Google',
+                                selected_tools: ['search', 'list'],
+                            },
+                        ],
+                    },
+                    rag: {
+                        shared: [{ id: '5', name: 'LegalDocuments', description: 'Search legal knowledge base' }],
+                    },
+                    graphRag: {
+                        shared: [{ id: '6', name: 'UserNetwork', description: 'Analyze user social graph' }],
+                    },
+                    executableFunction: {
+                        shared: [{ id: '7', name: 'CalculateMonthlyRevenue', description: 'Revenue aggregation' }],
+                    },
+                },
+                variables: {
+                    shared: [
+                        { id: '8', name: 'firstName', description: "User's first name" },
+                        { id: '9', name: 'orderAmount', description: 'Total price of the order' },
+                        { id: '10', name: 'supportEmail', description: 'Company support email' },
+                    ],
+                },
+                agents: {
+                    shared: [
+                        { id: '11', name: 'SupportBot', description: 'General support agent' },
+                        { id: '12', name: 'SalesBot', description: 'Lead generation agent' },
+                    ],
+                },
+                connectors: {
+                    shared: [{ id: '13', name: 'Salesforce', description: 'CRM connection' }],
+                },
+            };
+        },
+        {
+            enabled: true,
+            refetchOnWindowFocus: false,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            select: (data: any) => ({
+                api: data?.tools?.api?.shared
+                    ?.filter((tool: ISharedItem) => tool?.name)
+                    ?.map((tool: ISharedItem) => ({
+                        label: tool.name,
+                        value: `${IntellisenseTools.API}:${tool.name}`,
+                    })),
+                mcp:
+                    data?.tools?.mcp?.shared
+                        ?.filter((tool: ISharedItem) => tool?.selected_tools?.length != 0)
+                        ?.flatMap(
+                            (tool: ISharedItem) =>
+                                tool.selected_tools?.map((selectedTool: string) => ({
+                                    label: `${selectedTool}`,
+                                    value: `${IntellisenseTools.MCP}:${selectedTool}`,
+                                })) || []
+                        ) || [],
+                rag: data?.tools?.rag?.shared
+                    ?.filter((tool: ISharedItem) => tool?.name)
+                    ?.map((tool: ISharedItem) => ({
+                        label: tool.name,
+                        value: `${IntellisenseTools.VectorRAG}:${tool.name}`,
+                    })),
+                graphRag: data?.tools?.graphRag?.shared
+                    ?.filter((tool: ISharedItem) => tool?.name)
+                    ?.map((tool: ISharedItem) => ({
+                        label: tool.name,
+                        value: `${IntellisenseTools.GraphRAG}:${tool.name}`,
+                    })),
+                variables: data?.variables?.shared
+                    ?.filter((variable: ISharedItem) => variable?.name)
+                    ?.map((variable: ISharedItem) => ({
+                        label: variable.name,
+                        value: `${IntellisenseTools.Variable}:${variable.name}`,
+                    })),
+                agents: data?.agents?.shared
+                    ?.filter((agent: ISharedItem) => agent?.name)
+                    ?.map((agent: ISharedItem) => ({
+                        label: agent.name,
+                        value: `${IntellisenseTools.Agent}:${agent.name}`,
+                    })),
+                connectors: data?.connectors?.shared
+                    ?.filter((connector: ISharedItem) => connector?.name)
+                    ?.map((connector: ISharedItem) => ({
+                        label: connector.name,
+                        value: `${IntellisenseTools.DatabaseConnector}:${connector.name}`,
+                    })),
+                executableFunctions: data?.tools?.executableFunction?.shared
+                    ?.filter((func: ISharedItem) => func?.name)
+                    ?.map((func: ISharedItem) => ({
+                        label: func.name,
+                        value: `${IntellisenseTools.ExecutableFunction}:${func.name}`,
+                    })),
+            }),
+        }
+    );
+
+    useEffect(() => {
+        if (!allIntellisense) return;
+        const allValues = Object.values(allIntellisense)
+            .flat()
+            .map(item => (item as { value: string }).value);
+
+        setAllIntellisenseValues(allValues.filter((v): v is string => !!v));
+    }, [allIntellisense, setAllIntellisenseValues]);
 
     const intellisenseOptions = useMemo(() => {
         if (!allIntellisense?.agents || !allIntellisense?.api || !allIntellisense?.variables) return [];
-
-        const allValues = Object.values(allIntellisense)
-            .flat()
-            .map(item => item?.value);
-
-        setAllIntellisenseValues(allValues);
 
         return [
             {
@@ -367,9 +436,8 @@ export const usePromptTemplate = (props?: IHookProps) => {
     }, [allIntellisense]);
 
     const mapPromptTemplates = (arr: PromptTemplate[]) => {
-        const generateReadablePrompt = (prompt: string) => {
-            const initialContent = prompt ?? '';
-            const formattedInitialContent = initialContent.replace(/{{|}}/g, '');
+        const generateReadablePrompt = (prompt = '') => {
+            const formattedInitialContent = prompt.replaceAll(/{{|}}/g, '');
             return formattedInitialContent;
         };
         const data = arr.map((x: PromptTemplate) => ({
@@ -419,28 +487,8 @@ export const usePromptTemplate = (props?: IHookProps) => {
         }
     };
 
-    const wrapMatchingWords = (value: string): string => {
-        if (!value) return value;
-
-        const sortedWords = [...allIntellisenseValues].sort((a, b) => b.length - a.length);
-
-        for (const word of sortedWords) {
-            const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`\\b${escapedWord}\\b`, 'g');
-            value = value.replace(regex, `{{${word}}}`);
-        }
-
-        return value;
-    };
-
     const handleEditorChange = (value: string) => {
         setEditorContent(value);
-    };
-
-    const handleEditorContentChange = async (value: string) => {
-        const updatedValue = wrapMatchingWords(value);
-        setValue('prompt', updatedValue, { shouldTouch: true });
-        await trigger('prompt');
     };
 
     return {
@@ -456,7 +504,7 @@ export const usePromptTemplate = (props?: IHookProps) => {
         selectedPrompt,
         isOpenModal,
         editorContent,
-        intellisenseOptions: intellisenseOptions as never[],
+        intellisenseOptions: intellisenseOptions,
         loadingIntellisense,
         control,
         intelligentSource,
