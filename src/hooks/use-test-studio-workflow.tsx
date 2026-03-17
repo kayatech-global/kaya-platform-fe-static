@@ -1,10 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from 'react-query';
-import { $fetch } from '@/utils';
-import { Workflow } from '@/models';
-import { useParams } from 'next/navigation';
-import { useAuth } from '@/context';
-
+import { workflowsList } from '@/app/workspace/[wid]/test-studio/mock/workflows-list';
 
 export interface IWorkflow {
     id: string;
@@ -15,68 +10,7 @@ export interface IWorkflow {
 }
 
 export const useTestStudioWorkflow = () => {
-    const [workflows, setWorkflows] = useState<IWorkflow[]>([]);
-
-
-    const params = useParams();
-    const {token} = useAuth()
-
-    const retrieveAllWorkflowsForWorkspace = async (workspaceId: number | string) => {
-        const response = await $fetch<Workflow[]>(`/workspaces/${workspaceId}/workflows`, {
-            method: 'GET',
-            headers: {
-                'x-workspace-id': workspaceId.toString(),
-            },
-        });
-
-        return response.data;
-    };
-
-
-    const mapWorkflowData= (data: Workflow[]) => {
-        if(data && data.length > 0) {
-            const workflows: IWorkflow[] = data
-                .filter(wf => wf?.id !== undefined)
-                .map(wf => ({
-                    id: wf.id!,
-                    name: wf.name,
-                    description: wf.description,
-                    createdAt: '',
-                    updatedAt: '',
-                }));
-
-            if(workflows.length > 0) {
-                setWorkflows(workflows);
-            }
-        }
-    }
-    const { isFetching, isLoading } = useQuery(
-        'workflows',
-        () => retrieveAllWorkflowsForWorkspace(params.wid as string),
-        {
-            enabled: !!token,
-            refetchOnWindowFocus: false,
-            onSuccess: data => {
-                mapWorkflowData(data);
-            },
-        }
-    );
-    // @Purpose: Fetch workflows list from mock data
-    // useEffect(() => {
-    //     const fetchWorkflows = () => {
-    //         try {
-    //             setIsLoading(true);
-    //             // Load workflows immediately from mock data
-    //             setWorkflows(workflowsList);
-    //             setIsLoading(false);
-    //         } catch (err) {
-    //             setError(err instanceof Error ? err.message : 'Failed to fetch workflows');
-    //             setIsLoading(false);
-    //         }
-    //     };
-    //
-    //     fetchWorkflows();
-    // }, []);
+    const [workflows] = useState<IWorkflow[]>(workflowsList);
 
     // @Purpose: Search workflows by name or description
     const searchWorkflows = (query: string): IWorkflow[] => {
@@ -91,8 +25,8 @@ export const useTestStudioWorkflow = () => {
 
     return {
         workflows,
-        isFetching,
-        isLoading,
+        isFetching: false,
+        isLoading: false,
         searchWorkflows,
     };
 };

@@ -237,28 +237,28 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
             },
         ],
     },
-    // {
-    //     id: 'test_management_menu_item',
-    //     title: 'Test Studio',
-    //     description: 'Manage test cases, run suites, and track result coverage',
-    //     icon: 'ri-flask-fill',
-    //     items: [
-    //         {
-    //             id: 'data-generation',
-    //             title: 'Test Suites',
-    //             url: '/workspace/[wid]/test-studio/test-suite-creation',
-    //             icon: 'TestTube',
-    //             isSingleLink: true,
-    //         },
-    //         {
-    //             id: 'data-execution',
-    //             title: 'Test Suite Executions',
-    //             url: '/workspace/[wid]/test-studio/test-suite-report-generation',
-    //             icon: 'Play',
-    //             isSingleLink: true,
-    //         },
-    //     ],
-    // },
+    {
+        id: 'test_management_menu_item',
+        title: 'Test Studio',
+        description: 'Manage test cases, run suites, and track result coverage',
+        icon: 'ri-flask-fill',
+        items: [
+            {
+                id: 'data-generation',
+                title: 'Test Suites',
+                url: '/workspace/[wid]/test-studio/test-suite-creation',
+                icon: 'TestTube',
+                isSingleLink: true,
+            },
+            {
+                id: 'data-execution',
+                title: 'Test Suite Executions',
+                url: '/workspace/[wid]/test-studio/test-suite-report-generation',
+                icon: 'Play',
+                isSingleLink: true,
+            },
+        ],
+    },
     {
         id: 'monitor_tracking_menu_item',
         title: 'Monitoring & tracking',
