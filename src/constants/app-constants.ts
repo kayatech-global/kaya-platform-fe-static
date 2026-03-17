@@ -196,13 +196,13 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
         description: 'Build AI workflows for your workspace using configurations',
         icon: 'ri-stack-fill',
         items: [
-            // {
-            //     id: 'agents',
-            //     title: 'Create and Manage Agents',
-            //     url: '/workspace/[wid]/agents',
-            //     icon: 'Bot',
-            //     isSingleLink: true,
-            // },
+            {
+                id: 'agents',
+                title: 'Create and Manage Agents',
+                url: '/workspace/[wid]/agents',
+                icon: 'Bot',
+                isSingleLink: true,
+            },
             // {
             //     id: 'prompt-templates',
             //     title: 'Design Prompt Templates',

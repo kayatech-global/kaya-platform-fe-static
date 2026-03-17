@@ -347,7 +347,51 @@ const MOCK_MESSAGE_BROKER_DATA: IMessageBroker[] = [
     },
 ];
 
-export const useIntellisense = () => {
+const MOCK_PROMPT_DATA: PromptTemplate[] = [
+    {
+        id: 'prompt-1',
+        name: 'Technical Support Prompt',
+        description: 'Guided prompt for technical support agents',
+        configurations: {
+            prompt_template: 'You are a technical support agent. Help the user with their issue: {{user_input}}'
+        }
+    },
+    {
+        id: 'prompt-2',
+        name: 'Creative Writer Prompt',
+        description: 'Prompt for creative writing assistance',
+        configurations: {
+            prompt_template: 'You are a creative writer. Write a story about: {{topic}}'
+        }
+    }
+];
+
+const MOCK_AGENT_DATA: Agent[] = [
+    {
+        id: 'agent-1',
+        name: 'Tech Support Bot',
+        description: 'Handles technical support queries',
+        type: 'agent_node',
+        configurations: {
+            humanInput: {
+                enableHumanInput: false,
+                instruction: '',
+                enableBroker: false,
+                option: 'Message Broker' as any,
+                topicProducer: { messageBrokerId: '', topicId: '', requestStructure: '' },
+                topicConsumer: { messageBrokerId: '', topicId: '', requestStructure: '' },
+            },
+            rags: [],
+            guardrails: [],
+        },
+        llmId: 'mock-llm-1',
+        promptTemplateId: 'prompt-1',
+        tools: [],
+    }
+];
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const useIntellisense = (_workflowId?: string) => {
     const { token } = useAuth();
     const [allIntellisenseValues, setAllIntellisenseValues] = useState<string[]>([]);
 
@@ -668,7 +712,18 @@ export const usePromptQuery = <T = PromptTemplate>({
 } = {}) => {
     const { token } = useAuth();
 
-    return useQuery(queryKey ?? QueryKeyType.PROMPT, async () => [] as T[], {
+    return useQuery(queryKey ?? QueryKeyType.PROMPT, async () => {
+        const stored = localStorage.getItem('mock_prompt_data');
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch {
+                return MOCK_PROMPT_DATA;
+            }
+        }
+        localStorage.setItem('mock_prompt_data', JSON.stringify(MOCK_PROMPT_DATA));
+        return MOCK_PROMPT_DATA as unknown as T[];
+    }, {
         enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
         refetchOnWindowFocus: false,
         onSuccess: data => onSuccess?.(data),
@@ -1197,7 +1252,18 @@ export const useAgentQuery = <T = Agent, TSelected = T[]>({
 
     return useQuery<T[], any, TSelected>(
         queryKey ?? QueryKeyType.AGENT,
-        async () => [] as T[],
+        async () => {
+            const stored = localStorage.getItem('mock_agent_data');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch {
+                    return MOCK_AGENT_DATA;
+                }
+            }
+            localStorage.setItem('mock_agent_data', JSON.stringify(MOCK_AGENT_DATA));
+            return MOCK_AGENT_DATA as unknown as T[];
+        },
         {
             enabled: !!token && resolveTriggerQuery(props?.triggerQuery),
             refetchOnWindowFocus: false,
