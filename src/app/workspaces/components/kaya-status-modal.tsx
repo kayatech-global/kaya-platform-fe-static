@@ -27,10 +27,12 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogBody,
+    DialogFooter,
 } from '@/components/atoms/dialog';
 import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
-import { Card, CardContent } from '@/components/atoms/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/atoms/card';
 import { Separator } from '@/components/atoms/separator';
 import { Switch } from '@/components/atoms/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/atoms/tabs';
@@ -153,15 +155,19 @@ const formatTimestamp = (iso: string) =>
         timeZoneName: 'short',
     });
 
-/** Map uptime percentage to a design-system palette color class */
-const uptimeColor = (pct: number): string => {
-    if (pct === 0) return 'text-red-500 dark:text-red-400';
-    if (pct < 99) return 'text-amber-500 dark:text-amber-400';
-    if (pct < 99.9) return 'text-amber-400 dark:text-amber-300';
-    return 'text-green-600 dark:text-green-400';
+/**
+ * Map uptime percentage to semantic Tailwind color classes that align
+ * with the badge atom's own success/warning/destructive palette.
+ * No dark: pairs needed — the design system tokens already handle that.
+ */
+const uptimeColorClass = (pct: number): string => {
+    if (pct === 0) return 'text-destructive';
+    if (pct < 99) return 'text-amber-600 dark:text-amber-400';
+    if (pct < 99.9) return 'text-amber-600 dark:text-amber-400';
+    return 'text-green-600 dark:text-green-500';
 };
 
-// ─── Status chip config (using Badge variants) ────────────────────────────────
+// ─── Status chip config ───────────────────────────────────────────────────────
 
 const serviceStatusBadgeVariant: Record<ServiceStatus, 'success' | 'warning' | 'destructive' | 'info'> = {
     operational: 'success',
@@ -178,28 +184,29 @@ const serviceStatusLabel: Record<ServiceStatus, string> = {
 };
 
 // ─── Platform status banner config ────────────────────────────────────────────
+// Use semantic tokens only — no bespoke dark: class pairs.
 
 const platformStatusConfig: Record<
     PlatformStatus,
-    { containerClass: string; iconClass: string; icon: React.ReactNode; label: string }
+    { iconColorClass: string; icon: React.ReactNode; label: string; badgeVariant: 'success' | 'warning' | 'destructive' }
 > = {
     operational: {
-        containerClass: 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800',
-        iconClass: 'text-green-600 dark:text-green-400',
-        icon: <CheckCircle2 size={18} />,
+        iconColorClass: 'text-green-600 dark:text-green-500',
+        icon: <CheckCircle2 size={16} />,
         label: 'All Systems Operational',
+        badgeVariant: 'success',
     },
     degraded: {
-        containerClass: 'bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800',
-        iconClass: 'text-amber-600 dark:text-amber-400',
-        icon: <AlertTriangle size={18} />,
+        iconColorClass: 'text-amber-600 dark:text-amber-400',
+        icon: <AlertTriangle size={16} />,
         label: 'Partial System Degradation',
+        badgeVariant: 'warning',
     },
     outage: {
-        containerClass: 'bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800',
-        iconClass: 'text-red-600 dark:text-red-400',
-        icon: <XCircle size={18} />,
+        iconColorClass: 'text-destructive',
+        icon: <XCircle size={16} />,
         label: 'Major Outage',
+        badgeVariant: 'destructive',
     },
 };
 
@@ -213,10 +220,10 @@ const severityBadgeVariant: Record<IncidentSeverity, 'critical' | 'destructive' 
 };
 
 const severityIcon: Record<IncidentSeverity, React.ReactNode> = {
-    critical: <Flame size={12} />,
-    high: <AlertCircle size={12} />,
-    medium: <AlertTriangle size={12} />,
-    low: <Activity size={12} />,
+    critical: <Flame size={11} />,
+    high: <AlertCircle size={11} />,
+    medium: <AlertTriangle size={11} />,
+    low: <Activity size={11} />,
 };
 
 const severityLabel: Record<IncidentSeverity, string> = {
@@ -245,12 +252,12 @@ const incidentStatusLabel: Record<IncidentStatus, string> = {
 // ─── Category icons ───────────────────────────────────────────────────────────
 
 const categoryIcons: Record<Service['category'], React.ReactNode> = {
-    application: <Layers size={13} />,
-    identity: <KeyRound size={13} />,
-    security: <Lock size={13} />,
-    networking: <Network size={13} />,
-    cache: <Zap size={13} />,
-    infrastructure: <Server size={13} />,
+    application: <Layers size={12} />,
+    identity: <KeyRound size={12} />,
+    security: <Lock size={12} />,
+    networking: <Network size={12} />,
+    cache: <Zap size={12} />,
+    infrastructure: <Server size={12} />,
 };
 
 const categoryLabels: Record<Service['category'], string> = {
@@ -268,15 +275,15 @@ const ServiceCard = ({ service, timeframe }: { service: Service; timeframe: Time
     const pct = service.uptime[timeframe];
 
     return (
-        <Card className="rounded-lg">
-            <CardContent className="p-3 flex flex-col gap-2.5">
-                {/* Name + status */}
+        <Card>
+            <CardContent className="p-4 flex flex-col gap-3">
+                {/* Name + status badge */}
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-col gap-0.5 min-w-0">
                         <span className="text-sm font-semibold text-foreground leading-snug truncate">
                             {service.name}
                         </span>
-                        <div className="flex items-center gap-1 text-muted-foreground">
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
                             {categoryIcons[service.category]}
                             <span className="text-xs">{categoryLabels[service.category]}</span>
                         </div>
@@ -296,9 +303,9 @@ const ServiceCard = ({ service, timeframe }: { service: Service; timeframe: Time
                     >
                         {service.exposure}
                     </Badge>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                         <TrendingUp size={12} className="text-muted-foreground" />
-                        <span className={cn('text-xs font-semibold tabular-nums', uptimeColor(pct))}>
+                        <span className={cn('text-xs font-semibold tabular-nums', uptimeColorClass(pct))}>
                             {pct === 100 ? '100%' : `${pct.toFixed(2)}%`}
                         </span>
                     </div>
@@ -311,9 +318,9 @@ const ServiceCard = ({ service, timeframe }: { service: Service; timeframe: Time
 // ─── Incident Row ─────────────────────────────────────────────────────────────
 
 const IncidentRow = ({ incident }: { incident: Incident }) => (
-    <Card className="rounded-lg">
+    <Card>
         <CardContent className="p-4 flex flex-col gap-3">
-            {/* Header row: severity + title */}
+            {/* Header: severity + title */}
             <div className="flex items-start gap-3">
                 <Badge
                     variant={severityBadgeVariant[incident.severity]}
@@ -325,11 +332,8 @@ const IncidentRow = ({ incident }: { incident: Incident }) => (
                 </Badge>
                 <div className="flex flex-col gap-1 flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground leading-snug">{incident.title}</p>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                        <Badge
-                            variant={incidentStatusBadgeVariant[incident.status]}
-                            size="sm"
-                        >
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <Badge variant={incidentStatusBadgeVariant[incident.status]} size="sm">
                             {incidentStatusLabel[incident.status]}
                         </Badge>
                         <span className="text-xs text-muted-foreground">{formatTimestamp(incident.startTime)}</span>
@@ -346,7 +350,7 @@ const IncidentRow = ({ incident }: { incident: Incident }) => (
                 ))}
             </div>
 
-            {/* DevOps update */}
+            {/* Latest DevOps update */}
             <p className="text-xs text-muted-foreground leading-relaxed border-l-2 border-border pl-3">
                 {incident.latestUpdate}
             </p>
@@ -368,27 +372,38 @@ const UptimeTab = () => {
 
     return (
         <div className="flex flex-col gap-5">
-            {/* Platform status banner */}
-            <div className={cn('flex items-start gap-3 rounded-lg border p-4', ps.containerClass)}>
-                <span className={cn('shrink-0 mt-0.5', ps.iconClass)}>{ps.icon}</span>
-                <div className="flex flex-col gap-0.5">
-                    <p className={cn('text-sm font-semibold', ps.iconClass)}>{ps.label}</p>
-                    <p className="text-xs text-muted-foreground">{PLATFORM_STATUS.description}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+            {/* Platform status banner — uses Card + semantic tokens only */}
+            <Card>
+                <CardHeader className="p-4 pb-0">
+                    <div className="flex items-center gap-2">
+                        {/* Icon in a muted chip — same treatment as workspace icon chips */}
+                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-muted border border-border">
+                            <span className={ps.iconColorClass}>{ps.icon}</span>
+                        </div>
+                        <CardTitle className="text-sm font-semibold text-foreground">{ps.label}</CardTitle>
+                        <Badge variant={ps.badgeVariant} size="sm" className="ml-auto flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                            Live
+                        </Badge>
+                    </div>
+                </CardHeader>
+                <CardContent className="px-4 pb-4 pt-2">
+                    <CardDescription className="text-xs">{PLATFORM_STATUS.description}</CardDescription>
+                    <CardDescription className="text-xs mt-0.5">
                         Last updated: {formatTimestamp(PLATFORM_STATUS.timestamp)}
-                    </p>
-                </div>
-            </div>
+                    </CardDescription>
+                </CardContent>
+            </Card>
 
-            {/* Timeframe picker */}
+            {/* Timeframe picker — secondary (active) vs ghost (inactive), matching workspace filter pill pattern */}
             <div className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground">Show uptime for:</span>
+                <span className="text-xs font-medium text-muted-foreground">Show uptime for:</span>
                 <div className="flex gap-1">
                     {TIMEFRAMES.map(tf => (
                         <Button
                             key={tf.value}
                             size="sm"
-                            variant={timeframe === tf.value ? 'primary' : 'secondary'}
+                            variant={timeframe === tf.value ? 'secondary' : 'ghost'}
                             onClick={() => setTimeframe(tf.value)}
                             className="h-7 px-3 text-xs"
                         >
@@ -427,9 +442,9 @@ const IncidentsTab = () => {
 
     return (
         <div className="flex flex-col gap-5">
-            {/* Filter select */}
+            {/* Filter — uses the shared Select atom, same as workspace forms */}
             <div className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground shrink-0">Filter by status:</span>
+                <span className="text-xs font-medium text-muted-foreground shrink-0">Filter by status:</span>
                 <Select
                     options={INCIDENT_FILTER_OPTIONS}
                     value={filter}
@@ -440,13 +455,16 @@ const IncidentsTab = () => {
 
             {/* Incident list or empty state */}
             {filtered.length === 0 ? (
-                <div className="flex flex-col items-center gap-3 py-12">
-                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center">
-                        <CheckCircle2 size={20} className="text-green-600 dark:text-green-400" />
-                    </div>
-                    <p className="text-sm font-medium text-foreground">No incidents found</p>
-                    <p className="text-xs text-muted-foreground">No incidents match the selected filter.</p>
-                </div>
+                <Card>
+                    <CardContent className="flex flex-col items-center gap-3 py-12">
+                        {/* Muted icon chip — no bespoke green circle */}
+                        <div className="w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center">
+                            <CheckCircle2 size={20} className="text-muted-foreground" />
+                        </div>
+                        <p className="text-sm font-medium text-foreground">No incidents found</p>
+                        <p className="text-xs text-muted-foreground">No incidents match the selected filter.</p>
+                    </CardContent>
+                </Card>
             ) : (
                 <div className="flex flex-col gap-3">
                     {filtered.map(incident => (
@@ -482,71 +500,83 @@ const SubscriptionPanel = () => {
     ];
 
     return (
-        <div className="flex flex-col gap-3">
-            <Separator />
-            <div className="flex items-center gap-2">
-                <Bell size={14} className="text-muted-foreground" />
-                <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                    Email Digest
-                </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                <p className="text-xs text-muted-foreground">
-                    Receive status digests at{' '}
-                    <span className="font-medium text-primary">{email}</span>
-                </p>
-                <div className="flex items-center gap-4">
-                    {OPTIONS.map(({ key, label }) => (
-                        <label
-                            key={key}
-                            className="flex items-center gap-2 cursor-pointer"
-                        >
-                            <Switch
-                                checked={prefs[key]}
-                                onCheckedChange={() => toggle(key)}
-                                id={`digest-${key}`}
-                            />
-                            <span className="text-xs font-medium text-foreground select-none">{label}</span>
-                        </label>
-                    ))}
+        // Card wrapper gives the subscription panel the same surface treatment
+        // as other workspace form panels (bg-card, border-border, shadow).
+        <Card>
+            <CardContent className="p-4">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                    {/* Label + email */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Bell size={14} className="text-muted-foreground" />
+                        <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                            Email Digest
+                        </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        Receive status digests at{' '}
+                        <span className="font-medium text-primary">{email}</span>
+                    </p>
+
+                    {/* Toggle switches — shared Switch atom with label, same as workspace form toggles */}
+                    <div className="flex items-center gap-5 flex-wrap">
+                        {OPTIONS.map(({ key, label }) => (
+                            <label
+                                key={key}
+                                htmlFor={`digest-${key}`}
+                                className="flex items-center gap-2 cursor-pointer"
+                            >
+                                <Switch
+                                    id={`digest-${key}`}
+                                    checked={prefs[key]}
+                                    onCheckedChange={() => toggle(key)}
+                                />
+                                <span className="text-xs font-medium text-foreground select-none">{label}</span>
+                            </label>
+                        ))}
+                    </div>
+
+                    {/* Save CTA — secondary when saved (disabled), primary otherwise */}
+                    <Button
+                        size="sm"
+                        variant={saved ? 'secondary' : 'primary'}
+                        onClick={handleSave}
+                        disabled={saved}
+                        leadingIcon={saved ? <MailCheck size={13} /> : undefined}
+                        className="ml-auto"
+                    >
+                        {saved ? 'Preferences saved' : 'Save preferences'}
+                    </Button>
                 </div>
-                <Button
-                    size="sm"
-                    variant={saved ? 'secondary' : 'primary'}
-                    onClick={handleSave}
-                    disabled={saved}
-                    leadingIcon={saved ? <MailCheck size={13} /> : undefined}
-                    className="ml-auto"
-                >
-                    {saved ? 'Preferences saved' : 'Save preferences'}
-                </Button>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 };
 
 // ─── Error State ──────────────────────────────────────────────────────────────
 
 const ErrorState = ({ onRetry }: { onRetry: () => void }) => (
-    <div className="flex flex-col items-center gap-4 py-16">
-        <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950 flex items-center justify-center">
-            <WifiOff size={22} className="text-red-600 dark:text-red-400" />
-        </div>
-        <div className="flex flex-col items-center gap-1 text-center">
-            <p className="text-sm font-semibold text-foreground">Status endpoint unavailable</p>
-            <p className="text-xs text-muted-foreground max-w-sm">
-                We could not reach the KAYA status service. This may be a transient network issue.
-            </p>
-        </div>
-        <Button
-            size="sm"
-            variant="secondary"
-            leadingIcon={<RefreshCw size={13} />}
-            onClick={onRetry}
-        >
-            Retry
-        </Button>
-    </div>
+    <Card>
+        <CardContent className="flex flex-col items-center gap-4 py-16">
+            {/* Muted icon chip — no bespoke red circle */}
+            <div className="w-12 h-12 rounded-full bg-muted border border-border flex items-center justify-center">
+                <WifiOff size={22} className="text-muted-foreground" />
+            </div>
+            <div className="flex flex-col items-center gap-1 text-center">
+                <p className="text-sm font-semibold text-foreground">Status endpoint unavailable</p>
+                <p className="text-xs text-muted-foreground max-w-sm">
+                    We could not reach the KAYA status service. This may be a transient network issue.
+                </p>
+            </div>
+            <Button
+                size="sm"
+                variant="secondary"
+                leadingIcon={<RefreshCw size={13} />}
+                onClick={onRetry}
+            >
+                Retry
+            </Button>
+        </CardContent>
+    </Card>
 );
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
@@ -567,52 +597,47 @@ const KayaStatusModal = ({ open, onOpenChange }: KayaStatusModalProps) => {
                 className="max-w-[unset] w-[min(95vw,960px)] max-h-[90vh] overflow-hidden flex flex-col p-0"
                 autoClose
             >
-                {/* Header */}
-                <DialogHeader className="shrink-0 px-6 pt-5 pb-0">
-                    <div className="flex items-center justify-between gap-4 mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 flex items-center justify-center">
-                                <Cloud size={16} className="text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                                <DialogTitle className="text-sm font-semibold text-foreground">
-                                    KAYA Platform Status
-                                </DialogTitle>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                    Infrastructure &amp; service health — super admin view
-                                </p>
-                            </div>
+                {/* Header — uses the DialogHeader atom; includes border-b from the atom itself */}
+                <DialogHeader className="shrink-0 px-6 pt-5 pb-4 flex-row items-center justify-between gap-4 space-y-0">
+                    <div className="flex items-center gap-3">
+                        {/* Icon chip — bg-muted + border-border, same as workspace icon treatments */}
+                        <div className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
+                            <Cloud size={15} className="text-muted-foreground" />
                         </div>
-                        <Badge variant="success" size="sm" className="flex items-center gap-1.5 mr-6">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse" />
-                            Live
-                        </Badge>
+                        <div>
+                            <DialogTitle className="text-sm font-semibold text-foreground">
+                                KAYA Platform Status
+                            </DialogTitle>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Infrastructure &amp; service health — super admin view
+                            </p>
+                        </div>
                     </div>
+                </DialogHeader>
 
-                    {/* Tabs — use the repo's Tabs atom */}
-                    <Tabs defaultValue="uptime" className="w-full">
-                        <TabsList className="w-full justify-start rounded-none bg-transparent border-b border-border h-auto p-0 gap-0">
-                            <TabsTrigger
-                                value="uptime"
-                                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-3 text-sm font-medium"
-                            >
-                                Uptime
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value="incidents"
-                                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-3 text-sm font-medium flex items-center gap-2"
-                            >
-                                Incidents
-                                {openIncidentCount > 0 && (
-                                    <Badge variant="warning" size="sm">
-                                        {openIncidentCount}
-                                    </Badge>
-                                )}
-                            </TabsTrigger>
-                        </TabsList>
+                {/* Tabs + scrollable body + footer all in DialogBody */}
+                <DialogBody className="flex flex-col flex-1 overflow-hidden px-0 pb-0">
+                    <Tabs defaultValue="uptime" className="flex flex-col flex-1 overflow-hidden">
+                        {/*
+                         * TabsList: uses the atom's default rounded-lg bg-muted pill style.
+                         * Wrapped in a px-6 container to align with the header inset.
+                         */}
+                        <div className="px-6 py-3 border-b border-border shrink-0">
+                            <TabsList>
+                                <TabsTrigger value="uptime">Uptime</TabsTrigger>
+                                <TabsTrigger value="incidents" className="flex items-center gap-2">
+                                    Incidents
+                                    {openIncidentCount > 0 && (
+                                        <Badge variant="warning" size="sm">
+                                            {openIncidentCount}
+                                        </Badge>
+                                    )}
+                                </TabsTrigger>
+                            </TabsList>
+                        </div>
 
-                        {/* Scrollable body */}
-                        <div className="overflow-y-auto px-0 py-5 max-h-[calc(90vh-260px)] [&::-webkit-scrollbar]:w-[5px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent">
+                        {/* Scrollable content region */}
+                        <div className="overflow-y-auto flex-1 px-6 py-5 [&::-webkit-scrollbar]:w-[5px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent">
                             {hasError ? (
                                 <ErrorState onRetry={() => {}} />
                             ) : (
@@ -627,12 +652,12 @@ const KayaStatusModal = ({ open, onOpenChange }: KayaStatusModalProps) => {
                             )}
                         </div>
 
-                        {/* Subscription footer */}
-                        <div className="shrink-0 pt-2 pb-5">
+                        {/* Subscription footer — inside DialogFooter atom for consistent border-t + padding */}
+                        <DialogFooter className="shrink-0 px-6 py-4 block">
                             <SubscriptionPanel />
-                        </div>
+                        </DialogFooter>
                     </Tabs>
-                </DialogHeader>
+                </DialogBody>
             </DialogContent>
         </Dialog>
     );
