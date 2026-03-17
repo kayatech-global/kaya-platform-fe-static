@@ -6,9 +6,8 @@ import {
     IDataLineageStepExplanation,
     IDataLineageViewStep,
     IDataLineageSubStep,
+    IDataLineageStep,
 } from '@/models';
-import { lineageService } from '@/services';
-import { FetchError, logger } from '@/utils';
 import { Edge, Node } from '@xyflow/react';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -35,7 +34,7 @@ export const useDataLineageStep = ({ stepDetailsPanelProps, explanationType }: D
             setGenerated(false);
             setJsonCopied(false);
             setLoading(false);
-            setLinearViewStep(selectedNode.data as never);
+            setLinearViewStep(selectedNode.data as unknown as IDataLineageLinear);
         }
     }, [activeTab, steps, selectedNode]);
 
@@ -47,16 +46,17 @@ export const useDataLineageStep = ({ stepDetailsPanelProps, explanationType }: D
 
     useEffect(() => {
         if (activeTab && activeTab.includes('detail-') && selectedNode) {
-            setDetailViewStep(selectedNode.data as never);
+            setDetailViewStep(selectedNode.data as unknown as IDataLineageSubStep);
         }
     }, [activeTab, steps, selectedNode]);
 
     const { mutateAsync } = useMutation(
-        async ({ data }: { data: IDataLineageEvent }) => await lineageService.events(params.wid as string, data),
+        async (_data: { data: IDataLineageEvent }) => {
+            if (_data) return;
+        },
         {
-            onError: (error: FetchError) => {
+            onError: (error: Error) => {
                 toast.error(error?.message);
-                logger.error('Error fetching lineage events:', error?.message);
                 setLoading(false);
             },
         }
@@ -67,41 +67,30 @@ export const useDataLineageStep = ({ stepDetailsPanelProps, explanationType }: D
         isLoading: loadingStepExplanation,
         data: stepExplanation,
     } = useMutation(
-        async ({ data }: { data: IDataLineageStepExplanation }) =>
-            await lineageService.stepExplanation(
-                params.wid as string,
-                selectedExecution?.sessionId as string,
-                selectedExecution?.id as string,
-                data
-            ),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        async (_: { data: IDataLineageStepExplanation }) => {
+            return { content: 'Mocked explanation for this step.' } as IDataLineageStepExplanation;
+        },
         {
             onSuccess: () => {
                 setGenerated(true);
             },
-            onError: (error: FetchError) => {
+            onError: (error: Error) => {
                 toast.error(error?.message);
-                logger.error('Error fetching step explanation:', error?.message);
             },
         }
     );
 
     const { mutateAsync: mutateStepView, isLoading: loadingStepView } = useMutation(
-        async ({ stepIndex, type, workflowId }: { stepIndex: number; type: SessionViewType; workflowId: string }) =>
-            await lineageService.steps(
-                params.wid as string,
-                selectedExecution?.sessionId as string,
-                selectedExecution?.id as string,
-                stepIndex,
-                type,
-                workflowId
-            ),
+        async (variables: { stepIndex: number; type: SessionViewType; workflowId: string }) => {
+            return { stepIndex: variables.stepIndex, substeps: [] } as unknown as IDataLineageStep;
+        },
         {
             onSuccess: () => {
                 setGenerated(true);
             },
-            onError: (error: FetchError) => {
+            onError: (error: Error) => {
                 toast.error(error?.message);
-                logger.error('Error fetching step view:', error?.message);
             },
         }
     );
@@ -142,7 +131,7 @@ export const useDataLineageStep = ({ stepDetailsPanelProps, explanationType }: D
             [
                 selectedExecution?.workflowName || 'UnknownWorkflow',
                 `Step-${stepIndex || 0}${
-                    !isLinearView ? `.${detailViewStep?.substepIndex || 0}_DetailView` : ''
+                    isLinearView ? '' : `.${detailViewStep?.substepIndex || 0}_DetailView`
                 }`.trim(),
             ].join('_') + '.json';
 
@@ -154,7 +143,7 @@ export const useDataLineageStep = ({ stepDetailsPanelProps, explanationType }: D
         link.download = fileName;
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        link.remove();
         URL.revokeObjectURL(url);
 
         setLoading(false);
@@ -186,7 +175,7 @@ export const useDataLineageStep = ({ stepDetailsPanelProps, explanationType }: D
         const data = await mutateStepView({ stepIndex, type, workflowId });
         if (data && data?.substeps?.length > 0) {
             const { nodes, edges } = data.substeps.reduce(
-                (acc, graph, index) => {
+                (acc: { nodes: Node[]; edges: Edge[] }, graph: IDataLineageSubStep, index: number) => {
                     const node: Node = {
                         id: `detail_node_${index}`,
                         type: graph.substepType,

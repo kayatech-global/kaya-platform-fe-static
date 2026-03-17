@@ -4,8 +4,8 @@ import { useParams } from 'next/navigation';
 import { useAuth } from '@/context';
 import { DataLineageSessionTableProps } from '@/app/workspace/[wid]/data-lineage/components/data-lineage-session-table';
 import { IDataLineageSession, IDataLineageSessionFilter } from '@/models';
-import { lineageService } from '@/services';
 import { QueryKeyType } from '@/enums';
+import { mock_lineage_sessions } from '@/app/workspace/[wid]/data-lineage/mock_lineage_data';
 
 export const useDataLineageSession = (props: DataLineageSessionTableProps) => {
     const params = useParams();
@@ -43,7 +43,7 @@ export const useDataLineageSession = (props: DataLineageSessionTableProps) => {
 
     const { isFetching } = useQuery(
         [QueryKeyType.DATA_LINEAGE_SESSIONS, params.wid, row.original.id, sessionParams, { page, take }],
-        () => lineageService.sessions(params.wid as string, row.original.id, page, take, sessionParams),
+        () => Promise.resolve(mock_lineage_sessions[row.original.id] || { items: [], totalCount: 0 }),
         {
             enabled: !!token && mounted,
             keepPreviousData: true,
