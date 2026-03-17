@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import {useMutation, useQuery} from 'react-query';
 import {useParams, useSearchParams} from 'next/navigation';
 import {useAuth} from '@/context';
-import {IFeedbackLearning, ILearningWorkflow} from '@/models';
+import {IFeedbackLearning, IFeedbackLearningMetadata, ILearningWorkflow} from '@/models';
 
 import { mock_learnings, mock_workflow_details } from '@/app/workspace/[wid]/learnings/mock_learning_data';
 
@@ -113,23 +113,28 @@ export const useLearning = () => {
     );
 
     const {mutateAsync: approveAsync, isLoading: approvingFeedback} = useMutation(
-        () => Promise.resolve()
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_params: { feedbackId: string; workflowVariables?: Record<string, unknown>; comment?: string }) => Promise.resolve()
     );
 
     const {mutateAsync: rejectAsync, isLoading: rejectingFeedback} = useMutation(
-        () => Promise.resolve()
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_params: { feedbackId: string; comment?: string }) => Promise.resolve()
     );
 
     const {mutateAsync: deleteAsync, isLoading: deletingFeedback} = useMutation(
-        () => Promise.resolve()
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_feedbackId: string) => Promise.resolve()
     );
 
     const {mutateAsync: updateAsync, isLoading: updatingFeedback} = useMutation(
-        () => Promise.resolve()
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_params: { feedbackId: string; data: { feedback: string; rationale?: string; metadata: IFeedbackLearningMetadata; mustLearn: boolean; approvalStatus: string; comment: string } }) => Promise.resolve()
     );
 
     const {mutateAsync: unlinkAsync, isLoading: unlinkingFeedback} = useMutation(
-        () => Promise.resolve()
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_feedbackId: string) => Promise.resolve()
     );
 
     return {

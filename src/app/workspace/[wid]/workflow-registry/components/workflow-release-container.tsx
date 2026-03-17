@@ -12,7 +12,6 @@ export const WorkflowReleaseContainer = () => {
         workflowArtifactTableData,
         isFetching,
         onWorkflowArtifactFilter,
-        onDeploy,
         getWorkflowArtifactVersion,
         loadingArtifactVersion,
         loadingRow,
@@ -33,7 +32,6 @@ export const WorkflowReleaseContainer = () => {
                     <WorkflowReleaseTable
                         workflowArtifactData={workflowArtifactTableData}
                         onWorkflowArtifactFilter={onWorkflowArtifactFilter}
-                        onDeploy={onDeploy}
                         getWorkflowArtifactVersion={getWorkflowArtifactVersion}
                         loadingArtifactVersion={loadingArtifactVersion}
                         loadingRow={loadingRow}
