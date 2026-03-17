@@ -391,7 +391,8 @@ export const usePromptTemplate = (props?: IHookProps) => {
         if (!allIntellisense) return;
         const allValues = Object.values(allIntellisense)
             .flat()
-            .map(item => (item as { value: string }).value);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .map((item: any) => item?.value as string);
 
         setAllIntellisenseValues(allValues.filter((v): v is string => !!v));
     }, [allIntellisense, setAllIntellisenseValues]);
