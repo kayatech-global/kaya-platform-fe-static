@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { cn } from '@/lib/utils';
-import '../../globals.css';
+import '../globals.css';
 import React from 'react';
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ const KayaStatusLayout = ({
 }>) => {
     return (
         <div className={cn('w-full min-h-screen bg-[#F1F1F1]', 'dark:bg-[#2B3340]')}>
-            <div className="w-full">{children}</div>
+            {children}
         </div>
     );
 };

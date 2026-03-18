@@ -93,7 +93,7 @@ const WorkspaceListHeader = ({
                     onKeyUp={handleSubmit(onHandleSubmit)}
                 />
                 <div className="data-table-header-button flex gap-x-3">
-                    <a href="/workspaces/kaya-status" target="_blank" rel="noreferrer noopener">
+                    <a href="/kaya-status" target="_blank" rel="noreferrer noopener">
                         <Button
                             size={'sm'}
                             leadingIcon={<Activity size={14} />}
