@@ -96,7 +96,6 @@ const WorkspaceListHeader = ({
                     <a href="/workspaces/kaya-status" target="_blank" rel="noreferrer noopener">
                         <Button
                             size={'sm'}
-                            variant={'outline'}
                             leadingIcon={<Activity size={14} />}
                         >
                             KAYA Status
