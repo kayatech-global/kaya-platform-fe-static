@@ -20,7 +20,7 @@ import {
   DialogFooter,
 } from "@/components/atoms/dialog";
 import { StatusDot } from "@/components/status/status-dot";
-import { componentGroups } from "@/mocks/status-data";
+import { componentGroups, componentBaselineConfigs, networkAccessMap } from "@/mocks/status-data";
 import { STATUS_LABELS } from "@/models/status";
 import type { ComponentStatus } from "@/models/status";
 import { cn } from "@/lib/utils";
@@ -42,8 +42,11 @@ export default function ComponentsPage() {
   const [editInterval, setEditInterval] = useState("30");
   const [editThreshold, setEditThreshold] = useState("3");
   const [editGroupName, setEditGroupName] = useState("");
+  const [editBaseline, setEditBaseline] = useState("15");
+  const [editPollingMin, setEditPollingMin] = useState("15");
 
   const openComponentDialog = (comp?: {
+    id?: string;
     name: string;
     mappedService?: string;
     healthCheckUrl?: string;
@@ -55,6 +58,11 @@ export default function ComponentsPage() {
     setEditHealthUrl(comp?.healthCheckUrl ?? "");
     setEditInterval(String(comp?.pollingIntervalSeconds ?? 30));
     setEditThreshold(String(comp?.failureThreshold ?? 3));
+    const cfg = comp?.id
+      ? componentBaselineConfigs.find((c) => c.componentId === comp.id)
+      : undefined;
+    setEditBaseline(String(cfg?.baselineResponseTimeMs ? cfg.baselineResponseTimeMs / 1000 : 15));
+    setEditPollingMin(String(cfg?.pollingIntervalMinutes ?? 15));
     setEditDialogOpen(true);
   };
 
@@ -142,6 +150,15 @@ export default function ComponentsPage() {
                         Threshold
                       </th>
                       <th className="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 text-xs">
+                        Baseline RT
+                      </th>
+                      <th className="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 text-xs">
+                        Polling
+                      </th>
+                      <th className="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 text-xs">
+                        Network
+                      </th>
+                      <th className="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 text-xs">
                         Actions
                       </th>
                     </tr>
@@ -172,13 +189,32 @@ export default function ComponentsPage() {
                         <td className="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
                           {comp.failureThreshold}
                         </td>
+                        <td className="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
+                          {(() => {
+                            const cfg = componentBaselineConfigs.find((c) => c.componentId === comp.id);
+                            return cfg ? `${cfg.baselineResponseTimeMs / 1000}s` : "15s";
+                          })()}
+                        </td>
+                        <td className="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
+                          {(() => {
+                            const cfg = componentBaselineConfigs.find((c) => c.componentId === comp.id);
+                            return cfg ? `${cfg.pollingIntervalMinutes} min` : "15 min";
+                          })()}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          {networkAccessMap[comp.id] === "public" ? (
+                            <Badge variant="info" size="sm">Public</Badge>
+                          ) : (
+                            <Badge variant="secondary" size="sm">Private (K8s)</Badge>
+                          )}
+                        </td>
                         <td className="px-4 py-2.5">
                           <div className="flex gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6"
-                              onClick={() => openComponentDialog(comp)}
+                              onClick={() => openComponentDialog({ ...comp, id: comp.id })}
                             >
                               <Pencil size={11} />
                             </Button>
@@ -240,6 +276,20 @@ export default function ComponentsPage() {
                 type="number"
                 value={editThreshold}
                 onChange={(e) => setEditThreshold(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Baseline Response Time (s)"
+                type="number"
+                value={editBaseline}
+                onChange={(e) => setEditBaseline(e.target.value)}
+              />
+              <Input
+                label="Polling Interval (min)"
+                type="number"
+                value={editPollingMin}
+                onChange={(e) => setEditPollingMin(e.target.value)}
               />
             </div>
           </DialogBody>

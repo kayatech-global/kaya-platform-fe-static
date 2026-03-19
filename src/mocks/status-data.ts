@@ -11,6 +11,10 @@ import type {
   UptimeDay,
   UptimeDayStatus,
   SeverityThreshold,
+  SlaReportData,
+  ComponentBaselineConfig,
+  EscalationExpectations,
+  NetworkAccess,
 } from "@/models/status";
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -512,3 +516,126 @@ export const activityFeed: ActivityFeedItem[] = [
   { id: "act-9", type: "incident_created", message: "Incident created: Cache Layer partial connectivity issues", timestamp: hoursAgo(5), actor: "System (Auto-Detection)" },
   { id: "act-10", type: "incident_resolved", message: "Incident resolved: Voice Engine audio quality degradation", timestamp: daysAgo(3), actor: "Voice Team" },
 ];
+
+// ─── Network Access Classification ──────────────────────────────────
+
+const publicComponentIds = new Set([
+  "platform-api", // Admin Backend
+  "web-app", // Admin Frontend
+  "workflow-engine", // Workflow Engine
+  "voice-engine", // Voice Engine
+]);
+
+export const networkAccessMap: Record<string, NetworkAccess> = Object.fromEntries(
+  componentGroups.flatMap((g) =>
+    g.components.map((c) => [
+      c.id,
+      publicComponentIds.has(c.id) ? ("public" as const) : ("private-k8s" as const),
+    ])
+  )
+);
+
+// ─── Component Baseline Configs ─────────────────────────────────────
+
+export const componentBaselineConfigs: ComponentBaselineConfig[] =
+  componentGroups.flatMap((g) =>
+    g.components.map((c) => ({
+      componentId: c.id,
+      baselineResponseTimeMs: 15000,
+      pollingIntervalMinutes: 15,
+      networkAccess: (publicComponentIds.has(c.id) ? "public" : "private-k8s") as NetworkAccess,
+    }))
+  );
+
+// ─── SLA Report Mock Data ───────────────────────────────────────────
+
+const allComponents = componentGroups.flatMap((g) =>
+  g.components.map((c) => ({ ...c, groupName: g.name }))
+);
+
+const slaTargetMap: Record<string, number> = {
+  "web-app": 99.9,
+  "platform-api": 99.95,
+  "auth-sso": 99.9,
+  "workflow-engine": 99.95,
+  "triggers-scheduling": 99.9,
+  "workflow-builder": 99.9,
+  "voice-engine": 99.99,
+  "telephony-twilio": 99.95,
+  "event-subscription-mgr": 99.9,
+  "message-broker": 99.95,
+  "insights-engine": 99.9,
+  "metrics-dashboards": 99.9,
+  "license-portal": 99.9,
+  "license-api": 99.9,
+  "database": 99.99,
+  "cache-layer": 99.95,
+  "secret-management": 99.99,
+};
+
+function buildSlaReport(): SlaReportData {
+  const targets = allComponents.map((c) => {
+    const target = slaTargetMap[c.id] ?? 99.9;
+    // Most components meet SLA; cache-layer and workflow-engine breach
+    const isBreach = c.id === "cache-layer" || c.id === "workflow-engine";
+    const actual = isBreach
+      ? parseFloat((target - (0.1 + Math.random() * 0.3)).toFixed(3))
+      : parseFloat((target + Math.random() * 0.04).toFixed(3));
+    return {
+      componentId: c.id,
+      componentName: c.name,
+      groupName: c.groupName,
+      slaTargetPercent: target,
+      actualUptimePercent: Math.min(actual, 100),
+      status: (isBreach ? "breached" : "met") as "met" | "breached",
+    };
+  });
+
+  const breaches = targets
+    .filter((t) => t.status === "breached")
+    .map((t) => ({
+      componentId: t.componentId,
+      componentName: t.componentName,
+      slaTargetPercent: t.slaTargetPercent,
+      actualUptimePercent: t.actualUptimePercent,
+      breachDurationMinutes: t.componentId === "cache-layer" ? 47 : 23,
+      correlatedIncidentId: t.componentId === "cache-layer" ? "inc-002" : "inc-001",
+      correlatedIncidentTitle:
+        t.componentId === "cache-layer"
+          ? "Cache Layer partial connectivity issues"
+          : "Elevated latency on Workflow Engine",
+    }));
+
+  const metCount = targets.filter((t) => t.status === "met").length;
+  const breachCount = targets.filter((t) => t.status === "breached").length;
+  const avg = parseFloat(
+    (targets.reduce((sum, t) => sum + t.actualUptimePercent, 0) / targets.length).toFixed(3)
+  );
+
+  return {
+    periodStart: daysAgo(30),
+    periodEnd: new Date().toISOString(),
+    targets,
+    breaches,
+    mttrMttd: {
+      mttrMinutes: 42,
+      mttdMinutes: 8,
+      incidentsAnalyzed: 17,
+      periodLabel: "Last 30 days",
+    },
+    totalComponents: targets.length,
+    componentsMeetingSla: metCount,
+    componentsBreached: breachCount,
+    averageUptimePercent: avg,
+  };
+}
+
+export const slaReportData: SlaReportData = buildSlaReport();
+
+// ─── Escalation Expectations ────────────────────────────────────────
+
+export const escalationExpectations: EscalationExpectations = {
+  acknowledgementMinutes: 15,
+  firstResponseMinutes: 30,
+  updateCadenceMinutes: 60,
+};

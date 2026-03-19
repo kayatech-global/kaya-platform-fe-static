@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/atoms/card";
 import { StatusDot } from "@/components/status/status-dot";
-import { healthChecks, componentGroups } from "@/mocks/status-data";
+import { healthChecks, componentGroups, componentBaselineConfigs, networkAccessMap } from "@/mocks/status-data";
 import { STATUS_LABELS } from "@/models/status";
 import { cn } from "@/lib/utils";
 import type { ComponentStatus } from "@/models/status";
@@ -143,6 +143,48 @@ export default function HealthPage() {
                         Last Check
                       </p>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    {(() => {
+                      const cfg = componentBaselineConfigs.find(
+                        (c) => c.componentId === hc.componentId
+                      );
+                      return (
+                        <>
+                          <div className="rounded-lg bg-gray-50 px-2 py-1.5 text-center dark:bg-gray-800">
+                            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                              {cfg ? `${cfg.baselineResponseTimeMs / 1000}s` : "15s"}
+                            </p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                              Baseline RT
+                            </p>
+                          </div>
+                          <div className="rounded-lg bg-gray-50 px-2 py-1.5 text-center dark:bg-gray-800">
+                            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                              {cfg ? `${cfg.pollingIntervalMinutes} min` : "15 min"}
+                            </p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                              Poll Interval
+                            </p>
+                          </div>
+                          <div className="rounded-lg bg-gray-50 px-2 py-1.5 text-center dark:bg-gray-800">
+                            {networkAccessMap[hc.componentId] === "public" ? (
+                              <Badge variant="info" size="sm" className="text-[10px]">
+                                Public
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" size="sm" className="text-[10px]">
+                                Private (K8s)
+                              </Badge>
+                            )}
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                              Network
+                            </p>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex items-center justify-between text-xs text-gray-400">

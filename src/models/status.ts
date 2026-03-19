@@ -128,6 +128,67 @@ export interface EscalationRule {
   contacts: EscalationContact[];
 }
 
+// ─── SLA Report Models ──────────────────────────────────────────────
+
+export type SlaStatus = "met" | "breached";
+
+export type NetworkAccess = "public" | "private-k8s";
+
+export interface SlaTarget {
+  componentId: string;
+  componentName: string;
+  groupName: string;
+  slaTargetPercent: number;
+  actualUptimePercent: number;
+  status: SlaStatus;
+}
+
+export interface SlaBreachDetail {
+  componentId: string;
+  componentName: string;
+  slaTargetPercent: number;
+  actualUptimePercent: number;
+  breachDurationMinutes: number;
+  correlatedIncidentId: string;
+  correlatedIncidentTitle: string;
+}
+
+export interface MttrMttdStats {
+  mttrMinutes: number;
+  mttdMinutes: number;
+  incidentsAnalyzed: number;
+  periodLabel: string;
+}
+
+export interface SlaReportData {
+  periodStart: string;
+  periodEnd: string;
+  targets: SlaTarget[];
+  breaches: SlaBreachDetail[];
+  mttrMttd: MttrMttdStats;
+  totalComponents: number;
+  componentsMeetingSla: number;
+  componentsBreached: number;
+  averageUptimePercent: number;
+}
+
+// ─── Component Baseline Config ──────────────────────────────────────
+
+export interface ComponentBaselineConfig {
+  componentId: string;
+  baselineResponseTimeMs: number;
+  pollingIntervalMinutes: number;
+  networkAccess: NetworkAccess;
+}
+
+// ─── Escalation Expectations ────────────────────────────────────────
+
+export interface EscalationExpectations {
+  acknowledgementMinutes: number;
+  firstResponseMinutes: number;
+  updateCadenceMinutes: number;
+}
+
 // ─── Admin Dashboard ─────────────────────────────────────────────────
 
 export interface AdminOverview {

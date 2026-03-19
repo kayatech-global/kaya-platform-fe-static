@@ -19,7 +19,7 @@ import {
   DialogBody,
   DialogFooter,
 } from "@/components/atoms/dialog";
-import { escalationContacts, escalationRules } from "@/mocks/status-data";
+import { escalationContacts, escalationRules, escalationExpectations } from "@/mocks/status-data";
 import { IMPACT_LABELS } from "@/models/status";
 import type { IncidentImpact } from "@/models/status";
 
@@ -33,6 +33,9 @@ export default function EscalationPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [ackMinutes, setAckMinutes] = useState(String(escalationExpectations.acknowledgementMinutes));
+  const [firstRespMinutes, setFirstRespMinutes] = useState(String(escalationExpectations.firstResponseMinutes));
+  const [updateCadence, setUpdateCadence] = useState(String(escalationExpectations.updateCadenceMinutes));
 
   return (
     <div className="space-y-6">
@@ -84,6 +87,43 @@ export default function EscalationPage() {
                 </Button>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Escalation Expectations */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Escalation Expectations</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Input
+              label="Acknowledgement SLA (min)"
+              type="number"
+              value={ackMinutes}
+              onChange={(e) => setAckMinutes(e.target.value)}
+              supportiveText="Time to acknowledge an incident"
+            />
+            <Input
+              label="First Response SLA (min)"
+              type="number"
+              value={firstRespMinutes}
+              onChange={(e) => setFirstRespMinutes(e.target.value)}
+              supportiveText="Time to first meaningful response"
+            />
+            <Input
+              label="Update Cadence (min)"
+              type="number"
+              value={updateCadence}
+              onChange={(e) => setUpdateCadence(e.target.value)}
+              supportiveText="Frequency of updates during active incidents"
+            />
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button variant="primary" size="sm">
+              Save Expectations
+            </Button>
           </div>
         </CardContent>
       </Card>

@@ -10,6 +10,7 @@ import {
   Users,
   ArrowUpRight,
   Activity,
+  FileBarChart,
   ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/status/admin/subscribers", label: "Subscribers", icon: Users },
   { href: "/status/admin/escalation", label: "Escalation", icon: ArrowUpRight },
   { href: "/status/admin/health", label: "Health Monitor", icon: Activity },
+  { href: "/status/admin/sla-reports", label: "SLA Reports", icon: FileBarChart },
 ];
 
 export function AdminSidebar() {
