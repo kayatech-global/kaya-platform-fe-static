@@ -42,4 +42,6 @@ export enum CustomNodeTypes {
     humanInLoop = 'human_in_loop',
     // Tool Executor node
     toolExecutorNode = 'tool_executor_node',
+    // External Agent node (REQ-020)
+    externalAgentNode = 'external_agent_node',
 }
