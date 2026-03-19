@@ -8,6 +8,7 @@ export const BREADCRUMB_LABELS_LEVEL_3: Record<string, string> = {
     learnings: 'Learning Records',
     'guardrails-api-configurations': 'Guardrails API Configurations',
     'configure-connections': 'Configure Connections',
+    'standalone-agents': 'Standalone Agents',
 };
 
 /** Path segment index 4 labels (nested sections) */
@@ -48,6 +49,7 @@ export const PAGE_TITLE_BY_PATH: Record<string, string> = {
     'setup-guardrails': 'Setup Guardrails',
     'guardrails-api-configurations': 'Guardrails API Configurations',
     'guardrails-model-configurations': 'Guardrails Model Configurations',
+    'standalone-agents': 'Standalone Agents',
 };
 
 export function getBreadcrumbLabelLevel3(segment: string | undefined): string {
