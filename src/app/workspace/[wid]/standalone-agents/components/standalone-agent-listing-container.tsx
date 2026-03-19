@@ -4,12 +4,12 @@ import React, { useState, useMemo } from 'react';
 import { Input } from '@/components';
 import { Button } from '@/components';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/atoms/select';
+    SelectV2 as Select,
+    SelectContentV2 as SelectContent,
+    SelectItemV2 as SelectItem,
+    SelectTriggerV2 as SelectTrigger,
+    SelectValueV2 as SelectValue,
+} from '@/components/atoms/select-v2';
 import { Search, Plus, LayoutGrid, List } from 'lucide-react';
 import { StandaloneAgentSummaryCards } from './standalone-agent-summary-cards';
 import { StandaloneAgentCard } from './standalone-agent-card';

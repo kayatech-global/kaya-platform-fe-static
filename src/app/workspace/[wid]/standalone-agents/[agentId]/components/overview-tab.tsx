@@ -123,11 +123,9 @@ export const OverviewTab = ({ agent }: OverviewTabProps) => {
                             <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={handleCopy}>
                                 {copied ? <CheckCheck size={13} className="text-green-400" /> : <Copy size={13} className="text-muted-foreground" />}
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" asChild>
-                                <a href={agent.endpointUrl} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink size={13} className="text-muted-foreground" />
-                                </a>
-                            </Button>
+                            <a href={agent.endpointUrl} target="_blank" rel="noopener noreferrer" className="h-7 w-7 flex-shrink-0 inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground">
+                                <ExternalLink size={13} className="text-muted-foreground" />
+                            </a>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

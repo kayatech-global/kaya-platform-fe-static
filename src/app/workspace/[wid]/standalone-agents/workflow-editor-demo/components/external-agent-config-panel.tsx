@@ -5,12 +5,12 @@ import { Label } from '@/components/atoms/label';
 import { Input } from '@/components';
 import { Button } from '@/components';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/atoms/select';
+    SelectV2 as Select,
+    SelectContentV2 as SelectContent,
+    SelectItemV2 as SelectItem,
+    SelectTriggerV2 as SelectTrigger,
+    SelectValueV2 as SelectValue,
+} from '@/components/atoms/select-v2';
 import { RadioGroup, RadioGroupItem } from '@/components/atoms/radio-group';
 import { Switch } from '@/components/atoms/switch';
 import { Badge } from '@/components/atoms/badge';
