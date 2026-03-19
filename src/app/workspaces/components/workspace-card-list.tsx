@@ -68,6 +68,9 @@ const EmptyWorkspace = () => (
     </div>
 );
 
+// Total available credits (mock - in production this would come from an API)
+const TOTAL_AVAILABLE_CREDITS = 100000;
+
 const WorkspaceCardGrid = ({
     data,
     isSuccess,
@@ -76,6 +79,7 @@ const WorkspaceCardGrid = ({
     onHandleEdit,
     onHandleDelete,
     onOpenCreditBudgetDialog,
+    workspaceBudgets,
 }: {
     data: WorkspaceCardProps[];
     isSuccess: boolean;
@@ -84,42 +88,46 @@ const WorkspaceCardGrid = ({
     onHandleEdit: (workspaceId: number | string) => void;
     onHandleDelete: (workspaceId: number | string) => void;
     onOpenCreditBudgetDialog: (workspaceId: string | number, workspaceName?: string) => void;
+    workspaceBudgets: Record<string, number>;
 }) => {
     const { user, isSuperAdmin } = useAuth();
     const workspaces = user?.user?.workspaces;
 
+    // Calculate total allocated once for remaining budget
+    const totalAllocated = Object.values(workspaceBudgets).reduce((sum, val) => sum + val, 0);
+
     if (data?.length > 0 || !isSuccess) {
-        return (
-            <>
-                {data.map((workspace) => {
-                    const isWorkspaceAdmin = workspaces?.some(
-                        ws => ws.id === workspace.id && ws.roles.includes(RoleType.WORKSPACE_ADMIN)
-                    );
+        return data.map((workspace) => {
+            const isWorkspaceAdmin = workspaces?.some(
+                ws => ws.id === workspace.id && ws.roles.includes(RoleType.WORKSPACE_ADMIN)
+            );
 
-                    // Get governance badges for this workspace
-                    const governanceBadges = getGovernanceBadges(workspace.id, workspace.name);
+            // Get governance badges for this workspace
+            const governanceBadges = getGovernanceBadges(workspace.id, workspace.name);
+            const allocatedBudget = workspaceBudgets[String(workspace.uuid)] || 0;
+            const remainingBudget = TOTAL_AVAILABLE_CREDITS - totalAllocated;
 
-                    return (
-                        <WorkspaceCard
-                            key={workspace.id}
-                            {...workspace}
-                            showOptions={isSuperAdmin || isWorkspaceAdmin}
-                            cardWidth={cardWidth}
-                            governanceBadges={governanceBadges}
-                            onDeleteClick={workspaceId => {
-                                onHandleDelete(workspaceId);
-                            }}
-                            onEditClick={workspaceId => {
-                                onHandleEdit(workspaceId);
-                            }}
-                            onAllocateCreditBudget={workspaceId => {
-                                onOpenCreditBudgetDialog(workspaceId, workspace.name);
-                            }}
-                        />
-                    );
-                })}
-            </>
-        );
+            return (
+                <WorkspaceCard
+                    key={workspace.uuid || workspace.id}
+                    {...workspace}
+                    showOptions={isSuperAdmin || isWorkspaceAdmin}
+                    cardWidth={cardWidth}
+                    governanceBadges={governanceBadges}
+                    allocatedBudget={allocatedBudget}
+                    remainingBudget={allocatedBudget > 0 ? remainingBudget : undefined}
+                    onDeleteClick={workspaceId => {
+                        onHandleDelete(workspaceId);
+                    }}
+                    onEditClick={workspaceId => {
+                        onHandleEdit(workspaceId);
+                    }}
+                    onAllocateCreditBudget={workspaceId => {
+                        onOpenCreditBudgetDialog(workspaceId, workspace.name);
+                    }}
+                />
+            );
+        });
     }
 
     if (hasFilters) return <EmptyWorkspace />;
@@ -158,6 +166,7 @@ const WorkspaceCardList = ({
     const [creditBudgetDialogOpen, setCreditBudgetDialogOpen] = useState(false);
     const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | number>('');
     const [selectedWorkspaceName, setSelectedWorkspaceName] = useState<string>('');
+    const [workspaceBudgets, setWorkspaceBudgets] = useState<Record<string, number>>({});
 
     const onDeleteClick = (id: number | string) => {
         setWorkspaceId(id);
@@ -181,6 +190,17 @@ const WorkspaceCardList = ({
         setSelectedWorkspaceId('');
         setSelectedWorkspaceName('');
     }, []);
+
+    const handleSaveBudget = useCallback((wsId: string | number, allocatedBudget: number) => {
+        setWorkspaceBudgets(prev => ({
+            ...prev,
+            [String(wsId)]: allocatedBudget,
+        }));
+    }, []);
+
+    // Calculate total allocated and remaining
+    const totalAllocated = Object.values(workspaceBudgets).reduce((sum, val) => sum + val, 0);
+    const remainingCredits = TOTAL_AVAILABLE_CREDITS - totalAllocated;
 
     return (
         <div className="bg-white rounded-b-lg dark:bg-[#1F2937] flex flex-col border border-gray-200 shadow-sm dark:border-gray-800 overflow-hidden overflow-y-auto">
@@ -214,6 +234,7 @@ const WorkspaceCardList = ({
                                 onHandleDelete={onDeleteClick}
                                 onHandleEdit={onHandleEdit}
                                 onOpenCreditBudgetDialog={openCreditBudgetDialog}
+                                workspaceBudgets={workspaceBudgets}
                             />
                         ) : (
                             <>
@@ -233,6 +254,7 @@ const WorkspaceCardList = ({
                                                     onHandleDelete={onDeleteClick}
                                                     onHandleEdit={onHandleEdit}
                                                     onOpenCreditBudgetDialog={openCreditBudgetDialog}
+                                                    workspaceBudgets={workspaceBudgets}
                                                 />
                                             </div>
                                         </div>
@@ -269,6 +291,9 @@ const WorkspaceCardList = ({
                             onOpenChange={(isOpen) => !isOpen && closeCreditBudgetDialog()}
                             workspaceId={selectedWorkspaceId}
                             workspaceName={selectedWorkspaceName}
+                            totalAvailableCredits={remainingCredits + (workspaceBudgets[String(selectedWorkspaceId)] || 0)}
+                            currentAllocatedBudget={workspaceBudgets[String(selectedWorkspaceId)] || 0}
+                            onSave={handleSaveBudget}
                         />
                     </>
                 )}

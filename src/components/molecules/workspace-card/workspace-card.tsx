@@ -24,6 +24,8 @@ export interface WorkspaceCardProps extends AvatarGroupProps {
     showOptions?: boolean;
     cardWidth?: string;
     governanceBadges?: GovernanceBadge[];
+    allocatedBudget?: number;
+    remainingBudget?: number;
     onSkeltonClick?: () => void;
     onEditClick: (workspaceId: number | string) => void;
     onDeleteClick: (workspaceId: number | string) => void;
@@ -59,6 +61,8 @@ const WorkspaceCard = ({
     showOptions = false,
     cardWidth = '!w-[300px]',
     governanceBadges,
+    allocatedBudget,
+    remainingBudget,
     onSkeltonClick,
     onEditClick,
     onDeleteClick,
@@ -134,6 +138,19 @@ const WorkspaceCard = ({
             </div>
             <div className="realm-card-body px-4 min-h-[72px] overflow-hidden">
                 <p className="text-xs font-normal text-gray-500 dark:text-gray-400">{description}</p>
+                {/* Budget Chips */}
+                {(allocatedBudget !== undefined && allocatedBudget > 0) && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                            Allocated: {allocatedBudget.toLocaleString()}
+                        </span>
+                        {remainingBudget !== undefined && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                Remaining: {remainingBudget.toLocaleString()}
+                            </span>
+                        )}
+                    </div>
+                )}
                 {governanceBadges && governanceBadges.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-2">
                         {governanceBadges.map((badge, index) => (
