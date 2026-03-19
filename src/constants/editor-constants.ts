@@ -591,6 +591,17 @@ export const NODE_LIST: NodeListTypeDef[] = [
                 icon: '/png/nodes/decision_agent.png',
                 iconType: 'png',
             },
+            {
+                id: 'external_agent_init_menu',
+                data: {},
+                title: 'External Agent',
+                type: CustomNodeTypes.externalAgentNode,
+                showTitle: true,
+                showInteractions: false,
+                isActive: false,
+                color: '#0DA2E7',
+                icon: 'ri-robot-3-fill text-[50px] antialiased text-white',
+            },
         ],
     },
     {

@@ -322,5 +322,25 @@ export const Node: React.FC<NodeProps> = ({ id, data, type }) => {
         );
     }
 
+    if (type === CustomNodeTypes.externalAgentNode) {
+        return (
+            <CustomNodeBase
+                id={id}
+                data={data}
+                title="External Agent"
+                type={type}
+                color="#0DA2E7"
+                activeColor="#0891B2"
+                icon="ri-robot-3-fill text-[50px] antialiased text-white"
+                handleConfig={{ showSource: true, showTarget: true }}
+                showInteractions
+                iconType="icon"
+                showTitle
+                customTitle={data?.name as string}
+                hoverCard={<AgentHoverCard data={data as AgentType} color="#0DA2E7" />}
+            />
+        );
+    }
+
     return null;
 };

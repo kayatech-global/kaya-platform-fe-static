@@ -444,6 +444,7 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
                 [CustomNodeTypes.subflowNode]: Node,
                 [CustomNodeTypes.iteratorNode]: Node,
                 [CustomNodeTypes.toolExecutorNode]: Node,
+                [CustomNodeTypes.externalAgentNode]: Node,
             }),
             []
         );
