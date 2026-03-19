@@ -65,13 +65,7 @@ export const StandaloneAgentSummaryCards = ({ agents }: SummaryCardsProps) => {
             {cards.map(card => {
                 const Icon = card.icon;
                 return (
-                    <Card
-                        key={card.label}
-                        className={cn(
-                            'border bg-card',
-                            card.borderClass
-                        )}
-                    >
+                    <Card key={card.label} className={cn('border bg-card', card.borderClass)}>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between mb-3">
                                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">

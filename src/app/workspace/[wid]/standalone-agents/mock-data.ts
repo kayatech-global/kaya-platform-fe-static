@@ -77,9 +77,7 @@ export const MOCK_AGENTS: StandaloneAgent[] = [
         sessionMode: 'per-execution',
         tools: ['shell', 'code-exec', 'file-tools'],
         connectors: ['GitHub Connector'],
-        envVars: [
-            { key: 'REVIEW_DEPTH', value: 'deep' },
-        ],
+        envVars: [{ key: 'REVIEW_DEPTH', value: 'deep' }],
     },
     {
         id: 'agent-003',
@@ -102,9 +100,7 @@ export const MOCK_AGENTS: StandaloneAgent[] = [
         sessionMode: 'single',
         tools: ['code-exec', 'file-tools', 'memory'],
         connectors: ['S3 Connector', 'PostgreSQL Connector'],
-        envVars: [
-            { key: 'OUTPUT_FORMAT', value: 'json' },
-        ],
+        envVars: [{ key: 'OUTPUT_FORMAT', value: 'json' }],
     },
     {
         id: 'agent-004',
@@ -127,9 +123,7 @@ export const MOCK_AGENTS: StandaloneAgent[] = [
         sessionMode: 'per-workflow',
         tools: ['email', 'memory'],
         connectors: ['Gmail Connector'],
-        envVars: [
-            { key: 'DEFAULT_TONE', value: 'professional' },
-        ],
+        envVars: [{ key: 'DEFAULT_TONE', value: 'professional' }],
     },
     {
         id: 'agent-005',

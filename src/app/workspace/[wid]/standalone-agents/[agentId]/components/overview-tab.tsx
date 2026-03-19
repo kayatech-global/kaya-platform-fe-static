@@ -46,18 +46,18 @@ export const OverviewTab = ({ agent }: OverviewTabProps) => {
                     v{agent.version}
                 </Badge>
                 <div className="flex items-center gap-2 ml-auto">
-                    <Button variant="secondary" size="sm" className="gap-1.5 text-xs h-8">
-                        <Play size={12} className="text-green-400" /> Start
-                    </Button>
-                    <Button variant="secondary" size="sm" className="gap-1.5 text-xs h-8">
-                        <Square size={12} className="text-gray-400" /> Stop
-                    </Button>
-                    <Button variant="secondary" size="sm" className="gap-1.5 text-xs h-8">
-                        <RotateCcw size={12} className="text-blue-400" /> Restart
-                    </Button>
-                    <Button variant="secondary" size="sm" className="gap-1.5 text-xs h-8 text-red-400 hover:text-red-300">
-                        <Trash2 size={12} /> Delete
-                    </Button>
+                <Button variant="secondary" size="sm" className="gap-1.5 text-xs h-8" leadingIcon={<Play size={12} className="text-green-400" />}>
+                    Start
+                </Button>
+                <Button variant="secondary" size="sm" className="gap-1.5 text-xs h-8" leadingIcon={<Square size={12} className="text-gray-400" />}>
+                    Stop
+                </Button>
+                <Button variant="secondary" size="sm" className="gap-1.5 text-xs h-8" leadingIcon={<RotateCcw size={12} className="text-blue-400" />}>
+                    Restart
+                </Button>
+                <Button variant="secondary" size="sm" className="gap-1.5 text-xs h-8 text-red-400 hover:text-red-300" leadingIcon={<Trash2 size={12} />}>
+                    Delete
+                </Button>
                 </div>
             </div>
 
