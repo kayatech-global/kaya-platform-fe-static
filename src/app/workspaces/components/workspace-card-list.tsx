@@ -9,10 +9,10 @@ import { RoleType } from '@/enums';
 import { IGroupWorkspace, IOption } from '@/models';
 import { ResourceQuotasDialog } from './governance-dialogs';
 
-// Mock governance badges based on workspace - in production these would come from API
+// Mock governance badges based on workspace - in production this would come from API
 const getGovernanceBadges = (workspaceId: number | string, workspaceName?: string): GovernanceBadge[] => {
     const badges: GovernanceBadge[] = [];
-    // Null-safe: use optional chaining to handle undefined workspaceName
+    // Safely handle undefined workspaceName with nullish coalescing
     const name = (workspaceName ?? '').toLowerCase();
     
     // Simulate different governance states based on workspace characteristics
