@@ -101,40 +101,48 @@ const WorkspaceCardGrid = ({
     const workspaces = user?.user?.workspaces;
 
     if (data?.length > 0 || !isSuccess) {
-        const cards = data.map((workspace) => {
-            const isWorkspaceAdmin = workspaces?.some(
-                ws => ws.id === workspace.id && ws.roles.includes(RoleType.WORKSPACE_ADMIN)
-            );
+        return (
+            <>
+                {data.map((workspace, index) => {
+                    const isWorkspaceAdmin = workspaces?.some(
+                        ws => ws.id === workspace.id && ws.roles.includes(RoleType.WORKSPACE_ADMIN)
+                    );
 
-            // Get governance badges for this workspace
-            const governanceBadges = getGovernanceBadges(workspace.id, workspace.name);
-            const allocatedBudget = workspaceBudgets[String(workspace.uuid)] || 0;
-            // Remaining = Allocated - Utilized (credits used by workflows)
-            const utilizedCredits = allocatedBudget > 0 ? getUtilizedCredits(String(workspace.uuid)) : 0;
-            const remainingBudget = allocatedBudget - utilizedCredits;
+                    // Get governance badges for this workspace
+                    const governanceBadges = getGovernanceBadges(workspace.id, workspace.name);
+                    const allocatedBudget = workspaceBudgets[String(workspace.uuid)] || 0;
+                    // Remaining = Allocated - Utilized (credits used by workflows)
+                    const utilizedCredits = allocatedBudget > 0 ? getUtilizedCredits(String(workspace.uuid)) : 0;
+                    const remainingBudget = allocatedBudget - utilizedCredits;
 
-            return (
-                <WorkspaceCard
-                    key={String(workspace.uuid || workspace.id)}
-                    {...workspace}
-                    showOptions={isSuperAdmin || isWorkspaceAdmin}
-                    cardWidth={cardWidth}
-                    governanceBadges={governanceBadges}
-                    allocatedBudget={allocatedBudget}
-                    remainingBudget={allocatedBudget > 0 ? remainingBudget : undefined}
-                    onDeleteClick={workspaceId => {
-                        onHandleDelete(workspaceId);
-                    }}
-                    onEditClick={workspaceId => {
-                        onHandleEdit(workspaceId);
-                    }}
-                    onAllocateCreditBudget={workspaceId => {
-                        onOpenCreditBudgetDialog(workspaceId, workspace.name);
-                    }}
-                />
-            );
-        });
-        return <>{cards}</>;
+                    // Use a guaranteed unique key combining uuid, id, and index as fallback
+                    const uniqueKey = workspace.uuid 
+                        ? `workspace-${workspace.uuid}` 
+                        : `workspace-${workspace.id}-${index}`;
+
+                    return (
+                        <WorkspaceCard
+                            key={uniqueKey}
+                            {...workspace}
+                            showOptions={isSuperAdmin || isWorkspaceAdmin}
+                            cardWidth={cardWidth}
+                            governanceBadges={governanceBadges}
+                            allocatedBudget={allocatedBudget}
+                            remainingBudget={allocatedBudget > 0 ? remainingBudget : undefined}
+                            onDeleteClick={workspaceId => {
+                                onHandleDelete(workspaceId);
+                            }}
+                            onEditClick={workspaceId => {
+                                onHandleEdit(workspaceId);
+                            }}
+                            onAllocateCreditBudget={workspaceId => {
+                                onOpenCreditBudgetDialog(workspaceId, workspace.name);
+                            }}
+                        />
+                    );
+                })}
+            </>
+        );
     }
 
     if (hasFilters) return <EmptyWorkspace />;
