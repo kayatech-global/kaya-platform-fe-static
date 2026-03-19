@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import AppDrawer from '@/components/molecules/drawer/app-drawer';
 import WorkspaceContainerSkeleton from './workspace-container-skeleton';
 import { ActivityColorCode } from '@/enums/activity-color-code-type';
-import { Globe, Info, Layers, AlertTriangle, UserPlus } from 'lucide-react';
+import { Globe, Info } from 'lucide-react';
 
 const activityData = [
     {
@@ -82,72 +82,30 @@ const WorkspaceContainer = () => {
         return <WorkspaceContainerSkeleton />;
     }
 
-    // Mock governance stats - in production these would come from an API
-    const governanceStats = {
-        totalWorkspaces: workspaces?.length || 0,
-        policyViolations: 2,
-        pendingAccessRequests: 5,
-    };
-
     return (
         <React.Fragment>
-            {/* Governance Overview Bar */}
-            <div className="w-full flex flex-wrap items-center justify-between gap-4 mb-6">
-                {/* Quick Stats */}
-                <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                            <Layers size={16} className="text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Total Workspaces</span>
-                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{governanceStats.totalWorkspaces}</span>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30">
-                            <AlertTriangle size={16} className="text-orange-600 dark:text-orange-400" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Policy Violations</span>
-                            <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">{governanceStats.policyViolations}</span>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                            <UserPlus size={16} className="text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Pending Access</span>
-                            <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">{governanceStats.pendingAccessRequests}</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right side: Recent Activities & Environment */}
-                <div className="flex items-center gap-4">
-                    <Button variant={'link'} size={'sm'} onClick={handleClick}>
-                        Recent Activities
-                    </Button>
-                    <span className="flex items-center gap-1 bg-blue-100 rounded-sm py-1 px-4">
-                        {environmentData?.isValid ? (
-                            <>
-                                <Globe size={16} className="text-blue-600 dark:text-blue-600" />
-                                <span className="flex items-center gap-1 text-xs font-normal text-blue-600 dark:text-blue-600 mt-[1px]">
-                                    <span>Current environment:</span>
-                                    <span className="font-bold">{environmentData?.data}</span>
-                                </span>
-                            </>
-                        ) : (
-                            <>
-                                <Info size={16} className="text-blue-600 dark:text-blue-600" />
-                                <span className="text-xs font-normal text-blue-600 dark:text-blue-600 mt-[1px]">
-                                    No environment has been configured
-                                </span>
-                            </>
-                        )}
-                    </span>
-                </div>
+            <div className="w-full flex justify-end items-center gap-4 mb-6">
+                <Button variant={'link'} size={'sm'} onClick={handleClick}>
+                    Recent Activities
+                </Button>
+                <span className="flex items-center gap-1 bg-blue-100 rounded-sm py-1 px-4">
+                    {environmentData?.isValid ? (
+                        <>
+                            <Globe size={16} className="text-blue-600 dark:text-blue-600" />
+                            <span className="flex items-center gap-1 text-xs font-normal text-blue-600 dark:text-blue-600 mt-[1px]">
+                                <span>Current environment:</span>
+                                <span className="font-bold">{environmentData?.data}</span>
+                            </span>
+                        </>
+                    ) : (
+                        <>
+                            <Info size={16} className="text-blue-600 dark:text-blue-600" />
+                            <span className="text-xs font-normal text-blue-600 dark:text-blue-600 mt-[1px]">
+                                No environment has been configured
+                            </span>
+                        </>
+                    )}
+                </span>
             </div>
             <div ref={metricPageRef} className="realms-page pb-4">
                 <div className="flex justify-between gap-x-9">

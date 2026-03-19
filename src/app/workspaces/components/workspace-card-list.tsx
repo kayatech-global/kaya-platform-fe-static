@@ -12,7 +12,8 @@ import { ResourceQuotasDialog } from './governance-dialogs';
 // Mock governance badges based on workspace - in production these would come from API
 const getGovernanceBadges = (workspaceId: number | string, workspaceName?: string): GovernanceBadge[] => {
     const badges: GovernanceBadge[] = [];
-    const name = workspaceName?.toLowerCase() || '';
+    // Null-safe: use optional chaining to handle undefined workspaceName
+    const name = (workspaceName ?? '').toLowerCase();
     
     // Simulate different governance states based on workspace characteristics
     if (name.includes('alpha') || name.includes('dev')) {
