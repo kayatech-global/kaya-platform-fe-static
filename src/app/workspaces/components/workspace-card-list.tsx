@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { InfoIcon } from 'lucide-react';
 import { Button, TruncateCell } from '@/components';
 import WorkspaceCard, { WorkspaceCardProps, GovernanceBadge } from '@/components/molecules/workspace-card/workspace-card';
@@ -7,6 +7,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/a
 import { useAuth } from '@/context';
 import { RoleType } from '@/enums';
 import { IGroupWorkspace, IOption } from '@/models';
+import {
+    ManageAccessDialog,
+    ResourceQuotasDialog,
+    AuditLogsDialog,
+    EnvironmentSettingsDialog,
+    GovernanceDialogType,
+} from './governance-dialogs';
 
 // Mock governance badges based on workspace - in production these would come from API
 const getGovernanceBadges = (workspaceId: number | string, workspaceName?: string): GovernanceBadge[] => {
@@ -74,6 +81,7 @@ const WorkspaceCardGrid = ({
     cardWidth,
     onHandleEdit,
     onHandleDelete,
+    onOpenGovernanceDialog,
 }: {
     data: WorkspaceCardProps[];
     isSuccess: boolean;
@@ -81,47 +89,52 @@ const WorkspaceCardGrid = ({
     cardWidth?: string;
     onHandleEdit: (workspaceId: number | string) => void;
     onHandleDelete: (workspaceId: number | string) => void;
+    onOpenGovernanceDialog: (type: GovernanceDialogType, workspaceId: string | number, workspaceName?: string) => void;
 }) => {
     const { user, isSuperAdmin } = useAuth();
     const workspaces = user?.user?.workspaces;
 
     if (data?.length > 0 || !isSuccess) {
-        return data.map((workspace) => {
-            const isWorkspaceAdmin = workspaces?.some(
-                ws => ws.id === workspace.id && ws.roles.includes(RoleType.WORKSPACE_ADMIN)
-            );
+        return (
+            <>
+                {data.map((workspace) => {
+                    const isWorkspaceAdmin = workspaces?.some(
+                        ws => ws.id === workspace.id && ws.roles.includes(RoleType.WORKSPACE_ADMIN)
+                    );
 
-            // Get governance badges for this workspace
-            const governanceBadges = getGovernanceBadges(workspace.id, workspace.name);
+                    // Get governance badges for this workspace
+                    const governanceBadges = getGovernanceBadges(workspace.id, workspace.name);
 
-            return (
-                <WorkspaceCard
-                    key={workspace.id}
-                    {...workspace}
-                    showOptions={isSuperAdmin || isWorkspaceAdmin}
-                    cardWidth={cardWidth}
-                    governanceBadges={governanceBadges}
-                    onDeleteClick={workspaceId => {
-                        onHandleDelete(workspaceId);
-                    }}
-                    onEditClick={workspaceId => {
-                        onHandleEdit(workspaceId);
-                    }}
-                    onManageAccess={workspaceId => {
-                        console.log('Manage Access:', workspaceId);
-                    }}
-                    onResourceQuotas={workspaceId => {
-                        console.log('Resource Quotas:', workspaceId);
-                    }}
-                    onAuditLogs={workspaceId => {
-                        console.log('Audit Logs:', workspaceId);
-                    }}
-                    onEnvironmentSettings={workspaceId => {
-                        console.log('Environment Settings:', workspaceId);
-                    }}
-                />
-            );
-        });
+                    return (
+                        <WorkspaceCard
+                            key={workspace.id}
+                            {...workspace}
+                            showOptions={isSuperAdmin || isWorkspaceAdmin}
+                            cardWidth={cardWidth}
+                            governanceBadges={governanceBadges}
+                            onDeleteClick={workspaceId => {
+                                onHandleDelete(workspaceId);
+                            }}
+                            onEditClick={workspaceId => {
+                                onHandleEdit(workspaceId);
+                            }}
+                            onManageAccess={workspaceId => {
+                                onOpenGovernanceDialog('access', workspaceId, workspace.name);
+                            }}
+                            onResourceQuotas={workspaceId => {
+                                onOpenGovernanceDialog('quotas', workspaceId, workspace.name);
+                            }}
+                            onAuditLogs={workspaceId => {
+                                onOpenGovernanceDialog('audit', workspaceId, workspace.name);
+                            }}
+                            onEnvironmentSettings={workspaceId => {
+                                onOpenGovernanceDialog('environment', workspaceId, workspace.name);
+                            }}
+                        />
+                    );
+                })}
+            </>
+        );
     }
 
     if (hasFilters) return <EmptyWorkspace />;
@@ -155,6 +168,11 @@ const WorkspaceCardList = ({
 }: WorkspaceCardListProps) => {
     const [workspaceId, setWorkspaceId] = useState<number | string | undefined>(undefined);
     const [open, setOpen] = useState<boolean>(false);
+    
+    // Governance dialog state
+    const [governanceDialog, setGovernanceDialog] = useState<GovernanceDialogType>(null);
+    const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | number>('');
+    const [selectedWorkspaceName, setSelectedWorkspaceName] = useState<string>('');
 
     const onDeleteClick = (id: number | string) => {
         setWorkspaceId(id);
@@ -166,6 +184,18 @@ const WorkspaceCardList = ({
         onHandleDelete(workspaceId as number | string);
         setWorkspaceId(undefined);
     };
+
+    const openGovernanceDialog = useCallback((type: GovernanceDialogType, wsId: string | number, wsName?: string) => {
+        setGovernanceDialog(type);
+        setSelectedWorkspaceId(wsId);
+        setSelectedWorkspaceName(wsName || '');
+    }, []);
+
+    const closeGovernanceDialog = useCallback(() => {
+        setGovernanceDialog(null);
+        setSelectedWorkspaceId('');
+        setSelectedWorkspaceName('');
+    }, []);
 
     return (
         <div className="bg-white rounded-b-lg dark:bg-[#1F2937] flex flex-col border border-gray-200 shadow-sm dark:border-gray-800 overflow-hidden overflow-y-auto">
@@ -198,6 +228,7 @@ const WorkspaceCardList = ({
                                 hasFilters={hasFilters}
                                 onHandleDelete={onDeleteClick}
                                 onHandleEdit={onHandleEdit}
+                                onOpenGovernanceDialog={openGovernanceDialog}
                             />
                         ) : (
                             <>
@@ -216,6 +247,7 @@ const WorkspaceCardList = ({
                                                     cardWidth="!w-[290px]"
                                                     onHandleDelete={onDeleteClick}
                                                     onHandleEdit={onHandleEdit}
+                                                    onOpenGovernanceDialog={openGovernanceDialog}
                                                 />
                                             </div>
                                         </div>
@@ -245,6 +277,32 @@ const WorkspaceCardList = ({
                                 </div>
                             </DialogContent>
                         </Dialog>
+
+                        {/* Governance Dialogs */}
+                        <ManageAccessDialog
+                            open={governanceDialog === 'access'}
+                            onOpenChange={(isOpen) => !isOpen && closeGovernanceDialog()}
+                            workspaceId={selectedWorkspaceId}
+                            workspaceName={selectedWorkspaceName}
+                        />
+                        <ResourceQuotasDialog
+                            open={governanceDialog === 'quotas'}
+                            onOpenChange={(isOpen) => !isOpen && closeGovernanceDialog()}
+                            workspaceId={selectedWorkspaceId}
+                            workspaceName={selectedWorkspaceName}
+                        />
+                        <AuditLogsDialog
+                            open={governanceDialog === 'audit'}
+                            onOpenChange={(isOpen) => !isOpen && closeGovernanceDialog()}
+                            workspaceId={selectedWorkspaceId}
+                            workspaceName={selectedWorkspaceName}
+                        />
+                        <EnvironmentSettingsDialog
+                            open={governanceDialog === 'environment'}
+                            onOpenChange={(isOpen) => !isOpen && closeGovernanceDialog()}
+                            workspaceId={selectedWorkspaceId}
+                            workspaceName={selectedWorkspaceName}
+                        />
                     </>
                 )}
             </div>
