@@ -57,15 +57,7 @@ const AVAILABLE_CONNECTORS = [
     { id: 's3', label: 'S3 Connector' },
 ];
 
-const MODELS = [
-    'gpt-4o',
-    'gpt-4o-mini',
-    'claude-3-5-sonnet',
-    'claude-3-haiku',
-    'gemini-1.5-pro',
-    'gemini-1.5-flash',
-    'llama-3-70b',
-];
+const MODELS = ['gpt-4o', 'gpt-4o-mini', 'claude-3-5-sonnet', 'claude-3-haiku', 'gemini-1.5-pro', 'gemini-1.5-flash', 'llama-3-70b'];
 
 interface WizardState {
     framework: 'PI Agents' | 'OpenClaw' | '';
@@ -103,50 +95,36 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
     const [step, setStep] = useState(1);
     const [state, setState] = useState<WizardState>(initialState);
 
-    const updateState = (partial: Partial<WizardState>) => {
-        setState(prev => ({ ...prev, ...partial }));
-    };
+    const updateState = (partial: Partial<WizardState>) => setState(prev => ({ ...prev, ...partial }));
 
-    const toggleTool = (id: string) => {
+    const toggleTool = (id: string) =>
         setState(prev => ({
             ...prev,
             tools: prev.tools.includes(id) ? prev.tools.filter(t => t !== id) : [...prev.tools, id],
         }));
-    };
 
-    const toggleConnector = (id: string) => {
+    const toggleConnector = (id: string) =>
         setState(prev => ({
             ...prev,
-            connectors: prev.connectors.includes(id)
-                ? prev.connectors.filter(c => c !== id)
-                : [...prev.connectors, id],
+            connectors: prev.connectors.includes(id) ? prev.connectors.filter(c => c !== id) : [...prev.connectors, id],
         }));
-    };
 
-    const addEnvVar = () => {
-        setState(prev => ({ ...prev, envVars: [...prev.envVars, { key: '', value: '' }] }));
-    };
+    const addEnvVar = () => setState(prev => ({ ...prev, envVars: [...prev.envVars, { key: '', value: '' }] }));
 
-    const removeEnvVar = (index: number) => {
+    const removeEnvVar = (index: number) =>
         setState(prev => ({ ...prev, envVars: prev.envVars.filter((_, i) => i !== index) }));
-    };
 
-    const updateEnvVar = (index: number, field: 'key' | 'value', value: string) => {
+    const updateEnvVar = (index: number, field: 'key' | 'value', value: string) =>
         setState(prev => {
             const updated = [...prev.envVars];
             updated[index] = { ...updated[index], [field]: value };
             return { ...prev, envVars: updated };
         });
-    };
 
     const handleClose = () => {
         setStep(1);
         setState(initialState);
         onOpenChange(false);
-    };
-
-    const handleCreate = () => {
-        handleClose();
     };
 
     const canNext = () => {
@@ -197,12 +175,10 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
                 </div>
 
                 <div className="min-h-[320px] py-2">
-                    {/* Step 1: Framework Selection */}
+                    {/* Step 1: Framework */}
                     {step === 1 && (
                         <div className="flex flex-col gap-4">
-                            <p className="text-sm text-muted-foreground">
-                                Select the agent runtime framework for this standalone agent.
-                            </p>
+                            <p className="text-sm text-muted-foreground">Select the agent runtime framework for this standalone agent.</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {(['PI Agents', 'OpenClaw'] as const).map(fw => (
                                     <button
@@ -216,16 +192,11 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
                                         )}
                                     >
                                         <div className="flex items-center gap-3 mb-2">
-                                            <div className={cn(
-                                                'p-2 rounded-lg',
-                                                fw === 'PI Agents' ? 'bg-blue-500/15' : 'bg-purple-500/15'
-                                            )}>
+                                            <div className={cn('p-2 rounded-lg', fw === 'PI Agents' ? 'bg-blue-500/15' : 'bg-purple-500/15')}>
                                                 <Bot size={20} className={fw === 'PI Agents' ? 'text-blue-400' : 'text-purple-400'} />
                                             </div>
                                             <span className="font-semibold text-sm text-foreground">{fw}</span>
-                                            {state.framework === fw && (
-                                                <Check size={16} className="ml-auto text-blue-400" />
-                                            )}
+                                            {state.framework === fw && <Check size={16} className="ml-auto text-blue-400" />}
                                         </div>
                                         <p className="text-xs text-muted-foreground leading-relaxed">
                                             {fw === 'PI Agents'
@@ -233,10 +204,7 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
                                                 : 'OpenClaw open-source runtime with flexible tool integration, multi-model support, and ACP protocol compatibility.'}
                                         </p>
                                         <div className="mt-3 flex gap-1 flex-wrap">
-                                            {(fw === 'PI Agents'
-                                                ? ['A2A', 'Memory', 'Workflow-native']
-                                                : ['ACP', 'Multi-model', 'Open-source']
-                                            ).map(tag => (
+                                            {(fw === 'PI Agents' ? ['A2A', 'Memory', 'Workflow-native'] : ['ACP', 'Multi-model', 'Open-source']).map(tag => (
                                                 <span key={tag} className={cn(
                                                     'text-[10px] px-1.5 py-0.5 rounded border',
                                                     fw === 'PI Agents'
@@ -292,9 +260,7 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
                                         <SelectValue placeholder="Select model" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {MODELS.map(m => (
-                                            <SelectItem key={m} value={m}>{m}</SelectItem>
-                                        ))}
+                                        {MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -312,9 +278,7 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
                                             key={tool.id}
                                             className={cn(
                                                 'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
-                                                state.tools.includes(tool.id)
-                                                    ? 'border-blue-500/40 bg-blue-500/8'
-                                                    : 'border-border hover:border-border/80'
+                                                state.tools.includes(tool.id) ? 'border-blue-500/40 bg-blue-500/5' : 'border-border hover:border-border/80'
                                             )}
                                         >
                                             <Checkbox
@@ -339,7 +303,7 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
                                             className={cn(
                                                 'flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer text-xs transition-colors',
                                                 state.connectors.includes(conn.id)
-                                                    ? 'border-blue-500/40 bg-blue-500/8 text-blue-400'
+                                                    ? 'border-blue-500/40 bg-blue-500/5 text-blue-400'
                                                     : 'border-border text-muted-foreground hover:border-border/80'
                                             )}
                                         >
@@ -369,19 +333,11 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
                                 </div>
                                 <div className="grid gap-2">
                                     <Label className="text-xs font-medium">CPU Request</Label>
-                                    <Input
-                                        placeholder="500m"
-                                        value={state.cpu}
-                                        onChange={e => updateState({ cpu: e.target.value })}
-                                    />
+                                    <Input placeholder="500m" value={state.cpu} onChange={e => updateState({ cpu: e.target.value })} />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label className="text-xs font-medium">Memory Limit</Label>
-                                    <Input
-                                        placeholder="512Mi"
-                                        value={state.memory}
-                                        onChange={e => updateState({ memory: e.target.value })}
-                                    />
+                                    <Input placeholder="512Mi" value={state.memory} onChange={e => updateState({ memory: e.target.value })} />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label className="text-xs font-medium">Replicas</Label>
@@ -396,7 +352,7 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
                             </div>
 
                             <div className="grid gap-2">
-                                <Label className="text-xs font-medium">Session Management Mode</Label>
+                                <Label className="text-xs font-medium">Session Management</Label>
                                 <RadioGroup
                                     value={state.sessionMode}
                                     onValueChange={v => updateState({ sessionMode: v as WizardState['sessionMode'] })}
@@ -409,7 +365,7 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
                                     ].map(opt => (
                                         <label key={opt.value} className={cn(
                                             'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
-                                            state.sessionMode === opt.value ? 'border-blue-500/40 bg-blue-500/8' : 'border-border'
+                                            state.sessionMode === opt.value ? 'border-blue-500/40 bg-blue-500/5' : 'border-border'
                                         )}>
                                             <RadioGroupItem value={opt.value} className="mt-0.5" />
                                             <div>
@@ -462,7 +418,6 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
                     {step === 5 && (
                         <div className="flex flex-col gap-4">
                             <p className="text-sm text-muted-foreground">Review your configuration before creating the agent.</p>
-
                             {[
                                 {
                                     title: 'Framework',
@@ -511,8 +466,16 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
                                     content: (
                                         <div className="text-xs text-muted-foreground flex flex-col gap-1">
                                             <span><span className="text-foreground/70 font-medium">Image:</span> {state.image}</span>
-                                            <span><span className="text-foreground/70 font-medium">CPU:</span> {state.cpu} &nbsp;&bull;&nbsp; <span className="text-foreground/70 font-medium">Memory:</span> {state.memory}</span>
-                                            <span><span className="text-foreground/70 font-medium">Replicas:</span> {state.replicas} &nbsp;&bull;&nbsp; <span className="text-foreground/70 font-medium">Session:</span> {state.sessionMode}</span>
+                                            <span>
+                                                <span className="text-foreground/70 font-medium">CPU:</span> {state.cpu}{' '}
+                                                &bull;{' '}
+                                                <span className="text-foreground/70 font-medium">Memory:</span> {state.memory}
+                                            </span>
+                                            <span>
+                                                <span className="text-foreground/70 font-medium">Replicas:</span> {state.replicas}{' '}
+                                                &bull;{' '}
+                                                <span className="text-foreground/70 font-medium">Session:</span> {state.sessionMode}
+                                            </span>
                                         </div>
                                     ),
                                 },
@@ -547,16 +510,11 @@ export const CreateAgentWizard = ({ open, onOpenChange }: CreateAgentWizardProps
                     <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">Step {step} of {STEPS.length}</span>
                         {step < STEPS.length ? (
-                            <Button
-                                size="sm"
-                                onClick={() => setStep(step + 1)}
-                                disabled={!canNext()}
-                                className="gap-1"
-                            >
+                            <Button size="sm" onClick={() => setStep(step + 1)} disabled={!canNext()} className="gap-1">
                                 Next <ChevronRight size={14} />
                             </Button>
                         ) : (
-                            <Button size="sm" onClick={handleCreate} className="gap-1">
+                            <Button size="sm" onClick={handleClose} className="gap-1">
                                 <Zap size={14} /> Create Agent
                             </Button>
                         )}

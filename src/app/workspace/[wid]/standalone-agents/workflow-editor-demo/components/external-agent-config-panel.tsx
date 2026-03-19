@@ -14,7 +14,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/atoms/radio-group';
 import { Switch } from '@/components/atoms/switch';
 import { Badge } from '@/components/atoms/badge';
-import { Plus, Trash2, Bot, X, Globe, Zap, Link } from 'lucide-react';
+import { Plus, Trash2, Bot, X, Link } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ExternalAgentConfigPanelProps {
@@ -32,7 +32,7 @@ export const ExternalAgentConfigPanel = ({ onClose }: ExternalAgentConfigPanelPr
     const [authType, setAuthType] = useState<'none' | 'bearer' | 'api-key'>('bearer');
     const [authToken, setAuthToken] = useState('');
     const [executionMode, setExecutionMode] = useState<'synchronous' | 'asynchronous' | 'fire-and-forget'>('synchronous');
-    const [timeout, setTimeout] = useState(30);
+    const [timeout, setTimeoutVal] = useState(30);
     const [pollingInterval, setPollingInterval] = useState(5);
     const [sessionOverride, setSessionOverride] = useState(false);
     const [sessionId, setSessionId] = useState('');
@@ -65,9 +65,9 @@ export const ExternalAgentConfigPanel = ({ onClose }: ExternalAgentConfigPanelPr
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-gray-900 border-l border-border w-[340px] flex-shrink-0">
-            {/* Panel Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex flex-col h-full bg-gray-900 border-l border-border w-[340px] flex-shrink-0">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-cyan-500/15">
                         <Bot size={14} className="text-cyan-400" />
@@ -85,7 +85,7 @@ export const ExternalAgentConfigPanel = ({ onClose }: ExternalAgentConfigPanelPr
             </div>
 
             {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-5 [&::-webkit-scrollbar]:w-[4px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-gray-600">
+            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-5">
 
                 {/* Protocol */}
                 <div className="flex flex-col gap-2">
@@ -106,7 +106,7 @@ export const ExternalAgentConfigPanel = ({ onClose }: ExternalAgentConfigPanelPr
                             </button>
                         ))}
                     </div>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
                         {protocol === 'A2A'
                             ? 'Google Agent-to-Agent protocol. Discovers agent capabilities from .well-known/agent.json.'
                             : 'OpenClaw Agent Communication Protocol. REST-based cross-platform messaging.'}
@@ -132,9 +132,9 @@ export const ExternalAgentConfigPanel = ({ onClose }: ExternalAgentConfigPanelPr
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="none" className="text-xs">None</SelectItem>
-                            <SelectItem value="bearer" className="text-xs">Bearer Token</SelectItem>
-                            <SelectItem value="api-key" className="text-xs">API Key</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
+                            <SelectItem value="bearer">Bearer Token</SelectItem>
+                            <SelectItem value="api-key">API Key</SelectItem>
                         </SelectContent>
                     </Select>
                     {authType === 'bearer' && (
@@ -176,13 +176,15 @@ export const ExternalAgentConfigPanel = ({ onClose }: ExternalAgentConfigPanelPr
                                 className={cn(
                                     'flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer text-xs transition-colors',
                                     executionMode === opt.value
-                                        ? 'border-cyan-500/40 bg-cyan-500/8'
+                                        ? 'border-cyan-500/40 bg-cyan-500/5'
                                         : 'border-border hover:border-border/80'
                                 )}
                             >
                                 <RadioGroupItem value={opt.value} className="mt-0.5 flex-shrink-0" />
                                 <div>
-                                    <p className={cn('font-medium', executionMode === opt.value ? 'text-cyan-400' : 'text-foreground')}>{opt.label}</p>
+                                    <p className={cn('font-medium', executionMode === opt.value ? 'text-cyan-400' : 'text-foreground')}>
+                                        {opt.label}
+                                    </p>
                                     <p className="text-muted-foreground text-[10px]">{opt.desc}</p>
                                 </div>
                             </label>
@@ -198,7 +200,7 @@ export const ExternalAgentConfigPanel = ({ onClose }: ExternalAgentConfigPanelPr
                             <Input
                                 type="number"
                                 value={timeout}
-                                onChange={e => setTimeout(parseInt(e.target.value) || 30)}
+                                onChange={e => setTimeoutVal(parseInt(e.target.value) || 30)}
                                 className="h-8 text-xs"
                             />
                         </div>
@@ -242,7 +244,7 @@ export const ExternalAgentConfigPanel = ({ onClose }: ExternalAgentConfigPanelPr
                                         placeholder="{{workflow.var}}"
                                         className="text-[10px] h-7 font-mono flex-1"
                                     />
-                                    <span className="text-[10px] text-muted-foreground flex-shrink-0">→</span>
+                                    <span className="text-[10px] text-muted-foreground flex-shrink-0">{'→'}</span>
                                     <Input
                                         value={m.agentVar}
                                         onChange={e => updateMapping('input', i, 'agentVar', e.target.value)}
@@ -279,7 +281,7 @@ export const ExternalAgentConfigPanel = ({ onClose }: ExternalAgentConfigPanelPr
                                         placeholder="agent_output"
                                         className="text-[10px] h-7 font-mono flex-1"
                                     />
-                                    <span className="text-[10px] text-muted-foreground flex-shrink-0">→</span>
+                                    <span className="text-[10px] text-muted-foreground flex-shrink-0">{'→'}</span>
                                     <Input
                                         value={m.workflowVar}
                                         onChange={e => updateMapping('output', i, 'workflowVar', e.target.value)}
@@ -318,7 +320,7 @@ export const ExternalAgentConfigPanel = ({ onClose }: ExternalAgentConfigPanelPr
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
                     <div>
                         <Label className="text-xs font-semibold text-foreground">Enable Tracing</Label>
-                        <p className="text-[10px] text-muted-foreground">Capture observability & data lineage events</p>
+                        <p className="text-[10px] text-muted-foreground">Capture observability and data lineage events</p>
                     </div>
                     <Switch checked={enableTracing} onCheckedChange={setEnableTracing} />
                 </div>
@@ -356,12 +358,9 @@ export const ExternalAgentConfigPanel = ({ onClose }: ExternalAgentConfigPanelPr
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-3 border-t border-border flex gap-2">
-                <Button variant="secondary" size="sm" className="flex-1 text-xs h-8">
-                    Reset
-                </Button>
-                <Button size="sm" className="flex-1 text-xs h-8 gap-1.5">
-                    <Zap size={12} /> Apply
+            <div className="px-4 py-3 border-t border-border flex-shrink-0">
+                <Button size="sm" className="w-full text-xs gap-1.5 h-8">
+                    Apply Configuration
                 </Button>
             </div>
         </div>

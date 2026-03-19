@@ -38,9 +38,7 @@ import { cn } from '@/lib/utils';
 import { ExternalAgentConfigPanel } from './external-agent-config-panel';
 import { useRouter, useParams } from 'next/navigation';
 
-/* ─────────────────────────────────────────────
-   Custom Node Components
-───────────────────────────────────────────── */
+/* ─── Custom Node Components ─── */
 
 const StartNode = ({ data, selected }: NodeProps) => (
     <div className={cn(
@@ -89,7 +87,7 @@ const LLMNode = ({ data, selected }: NodeProps) => (
 
 const ExternalAgentNodeComponent = ({ data, selected }: NodeProps) => (
     <div className={cn(
-        'px-4 py-3 rounded-xl border-2 bg-cyan-500/10 min-w-[160px] transition-all',
+        'px-4 py-3 rounded-xl border-2 bg-cyan-500/10 min-w-[160px] transition-all relative',
         selected
             ? 'border-cyan-400 shadow-xl shadow-cyan-500/30 ring-1 ring-cyan-400/30'
             : 'border-cyan-500/60 hover:border-cyan-400/80'
@@ -139,9 +137,7 @@ const ConditionalNode = ({ data, selected }: NodeProps) => (
     </div>
 );
 
-/* ─────────────────────────────────────────────
-   Tool Palette Sidebar
-───────────────────────────────────────────── */
+/* ─── Tool Palette ─── */
 
 interface PaletteCategory {
     id: string;
@@ -217,7 +213,7 @@ const PaletteCategoryItem = ({ category }: { category: PaletteCategory }) => {
                                 className={cn(
                                     'flex items-center gap-2 p-2 rounded-lg border cursor-grab active:cursor-grabbing transition-all',
                                     isExternal
-                                        ? 'border-cyan-500/40 bg-cyan-500/8 hover:border-cyan-400/60 hover:bg-cyan-500/12'
+                                        ? 'border-cyan-500/40 bg-cyan-500/5 hover:border-cyan-400/60'
                                         : 'border-border hover:border-border/80 hover:bg-muted/30'
                                 )}
                             >
@@ -242,41 +238,14 @@ const PaletteCategoryItem = ({ category }: { category: PaletteCategory }) => {
     );
 };
 
-/* ─────────────────────────────────────────────
-   Main Component
-───────────────────────────────────────────── */
+/* ─── Initial Nodes & Edges ─── */
 
 const INITIAL_NODES: Node[] = [
-    {
-        id: 'start-1',
-        type: 'startNode',
-        position: { x: 60, y: 200 },
-        data: { label: 'Start' },
-    },
-    {
-        id: 'llm-1',
-        type: 'llmNode',
-        position: { x: 240, y: 178 },
-        data: { label: 'LLM Agent', model: 'gpt-4o' },
-    },
-    {
-        id: 'ext-agent-1',
-        type: 'externalAgentNode',
-        position: { x: 460, y: 173 },
-        data: { label: 'External Agent', protocol: 'A2A', mode: 'sync' },
-    },
-    {
-        id: 'cond-1',
-        type: 'conditionalNode',
-        position: { x: 700, y: 167 },
-        data: { label: 'Route' },
-    },
-    {
-        id: 'end-1',
-        type: 'endNode',
-        position: { x: 870, y: 200 },
-        data: { label: 'End' },
-    },
+    { id: 'start-1', type: 'startNode', position: { x: 60, y: 200 }, data: { label: 'Start' } },
+    { id: 'llm-1', type: 'llmNode', position: { x: 240, y: 178 }, data: { label: 'LLM Agent', model: 'gpt-4o' } },
+    { id: 'ext-agent-1', type: 'externalAgentNode', position: { x: 460, y: 173 }, data: { label: 'External Agent', protocol: 'A2A', mode: 'sync' } },
+    { id: 'cond-1', type: 'conditionalNode', position: { x: 700, y: 167 }, data: { label: 'Route' } },
+    { id: 'end-1', type: 'endNode', position: { x: 870, y: 200 }, data: { label: 'End' } },
 ];
 
 const INITIAL_EDGES: Edge[] = [
@@ -285,6 +254,8 @@ const INITIAL_EDGES: Edge[] = [
     { id: 'e3', source: 'ext-agent-1', target: 'cond-1', animated: true, type: 'smoothstep', style: { stroke: '#22d3ee', strokeWidth: 1.5 } },
     { id: 'e4', source: 'cond-1', target: 'end-1', animated: true, type: 'smoothstep', style: { stroke: '#fbbf24', strokeWidth: 1.5 } },
 ];
+
+/* ─── Main Component ─── */
 
 const WorkflowEditorDemoInner = () => {
     const router = useRouter();
@@ -312,16 +283,13 @@ const WorkflowEditorDemoInner = () => {
         setSelectedNodeId(null);
     }, []);
 
-    const nodeTypes = useMemo(
-        () => ({
-            startNode: StartNode,
-            endNode: EndNode,
-            llmNode: LLMNode,
-            externalAgentNode: ExternalAgentNodeComponent,
-            conditionalNode: ConditionalNode,
-        }),
-        []
-    );
+    const nodeTypes = useMemo(() => ({
+        startNode: StartNode,
+        endNode: EndNode,
+        llmNode: LLMNode,
+        externalAgentNode: ExternalAgentNodeComponent,
+        conditionalNode: ConditionalNode,
+    }), []);
 
     const onDragOver = useCallback((event: React.DragEvent) => {
         event.preventDefault();
@@ -333,15 +301,9 @@ const WorkflowEditorDemoInner = () => {
             event.preventDefault();
             const nodeType = event.dataTransfer.getData('nodeType');
             if (!nodeType) return;
-
             const rect = (event.target as HTMLElement).closest('.react-flow')?.getBoundingClientRect();
             if (!rect) return;
-
-            const position = {
-                x: event.clientX - rect.left - 80,
-                y: event.clientY - rect.top - 20,
-            };
-
+            const position = { x: event.clientX - rect.left - 80, y: event.clientY - rect.top - 20 };
             const newNode: Node = {
                 id: `${nodeType}-${Date.now()}`,
                 type: nodeType,
@@ -360,9 +322,7 @@ const WorkflowEditorDemoInner = () => {
 
     const filteredCategories = PALETTE_CATEGORIES.map(cat => ({
         ...cat,
-        nodes: cat.nodes.filter(n =>
-            !paletteSearch || n.label.toLowerCase().includes(paletteSearch.toLowerCase())
-        ),
+        nodes: cat.nodes.filter(n => !paletteSearch || n.label.toLowerCase().includes(paletteSearch.toLowerCase())),
     })).filter(cat => cat.nodes.length > 0);
 
     return (
@@ -394,7 +354,7 @@ const WorkflowEditorDemoInner = () => {
 
             <div className="flex flex-1 overflow-hidden">
                 {/* Left Palette */}
-                <div className="w-[220px] flex-shrink-0 bg-white dark:bg-gray-900 border-r border-border flex flex-col overflow-hidden">
+                <div className="w-[220px] flex-shrink-0 bg-gray-900 border-r border-border flex flex-col overflow-hidden">
                     <div className="px-3 py-3 border-b border-border">
                         <div className="relative">
                             <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -406,7 +366,7 @@ const WorkflowEditorDemoInner = () => {
                             />
                         </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-1 [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-gray-600">
+                    <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-1">
                         {filteredCategories.map(cat => (
                             <PaletteCategoryItem key={cat.id} category={cat} />
                         ))}
@@ -445,7 +405,6 @@ const WorkflowEditorDemoInner = () => {
                         />
                     </ReactFlow>
 
-                    {/* Canvas overlay hint */}
                     {!selectedNodeId && (
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none">
                             <p className="text-xs text-muted-foreground bg-gray-900/80 px-3 py-1.5 rounded-full border border-border backdrop-blur">
@@ -455,25 +414,19 @@ const WorkflowEditorDemoInner = () => {
                     )}
                 </div>
 
-                {/* Right Config Panel */}
+                {/* Right: External Agent Config Panel */}
                 {showConfigPanel && (
                     <ExternalAgentConfigPanel onClose={() => setSelectedNodeId(null)} />
                 )}
 
                 {/* Generic right panel for non-external nodes */}
                 {selectedNode && !showConfigPanel && (
-                    <div className="w-[260px] flex-shrink-0 bg-white dark:bg-gray-900 border-l border-border p-4">
+                    <div className="w-[260px] flex-shrink-0 bg-gray-900 border-l border-border p-4">
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="p-1.5 rounded-lg bg-muted/50">
-                                <Bot size={14} className="text-muted-foreground" />
-                            </div>
                             <p className="text-sm font-semibold text-foreground">{selectedNode.data.label as string}</p>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            Node type: <span className="text-foreground font-mono">{selectedNode.type}</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                            Select the <span className="text-cyan-400">External Agent</span> node to see the full A2A/ACP configuration panel.
+                            Select the <strong className="text-cyan-400">External Agent</strong> node to see the full configuration panel with A2A/ACP protocol settings, variable mappings, and tracing options.
                         </p>
                     </div>
                 )}

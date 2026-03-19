@@ -36,7 +36,6 @@ export const StandaloneAgentListingContainer = () => {
 
     return (
         <div className="w-full flex flex-col gap-y-6 py-6 px-2">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-lg font-semibold text-foreground">Standalone Agents</h1>
@@ -50,10 +49,8 @@ export const StandaloneAgentListingContainer = () => {
                 </Button>
             </div>
 
-            {/* Summary Cards */}
             <StandaloneAgentSummaryCards agents={MOCK_AGENTS} />
 
-            {/* Filters */}
             <div className="flex flex-wrap items-center gap-3">
                 <div className="relative flex-1 min-w-[200px] max-w-sm">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -91,7 +88,6 @@ export const StandaloneAgentListingContainer = () => {
                 </span>
             </div>
 
-            {/* Agent Grid */}
             {filteredAgents.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredAgents.map(agent => (
@@ -104,9 +100,7 @@ export const StandaloneAgentListingContainer = () => {
                         <Search size={20} className="text-muted-foreground" />
                     </div>
                     <p className="text-sm font-medium text-foreground">No agents found</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Try adjusting your filters or search query
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Try adjusting your filters or search query</p>
                 </div>
             )}
 

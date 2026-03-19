@@ -29,7 +29,6 @@ export const LogsTab = () => {
 
     return (
         <div className="flex flex-col gap-4">
-            {/* Controls */}
             <div className="flex flex-wrap items-center gap-3">
                 <div className="relative flex-1 min-w-[180px] max-w-xs">
                     <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -61,13 +60,12 @@ export const LogsTab = () => {
                 <span className="text-xs text-muted-foreground ml-auto">{filtered.length} entries</span>
             </div>
 
-            {/* Log Viewer */}
             <div className="rounded-lg border border-border bg-gray-900/60 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/20">
                     <p className="text-xs font-medium text-muted-foreground">Log Output</p>
                     <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-400">Live</Badge>
                 </div>
-                <div className="h-[480px] overflow-y-auto font-mono text-xs p-4 flex flex-col gap-0.5 [&::-webkit-scrollbar]:w-[4px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-gray-600">
+                <div className="h-[480px] overflow-y-auto font-mono text-xs p-4 flex flex-col gap-0.5">
                     {filtered.length === 0 ? (
                         <p className="text-muted-foreground text-center py-8">No log entries match your filters.</p>
                     ) : (
