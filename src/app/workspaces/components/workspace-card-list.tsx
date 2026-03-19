@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { InfoIcon } from 'lucide-react';
 import { Button, TruncateCell } from '@/components';
 import WorkspaceCard, { WorkspaceCardProps, GovernanceBadge } from '@/components/molecules/workspace-card/workspace-card';
@@ -9,29 +9,36 @@ import { RoleType } from '@/enums';
 import { IGroupWorkspace, IOption } from '@/models';
 import { ResourceQuotasDialog } from './governance-dialogs';
 
+// Total available credits (mock - in production this would come from an API)
+const TOTAL_AVAILABLE_CREDITS = 100000;
+
+// Mock utilized credits per workspace (in production this would come from API)
+function getUtilizedCredits(workspaceId: string): number {
+    const hash = String(workspaceId).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return (hash * 13) % 3000;
+}
+
 // Mock governance badges based on workspace - in production this would come from API
-const getGovernanceBadges = (workspaceId: number | string, workspaceName?: string): GovernanceBadge[] => {
+function getGovernanceBadges(workspaceId: number | string, workspaceName: string | undefined): GovernanceBadge[] {
     const badges: GovernanceBadge[] = [];
-    // Safely handle undefined workspaceName with nullish coalescing
-    const name = (workspaceName ?? '').toLowerCase();
     
-    // Simulate different governance states based on workspace characteristics
-    if (name.includes('alpha') || name.includes('dev')) {
+    // Safely handle undefined/null workspaceName
+    const safeName = typeof workspaceName === 'string' ? workspaceName.toLowerCase() : '';
+    
+    if (safeName.includes('alpha') || safeName.includes('dev')) {
         badges.push({ label: 'Dev', variant: 'dev' });
-    } else if (name.includes('beta') || name.includes('staging')) {
+    } else if (safeName.includes('beta') || safeName.includes('staging')) {
         badges.push({ label: 'Staging', variant: 'staging' });
     } else {
         badges.push({ label: 'Production', variant: 'production' });
     }
 
-    // Use workspace ID for deterministic random values instead of Math.random()
     const idNum = typeof workspaceId === 'number' ? workspaceId : parseInt(String(workspaceId), 10) || 0;
     const quotaPercentage = (idNum * 17) % 100;
     if (quotaPercentage > 70) {
         badges.push({ label: `Quotas: ${quotaPercentage}%`, variant: 'quota' });
     }
 
-    // Simulate compliance status based on ID
     if ((idNum % 3) !== 0) {
         badges.push({ label: 'Compliant', variant: 'compliant' });
     } else {
@@ -39,7 +46,7 @@ const getGovernanceBadges = (workspaceId: number | string, workspaceName?: strin
     }
 
     return badges;
-};
+}
 
 export interface WorkspaceCardListProps {
     metadataOption: IOption | null;
@@ -55,40 +62,35 @@ export interface WorkspaceCardListProps {
     onHandleDelete: (workspaceId: number | string) => void;
 }
 
-const EmptyWorkspace = () => (
-    <div
-        className="flex w-full items-center justify-center p-4 text-sm text-gray-800 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"
-        role="alert"
-    >
-        <InfoIcon className="shrink-0 inline w-4 h-4 me-3" />
-        <div className="text-center">
-            {
-                "We couldn't find any workspaces matching your search. Try a different name or clear your filters to see all results"
-            }
+function EmptyWorkspace() {
+    return (
+        <div
+            className="flex w-full items-center justify-center p-4 text-sm text-gray-800 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"
+            role="alert"
+        >
+            <InfoIcon className="shrink-0 inline w-4 h-4 me-3" />
+            <div className="text-center">
+                {"We couldn't find any workspaces matching your search. Try a different name or clear your filters to see all results"}
+            </div>
         </div>
-    </div>
-);
+    );
+}
 
-// Total available credits (mock - in production this would come from an API)
-const TOTAL_AVAILABLE_CREDITS = 100000;
+function NoAccessMessage() {
+    return (
+        <div
+            className="flex w-full items-center justify-center p-4 text-sm text-gray-800 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"
+            role="alert"
+        >
+            <InfoIcon className="shrink-0 inline w-4 h-4 me-3" />
+            <div className="text-center">
+                Sorry, you have not been assigned any workspace on KAYA AI Platform. Please contact your admin for access
+            </div>
+        </div>
+    );
+}
 
-// Mock utilized credits per workspace (in production this would come from API)
-const getUtilizedCredits = (workspaceId: string): number => {
-    // Simulate some usage based on workspace ID hash
-    const hash = String(workspaceId).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return (hash * 13) % 3000; // Returns a deterministic value 0-2999
-};
-
-const WorkspaceCardGrid = ({
-    data,
-    isSuccess,
-    hasFilters,
-    cardWidth,
-    onHandleEdit,
-    onHandleDelete,
-    onOpenCreditBudgetDialog,
-    workspaceBudgets,
-}: {
+interface WorkspaceCardGridProps {
     data: WorkspaceCardProps[];
     isSuccess: boolean;
     hasFilters?: boolean;
@@ -97,72 +99,73 @@ const WorkspaceCardGrid = ({
     onHandleDelete: (workspaceId: number | string) => void;
     onOpenCreditBudgetDialog: (workspaceId: string | number, workspaceName?: string) => void;
     workspaceBudgets: Record<string, number>;
-}) => {
+}
+
+function WorkspaceCardGrid({
+    data,
+    isSuccess,
+    hasFilters,
+    cardWidth,
+    onHandleEdit,
+    onHandleDelete,
+    onOpenCreditBudgetDialog,
+    workspaceBudgets,
+}: WorkspaceCardGridProps) {
     const { user, isSuperAdmin } = useAuth();
     const workspaces = user?.user?.workspaces;
 
-    if (data?.length > 0 || !isSuccess) {
-        return (
-            <>
-                {data.map((workspace, index) => {
-                    const isWorkspaceAdmin = workspaces?.some(
-                        ws => ws.id === workspace.id && ws.roles.includes(RoleType.WORKSPACE_ADMIN)
-                    );
+    if (!data || data.length === 0) {
+        if (!isSuccess) {
+            return null;
+        }
+        if (hasFilters) {
+            return <EmptyWorkspace />;
+        }
+        return <NoAccessMessage />;
+    }
 
-                    // Get governance badges for this workspace
-                    const governanceBadges = getGovernanceBadges(workspace.id, workspace.name);
-                    const allocatedBudget = workspaceBudgets[String(workspace.uuid)] || 0;
-                    // Remaining = Allocated - Utilized (credits used by workflows)
-                    const utilizedCredits = allocatedBudget > 0 ? getUtilizedCredits(String(workspace.uuid)) : 0;
-                    const remainingBudget = allocatedBudget - utilizedCredits;
+    const renderedCards: React.ReactNode[] = [];
 
-                    // Use a guaranteed unique key combining uuid, id, and index as fallback
-                    const uniqueKey = workspace.uuid 
-                        ? `workspace-${workspace.uuid}` 
-                        : `workspace-${workspace.id}-${index}`;
+    for (let i = 0; i < data.length; i++) {
+        const workspace = data[i];
+        const wsUuid = String(workspace.uuid || '');
+        const wsId = String(workspace.id || '');
+        
+        const isWorkspaceAdmin = workspaces?.some(
+            (ws) => ws.id === workspace.id && ws.roles.includes(RoleType.WORKSPACE_ADMIN)
+        );
 
-                    return (
-                        <WorkspaceCard
-                            key={uniqueKey}
-                            {...workspace}
-                            showOptions={isSuperAdmin || isWorkspaceAdmin}
-                            cardWidth={cardWidth}
-                            governanceBadges={governanceBadges}
-                            allocatedBudget={allocatedBudget}
-                            remainingBudget={allocatedBudget > 0 ? remainingBudget : undefined}
-                            onDeleteClick={workspaceId => {
-                                onHandleDelete(workspaceId);
-                            }}
-                            onEditClick={workspaceId => {
-                                onHandleEdit(workspaceId);
-                            }}
-                            onAllocateCreditBudget={workspaceId => {
-                                onOpenCreditBudgetDialog(workspaceId, workspace.name);
-                            }}
-                        />
-                    );
-                })}
-            </>
+        const governanceBadges = getGovernanceBadges(workspace.id, workspace.name);
+        const allocatedBudget = workspaceBudgets[wsUuid] || 0;
+        const utilizedCredits = allocatedBudget > 0 ? getUtilizedCredits(wsUuid) : 0;
+        const remainingBudget = allocatedBudget - utilizedCredits;
+
+        renderedCards.push(
+            <WorkspaceCard
+                key={`card-${wsUuid || wsId}-${i}`}
+                id={workspace.id}
+                uuid={workspace.uuid}
+                name={workspace.name}
+                description={workspace.description}
+                metadata={workspace.metadata}
+                createdAt={workspace.createdAt}
+                avatars={workspace.avatars}
+                showOptions={isSuperAdmin || isWorkspaceAdmin}
+                cardWidth={cardWidth}
+                governanceBadges={governanceBadges}
+                allocatedBudget={allocatedBudget}
+                remainingBudget={allocatedBudget > 0 ? remainingBudget : undefined}
+                onDeleteClick={onHandleDelete}
+                onEditClick={onHandleEdit}
+                onAllocateCreditBudget={(id) => onOpenCreditBudgetDialog(id, workspace.name)}
+            />
         );
     }
 
-    if (hasFilters) return <EmptyWorkspace />;
+    return <>{renderedCards}</>;
+}
 
-    return (
-        <div
-            className="flex w-full items-center justify-center p-4 text-sm text-gray-800 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"
-            role="alert"
-        >
-            <InfoIcon className="shrink-0 inline w-4 h-4 me-3" />
-            <div className="text-center">
-                Sorry, you have not been assigned any workspace on KAYA AI Platform. Please contact your admin for
-                access
-            </div>
-        </div>
-    );
-};
-
-const WorkspaceCardList = ({
+function WorkspaceCardList({
     metadataOption,
     data,
     isFetching,
@@ -174,11 +177,10 @@ const WorkspaceCardList = ({
     onPrevious,
     onHandleEdit,
     onHandleDelete,
-}: WorkspaceCardListProps) => {
+}: WorkspaceCardListProps) {
     const [workspaceId, setWorkspaceId] = useState<number | string | undefined>(undefined);
     const [open, setOpen] = useState<boolean>(false);
     
-    // Credit budget dialog state
     const [creditBudgetDialogOpen, setCreditBudgetDialogOpen] = useState(false);
     const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | number>('');
     const [selectedWorkspaceName, setSelectedWorkspaceName] = useState<string>('');
@@ -208,13 +210,12 @@ const WorkspaceCardList = ({
     }, []);
 
     const handleSaveBudget = useCallback((wsId: string | number, allocatedBudget: number) => {
-        setWorkspaceBudgets(prev => ({
+        setWorkspaceBudgets((prev) => ({
             ...prev,
             [String(wsId)]: allocatedBudget,
         }));
     }, []);
 
-    // Calculate total allocated and remaining
     const totalAllocated = Object.values(workspaceBudgets).reduce((sum, val) => sum + val, 0);
     const remainingCredits = TOTAL_AVAILABLE_CREDITS - totalAllocated;
 
@@ -229,9 +230,9 @@ const WorkspaceCardList = ({
             >
                 {isFetching ? (
                     <>
-                        {[...Array(3).keys()]?.map(item => (
+                        {[0, 1, 2].map((item) => (
                             <div
-                                key={item}
+                                key={`skeleton-${item}`}
                                 className={cn(
                                     'realm-card !w-[300px] min-h-[180px] h-fit bg-[rgba(255,255,255,0.6)] h-[124px] rounded-lg backdrop-blur-[7px] border border-gray-200 px-6 py-3 flex flex-col gap-y-[10px]',
                                     'dark:bg-[rgba(31,41,55,0.8)] dark:border-gray-700',
@@ -256,7 +257,7 @@ const WorkspaceCardList = ({
                             <>
                                 {(data as IGroupWorkspace[])?.length > 0 ? (
                                     (data as IGroupWorkspace[])?.map((item, index) => (
-                                        <div key={item.metadataValue ?? `group-${index}`}>
+                                        <div key={`group-${item.metadataValue || index}`}>
                                             <TruncateCell
                                                 length={90}
                                                 value={item.metadataValue}
@@ -301,7 +302,6 @@ const WorkspaceCardList = ({
                             </DialogContent>
                         </Dialog>
 
-                        {/* Credit Budget Dialog */}
                         <ResourceQuotasDialog
                             open={creditBudgetDialogOpen}
                             onOpenChange={(isOpen) => !isOpen && closeCreditBudgetDialog()}
@@ -329,6 +329,6 @@ const WorkspaceCardList = ({
             )}
         </div>
     );
-};
+}
 
 export default WorkspaceCardList;
