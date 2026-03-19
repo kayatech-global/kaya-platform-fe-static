@@ -9,26 +9,28 @@ import { RoleType } from '@/enums';
 import { IGroupWorkspace, IOption } from '@/models';
 
 // Mock governance badges based on workspace - in production these would come from API
-const getGovernanceBadges = (workspaceId: number | string, workspaceName: string): GovernanceBadge[] => {
+const getGovernanceBadges = (workspaceId: number | string, workspaceName?: string): GovernanceBadge[] => {
     const badges: GovernanceBadge[] = [];
+    const name = workspaceName?.toLowerCase() || '';
     
     // Simulate different governance states based on workspace characteristics
-    if (workspaceName.toLowerCase().includes('alpha') || workspaceName.toLowerCase().includes('dev')) {
+    if (name.includes('alpha') || name.includes('dev')) {
         badges.push({ label: 'Dev', variant: 'dev' });
-    } else if (workspaceName.toLowerCase().includes('beta') || workspaceName.toLowerCase().includes('staging')) {
+    } else if (name.includes('beta') || name.includes('staging')) {
         badges.push({ label: 'Staging', variant: 'staging' });
     } else {
         badges.push({ label: 'Production', variant: 'production' });
     }
 
-    // Simulate quota status
-    const quotaPercentage = Math.floor(Math.random() * 100);
+    // Use workspace ID for deterministic random values instead of Math.random()
+    const idNum = typeof workspaceId === 'number' ? workspaceId : parseInt(String(workspaceId), 10) || 0;
+    const quotaPercentage = (idNum * 17) % 100;
     if (quotaPercentage > 70) {
         badges.push({ label: `Quotas: ${quotaPercentage}%`, variant: 'quota' });
     }
 
-    // Simulate compliance status
-    if (Math.random() > 0.3) {
+    // Simulate compliance status based on ID
+    if ((idNum % 3) !== 0) {
         badges.push({ label: 'Compliant', variant: 'compliant' });
     } else {
         badges.push({ label: 'Review Required', variant: 'warning' });
