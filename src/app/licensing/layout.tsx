@@ -6,10 +6,10 @@ import '../globals.css';
 import React from 'react';
 
 export const metadata: Metadata = {
-    title: 'KAYA AI Platform',
+    title: 'KAYA AI Platform - Licensing',
 };
 
-const WorkspacesLayout = ({
+const LicensingLayout = ({
     children,
 }: Readonly<{
     children: React.ReactNode;
@@ -27,4 +27,4 @@ const WorkspacesLayout = ({
     );
 };
 
-export default WorkspacesLayout;
+export default LicensingLayout;
