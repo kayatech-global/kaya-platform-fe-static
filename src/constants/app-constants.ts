@@ -310,6 +310,13 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
     icon: 'ri-coin-fill',
     items: [
         {
+            id: 'credit-dashboard',
+            title: 'Dashboard',
+            url: '/workspace/[wid]/credit-allocation/dashboard',
+            icon: 'LayoutDashboard',
+            isSingleLink: true,
+        },
+        {
             id: 'workflow-credit-management',
             title: 'Workflow Level Credit Management',
             url: '/workspace/[wid]/credit-allocation/workflow-credit-management',
