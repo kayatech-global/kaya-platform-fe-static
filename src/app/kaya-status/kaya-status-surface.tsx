@@ -7,6 +7,8 @@ import {
     AlertTriangle,
     Bell,
     CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
     Flame,
     KeyRound,
     Layers,
@@ -15,7 +17,6 @@ import {
     Network,
     RefreshCw,
     Server,
-    TrendingUp,
     WifiOff,
     XCircle,
     Zap,
@@ -26,7 +27,6 @@ import { Button } from '@/components/atoms/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/atoms/card';
 import { Input } from '@/components/atoms/input';
 import { Select } from '@/components/atoms/select';
-import { Separator } from '@/components/atoms/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/atoms/tabs';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -35,7 +35,6 @@ type ServiceStatus = 'operational' | 'degraded' | 'outage' | 'maintenance';
 type PlatformStatus = 'operational' | 'degraded' | 'outage';
 type IncidentSeverity = 'critical' | 'high' | 'medium' | 'low';
 type IncidentStatus = 'investigating' | 'identified' | 'monitoring' | 'resolved';
-type Timeframe = '24h' | '7d' | '30d';
 
 interface ServiceUptime {
     '24h': number;
@@ -50,6 +49,8 @@ interface Service {
     name: string;
     uptime: ServiceUptime;
     status: ServiceStatus;
+    components: number;
+    history: ServiceStatus[];
 }
 
 interface Incident {
@@ -70,61 +71,117 @@ const PLATFORM_STATUS: { status: PlatformStatus; timestamp: string; description:
     description: 'All systems operating normally. Last incident resolved 3 days ago.',
 };
 
+// 40-segment history arrays — most recent segment last (right-most)
 const MOCK_SERVICES: Service[] = [
-    { id: 'admin-ui',         category: 'application',     displayName: 'KAYA AI Platform',             name: 'Admin UI',                      uptime: { '24h': 100,  '7d': 99.99, '30d': 99.95 }, status: 'operational' },
-    { id: 'workflow-engine',  category: 'application',     displayName: 'Workflow Builder',             name: 'Workflow Engine',               uptime: { '24h': 100,  '7d': 100,   '30d': 99.93 }, status: 'operational' },
-    { id: 'voice-workflow',   category: 'application',     displayName: 'Voice Agent Service',          name: 'Voice Workflow Engine',         uptime: { '24h': 100,  '7d': 99.72, '30d': 99.48 }, status: 'operational' },
-    { id: 'admin-api',        category: 'application',     displayName: 'API Gateway',                  name: 'Admin API',                     uptime: { '24h': 100,  '7d': 99.97, '30d': 99.91 }, status: 'operational' },
-    { id: 'insights',         category: 'application',     displayName: 'Insights Service',             name: 'Insights',                      uptime: { '24h': 100,  '7d': 99.84, '30d': 99.62 }, status: 'operational' },
-    { id: 'dsm',              category: 'application',     displayName: 'Dynamic Subscription Manager', name: 'Dynamic Subscription Manager',  uptime: { '24h': 98.6, '7d': 97.82, '30d': 98.44 }, status: 'degraded'    },
-    { id: 'workflow-triggers',category: 'application',     displayName: 'Workflow Triggers',            name: 'Workflow Triggers',             uptime: { '24h': 99.1, '7d': 99.55, '30d': 99.17 }, status: 'degraded'    },
-    { id: 'idp-login',        category: 'identity',        displayName: 'IDP Login',                    name: 'IDP Login',                     uptime: { '24h': 100,  '7d': 99.99, '30d': 99.96 }, status: 'operational' },
-    { id: 'idp-management',   category: 'identity',        displayName: 'IDP Management',               name: 'IDP Management',                uptime: { '24h': 100,  '7d': 99.95, '30d': 99.88 }, status: 'operational' },
-    { id: 'vault-api',        category: 'security',        displayName: 'Vault API',                    name: 'Vault API',                     uptime: { '24h': 100,  '7d': 100,   '30d': 100   }, status: 'operational' },
-    { id: 'vault-cluster',    category: 'security',        displayName: 'Vault Cluster',                name: 'Vault Cluster',                 uptime: { '24h': 100,  '7d': 100,   '30d': 99.99 }, status: 'operational' },
-    { id: 'vault-ui',         category: 'security',        displayName: 'Vault UI',                     name: 'Vault UI',                      uptime: { '24h': 100,  '7d': 99.94, '30d': 99.82 }, status: 'operational' },
-    { id: 'dragonfly',        category: 'cache',           displayName: 'Dragonfly',                    name: 'Dragonfly',                     uptime: { '24h': 0,    '7d': 71.43, '30d': 91.67 }, status: 'outage'      },
-    { id: 'istio-ingress',    category: 'networking',      displayName: 'Istio Ingress Gateway',        name: 'Istio Ingress',                 uptime: { '24h': 100,  '7d': 99.98, '30d': 99.96 }, status: 'operational' },
-    { id: 'aws-alb',          category: 'networking',      displayName: 'Application Load Balancer',    name: 'AWS ALB',                       uptime: { '24h': 100,  '7d': 100,   '30d': 100   }, status: 'operational' },
+    {
+        id: 'admin-ui', category: 'application', displayName: 'KAYA AI Platform', name: 'Admin UI',
+        uptime: { '24h': 100, '7d': 99.99, '30d': 99.95 }, status: 'operational', components: 4,
+        history: Array(38).fill('operational').concat(['operational', 'operational']),
+    },
+    {
+        id: 'workflow-engine', category: 'application', displayName: 'Workflow Builder', name: 'Workflow Engine',
+        uptime: { '24h': 100, '7d': 100, '30d': 99.93 }, status: 'operational', components: 3,
+        history: Array(37).fill('operational').concat(['operational', 'operational', 'operational']),
+    },
+    {
+        id: 'voice-workflow', category: 'application', displayName: 'Voice Agent Service', name: 'Voice Workflow Engine',
+        uptime: { '24h': 100, '7d': 99.72, '30d': 99.48 }, status: 'operational', components: 2,
+        history: [...Array(30).fill('operational'), 'degraded', 'degraded', ...Array(8).fill('operational')],
+    },
+    {
+        id: 'admin-api', category: 'application', displayName: 'API Gateway', name: 'Admin API',
+        uptime: { '24h': 100, '7d': 99.97, '30d': 99.91 }, status: 'operational', components: 5,
+        history: Array(40).fill('operational'),
+    },
+    {
+        id: 'insights', category: 'application', displayName: 'Insights Service', name: 'Insights',
+        uptime: { '24h': 100, '7d': 99.84, '30d': 99.62 }, status: 'operational', components: 3,
+        history: [...Array(28).fill('operational'), 'degraded', 'degraded', 'degraded', ...Array(9).fill('operational')],
+    },
+    {
+        id: 'dsm', category: 'application', displayName: 'Dynamic Subscription Manager', name: 'Dynamic Subscription Manager',
+        uptime: { '24h': 98.6, '7d': 97.82, '30d': 98.44 }, status: 'degraded', components: 2,
+        history: [...Array(33).fill('operational'), 'degraded', 'degraded', 'degraded', 'degraded', 'degraded', 'degraded', 'degraded'],
+    },
+    {
+        id: 'workflow-triggers', category: 'application', displayName: 'Workflow Triggers', name: 'Workflow Triggers',
+        uptime: { '24h': 99.1, '7d': 99.55, '30d': 99.17 }, status: 'degraded', components: 2,
+        history: [...Array(35).fill('operational'), 'degraded', 'degraded', 'degraded', 'degraded', 'degraded'],
+    },
+    {
+        id: 'idp-login', category: 'identity', displayName: 'IDP Login', name: 'IDP Login',
+        uptime: { '24h': 100, '7d': 99.99, '30d': 99.96 }, status: 'operational', components: 2,
+        history: Array(40).fill('operational'),
+    },
+    {
+        id: 'idp-management', category: 'identity', displayName: 'IDP Management', name: 'IDP Management',
+        uptime: { '24h': 100, '7d': 99.95, '30d': 99.88 }, status: 'operational', components: 2,
+        history: [...Array(39).fill('operational'), 'operational'],
+    },
+    {
+        id: 'vault-api', category: 'security', displayName: 'Vault API', name: 'Vault API',
+        uptime: { '24h': 100, '7d': 100, '30d': 100 }, status: 'operational', components: 1,
+        history: Array(40).fill('operational'),
+    },
+    {
+        id: 'vault-cluster', category: 'security', displayName: 'Vault Cluster', name: 'Vault Cluster',
+        uptime: { '24h': 100, '7d': 100, '30d': 99.99 }, status: 'operational', components: 3,
+        history: Array(40).fill('operational'),
+    },
+    {
+        id: 'vault-ui', category: 'security', displayName: 'Vault UI', name: 'Vault UI',
+        uptime: { '24h': 100, '7d': 99.94, '30d': 99.82 }, status: 'operational', components: 1,
+        history: [...Array(38).fill('operational'), 'maintenance', 'operational'],
+    },
+    {
+        id: 'dragonfly', category: 'cache', displayName: 'Dragonfly', name: 'Dragonfly',
+        uptime: { '24h': 0, '7d': 71.43, '30d': 91.67 }, status: 'outage', components: 3,
+        history: [
+            ...Array(22).fill('operational'),
+            'degraded', 'degraded',
+            'outage', 'outage', 'outage', 'outage', 'outage',
+            'outage', 'outage', 'outage', 'outage', 'outage',
+            'outage', 'outage', 'outage', 'outage', 'outage',
+            'outage',
+        ],
+    },
+    {
+        id: 'istio-ingress', category: 'networking', displayName: 'Istio Ingress Gateway', name: 'Istio Ingress',
+        uptime: { '24h': 100, '7d': 99.98, '30d': 99.96 }, status: 'operational', components: 2,
+        history: Array(40).fill('operational'),
+    },
+    {
+        id: 'aws-alb', category: 'networking', displayName: 'Application Load Balancer', name: 'AWS ALB',
+        uptime: { '24h': 100, '7d': 100, '30d': 100 }, status: 'operational', components: 2,
+        history: Array(40).fill('operational'),
+    },
 ];
 
 const MOCK_INCIDENTS: Incident[] = [
     {
-        id: 'inc-001',
-        severity: 'critical',
-        services: ['Dragonfly'],
-        startTime: '2026-03-17T08:14:00Z',
-        status: 'investigating',
+        id: 'inc-001', severity: 'critical', services: ['Dragonfly'],
+        startTime: '2026-03-17T08:14:00Z', status: 'investigating',
         title: 'Dragonfly cache cluster complete outage',
         latestUpdate:
             'Cache cluster pods are in CrashLoopBackOff. We have identified a misconfigured PodDisruptionBudget following the 08:00 rolling update. Rollback is in progress. ETA for recovery: 30 min.',
     },
     {
-        id: 'inc-002',
-        severity: 'high',
-        services: ['Dynamic Subscription Manager', 'Workflow Triggers'],
-        startTime: '2026-03-17T06:45:00Z',
-        status: 'identified',
+        id: 'inc-002', severity: 'high', services: ['Dynamic Subscription Manager', 'Workflow Triggers'],
+        startTime: '2026-03-17T06:45:00Z', status: 'identified',
         title: 'Elevated error rates on DSM & Workflow Triggers',
         latestUpdate:
             'Root cause traced to a dependency on the Dragonfly cache. Both services have fallback logic but are experiencing ~2% error rate. No data loss. Services will self-heal once cache is restored.',
     },
     {
-        id: 'inc-003',
-        severity: 'medium',
-        services: ['Insights'],
-        startTime: '2026-03-14T22:10:00Z',
-        status: 'resolved',
+        id: 'inc-003', severity: 'medium', services: ['Insights'],
+        startTime: '2026-03-14T22:10:00Z', status: 'resolved',
         title: 'Insights dashboard query latency spike',
         latestUpdate:
             'Resolved. The spike was caused by a missing index on the analytics_events table. Index has been added and queries are now returning sub-200ms. Closed 2026-03-15T03:47Z.',
     },
     {
-        id: 'inc-004',
-        severity: 'low',
-        services: ['KAYA AI Platform'],
-        startTime: '2026-03-12T14:00:00Z',
-        status: 'resolved',
+        id: 'inc-004', severity: 'low', services: ['KAYA AI Platform'],
+        startTime: '2026-03-12T14:00:00Z', status: 'resolved',
         title: 'Admin UI login page blank screen on Safari 17',
         latestUpdate:
             'A Safari 17-specific CSS rendering issue was patched in v2.14.3. Deployed to production 2026-03-12T16:30Z. All affected users have been notified.',
@@ -135,11 +192,8 @@ const MOCK_INCIDENTS: Incident[] = [
 
 const formatTimestamp = (iso: string) =>
     new Date(iso).toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZoneName: 'short',
+        month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
     });
 
 const uptimeColorClass = (pct: number): string => {
@@ -149,6 +203,47 @@ const uptimeColorClass = (pct: number): string => {
 };
 
 // ─── Config maps ──────────────────────────────────────────────────────────────
+
+const platformStatusConfig: Record<
+    PlatformStatus,
+    {
+        heroBg: string;
+        heroBorder: string;
+        heroIconBg: string;
+        iconColor: string;
+        icon: React.ReactNode;
+        headline: string;
+        badgeVariant: 'success' | 'warning' | 'destructive';
+    }
+> = {
+    operational: {
+        heroBg: 'bg-green-50 dark:bg-green-950/30',
+        heroBorder: 'border-green-200 dark:border-green-800',
+        heroIconBg: 'bg-green-100 dark:bg-green-900/50',
+        iconColor: 'text-green-600 dark:text-green-400',
+        icon: <CheckCircle2 size={28} />,
+        headline: "We're fully operational",
+        badgeVariant: 'success',
+    },
+    degraded: {
+        heroBg: 'bg-amber-50 dark:bg-amber-950/30',
+        heroBorder: 'border-amber-200 dark:border-amber-800',
+        heroIconBg: 'bg-amber-100 dark:bg-amber-900/50',
+        iconColor: 'text-amber-600 dark:text-amber-400',
+        icon: <AlertTriangle size={28} />,
+        headline: 'Partial system degradation',
+        badgeVariant: 'warning',
+    },
+    outage: {
+        heroBg: 'bg-red-50 dark:bg-red-950/30',
+        heroBorder: 'border-red-200 dark:border-red-800',
+        heroIconBg: 'bg-red-100 dark:bg-red-900/50',
+        iconColor: 'text-destructive',
+        icon: <XCircle size={28} />,
+        headline: 'Major outage in progress',
+        badgeVariant: 'destructive',
+    },
+};
 
 const serviceStatusBadgeVariant: Record<ServiceStatus, 'success' | 'warning' | 'destructive' | 'info'> = {
     operational: 'success',
@@ -164,28 +259,12 @@ const serviceStatusLabel: Record<ServiceStatus, string> = {
     maintenance: 'Maintenance',
 };
 
-const platformStatusConfig: Record<
-    PlatformStatus,
-    { iconColorClass: string; icon: React.ReactNode; label: string; badgeVariant: 'success' | 'warning' | 'destructive' }
-> = {
-    operational: {
-        iconColorClass: 'text-green-600 dark:text-green-500',
-        icon: <CheckCircle2 size={16} />,
-        label: 'All Systems Operational',
-        badgeVariant: 'success',
-    },
-    degraded: {
-        iconColorClass: 'text-amber-600 dark:text-amber-400',
-        icon: <AlertTriangle size={16} />,
-        label: 'Partial System Degradation',
-        badgeVariant: 'warning',
-    },
-    outage: {
-        iconColorClass: 'text-destructive',
-        icon: <XCircle size={16} />,
-        label: 'Major Outage',
-        badgeVariant: 'destructive',
-    },
+// Maps a history segment status → tailwind bg classes
+const historySegmentClass: Record<ServiceStatus, string> = {
+    operational: 'bg-green-500 dark:bg-green-500',
+    degraded:    'bg-amber-400 dark:bg-amber-400',
+    outage:      'bg-red-500 dark:bg-red-500',
+    maintenance: 'bg-blue-400 dark:bg-blue-400',
 };
 
 const severityBadgeVariant: Record<IncidentSeverity, 'critical' | 'destructive' | 'warning' | 'info'> = {
@@ -203,88 +282,94 @@ const severityIcon: Record<IncidentSeverity, React.ReactNode> = {
 };
 
 const severityLabel: Record<IncidentSeverity, string> = {
-    critical: 'Critical',
-    high: 'High',
-    medium: 'Medium',
-    low: 'Low',
+    critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low',
 };
 
 const incidentStatusBadgeVariant: Record<IncidentStatus, 'destructive' | 'warning' | 'info' | 'success'> = {
-    investigating: 'destructive',
-    identified: 'warning',
-    monitoring: 'info',
-    resolved: 'success',
+    investigating: 'destructive', identified: 'warning', monitoring: 'info', resolved: 'success',
 };
 
 const incidentStatusLabel: Record<IncidentStatus, string> = {
-    investigating: 'Investigating',
-    identified: 'Identified',
-    monitoring: 'Monitoring',
-    resolved: 'Resolved',
+    investigating: 'Investigating', identified: 'Identified', monitoring: 'Monitoring', resolved: 'Resolved',
 };
 
 const categoryIcons: Record<Service['category'], React.ReactNode> = {
-    application: <Layers size={12} />,
-    identity: <KeyRound size={12} />,
-    security: <Lock size={12} />,
-    networking: <Network size={12} />,
-    cache: <Zap size={12} />,
-    infrastructure: <Server size={12} />,
+    application:    <Layers size={11} />,
+    identity:       <KeyRound size={11} />,
+    security:       <Lock size={11} />,
+    networking:     <Network size={11} />,
+    cache:          <Zap size={11} />,
+    infrastructure: <Server size={11} />,
 };
 
 const categoryLabels: Record<Service['category'], string> = {
-    application: 'Application',
-    identity: 'Identity',
-    security: 'Security',
-    networking: 'Networking',
-    cache: 'Cache',
-    infrastructure: 'Infrastructure',
+    application: 'Application', identity: 'Identity', security: 'Security',
+    networking: 'Networking', cache: 'Cache', infrastructure: 'Infrastructure',
 };
 
-// ─── Service Card ─────────────────────────────────────────────────────────────
+// ─── ServiceRow ───────────────────────────────────────────────────────────────
 
-const ServiceCard = ({ service, timeframe }: { service: Service; timeframe: Timeframe }) => {
+const ServiceRow = ({ service, timeframe }: { service: Service; timeframe: '24h' | '7d' | '30d' }) => {
     const pct = service.uptime[timeframe];
-    const label = timeframe === '24h' ? '24H UPTIME' : timeframe === '7d' ? '7D UPTIME' : '30D UPTIME';
+    const uptimeLabel = timeframe === '24h' ? '24H UPTIME' : timeframe === '7d' ? '7D UPTIME' : '30D UPTIME';
 
     return (
-        <Card>
-            <CardContent className="p-4 flex flex-col gap-3">
-                {/* Name + status badge */}
-                <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                        <span
-                            className="text-sm font-semibold text-foreground leading-snug truncate"
-                            title={service.displayName}
-                        >
-                            {service.displayName}
-                        </span>
-                        <div className="flex items-center gap-1.5 text-muted-foreground">
-                            {categoryIcons[service.category]}
-                            <span className="text-xs">{categoryLabels[service.category]}</span>
-                        </div>
-                    </div>
-                    <Badge variant={serviceStatusBadgeVariant[service.status]} size="sm" className="shrink-0">
-                        {serviceStatusLabel[service.status]}
-                    </Badge>
-                </div>
-
-                <Separator />
-
-                {/* Uptime metric */}
-                <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
-                        {label}
+        <div className={cn(
+            'group flex items-center gap-4 px-4 py-3 rounded-lg border border-border',
+            'bg-card hover:bg-muted/50 transition-all duration-150',
+            'cursor-default',
+        )}>
+            {/* Service name + category */}
+            <div className="flex flex-col gap-0.5 min-w-0 w-52 shrink-0">
+                <span
+                    className="text-sm font-medium text-foreground truncate leading-snug"
+                    title={service.displayName}
+                >
+                    {service.displayName}
+                </span>
+                <div className="flex items-center gap-1 text-muted-foreground">
+                    {categoryIcons[service.category]}
+                    <span className="text-[11px]">{categoryLabels[service.category]}</span>
+                    <span className="text-[11px] text-muted-foreground/60">
+                        · {service.components} {service.components === 1 ? 'component' : 'components'}
                     </span>
-                    <div className="flex items-center gap-1.5">
-                        <TrendingUp size={12} className="text-muted-foreground" />
-                        <span className={cn('text-xs font-semibold tabular-nums', uptimeColorClass(pct))}>
-                            {pct === 100 ? '100%' : `${pct.toFixed(2)}%`}
-                        </span>
-                    </div>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+
+            {/* History timeline */}
+            <div
+                className="flex items-center gap-px flex-1 min-w-0 overflow-hidden"
+                role="img"
+                aria-label={`${service.displayName} uptime history`}
+            >
+                {service.history.map((seg, i) => (
+                    <span
+                        key={i}
+                        className={cn(
+                            'inline-block h-8 rounded-sm flex-1 min-w-[2px] transition-opacity',
+                            'group-hover:opacity-90',
+                            historySegmentClass[seg],
+                        )}
+                        aria-label={seg}
+                    />
+                ))}
+            </div>
+
+            {/* Status + uptime */}
+            <div className="flex flex-col items-end gap-1 shrink-0 w-28 text-right">
+                <Badge variant={serviceStatusBadgeVariant[service.status]} size="sm">
+                    {serviceStatusLabel[service.status]}
+                </Badge>
+                <div className="flex flex-col items-end gap-0">
+                    <span className={cn('text-sm font-semibold tabular-nums', uptimeColorClass(pct))}>
+                        {pct === 100 ? '100%' : `${pct.toFixed(2)}%`}
+                    </span>
+                    <span className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+                        {uptimeLabel}
+                    </span>
+                </div>
+            </div>
+        </div>
     );
 };
 
@@ -330,62 +415,71 @@ const IncidentRow = ({ incident }: { incident: Incident }) => (
 
 // ─── Uptime Tab ───────────────────────────────────────────────────────────────
 
-const TIMEFRAMES: { value: Timeframe; label: string }[] = [
-    { value: '24h', label: '24h' },
-    { value: '7d', label: '7d' },
-    { value: '30d', label: '30d' },
-];
-
 const UptimeTab = () => {
-    const [timeframe, setTimeframe] = useState<Timeframe>('24h');
+    const [timeframe, setTimeframe] = useState<'24h' | '7d' | '30d'>('24h');
     const ps = platformStatusConfig[PLATFORM_STATUS.status];
 
     return (
         <div className="flex flex-col gap-5">
-            {/* Platform status banner */}
-            <Card>
-                <CardHeader className="p-4 pb-0">
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-muted border border-border">
-                            <span className={ps.iconColorClass}>{ps.icon}</span>
-                        </div>
-                        <CardTitle className="text-sm font-semibold text-foreground">{ps.label}</CardTitle>
-                        <Badge variant={ps.badgeVariant} size="sm" className="ml-auto flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                            Live
-                        </Badge>
-                    </div>
-                </CardHeader>
-                <CardContent className="px-4 pb-4 pt-2">
-                    <CardDescription className="text-xs">{PLATFORM_STATUS.description}</CardDescription>
-                    <CardDescription className="text-xs mt-0.5">
+            {/* Hero status card */}
+            <div className={cn('rounded-xl border p-5 flex items-center gap-4', ps.heroBg, ps.heroBorder)}>
+                <div className={cn('w-14 h-14 rounded-xl flex items-center justify-center shrink-0', ps.heroIconBg)}>
+                    <span className={ps.iconColor}>{ps.icon}</span>
+                </div>
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                    <h2 className="text-base font-semibold text-foreground">{ps.headline}</h2>
+                    <p className="text-sm text-muted-foreground">{PLATFORM_STATUS.description}</p>
+                    <p className="text-xs text-muted-foreground/70">
                         Last updated: {formatTimestamp(PLATFORM_STATUS.timestamp)}
-                    </CardDescription>
-                </CardContent>
-            </Card>
+                    </p>
+                </div>
+                <Badge variant={ps.badgeVariant} size="sm" className="flex items-center gap-1.5 shrink-0 self-start">
+                    <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                    Live
+                </Badge>
+            </div>
 
-            {/* Timeframe picker */}
-            <div className="flex items-center gap-3">
-                <span className="text-xs font-medium text-muted-foreground">Show uptime for:</span>
-                <div className="flex gap-1">
-                    {TIMEFRAMES.map(tf => (
-                        <Button
-                            key={tf.value}
-                            size="sm"
-                            variant={timeframe === tf.value ? 'secondary' : 'ghost'}
-                            onClick={() => setTimeframe(tf.value)}
-                            className="h-7 px-3 text-xs"
-                        >
-                            {tf.label}
-                        </Button>
-                    ))}
+            {/* System status header with breadcrumb */}
+            <div className="flex items-center justify-between gap-3 pt-1">
+                <span className="text-sm font-semibold text-foreground">System status</span>
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" aria-label="Previous period">
+                        <ChevronLeft size={15} />
+                    </Button>
+                    <span className="text-xs text-muted-foreground px-1">Dec 2025 – Mar 2026</span>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" aria-label="Next period">
+                        <ChevronRight size={15} />
+                    </Button>
+                    <div className="ml-3 flex gap-1 border-l border-border pl-3">
+                        {(['24h', '7d', '30d'] as const).map(tf => (
+                            <Button
+                                key={tf}
+                                size="sm"
+                                variant={timeframe === tf ? 'secondary' : 'ghost'}
+                                onClick={() => setTimeframe(tf)}
+                                className="h-7 px-2.5 text-xs"
+                            >
+                                {tf}
+                            </Button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            {/* Service grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {/* Vertical service list */}
+            <div className="flex flex-col gap-2">
                 {MOCK_SERVICES.map(service => (
-                    <ServiceCard key={service.id} service={service} timeframe={timeframe} />
+                    <ServiceRow key={service.id} service={service} timeframe={timeframe} />
+                ))}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center gap-4 pt-1 pb-2">
+                {(['operational', 'degraded', 'outage', 'maintenance'] as ServiceStatus[]).map(s => (
+                    <div key={s} className="flex items-center gap-1.5">
+                        <span className={cn('w-3 h-3 rounded-sm', historySegmentClass[s])} />
+                        <span className="text-[11px] text-muted-foreground capitalize">{s}</span>
+                    </div>
                 ))}
             </div>
         </div>
@@ -406,7 +500,6 @@ const INCIDENT_FILTER_OPTIONS = [
 
 const IncidentsTab = () => {
     const [filter, setFilter] = useState<IncidentFilter>('all');
-
     const filtered = MOCK_INCIDENTS.filter(i => filter === 'all' || i.status === filter);
 
     return (
@@ -553,14 +646,8 @@ const ErrorState = ({ onRetry }: { onRetry: () => void }) => (
 
 // ─── KayaStatusSurface ────────────────────────────────────────────────────────
 
-/**
- * Self-contained status surface. Renders the full Uptime + Incidents tabs,
- * platform banner, service grid, incident list, and subscription panel.
- * No Dialog wrappers — designed to be mounted directly in a page.
- */
 const KayaStatusSurface = () => {
     const [hasError] = useState(false);
-
     const openIncidentCount = MOCK_INCIDENTS.filter(i => i.status !== 'resolved').length;
 
     return (
@@ -568,30 +655,32 @@ const KayaStatusSurface = () => {
             {hasError ? (
                 <ErrorState onRetry={() => {}} />
             ) : (
-                <Tabs defaultValue="uptime" className="flex flex-col gap-5">
-                    <TabsList>
-                        <TabsTrigger value="uptime">Uptime</TabsTrigger>
-                        <TabsTrigger value="incidents" className="flex items-center gap-2">
-                            Incidents
-                            {openIncidentCount > 0 && (
-                                <Badge variant="warning" size="sm">
-                                    {openIncidentCount}
-                                </Badge>
-                            )}
-                        </TabsTrigger>
-                    </TabsList>
+                <>
+                    <SubscriptionPanel />
 
-                    <TabsContent value="uptime" className="mt-0">
-                        <UptimeTab />
-                    </TabsContent>
+                    <Tabs defaultValue="uptime" className="flex flex-col gap-5">
+                        <TabsList>
+                            <TabsTrigger value="uptime">Uptime</TabsTrigger>
+                            <TabsTrigger value="incidents" className="flex items-center gap-2">
+                                Incidents
+                                {openIncidentCount > 0 && (
+                                    <Badge variant="warning" size="sm">
+                                        {openIncidentCount}
+                                    </Badge>
+                                )}
+                            </TabsTrigger>
+                        </TabsList>
 
-                    <TabsContent value="incidents" className="mt-0">
-                        <IncidentsTab />
-                    </TabsContent>
-                </Tabs>
+                        <TabsContent value="uptime" className="mt-0">
+                            <UptimeTab />
+                        </TabsContent>
+
+                        <TabsContent value="incidents" className="mt-0">
+                            <IncidentsTab />
+                        </TabsContent>
+                    </Tabs>
+                </>
             )}
-
-            <SubscriptionPanel />
         </div>
     );
 };
