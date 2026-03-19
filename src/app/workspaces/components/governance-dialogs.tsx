@@ -144,7 +144,7 @@ export const ManageAccessDialog: React.FC<GovernanceDialogProps> = ({
     );
 };
 
-// Resource Quotas Dialog with Budget Limits
+// Allocate Credit Budget Dialog
 export const ResourceQuotasDialog: React.FC<GovernanceDialogProps> = ({
     open,
     onOpenChange,
@@ -168,10 +168,10 @@ export const ResourceQuotasDialog: React.FC<GovernanceDialogProps> = ({
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <DollarSign className="h-5 w-5 text-green-600" />
-                        Resource Quotas & Budget Limits
+                        Allocate Credit Budget
                     </DialogTitle>
                     <DialogDescription>
-                        Configure budget limits for each workflow in {workspaceName || 'this workspace'}
+                        Configure credit budget limits for each workflow in {workspaceName || 'this workspace'}
                     </DialogDescription>
                 </DialogHeader>
                 <DialogBody className="space-y-6 py-4">
@@ -179,8 +179,8 @@ export const ResourceQuotasDialog: React.FC<GovernanceDialogProps> = ({
                     <div className="p-4 rounded-lg bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800">
                         <div className="flex items-center justify-between mb-3">
                             <div>
-                                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Global Workspace Budget</h4>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Maximum budget for all workflows combined</p>
+                                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Global Credit Budget</h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Maximum credit budget for all workflows combined</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="text-2xl font-bold text-green-600">${globalBudget}</span>
@@ -220,7 +220,7 @@ export const ResourceQuotasDialog: React.FC<GovernanceDialogProps> = ({
                     <div>
                         <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
                             <Cpu size={16} />
-                            Workflow Budget Limits
+                            Per-Workflow Credit Limits
                         </h4>
                         <div className="space-y-4">
                             {workflows.map((workflow) => {
@@ -283,7 +283,7 @@ export const ResourceQuotasDialog: React.FC<GovernanceDialogProps> = ({
                         Cancel
                     </Button>
                     <Button variant="primary" size="sm" onClick={() => onOpenChange(false)}>
-                        Save Budget Limits
+                        Save Credit Budget
                     </Button>
                 </DialogFooter>
             </DialogContent>

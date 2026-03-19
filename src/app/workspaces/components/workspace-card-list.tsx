@@ -7,13 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/a
 import { useAuth } from '@/context';
 import { RoleType } from '@/enums';
 import { IGroupWorkspace, IOption } from '@/models';
-import {
-    ManageAccessDialog,
-    ResourceQuotasDialog,
-    AuditLogsDialog,
-    EnvironmentSettingsDialog,
-    GovernanceDialogType,
-} from './governance-dialogs';
+import { ResourceQuotasDialog } from './governance-dialogs';
 
 // Mock governance badges based on workspace - in production these would come from API
 const getGovernanceBadges = (workspaceId: number | string, workspaceName?: string): GovernanceBadge[] => {
@@ -81,7 +75,7 @@ const WorkspaceCardGrid = ({
     cardWidth,
     onHandleEdit,
     onHandleDelete,
-    onOpenGovernanceDialog,
+    onOpenCreditBudgetDialog,
 }: {
     data: WorkspaceCardProps[];
     isSuccess: boolean;
@@ -89,7 +83,7 @@ const WorkspaceCardGrid = ({
     cardWidth?: string;
     onHandleEdit: (workspaceId: number | string) => void;
     onHandleDelete: (workspaceId: number | string) => void;
-    onOpenGovernanceDialog: (type: GovernanceDialogType, workspaceId: string | number, workspaceName?: string) => void;
+    onOpenCreditBudgetDialog: (workspaceId: string | number, workspaceName?: string) => void;
 }) => {
     const { user, isSuperAdmin } = useAuth();
     const workspaces = user?.user?.workspaces;
@@ -118,17 +112,8 @@ const WorkspaceCardGrid = ({
                             onEditClick={workspaceId => {
                                 onHandleEdit(workspaceId);
                             }}
-                            onManageAccess={workspaceId => {
-                                onOpenGovernanceDialog('access', workspaceId, workspace.name);
-                            }}
-                            onResourceQuotas={workspaceId => {
-                                onOpenGovernanceDialog('quotas', workspaceId, workspace.name);
-                            }}
-                            onAuditLogs={workspaceId => {
-                                onOpenGovernanceDialog('audit', workspaceId, workspace.name);
-                            }}
-                            onEnvironmentSettings={workspaceId => {
-                                onOpenGovernanceDialog('environment', workspaceId, workspace.name);
+                            onAllocateCreditBudget={workspaceId => {
+                                onOpenCreditBudgetDialog(workspaceId, workspace.name);
                             }}
                         />
                     );
@@ -169,8 +154,8 @@ const WorkspaceCardList = ({
     const [workspaceId, setWorkspaceId] = useState<number | string | undefined>(undefined);
     const [open, setOpen] = useState<boolean>(false);
     
-    // Governance dialog state
-    const [governanceDialog, setGovernanceDialog] = useState<GovernanceDialogType>(null);
+    // Credit budget dialog state
+    const [creditBudgetDialogOpen, setCreditBudgetDialogOpen] = useState(false);
     const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | number>('');
     const [selectedWorkspaceName, setSelectedWorkspaceName] = useState<string>('');
 
@@ -185,14 +170,14 @@ const WorkspaceCardList = ({
         setWorkspaceId(undefined);
     };
 
-    const openGovernanceDialog = useCallback((type: GovernanceDialogType, wsId: string | number, wsName?: string) => {
-        setGovernanceDialog(type);
+    const openCreditBudgetDialog = useCallback((wsId: string | number, wsName?: string) => {
         setSelectedWorkspaceId(wsId);
         setSelectedWorkspaceName(wsName || '');
+        setCreditBudgetDialogOpen(true);
     }, []);
 
-    const closeGovernanceDialog = useCallback(() => {
-        setGovernanceDialog(null);
+    const closeCreditBudgetDialog = useCallback(() => {
+        setCreditBudgetDialogOpen(false);
         setSelectedWorkspaceId('');
         setSelectedWorkspaceName('');
     }, []);
@@ -228,7 +213,7 @@ const WorkspaceCardList = ({
                                 hasFilters={hasFilters}
                                 onHandleDelete={onDeleteClick}
                                 onHandleEdit={onHandleEdit}
-                                onOpenGovernanceDialog={openGovernanceDialog}
+                                onOpenCreditBudgetDialog={openCreditBudgetDialog}
                             />
                         ) : (
                             <>
@@ -247,7 +232,7 @@ const WorkspaceCardList = ({
                                                     cardWidth="!w-[290px]"
                                                     onHandleDelete={onDeleteClick}
                                                     onHandleEdit={onHandleEdit}
-                                                    onOpenGovernanceDialog={openGovernanceDialog}
+                                                    onOpenCreditBudgetDialog={openCreditBudgetDialog}
                                                 />
                                             </div>
                                         </div>
@@ -278,28 +263,10 @@ const WorkspaceCardList = ({
                             </DialogContent>
                         </Dialog>
 
-                        {/* Governance Dialogs */}
-                        <ManageAccessDialog
-                            open={governanceDialog === 'access'}
-                            onOpenChange={(isOpen) => !isOpen && closeGovernanceDialog()}
-                            workspaceId={selectedWorkspaceId}
-                            workspaceName={selectedWorkspaceName}
-                        />
+                        {/* Credit Budget Dialog */}
                         <ResourceQuotasDialog
-                            open={governanceDialog === 'quotas'}
-                            onOpenChange={(isOpen) => !isOpen && closeGovernanceDialog()}
-                            workspaceId={selectedWorkspaceId}
-                            workspaceName={selectedWorkspaceName}
-                        />
-                        <AuditLogsDialog
-                            open={governanceDialog === 'audit'}
-                            onOpenChange={(isOpen) => !isOpen && closeGovernanceDialog()}
-                            workspaceId={selectedWorkspaceId}
-                            workspaceName={selectedWorkspaceName}
-                        />
-                        <EnvironmentSettingsDialog
-                            open={governanceDialog === 'environment'}
-                            onOpenChange={(isOpen) => !isOpen && closeGovernanceDialog()}
+                            open={creditBudgetDialogOpen}
+                            onOpenChange={(isOpen) => !isOpen && closeCreditBudgetDialog()}
                             workspaceId={selectedWorkspaceId}
                             workspaceName={selectedWorkspaceName}
                         />

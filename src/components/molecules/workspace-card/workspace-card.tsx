@@ -1,4 +1,4 @@
-import { CalendarSync, Ellipsis, Pencil, Plus, Trash, Users, Gauge, FileText, Settings } from 'lucide-react';
+import { CalendarSync, Ellipsis, Pencil, Plus, Trash, Wallet } from 'lucide-react';
 import React from 'react';
 import AvatarGroup, { AvatarGroupProps } from '../avatar-group/avatar-group';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/atoms';
@@ -27,10 +27,7 @@ export interface WorkspaceCardProps extends AvatarGroupProps {
     onSkeltonClick?: () => void;
     onEditClick: (workspaceId: number | string) => void;
     onDeleteClick: (workspaceId: number | string) => void;
-    onManageAccess?: (workspaceId: number | string) => void;
-    onResourceQuotas?: (workspaceId: number | string) => void;
-    onAuditLogs?: (workspaceId: number | string) => void;
-    onEnvironmentSettings?: (workspaceId: number | string) => void;
+    onAllocateCreditBudget?: (workspaceId: number | string) => void;
 }
 
 const getBadgeStyles = (variant: GovernanceBadge['variant']) => {
@@ -65,10 +62,7 @@ const WorkspaceCard = ({
     onSkeltonClick,
     onEditClick,
     onDeleteClick,
-    onManageAccess,
-    onResourceQuotas,
-    onAuditLogs,
-    onEnvironmentSettings,
+    onAllocateCreditBudget,
 }: WorkspaceCardProps) => {
     const router = useRouter();
     const date = moment(createdAt).format('DD MMM YY');
@@ -130,21 +124,9 @@ const WorkspaceCard = ({
                                 <p>Delete</p>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => onManageAccess?.(uuid)}>
-                                <Users size={12} />
-                                <p>Manage Access</p>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onResourceQuotas?.(uuid)}>
-                                <Gauge size={12} />
-                                <p>Resource Quotas</p>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onAuditLogs?.(uuid)}>
-                                <FileText size={12} />
-                                <p>Audit Logs</p>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onEnvironmentSettings?.(uuid)}>
-                                <Settings size={12} />
-                                <p>Environment Settings</p>
+                            <DropdownMenuItem onClick={() => onAllocateCreditBudget?.(uuid)}>
+                                <Wallet size={12} />
+                                <p>Allocate Credit Budget</p>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
