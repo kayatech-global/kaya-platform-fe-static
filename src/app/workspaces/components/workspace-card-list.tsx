@@ -71,6 +71,13 @@ const EmptyWorkspace = () => (
 // Total available credits (mock - in production this would come from an API)
 const TOTAL_AVAILABLE_CREDITS = 100000;
 
+// Mock utilized credits per workspace (in production this would come from API)
+const getUtilizedCredits = (workspaceId: string): number => {
+    // Simulate some usage based on workspace ID hash
+    const hash = String(workspaceId).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return (hash * 13) % 3000; // Returns a deterministic value 0-2999
+};
+
 const WorkspaceCardGrid = ({
     data,
     isSuccess,
@@ -93,11 +100,8 @@ const WorkspaceCardGrid = ({
     const { user, isSuperAdmin } = useAuth();
     const workspaces = user?.user?.workspaces;
 
-    // Calculate total allocated once for remaining budget
-    const totalAllocated = Object.values(workspaceBudgets).reduce((sum, val) => sum + val, 0);
-
     if (data?.length > 0 || !isSuccess) {
-        return data.map((workspace) => {
+        const cards = data.map((workspace) => {
             const isWorkspaceAdmin = workspaces?.some(
                 ws => ws.id === workspace.id && ws.roles.includes(RoleType.WORKSPACE_ADMIN)
             );
@@ -105,11 +109,13 @@ const WorkspaceCardGrid = ({
             // Get governance badges for this workspace
             const governanceBadges = getGovernanceBadges(workspace.id, workspace.name);
             const allocatedBudget = workspaceBudgets[String(workspace.uuid)] || 0;
-            const remainingBudget = TOTAL_AVAILABLE_CREDITS - totalAllocated;
+            // Remaining = Allocated - Utilized (credits used by workflows)
+            const utilizedCredits = allocatedBudget > 0 ? getUtilizedCredits(String(workspace.uuid)) : 0;
+            const remainingBudget = allocatedBudget - utilizedCredits;
 
             return (
                 <WorkspaceCard
-                    key={workspace.uuid || workspace.id}
+                    key={String(workspace.uuid || workspace.id)}
                     {...workspace}
                     showOptions={isSuperAdmin || isWorkspaceAdmin}
                     cardWidth={cardWidth}
@@ -128,6 +134,7 @@ const WorkspaceCardGrid = ({
                 />
             );
         });
+        return <>{cards}</>;
     }
 
     if (hasFilters) return <EmptyWorkspace />;
