@@ -1,12 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { InfoIcon } from 'lucide-react';
 import { Button, TruncateCell } from '@/components';
-import WorkspaceCard, { WorkspaceCardProps } from '@/components/molecules/workspace-card/workspace-card';
+import WorkspaceCard, { WorkspaceCardProps, GovernanceBadge } from '@/components/molecules/workspace-card/workspace-card';
 import { cn, isNullOrEmpty } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { useAuth } from '@/context';
 import { RoleType } from '@/enums';
 import { IGroupWorkspace, IOption } from '@/models';
+
+// Mock governance badges based on workspace - in production these would come from API
+const getGovernanceBadges = (workspaceId: number | string, workspaceName: string): GovernanceBadge[] => {
+    const badges: GovernanceBadge[] = [];
+    
+    // Simulate different governance states based on workspace characteristics
+    if (workspaceName.toLowerCase().includes('alpha') || workspaceName.toLowerCase().includes('dev')) {
+        badges.push({ label: 'Dev', variant: 'dev' });
+    } else if (workspaceName.toLowerCase().includes('beta') || workspaceName.toLowerCase().includes('staging')) {
+        badges.push({ label: 'Staging', variant: 'staging' });
+    } else {
+        badges.push({ label: 'Production', variant: 'production' });
+    }
+
+    // Simulate quota status
+    const quotaPercentage = Math.floor(Math.random() * 100);
+    if (quotaPercentage > 70) {
+        badges.push({ label: `Quotas: ${quotaPercentage}%`, variant: 'quota' });
+    }
+
+    // Simulate compliance status
+    if (Math.random() > 0.3) {
+        badges.push({ label: 'Compliant', variant: 'compliant' });
+    } else {
+        badges.push({ label: 'Review Required', variant: 'warning' });
+    }
+
+    return badges;
+};
 
 export interface WorkspaceCardListProps {
     metadataOption: IOption | null;
@@ -60,17 +89,33 @@ const WorkspaceCardGrid = ({
                 ws => ws.id === workspace.id && ws.roles.includes(RoleType.WORKSPACE_ADMIN)
             );
 
+            // Get governance badges for this workspace
+            const governanceBadges = getGovernanceBadges(workspace.id, workspace.name);
+
             return (
                 <WorkspaceCard
                     key={workspace.id}
                     {...workspace}
                     showOptions={isSuperAdmin || isWorkspaceAdmin}
                     cardWidth={cardWidth}
+                    governanceBadges={governanceBadges}
                     onDeleteClick={workspaceId => {
                         onHandleDelete(workspaceId);
                     }}
                     onEditClick={workspaceId => {
                         onHandleEdit(workspaceId);
+                    }}
+                    onManageAccess={workspaceId => {
+                        console.log('Manage Access:', workspaceId);
+                    }}
+                    onResourceQuotas={workspaceId => {
+                        console.log('Resource Quotas:', workspaceId);
+                    }}
+                    onAuditLogs={workspaceId => {
+                        console.log('Audit Logs:', workspaceId);
+                    }}
+                    onEnvironmentSettings={workspaceId => {
+                        console.log('Environment Settings:', workspaceId);
                     }}
                 />
             );
