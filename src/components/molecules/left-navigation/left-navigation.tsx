@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Layers } from 'lucide-react';
+import { Layers, FileKey2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type NavItem = {
@@ -16,6 +16,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
     { id: 'workspaces', label: 'Workspaces', icon: <Layers className="size-5" />, href: '/workspaces' },
+    { id: 'licensing', label: 'Licensing', icon: <FileKey2 className="size-5" />, href: '/licensing' },
 ];
 
 export const LeftNavigation = () => {
