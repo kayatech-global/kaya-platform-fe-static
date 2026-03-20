@@ -37,13 +37,7 @@ export const AgentListingContainer = () => {
 
     return (
         <div className="pb-4 max-w-[1280px] mx-auto">
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Standalone Agents</h1>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Manage external and standalone AI agents connected to your workspace
-                    </p>
-                </div>
+            <div className="flex items-center justify-end mb-4">
                 <Button variant="primary" size="sm" onClick={() => setWizardOpen(true)} leadingIcon={<Plus className="h-4 w-4" />}>
                     Create Agent
                 </Button>

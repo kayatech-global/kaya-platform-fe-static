@@ -19,7 +19,7 @@ export const AgentDetailContainer = () => {
 
     return (
         <div className="pb-4 max-w-[1280px] mx-auto">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-4">
                 <Button
                     variant="ghost"
                     size="icon"
@@ -27,10 +27,7 @@ export const AgentDetailContainer = () => {
                 >
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <div>
-                    <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{agent.name}</h1>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{agent.a2aEndpoint}</p>
-                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{agent.a2aEndpoint}</p>
             </div>
 
             <Tabs defaultValue="overview">
