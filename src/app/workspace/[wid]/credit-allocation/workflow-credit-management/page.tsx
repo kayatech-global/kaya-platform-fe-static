@@ -6,17 +6,39 @@ import {
     ChevronDown,
     SlidersHorizontal,
     Users,
+    Bot,
+    Brain,
+    Database,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/atoms/card';
 import { Badge } from '@/components/atoms/badge';
 import { cn } from '@/lib/utils';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/atoms/dialog';
+import { Button } from '@/components/atoms/button';
 
 // Types
+interface CEEDBreakdown {
+    entity: number;
+    capability: number;
+    execution: number;
+    dataFlow: number;
+}
+
 interface WorkflowAgent {
     id: string;
     name: string;
+    type: 'Orchestrator' | 'Worker' | 'Specialist';
+    model: string;
+    intelligenceTier: 'HIGH INTELLIGENCE' | 'STANDARD INTELLIGENCE';
     consumed: number;
     budgetLimit: number | null;
+    icon: 'brain' | 'database' | 'bot';
 }
 
 interface Workflow {
@@ -27,6 +49,7 @@ interface Workflow {
     tier: 'T1 (Low)' | 'T2 (Medium)' | 'T3 (High)';
     consumed: number;
     budgetLimit: number | null;
+    ceedBreakdown: CEEDBreakdown;
     agents: WorkflowAgent[];
 }
 
@@ -40,10 +63,16 @@ const mockWorkflows: Workflow[] = [
         tier: 'T2 (Medium)',
         consumed: 150000,
         budgetLimit: 200000,
+        ceedBreakdown: {
+            entity: 50000,
+            capability: 40000,
+            execution: 40000,
+            dataFlow: 20000,
+        },
         agents: [
-            { id: 'a1', name: 'OCR Agent', consumed: 50000, budgetLimit: 75000 },
-            { id: 'a2', name: 'Validation Agent', consumed: 60000, budgetLimit: 70000 },
-            { id: 'a3', name: 'Processing Agent', consumed: 40000, budgetLimit: 55000 },
+            { id: 'a1', name: 'Invoice Classifier', type: 'Orchestrator', model: 'GPT-4 Turbo', intelligenceTier: 'HIGH INTELLIGENCE', consumed: 80000, budgetLimit: null, icon: 'brain' },
+            { id: 'a2', name: 'Data Extractor', type: 'Worker', model: 'Claude 3.5 Sonnet', intelligenceTier: 'HIGH INTELLIGENCE', consumed: 60000, budgetLimit: null, icon: 'database' },
+            { id: 'a3', name: 'Validation Bot', type: 'Specialist', model: 'GPT-3.5 Turbo', intelligenceTier: 'STANDARD INTELLIGENCE', consumed: 10000, budgetLimit: null, icon: 'bot' },
         ],
     },
     {
@@ -54,8 +83,14 @@ const mockWorkflows: Workflow[] = [
         tier: 'T1 (Low)',
         consumed: 85000,
         budgetLimit: 100000,
+        ceedBreakdown: {
+            entity: 30000,
+            capability: 25000,
+            execution: 20000,
+            dataFlow: 10000,
+        },
         agents: [
-            { id: 'a4', name: 'Approval Agent', consumed: 85000, budgetLimit: 100000 },
+            { id: 'a4', name: 'Approval Agent', type: 'Worker', model: 'GPT-4 Turbo', intelligenceTier: 'HIGH INTELLIGENCE', consumed: 85000, budgetLimit: 100000, icon: 'brain' },
         ],
     },
     {
@@ -66,6 +101,12 @@ const mockWorkflows: Workflow[] = [
         tier: 'T1 (Low)',
         consumed: 45000,
         budgetLimit: null,
+        ceedBreakdown: {
+            entity: 15000,
+            capability: 12000,
+            execution: 10000,
+            dataFlow: 8000,
+        },
         agents: [],
     },
     {
@@ -76,6 +117,12 @@ const mockWorkflows: Workflow[] = [
         tier: 'T3 (High)',
         consumed: 45000,
         budgetLimit: 50000,
+        ceedBreakdown: {
+            entity: 18000,
+            capability: 12000,
+            execution: 10000,
+            dataFlow: 5000,
+        },
         agents: [],
     },
 ];
@@ -113,6 +160,30 @@ const getTierBadgeClass = (tier: string): string => {
     if (tier.includes('Medium')) return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
     if (tier.includes('High')) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
     return 'bg-gray-100 text-gray-700';
+};
+
+const getAgentTypeColor = (type: string): string => {
+    switch (type) {
+        case 'Orchestrator':
+            return 'text-purple-600 dark:text-purple-400';
+        case 'Worker':
+            return 'text-blue-600 dark:text-blue-400';
+        default:
+            return 'text-gray-600 dark:text-gray-400';
+    }
+};
+
+const getAgentIcon = (icon: string) => {
+    switch (icon) {
+        case 'brain':
+            return <Brain className="size-4 text-purple-600 dark:text-purple-400" />;
+        case 'database':
+            return <Database className="size-4 text-blue-600 dark:text-blue-400" />;
+        case 'bot':
+            return <Bot className="size-4 text-gray-600 dark:text-gray-400" />;
+        default:
+            return <Bot className="size-4 text-gray-600 dark:text-gray-400" />;
+    }
 };
 
 // Consumption Progress Bar Component
@@ -157,18 +228,131 @@ const UtilizationBar: React.FC<{ utilization: number | null }> = ({ utilization 
     );
 };
 
+// CEED Card Component
+const CEEDCard: React.FC<{ label: string; value: number; dotColor: string }> = ({ label, value, dotColor }) => (
+    <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+        <div className="flex items-center gap-2">
+            <div className={cn('w-2.5 h-2.5 rounded-full', dotColor)} />
+            <span className="text-sm text-gray-500 dark:text-gray-400">{label}</span>
+        </div>
+        <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{formatNumber(value)}</span>
+    </div>
+);
+
+// Budget Edit Modal Component
+const BudgetEditModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    title: string;
+    entityName: string;
+    currentBudget: number | null;
+    consumed: number;
+}> = ({ isOpen, onClose, title, entityName, currentBudget, consumed }) => {
+    const [budgetLimit, setBudgetLimit] = useState<string>(currentBudget?.toString() || '');
+    const [warningThreshold, setWarningThreshold] = useState<number>(80);
+    const [criticalThreshold, setCriticalThreshold] = useState<number>(95);
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="sm:max-w-[480px]" aria-describedby="budget-edit-description">
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                    <DialogDescription id="budget-edit-description">
+                        Configure budget limits and notification thresholds for {entityName}.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-6 py-4">
+                    {/* Current Status */}
+                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Current Consumption</span>
+                        <span className="text-sm font-semibold font-mono text-gray-900 dark:text-gray-100">
+                            {formatNumber(consumed)} CEED
+                        </span>
+                    </div>
+
+                    {/* Budget Limit Input */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Budget Limit (CEED)
+                        </label>
+                        <input
+                            type="text"
+                            value={budgetLimit}
+                            onChange={(e) => setBudgetLimit(e.target.value.replace(/[^0-9]/g, ''))}
+                            placeholder="Enter budget limit or leave empty for unlimited"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        />
+                        <p className="text-xs text-gray-500">Leave empty for unlimited budget</p>
+                    </div>
+
+                    {/* Warning Threshold Slider */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Warning Threshold
+                            </label>
+                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{warningThreshold}%</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="50"
+                            max="90"
+                            value={warningThreshold}
+                            onChange={(e) => setWarningThreshold(Number(e.target.value))}
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                        />
+                    </div>
+
+                    {/* Critical Threshold Slider */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Critical Alert Threshold
+                            </label>
+                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{criticalThreshold}%</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="80"
+                            max="100"
+                            value={criticalThreshold}
+                            onChange={(e) => setCriticalThreshold(Number(e.target.value))}
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                        />
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <Button variant="outline" onClick={onClose}>
+                        Cancel
+                    </Button>
+                    <Button onClick={onClose} className="bg-purple-600 hover:bg-purple-700 text-white">
+                        Save Changes
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 // Workflow Row Component
 const WorkflowRow: React.FC<{
     workflow: Workflow;
     isExpanded: boolean;
     onToggle: () => void;
-}> = ({ workflow, isExpanded, onToggle }) => {
+    onEditWorkflow: (workflow: Workflow) => void;
+    onEditAgent: (agent: WorkflowAgent, workflowName: string) => void;
+}> = ({ workflow, isExpanded, onToggle, onEditWorkflow, onEditAgent }) => {
     const utilization = getUtilization(workflow.consumed, workflow.budgetLimit);
 
     return (
         <>
             <tr
-                className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
+                className={cn(
+                    'border-b border-gray-100 dark:border-gray-800 cursor-pointer transition-colors',
+                    isExpanded ? 'bg-purple-50/50 dark:bg-purple-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                )}
                 onClick={onToggle}
             >
                 {/* Workflow Name */}
@@ -206,7 +390,7 @@ const WorkflowRow: React.FC<{
                             {workflow.status}
                         </Badge>
                         <span className={cn(
-                            'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-md',
+                            'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-md w-fit',
                             getTierBadgeClass(workflow.tier)
                         )}>
                             {workflow.tier}
@@ -242,7 +426,7 @@ const WorkflowRow: React.FC<{
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
-                            // Handle settings click
+                            onEditWorkflow(workflow);
                         }}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         aria-label="Workflow settings"
@@ -252,44 +436,129 @@ const WorkflowRow: React.FC<{
                 </td>
             </tr>
 
-            {/* Expanded Agent Details */}
-            {isExpanded && workflow.agents.length > 0 && (
-                <tr className="bg-gray-50 dark:bg-gray-800/30">
-                    <td colSpan={6} className="py-4 px-4 pl-20">
-                        <div className="space-y-3">
-                            <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                                Agent-Level Credits
-                            </h4>
-                            <div className="grid gap-2">
-                                {workflow.agents.map((agent) => {
-                                    const agentUtilization = getUtilization(agent.consumed, agent.budgetLimit);
-                                    return (
-                                        <div
-                                            key={agent.id}
-                                            className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
-                                        >
-                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                {agent.name}
-                                            </span>
-                                            <div className="flex items-center gap-6">
-                                                <div className="text-right">
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400">Consumed</span>
-                                                    <p className="text-sm font-mono font-semibold text-gray-900 dark:text-gray-100">
-                                                        {formatNumber(agent.consumed)}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400">Limit</span>
-                                                    <p className="text-sm font-mono font-semibold text-gray-900 dark:text-gray-100">
-                                                        {agent.budgetLimit ? formatNumber(agent.budgetLimit) : 'Unlimited'}
-                                                    </p>
-                                                </div>
-                                                <UtilizationBar utilization={agentUtilization} />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+            {/* Expanded Section */}
+            {isExpanded && (
+                <tr>
+                    <td colSpan={6} className="p-0">
+                        <div className="border-l-4 border-l-purple-600 bg-white dark:bg-gray-900">
+                            {/* iFlow Profile Summary */}
+                            <div className="px-6 py-5">
+                                <div className="flex flex-col lg:flex-row gap-6">
+                                    {/* Left: Text Area */}
+                                    <div className="flex-shrink-0 lg:w-64">
+                                        <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
+                                            IFLOW PROFILE SUMMARY
+                                        </h4>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            Detailed credit breakdown based on CEED methodology.
+                                        </p>
+                                    </div>
+
+                                    {/* Right: CEED Grid */}
+                                    <div className="flex-1 grid grid-cols-2 gap-3">
+                                        <CEEDCard label="Entity" value={workflow.ceedBreakdown.entity} dotColor="bg-blue-500" />
+                                        <CEEDCard label="Capability" value={workflow.ceedBreakdown.capability} dotColor="bg-teal-500" />
+                                        <CEEDCard label="Execution" value={workflow.ceedBreakdown.execution} dotColor="bg-green-500" />
+                                        <CEEDCard label="Data Flow" value={workflow.ceedBreakdown.dataFlow} dotColor="bg-purple-500" />
+                                    </div>
+                                </div>
                             </div>
+
+                            {/* Divider */}
+                            <div className="border-t border-gray-200 dark:border-gray-700" />
+
+                            {/* Agent Architecture */}
+                            {workflow.agents.length > 0 && (
+                                <div className="px-6 py-5">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <Bot className="size-4 text-gray-500" />
+                                        <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            AGENT ARCHITECTURE
+                                        </h4>
+                                    </div>
+
+                                    {/* Agent Table */}
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                            <thead>
+                                                <tr className="text-left">
+                                                    <th className="py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">Agent</th>
+                                                    <th className="py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">Type</th>
+                                                    <th className="py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">Model & API Tier</th>
+                                                    <th className="py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">Consumed</th>
+                                                    <th className="py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">Budget</th>
+                                                    <th className="py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-center">Utilization</th>
+                                                    <th className="py-2 px-3"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {workflow.agents.map((agent) => {
+                                                    const agentUtilization = getUtilization(agent.consumed, agent.budgetLimit);
+                                                    return (
+                                                        <tr key={agent.id} className="border-t border-gray-100 dark:border-gray-800">
+                                                            <td className="py-3 px-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800">
+                                                                        {getAgentIcon(agent.icon)}
+                                                                    </div>
+                                                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                                        {agent.name}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-3 px-3">
+                                                                <span className={cn('text-sm font-medium', getAgentTypeColor(agent.type))}>
+                                                                    {agent.type}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-3 px-3">
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 w-fit">
+                                                                        {agent.model}
+                                                                    </span>
+                                                                    <span className="text-xs font-bold uppercase tracking-wide text-purple-600 dark:text-purple-400">
+                                                                        {agent.intelligenceTier}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-3 px-3 text-right">
+                                                                <span className="text-sm font-mono text-gray-900 dark:text-gray-100">
+                                                                    {formatNumber(agent.consumed)}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-3 px-3 text-right">
+                                                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                                    {agent.budgetLimit !== null ? formatNumber(agent.budgetLimit) : 'Unlimited'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-3 px-3 text-center">
+                                                                {agentUtilization !== null ? (
+                                                                    <UtilizationBar utilization={agentUtilization} />
+                                                                ) : (
+                                                                    <span className="text-gray-400">-</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="py-3 px-3 text-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        onEditAgent(agent, workflow.name);
+                                                                    }}
+                                                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                                    aria-label="Agent settings"
+                                                                >
+                                                                    <SlidersHorizontal className="size-4 text-gray-400" />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </td>
                 </tr>
@@ -301,6 +570,8 @@ const WorkflowRow: React.FC<{
 // Main Page Component
 const WorkflowCreditManagementPage: React.FC = () => {
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+    const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
+    const [editingAgent, setEditingAgent] = useState<{ agent: WorkflowAgent; workflowName: string } | null>(null);
 
     const toggleRow = (workflowId: string) => {
         setExpandedRows((prev) => {
@@ -357,7 +628,7 @@ const WorkflowCreditManagementPage: React.FC = () => {
                                         Utilization
                                     </th>
                                     <th className="py-3 px-4 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Actions
+                                        
                                     </th>
                                 </tr>
                             </thead>
@@ -368,6 +639,8 @@ const WorkflowCreditManagementPage: React.FC = () => {
                                         workflow={workflow}
                                         isExpanded={expandedRows.has(workflow.id)}
                                         onToggle={() => toggleRow(workflow.id)}
+                                        onEditWorkflow={setEditingWorkflow}
+                                        onEditAgent={(agent, workflowName) => setEditingAgent({ agent, workflowName })}
                                     />
                                 ))}
                             </tbody>
@@ -375,6 +648,30 @@ const WorkflowCreditManagementPage: React.FC = () => {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Workflow Budget Edit Modal */}
+            {editingWorkflow && (
+                <BudgetEditModal
+                    isOpen={true}
+                    onClose={() => setEditingWorkflow(null)}
+                    title="Edit Workflow Budget"
+                    entityName={editingWorkflow.name}
+                    currentBudget={editingWorkflow.budgetLimit}
+                    consumed={editingWorkflow.consumed}
+                />
+            )}
+
+            {/* Agent Budget Edit Modal */}
+            {editingAgent && (
+                <BudgetEditModal
+                    isOpen={true}
+                    onClose={() => setEditingAgent(null)}
+                    title="Edit Agent Budget"
+                    entityName={`${editingAgent.agent.name} (${editingAgent.workflowName})`}
+                    currentBudget={editingAgent.agent.budgetLimit}
+                    consumed={editingAgent.agent.consumed}
+                />
+            )}
         </div>
     );
 };
