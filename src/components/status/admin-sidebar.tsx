@@ -16,14 +16,14 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/status-management", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/status-management/incidents", label: "Incidents", icon: AlertTriangle },
-  { href: "/status-management/maintenance", label: "Maintenance", icon: Wrench },
-  { href: "/status-management/components", label: "Components", icon: Layers },
-  { href: "/status-management/subscribers", label: "Subscribers", icon: Users },
-  { href: "/status-management/escalation", label: "Escalation", icon: ArrowUpRight },
-  { href: "/status-management/health", label: "Health Monitor", icon: Activity },
-  { href: "/status-management/sla-reports", label: "SLA Reports", icon: FileBarChart },
+  { href: "/status/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/status/admin/incidents", label: "Incidents", icon: AlertTriangle },
+  { href: "/status/admin/maintenance", label: "Maintenance", icon: Wrench },
+  { href: "/status/admin/components", label: "Components", icon: Layers },
+  { href: "/status/admin/subscribers", label: "Subscribers", icon: Users },
+  { href: "/status/admin/escalation", label: "Escalation", icon: ArrowUpRight },
+  { href: "/status/admin/health", label: "Health Monitor", icon: Activity },
+  { href: "/status/admin/sla-reports", label: "SLA Reports", icon: FileBarChart },
 ];
 
 export function AdminSidebar() {
