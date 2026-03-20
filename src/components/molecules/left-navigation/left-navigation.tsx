@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Layers, FileKey2, LayoutDashboard, Settings } from 'lucide-react';
+import { Layers, FileKey2, LayoutDashboard, Settings, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type NavItem = {
@@ -19,6 +19,7 @@ const navItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="size-5" />, href: '/dashboard' },
     { id: 'workspaces', label: 'Workspaces', icon: <Layers className="size-5" />, href: '/workspaces' },
     { id: 'licensing', label: 'Licensing', icon: <FileKey2 className="size-5" />, href: '/licensing' },
+    { id: 'reports', label: 'Reports', icon: <BarChart3 className="size-5" />, href: '/reports' },
     { id: 'settings', label: 'Settings', icon: <Settings className="size-5" />, href: '/settings' },
 ];
 
