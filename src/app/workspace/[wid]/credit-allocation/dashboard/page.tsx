@@ -14,8 +14,8 @@ import {
     Legend,
 } from 'recharts';
 
-// Mock data for the consumption trend chart
-const consumptionTrendData = [
+// Mock data for the consumption trend chart - By CEED Layer
+const consumptionTrendByCEED = [
     { day: 'Mon', Capability: 2000, Data: 1500, Entity: 3000, Execution: 1000 },
     { day: 'Tue', Capability: 3000, Data: 2000, Entity: 4000, Execution: 1500 },
     { day: 'Wed', Capability: 5000, Data: 3500, Entity: 5000, Execution: 2500 },
@@ -23,6 +23,17 @@ const consumptionTrendData = [
     { day: 'Fri', Capability: 3500, Data: 2500, Entity: 4000, Execution: 1800 },
     { day: 'Sat', Capability: 3000, Data: 2200, Entity: 3500, Execution: 1500 },
     { day: 'Sun', Capability: 2800, Data: 2000, Entity: 3200, Execution: 1400 },
+];
+
+// Mock data for the consumption trend chart - By Workflow
+const consumptionTrendByWorkflow = [
+    { day: 'Mon', 'Invoice Processing': 3000, 'Expense Approval': 2500, 'Audit Compliance': 2000 },
+    { day: 'Tue', 'Invoice Processing': 3500, 'Expense Approval': 3200, 'Audit Compliance': 3000 },
+    { day: 'Wed', 'Invoice Processing': 4000, 'Expense Approval': 4500, 'Audit Compliance': 5000 },
+    { day: 'Thu', 'Invoice Processing': 2780, 'Expense Approval': 3908, 'Audit Compliance': 2000 },
+    { day: 'Fri', 'Invoice Processing': 2500, 'Expense Approval': 3000, 'Audit Compliance': 2200 },
+    { day: 'Sat', 'Invoice Processing': 2800, 'Expense Approval': 3200, 'Audit Compliance': 2500 },
+    { day: 'Sun', 'Invoice Processing': 3200, 'Expense Approval': 3800, 'Audit Compliance': 3000 },
 ];
 
 // Mock data for recent executions
@@ -109,7 +120,7 @@ const SegmentedToggle = ({
                 onClick={() => onToggle(option)}
                 className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
                     activeOption === option
-                        ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100'
+                        ? 'bg-white dark:bg-gray-700 shadow-sm border border-blue-500 text-blue-600 dark:text-blue-400'
                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
             >
@@ -204,8 +215,8 @@ const ExecutionRow = ({
     </div>
 );
 
-// Custom Legend Component
-const CustomLegend = () => (
+// Custom Legend Component for CEED Layer
+const CEEDLegend = () => (
     <div className="flex justify-center gap-6 mt-4">
         {[
             { name: 'Capability', color: '#14b8a6' },
@@ -214,12 +225,57 @@ const CustomLegend = () => (
             { name: 'Execution', color: '#8b5cf6' },
         ].map((item) => (
             <div key={item.name} className="flex items-center gap-2">
-                <div className="w-3 h-0.5 rounded" style={{ backgroundColor: item.color }} />
-                <span className="text-xs text-gray-600 dark:text-gray-400">{item.name}</span>
+                <svg width="24" height="12" className="flex-shrink-0">
+                    <circle cx="6" cy="6" r="4" fill={item.color} />
+                    <line x1="10" y1="6" x2="24" y2="6" stroke={item.color} strokeWidth="2" />
+                </svg>
+                <span className="text-xs" style={{ color: item.color }}>{item.name}</span>
             </div>
         ))}
     </div>
 );
+
+// Custom Legend Component for Workflow
+const WorkflowLegend = () => (
+    <div className="flex justify-center gap-6 mt-4">
+        {[
+            { name: 'Audit Compliance', color: '#22c55e' },
+            { name: 'Expense Approval', color: '#3b82f6' },
+            { name: 'Invoice Processing', color: '#8b5cf6' },
+        ].map((item) => (
+            <div key={item.name} className="flex items-center gap-2">
+                <svg width="24" height="12" className="flex-shrink-0">
+                    <circle cx="6" cy="6" r="4" fill={item.color} />
+                    <line x1="10" y1="6" x2="24" y2="6" stroke={item.color} strokeWidth="2" />
+                </svg>
+                <span className="text-xs" style={{ color: item.color }}>{item.name}</span>
+            </div>
+        ))}
+    </div>
+);
+
+// Custom Tooltip for Workflow view
+const WorkflowTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) => {
+    if (active && payload && payload.length) {
+        const workflowColors: Record<string, string> = {
+            'Audit Compliance': '#22c55e',
+            'Expense Approval': '#3b82f6',
+            'Invoice Processing': '#8b5cf6',
+        };
+        
+        return (
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
+                <p className="text-xs text-gray-400 mb-2">{label}</p>
+                {payload.slice().reverse().map((entry, index) => (
+                    <p key={index} className="text-sm font-medium" style={{ color: workflowColors[entry.name] || entry.color }}>
+                        {entry.name} : {entry.value.toLocaleString()}
+                    </p>
+                ))}
+            </div>
+        );
+    }
+    return null;
+};
 
 export default function WorkspaceDashboardPage() {
     const [chartView, setChartView] = useState('By CEED Layer');
@@ -303,81 +359,145 @@ export default function WorkspaceDashboardPage() {
                 <CardContent>
                     <div className="h-[350px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart
-                                data={consumptionTrendData}
-                                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                            >
-                                <defs>
-                                    <linearGradient id="colorCapability" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#14b8a6" stopOpacity={0.2} />
-                                    </linearGradient>
-                                    <linearGradient id="colorData" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0.2} />
-                                    </linearGradient>
-                                    <linearGradient id="colorEntity" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.2} />
-                                    </linearGradient>
-                                    <linearGradient id="colorExecution" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.2} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                <XAxis
-                                    dataKey="day"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                                    tickFormatter={(value) => value.toLocaleString()}
-                                />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: 'white',
-                                        border: '1px solid #e5e7eb',
-                                        borderRadius: '8px',
-                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                                    }}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="Execution"
-                                    stackId="1"
-                                    stroke="#8b5cf6"
-                                    fill="url(#colorExecution)"
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="Entity"
-                                    stackId="1"
-                                    stroke="#3b82f6"
-                                    fill="url(#colorEntity)"
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="Data"
-                                    stackId="1"
-                                    stroke="#22c55e"
-                                    fill="url(#colorData)"
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="Capability"
-                                    stackId="1"
-                                    stroke="#14b8a6"
-                                    fill="url(#colorCapability)"
-                                />
-                            </AreaChart>
+                            {chartView === 'By CEED Layer' ? (
+                                <AreaChart
+                                    data={consumptionTrendByCEED}
+                                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                                >
+                                    <defs>
+                                        <linearGradient id="colorCapability" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#14b8a6" stopOpacity={0.1} />
+                                        </linearGradient>
+                                        <linearGradient id="colorData" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#22c55e" stopOpacity={0.1} />
+                                        </linearGradient>
+                                        <linearGradient id="colorEntity" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
+                                        </linearGradient>
+                                        <linearGradient id="colorExecution" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                    <XAxis
+                                        dataKey="day"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                                    />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                                        tickFormatter={(value) => value.toLocaleString()}
+                                        domain={[0, 16000]}
+                                        ticks={[0, 4000, 8000, 12000, 16000]}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: 'white',
+                                            border: '1px solid #e5e7eb',
+                                            borderRadius: '8px',
+                                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                        }}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="Execution"
+                                        stackId="1"
+                                        stroke="#8b5cf6"
+                                        fill="url(#colorExecution)"
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="Entity"
+                                        stackId="1"
+                                        stroke="#3b82f6"
+                                        fill="url(#colorEntity)"
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="Data"
+                                        stackId="1"
+                                        stroke="#22c55e"
+                                        fill="url(#colorData)"
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="Capability"
+                                        stackId="1"
+                                        stroke="#14b8a6"
+                                        fill="url(#colorCapability)"
+                                    />
+                                </AreaChart>
+                            ) : (
+                                <AreaChart
+                                    data={consumptionTrendByWorkflow}
+                                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                                >
+                                    <defs>
+                                        <linearGradient id="colorInvoice" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1} />
+                                        </linearGradient>
+                                        <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
+                                        </linearGradient>
+                                        <linearGradient id="colorAudit" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#22c55e" stopOpacity={0.1} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                    <XAxis
+                                        dataKey="day"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                                    />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                                        tickFormatter={(value) => value.toLocaleString()}
+                                        domain={[0, 16000]}
+                                        ticks={[0, 4000, 8000, 12000, 16000]}
+                                    />
+                                    <Tooltip content={<WorkflowTooltip />} cursor={{ stroke: '#9ca3af', strokeDasharray: '3 3' }} />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="Invoice Processing"
+                                        stackId="1"
+                                        stroke="#8b5cf6"
+                                        fill="url(#colorInvoice)"
+                                        activeDot={{ r: 6, fill: '#8b5cf6', stroke: '#fff', strokeWidth: 3 }}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="Expense Approval"
+                                        stackId="1"
+                                        stroke="#3b82f6"
+                                        fill="url(#colorExpense)"
+                                        activeDot={{ r: 6, fill: '#3b82f6', stroke: '#fff', strokeWidth: 3 }}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="Audit Compliance"
+                                        stackId="1"
+                                        stroke="#22c55e"
+                                        fill="url(#colorAudit)"
+                                        activeDot={{ r: 6, fill: '#22c55e', stroke: '#fff', strokeWidth: 3 }}
+                                    />
+                                </AreaChart>
+                            )}
                         </ResponsiveContainer>
                     </div>
-                    <CustomLegend />
+                    {chartView === 'By CEED Layer' ? <CEEDLegend /> : <WorkflowLegend />}
                 </CardContent>
             </Card>
 
