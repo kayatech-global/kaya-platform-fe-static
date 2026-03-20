@@ -63,11 +63,11 @@ export function AdminSidebar() {
 
       <div className="border-t border-gray-200 p-3 dark:border-gray-800">
         <Link
-          href="/status"
+          href="/workspaces"
           className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-500 transition-colors hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
         >
           <ArrowLeft size={14} />
-          Back to Status Page
+          Back to Workspaces
         </Link>
       </div>
     </aside>

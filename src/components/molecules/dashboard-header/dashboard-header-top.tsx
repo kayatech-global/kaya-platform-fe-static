@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 import useLocalStorage from '@/hooks/useLocalStorage';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
 import { useRouter } from 'next/navigation';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/atoms/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/atoms/tooltip';
 
 interface DashboardHeaderTopProps extends DashboardHeaderProps {
     value: string;
@@ -80,20 +80,22 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                                 )}
                             </motion.div>
                         </motion.div>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <motion.div
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={() => router.push('/status/admin')}
-                                    className="cursor-pointer"
-                                >
-                                    <Activity width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
-                                </motion.div>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" sideOffset={8}>
-                                <p>Status Management</p>
-                            </TooltipContent>
-                        </Tooltip>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <motion.div
+                                        whileTap={{ scale: 0.9 }}
+                                        onClick={() => router.push('/status/admin')}
+                                        className="cursor-pointer"
+                                    >
+                                        <Activity width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
+                                    </motion.div>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" sideOffset={8}>
+                                    <p>Status Management</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                         <motion.div whileTap={{ scale: 0.9 }}>
                             <BellDot width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
                         </motion.div>
