@@ -600,7 +600,7 @@ export const NODE_LIST: NodeListTypeDef[] = [
                 showInteractions: false,
                 isActive: false,
                 color: '#0DA2E7',
-                icon: '/png/nodes/external-agent-node.png',
+                icon: '/png/nodes/external-agent-node.svg',
                 iconType: 'png',
             },
         ],

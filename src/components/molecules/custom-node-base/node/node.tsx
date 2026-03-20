@@ -331,7 +331,7 @@ export const Node: React.FC<NodeProps> = ({ id, data, type }) => {
                 type={type}
                 color="#0DA2E7"
                 activeColor="#0891B2"
-                icon="/png/nodes/external-agent-node.png"
+                icon="/png/nodes/external-agent-node.svg"
                 handleConfig={{ showSource: true, showTarget: true }}
                 showInteractions
                 iconType="png"

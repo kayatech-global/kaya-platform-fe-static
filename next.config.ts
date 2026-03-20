@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
         NEXT_PUBLIC_MAX_WORKER_LIMIT: process.env.NEXT_PUBLIC_MAX_WORKER_LIMIT,
     },
     productionBrowserSourceMaps: false,
+    images: {
+        dangerouslyAllowSVG: true,
+        contentDispositionType: 'attachment',
+        contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    },
     // temp disable es-list
     eslint: {
         ignoreDuringBuilds: true,

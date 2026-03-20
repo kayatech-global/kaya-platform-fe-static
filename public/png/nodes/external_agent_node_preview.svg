@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="180" viewBox="0 0 200 180" fill="none">
+  <!-- Background rounded rect -->
+  <rect x="20" y="10" width="160" height="160" rx="20" fill="#0DA2E7"/>
+  <!-- Shadow rect -->
+  <rect x="25" y="15" width="160" height="160" rx="20" fill="#0B8AC4" opacity="0.5"/>
+  <rect x="20" y="10" width="160" height="160" rx="20" fill="#0DA2E7"/>
+  <!-- Connection handles -->
+  <ellipse cx="15" cy="90" rx="8" ry="10" fill="#0DA2E7" opacity="0.5"/>
+  <ellipse cx="185" cy="90" rx="8" ry="10" fill="#0DA2E7" opacity="0.5"/>
+  <!-- Robot head -->
+  <rect x="62" y="72" width="76" height="52" rx="14" stroke="white" stroke-width="4" fill="none"/>
+  <!-- Eyes -->
+  <ellipse cx="84" cy="98" rx="7" ry="7" fill="white"/>
+  <ellipse cx="116" cy="98" rx="7" ry="7" fill="white"/>
+  <!-- Mouth -->
+  <rect x="82" y="112" width="36" height="5" rx="2.5" fill="white"/>
+  <!-- Ears -->
+  <circle cx="56" cy="98" r="7" fill="white" opacity="0.7"/>
+  <circle cx="144" cy="98" r="7" fill="white" opacity="0.7"/>
+  <!-- Antenna stem -->
+  <line x1="100" y1="72" x2="100" y2="55" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Antenna dot -->
+  <circle cx="100" cy="52" r="4" fill="white"/>
+  <!-- Signal arcs -->
+  <path d="M108 46 Q116 36 108 26" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M114 50 Q125 36 114 22" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- Glow effect -->
+  <rect x="62" y="72" width="76" height="52" rx="14" stroke="white" stroke-width="1" fill="none" opacity="0.3" transform="scale(1.05) translate(-3,-3)"/>
+  <!-- Bottom reflection line -->
+  <line x1="80" y1="136" x2="120" y2="136" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+</svg>
