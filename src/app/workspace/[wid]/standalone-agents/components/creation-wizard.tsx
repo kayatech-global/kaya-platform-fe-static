@@ -35,6 +35,14 @@ import {
     Clock,
     RefreshCw,
     Settings,
+    CloudCog,
+    Database,
+    ServerCog,
+    Search,
+    Network,
+    Plug,
+    ShieldCheck,
+    Radio,
 } from 'lucide-react';
 import { defaultTools } from '../mock-data';
 
@@ -53,6 +61,7 @@ const steps = [
 
 const toolIcons: Record<string, React.ElementType> = {
     Terminal, Code, FileText, Brain, Mail, Globe, Monitor, Variable, ListTodo, Clock, RefreshCw, Settings,
+    CloudCog, Database, ServerCog, Search, Network, Plug, ShieldCheck, Radio,
 };
 
 export const CreationWizard = ({ open, onOpenChange }: CreationWizardProps) => {
@@ -216,43 +225,63 @@ export const CreationWizard = ({ open, onOpenChange }: CreationWizardProps) => {
                         </div>
                     </div>
                 );
-            case 3:
-                return (
-                    <div className="space-y-4">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Select the tools and capabilities for your agent.
-                        </p>
-                        <div className="grid grid-cols-3 gap-3">
-                            {defaultTools.map(tool => {
-                                const IconComponent = toolIcons[tool.icon] || Settings;
-                                const isSelected = selectedTools.includes(tool.id);
-                                return (
-                                    <div
-                                        key={tool.id}
-                                        onClick={() => toggleTool(tool.id)}
-                                        className={cn(
-                                            'cursor-pointer rounded-lg border p-3 transition-all',
-                                            isSelected
-                                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
-                                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                                        )}
-                                    >
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <IconComponent className={cn('h-4 w-4', isSelected ? 'text-blue-500' : 'text-gray-400')} />
-                                            <Switch
-                                                checked={isSelected}
-                                                onCheckedChange={() => toggleTool(tool.id)}
-                                                className="scale-75"
-                                            />
-                                        </div>
-                                        <p className="text-xs font-medium text-gray-900 dark:text-gray-100">{tool.name}</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{tool.description}</p>
+            case 3: {
+                const agentCapabilities = defaultTools.filter(t => t.category === 'agent-capability');
+                const platformTools = defaultTools.filter(t => t.category === 'platform-tool');
+                const renderToolGrid = (tools: typeof defaultTools) => (
+                    <div className="grid grid-cols-3 gap-3">
+                        {tools.map(tool => {
+                            const IconComponent = toolIcons[tool.icon] || Settings;
+                            const isSelected = selectedTools.includes(tool.id);
+                            return (
+                                <div
+                                    key={tool.id}
+                                    onClick={() => toggleTool(tool.id)}
+                                    className={cn(
+                                        'cursor-pointer rounded-lg border p-3 transition-all',
+                                        isSelected
+                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                    )}
+                                >
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <IconComponent className={cn('h-4 w-4', isSelected ? 'text-blue-500' : 'text-gray-400')} />
+                                        <Switch
+                                            checked={isSelected}
+                                            onCheckedChange={() => toggleTool(tool.id)}
+                                            className="scale-75"
+                                        />
                                     </div>
-                                );
-                            })}
+                                    <p className="text-xs font-medium text-gray-900 dark:text-gray-100">{tool.name}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{tool.description}</p>
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
+                return (
+                    <div className="space-y-6">
+                        <div className="space-y-3">
+                            <div>
+                                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Default Agent Capabilities</h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    Built-in capabilities available to every standalone agent
+                                </p>
+                            </div>
+                            {renderToolGrid(agentCapabilities)}
+                        </div>
+                        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
+                            <div>
+                                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Platform Workflow Tools</h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    Reuse the same tools available to regular workflow agents — APIs, databases, MCP servers, and more
+                                </p>
+                            </div>
+                            {renderToolGrid(platformTools)}
                         </div>
                     </div>
                 );
+            }
             case 4:
                 return (
                     <div className="space-y-4">

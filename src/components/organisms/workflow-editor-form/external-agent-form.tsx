@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 
 type ProtocolType = 'a2a' | 'acp';
 type AuthMode = 'none' | 'bearer' | 'apikey' | 'oauth' | 'jwt';
-type ExecutionMode = 'sync' | 'async_wait' | 'async_fire_forget' | 'streaming';
+type ExecutionMode = 'sync' | 'async_wait' | 'async_fire_forget';
 type SessionOverride = 'none' | 'single' | 'per_workflow' | 'per_execution';
 type TracePropagation = 'w3c_traceparent' | 'otel_meta' | 'both';
 type TraceLogLevel = 'none' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
@@ -35,17 +35,14 @@ export type ExternalAgentNodeData = {
 
     // --- A2A-specific ---
     agentCardUrl?: string;
-    a2aSkillId?: string;
     a2aInputModes?: string;
     a2aOutputModes?: string;
-    a2aStreamingEnabled?: boolean;
     a2aPushNotificationUrl?: string;
 
     // --- ACP-specific ---
     acpAgentName?: string;
     acpConfigId?: string;
     acpAwaitResumeEnabled?: boolean;
-    acpStreamingEnabled?: boolean;
 
     // --- Execution ---
     executionMode?: ExecutionMode;
@@ -139,17 +136,14 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
 
     // --- A2A-specific ---
     const [agentCardUrl, setAgentCardUrl] = useState('');
-    const [a2aSkillId, setA2aSkillId] = useState('');
     const [a2aInputModes, setA2aInputModes] = useState('text/plain, application/json');
     const [a2aOutputModes, setA2aOutputModes] = useState('text/plain, application/json');
-    const [a2aStreamingEnabled, setA2aStreamingEnabled] = useState(false);
     const [a2aPushNotificationUrl, setA2aPushNotificationUrl] = useState('');
 
     // --- ACP-specific ---
     const [acpAgentName, setAcpAgentName] = useState('');
     const [acpConfigId, setAcpConfigId] = useState('');
     const [acpAwaitResumeEnabled, setAcpAwaitResumeEnabled] = useState(false);
-    const [acpStreamingEnabled, setAcpStreamingEnabled] = useState(false);
 
     // --- Execution ---
     const [executionMode, setExecutionMode] = useState<ExecutionMode>('sync');
@@ -199,15 +193,12 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
         setJwtSecret(d?.jwtSecret ?? '');
         setJwtIssuer(d?.jwtIssuer ?? '');
         setAgentCardUrl(d?.agentCardUrl ?? '');
-        setA2aSkillId(d?.a2aSkillId ?? '');
         setA2aInputModes(d?.a2aInputModes ?? 'text/plain, application/json');
         setA2aOutputModes(d?.a2aOutputModes ?? 'text/plain, application/json');
-        setA2aStreamingEnabled(d?.a2aStreamingEnabled ?? false);
         setA2aPushNotificationUrl(d?.a2aPushNotificationUrl ?? '');
         setAcpAgentName(d?.acpAgentName ?? '');
         setAcpConfigId(d?.acpConfigId ?? '');
         setAcpAwaitResumeEnabled(d?.acpAwaitResumeEnabled ?? false);
-        setAcpStreamingEnabled(d?.acpStreamingEnabled ?? false);
         setExecutionMode(d?.executionMode ?? 'sync');
         setTimeoutMs(d?.timeoutMs ?? 30000);
         setPollingIntervalMs(d?.pollingIntervalMs ?? 5000);
@@ -255,10 +246,8 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
         if (protocol === 'a2a') {
             Object.assign(base, {
                 agentCardUrl: agentCardUrl || undefined,
-                a2aSkillId: a2aSkillId || undefined,
                 a2aInputModes,
                 a2aOutputModes,
-                a2aStreamingEnabled,
                 a2aPushNotificationUrl: a2aPushNotificationUrl || undefined,
             });
         } else {
@@ -266,7 +255,6 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                 acpAgentName: acpAgentName || undefined,
                 acpConfigId: acpConfigId || undefined,
                 acpAwaitResumeEnabled,
-                acpStreamingEnabled,
             });
         }
 
@@ -292,8 +280,8 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
         executionMode, timeoutMs, pollingIntervalMs,
         sendWorkflowVarsAsMetadata, includeExecutionContext, metadataKeyPrefix,
         sessionOverride,
-        agentCardUrl, a2aSkillId, a2aInputModes, a2aOutputModes, a2aStreamingEnabled, a2aPushNotificationUrl,
-        acpAgentName, acpConfigId, acpAwaitResumeEnabled, acpStreamingEnabled,
+        agentCardUrl, a2aInputModes, a2aOutputModes, a2aPushNotificationUrl,
+        acpAgentName, acpConfigId, acpAwaitResumeEnabled,
         tracingEnabled, tracePropagation, captureTaskStateTransitions,
         captureTokenUsage, captureLatencyMetrics, captureCostMetrics,
         dataLineageEnabled, traceLogLevel, otelExporterEndpoint, otelServiceName, customSpanAttributes,
@@ -368,17 +356,9 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                         />
                         <InfoBanner text="The Agent Card (JSON) describes the agent's identity, capabilities, skills, and supported auth schemes. Typically at /.well-known/agent.json" />
 
-                        <Input
-                            label="Skill ID (optional)"
-                            placeholder="e.g. summarize, translate, code-review"
-                            value={a2aSkillId}
-                            onChange={e => setA2aSkillId(e.target.value)}
-                            disabled={isReadOnly}
-                        />
-
                         <SectionHeader
                             title="A2A Advanced Settings"
-                            description="Input/output modes, streaming, push notifications"
+                            description="Input/output modes, push notifications"
                             expanded={showA2aAdvanced}
                             onToggle={() => setShowA2aAdvanced(!showA2aAdvanced)}
                         />
@@ -398,13 +378,6 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                     onChange={e => setA2aOutputModes(e.target.value)}
                                     disabled={isReadOnly}
                                 />
-                                <div className="flex items-center justify-between">
-                                    <div className="flex flex-col gap-y-0.5">
-                                        <Label className="text-sm text-gray-700 dark:text-gray-100">SSE Streaming</Label>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">Stream task updates via Server-Sent Events</p>
-                                    </div>
-                                    <Switch checked={a2aStreamingEnabled} onCheckedChange={setA2aStreamingEnabled} disabled={isReadOnly} />
-                                </div>
                                 <Input
                                     label="Push Notification URL (optional)"
                                     placeholder="https://your-platform.com/a2a/callback"
@@ -439,7 +412,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
 
                         <SectionHeader
                             title="ACP Advanced Settings"
-                            description="Await/resume, streaming"
+                            description="Await/resume pattern"
                             expanded={showAcpAdvanced}
                             onToggle={() => setShowAcpAdvanced(!showAcpAdvanced)}
                         />
@@ -451,13 +424,6 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                         <p className="text-xs text-gray-500 dark:text-gray-400">Allow agent to pause and request additional input</p>
                                     </div>
                                     <Switch checked={acpAwaitResumeEnabled} onCheckedChange={setAcpAwaitResumeEnabled} disabled={isReadOnly} />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex flex-col gap-y-0.5">
-                                        <Label className="text-sm text-gray-700 dark:text-gray-100">Streaming</Label>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">Stream run output via SSE</p>
-                                    </div>
-                                    <Switch checked={acpStreamingEnabled} onCheckedChange={setAcpStreamingEnabled} disabled={isReadOnly} />
                                 </div>
                             </div>
                         )}
@@ -581,10 +547,9 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                     <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">Execution Mode</Label>
                     <div className="flex flex-col gap-y-2">
                         {([
-                            { value: 'sync', label: 'Synchronous', desc: 'Block until response' },
-                            { value: 'async_wait', label: 'Async (Wait)', desc: 'Poll until task completes' },
-                            { value: 'async_fire_forget', label: 'Fire & Forget', desc: 'Send and continue workflow' },
-                            { value: 'streaming', label: 'Streaming (SSE)', desc: 'Stream task updates in real-time' },
+                            { value: 'sync', label: 'Synchronous (SSE)', desc: 'Block until response — streams tokens via SSE in real-time' },
+                            { value: 'async_wait', label: 'Async (Wait)', desc: 'Poll / push notification until task completes' },
+                            { value: 'async_fire_forget', label: 'Fire & Forget', desc: 'Send and continue workflow without waiting' },
                         ] as const).map(option => (
                             <label
                                 key={option.value}

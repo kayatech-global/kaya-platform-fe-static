@@ -332,17 +332,35 @@ export const mockVersions: AgentVersion[] = [
     },
 ];
 
-export const defaultTools = [
-    { id: 'shell', name: 'Shell Access', description: 'Execute shell commands', icon: 'Terminal' },
-    { id: 'code-execution', name: 'Code Execution', description: 'Run code in sandboxed environment', icon: 'Code' },
-    { id: 'file-ops', name: 'File Operations', description: 'Read, write, and manage files', icon: 'FileText' },
-    { id: 'memory', name: 'Memory', description: 'Persistent context across sessions', icon: 'Brain' },
-    { id: 'email', name: 'Email', description: 'Send and receive emails', icon: 'Mail' },
-    { id: 'web', name: 'Web Access', description: 'Fetch and browse web content', icon: 'Globe' },
-    { id: 'browser', name: 'Browser', description: 'Full browser automation', icon: 'Monitor' },
-    { id: 'workflow-variables', name: 'Workflow Variables', description: 'Access shared workflow state', icon: 'Variable' },
-    { id: 'planning', name: 'Planning', description: 'Task decomposition and planning', icon: 'ListTodo' },
-    { id: 'task-scheduling', name: 'Task Scheduling', description: 'Schedule async tasks', icon: 'Clock' },
-    { id: 'retry', name: 'Retry Logic', description: 'Automatic retry with backoff', icon: 'RefreshCw' },
-    { id: 'self-configuration', name: 'Self Configuration', description: 'Dynamic self-tuning', icon: 'Settings' },
-] as const;
+export interface ToolDefinition {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    category: 'agent-capability' | 'platform-tool';
+}
+
+export const defaultTools: ToolDefinition[] = [
+    // Default Agent Capabilities
+    { id: 'shell', name: 'Shell Access', description: 'Execute shell commands (npm/npx)', icon: 'Terminal', category: 'agent-capability' },
+    { id: 'code-execution', name: 'Code Execution', description: 'Run code in sandboxed environment', icon: 'Code', category: 'agent-capability' },
+    { id: 'file-ops', name: 'File Operations', description: 'Read, write, and manage files', icon: 'FileText', category: 'agent-capability' },
+    { id: 'memory', name: 'Memory', description: 'Persistent context across sessions', icon: 'Brain', category: 'agent-capability' },
+    { id: 'email', name: 'Email', description: 'Send and receive emails', icon: 'Mail', category: 'agent-capability' },
+    { id: 'web', name: 'Web Access', description: 'Fetch and browse web content', icon: 'Globe', category: 'agent-capability' },
+    { id: 'browser', name: 'Browser', description: 'Full browser automation', icon: 'Monitor', category: 'agent-capability' },
+    { id: 'workflow-variables', name: 'Workflow Variables', description: 'Access shared workflow state', icon: 'Variable', category: 'agent-capability' },
+    { id: 'planning', name: 'Planning', description: 'Task decomposition and planning', icon: 'ListTodo', category: 'agent-capability' },
+    { id: 'task-scheduling', name: 'Task Scheduling', description: 'Schedule async tasks', icon: 'Clock', category: 'agent-capability' },
+    { id: 'retry', name: 'Retry Logic', description: 'Automatic retry with backoff', icon: 'RefreshCw', category: 'agent-capability' },
+    { id: 'self-configuration', name: 'Self Configuration', description: 'Dynamic self-tuning', icon: 'Settings', category: 'agent-capability' },
+    // Platform Workflow Tools
+    { id: 'api-connector', name: 'API Configurations', description: 'Invoke configured REST/GraphQL APIs', icon: 'CloudCog', category: 'platform-tool' },
+    { id: 'db-connector', name: 'Database Connector', description: 'Query configured databases', icon: 'Database', category: 'platform-tool' },
+    { id: 'mcp-server', name: 'MCP Server', description: 'Connect to Model Context Protocol servers', icon: 'ServerCog', category: 'platform-tool' },
+    { id: 'vector-rag', name: 'Vector RAG', description: 'Semantic search over vector knowledge bases', icon: 'Search', category: 'platform-tool' },
+    { id: 'graph-rag', name: 'Graph RAG', description: 'Query graph-based knowledge sources', icon: 'Network', category: 'platform-tool' },
+    { id: 'data-connector', name: 'Data Connector', description: 'Ingest data from external sources', icon: 'Plug', category: 'platform-tool' },
+    { id: 'guardrails', name: 'Guardrails', description: 'Apply input/output safety guardrails', icon: 'ShieldCheck', category: 'platform-tool' },
+    { id: 'message-broker', name: 'Message Broker', description: 'Publish/subscribe to message queues', icon: 'Radio', category: 'platform-tool' },
+];
