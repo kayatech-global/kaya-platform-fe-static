@@ -103,7 +103,7 @@ export const EditorPanel = (props: EditorPanelProps) => {
             case CustomNodeTypes.toolExecutorNode:
                 return '/png/nodes/tool_executor_preview.png';
             case CustomNodeTypes.externalAgentNode:
-                return undefined;
+                return '/png/nodes/external_agent_node_preview.png';
         }
     };
 
