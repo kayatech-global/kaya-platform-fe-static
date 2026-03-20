@@ -1,7 +1,7 @@
 import React from 'react';
 import { SidebarTrigger } from '../sidebar/sidebar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/atoms';
-import { BellDot, ChevronDown, Maximize, Moon, Sun } from 'lucide-react';
+import { Activity, BellDot, ChevronDown, Maximize, Moon, Sun } from 'lucide-react';
 import { cn, goFullScreen } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/atoms/avatar';
 import { useTheme } from '@/theme';
@@ -11,6 +11,8 @@ import { useAuth } from '@/context';
 import { motion } from 'framer-motion';
 import useLocalStorage from '@/hooks/useLocalStorage';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
+import { useRouter } from 'next/navigation';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/atoms/tooltip';
 
 interface DashboardHeaderTopProps extends DashboardHeaderProps {
     value: string;
@@ -21,6 +23,7 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
     const { user } = useAuth();
     const [workspaceInfo] = useLocalStorage('workspaceInfo');
     const { isSm, isMobile } = useBreakpoint();
+    const router = useRouter();
 
     const toggleTheme = () => {
         setTheme(theme === 'light' ? 'dark' : 'light');
@@ -77,6 +80,20 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                                 )}
                             </motion.div>
                         </motion.div>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <motion.div
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={() => router.push('/status/admin')}
+                                    className="cursor-pointer"
+                                >
+                                    <Activity width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
+                                </motion.div>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" sideOffset={8}>
+                                <p>Status Management</p>
+                            </TooltipContent>
+                        </Tooltip>
                         <motion.div whileTap={{ scale: 0.9 }}>
                             <BellDot width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />
                         </motion.div>
