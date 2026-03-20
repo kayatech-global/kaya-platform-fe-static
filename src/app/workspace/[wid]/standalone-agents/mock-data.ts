@@ -1,6 +1,6 @@
 // ─── Type Definitions ───
 
-export type AgentFramework = 'pi-agents' | 'openclaw';
+export type AgentFramework = 'kaya-agent' | 'openclaw';
 export type AgentStatus = 'running' | 'stopped' | 'error' | 'deploying';
 export type SessionMode = 'single' | 'per-workflow' | 'per-execution';
 export type DeploymentStrategy = 'template-repo' | 'base-image';
@@ -70,7 +70,7 @@ export const mockAgents: StandaloneAgent[] = [
         id: 'agent-001',
         name: 'Customer Support Agent',
         description: 'Handles customer inquiries and ticket resolution via A2A protocol',
-        framework: 'pi-agents',
+        framework: 'kaya-agent',
         status: 'running',
         a2aEndpoint: 'https://agents.kaya.ai/a2a/customer-support',
         version: '2.1.0',
@@ -104,7 +104,7 @@ export const mockAgents: StandaloneAgent[] = [
         id: 'agent-003',
         name: 'Data Pipeline Orchestrator',
         description: 'Manages ETL pipelines and data transformations',
-        framework: 'pi-agents',
+        framework: 'kaya-agent',
         status: 'stopped',
         a2aEndpoint: 'https://agents.kaya.ai/a2a/data-pipeline',
         version: '1.0.2',
@@ -137,8 +137,8 @@ export const mockAgents: StandaloneAgent[] = [
     {
         id: 'agent-005',
         name: 'Document Summarizer',
-        description: 'Summarizes documents and extracts key insights using PI Agents',
-        framework: 'pi-agents',
+        description: 'Summarizes documents and extracts key insights using Kaya Agent Framework',
+        framework: 'kaya-agent',
         status: 'deploying',
         a2aEndpoint: 'https://agents.kaya.ai/a2a/doc-summarizer',
         version: '3.0.0',

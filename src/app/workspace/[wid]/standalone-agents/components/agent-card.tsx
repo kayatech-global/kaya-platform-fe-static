@@ -12,7 +12,7 @@ interface AgentCardProps {
 }
 
 export const AgentCard = ({ agent, onClick }: AgentCardProps) => {
-    const frameworkLabel = agent.framework === 'pi-agents' ? 'PI Agents' : 'OpenClaw';
+    const frameworkLabel = agent.framework === 'kaya-agent' ? 'Kaya Agent' : 'OpenClaw';
     const deployedDate = new Date(agent.lastDeployed).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',

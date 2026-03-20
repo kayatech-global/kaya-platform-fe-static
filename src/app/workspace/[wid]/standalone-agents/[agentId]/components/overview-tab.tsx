@@ -12,7 +12,7 @@ interface OverviewTabProps {
 }
 
 export const OverviewTab = ({ agent }: OverviewTabProps) => {
-    const frameworkLabel = agent.framework === 'pi-agents' ? 'PI Agents' : 'OpenClaw';
+    const frameworkLabel = agent.framework === 'kaya-agent' ? 'Kaya Agent' : 'OpenClaw';
     const deployedDate = new Date(agent.lastDeployed).toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',

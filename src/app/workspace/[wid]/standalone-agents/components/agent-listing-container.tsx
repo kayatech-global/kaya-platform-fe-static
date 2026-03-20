@@ -70,7 +70,7 @@ export const AgentListingContainer = () => {
                         className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-xs text-gray-700 dark:text-gray-300"
                     >
                         <option value="all">All Frameworks</option>
-                        <option value="pi-agents">PI Agents</option>
+                        <option value="kaya-agent">Kaya Agent</option>
                         <option value="openclaw">OpenClaw</option>
                     </select>
                     <select

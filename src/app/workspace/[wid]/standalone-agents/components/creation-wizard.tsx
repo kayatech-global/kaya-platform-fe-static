@@ -66,7 +66,7 @@ const toolIcons: Record<string, React.ElementType> = {
 
 export const CreationWizard = ({ open, onOpenChange }: CreationWizardProps) => {
     const [currentStep, setCurrentStep] = useState(1);
-    const [framework, setFramework] = useState<'pi-agents' | 'openclaw' | null>(null);
+    const [framework, setFramework] = useState<'kaya-agent' | 'openclaw' | null>(null);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [instructions, setInstructions] = useState('');
@@ -106,10 +106,10 @@ export const CreationWizard = ({ open, onOpenChange }: CreationWizardProps) => {
                         </p>
                         <div className="grid grid-cols-2 gap-4">
                             <div
-                                onClick={() => setFramework('pi-agents')}
+                                onClick={() => setFramework('kaya-agent')}
                                 className={cn(
                                     'cursor-pointer rounded-lg border-2 p-5 transition-all',
-                                    framework === 'pi-agents'
+                                    framework === 'kaya-agent'
                                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
                                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                 )}
@@ -118,12 +118,24 @@ export const CreationWizard = ({ open, onOpenChange }: CreationWizardProps) => {
                                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
                                         <Bot className="h-5 w-5 text-blue-500" />
                                     </div>
-                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">PI Agents</h4>
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Kaya Agent</h4>
+                                        <Badge variant="outline" className="text-[10px] mt-0.5">Recommended</Badge>
+                                    </div>
                                 </div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    KAYA&apos;s native agent framework with built-in A2A protocol support,
-                                    session management, and deep platform integration.
+                                    Kaya&apos;s native full-featured agent framework with built-in skills
+                                    (planning, research, delegation, self-configuration), deep platform
+                                    tool integration, A2A/ACP support, advanced session management, and
+                                    end-to-end observability.
                                 </p>
+                                <div className="flex flex-wrap gap-1 mt-3">
+                                    {['Skills', 'A2A/ACP', 'Platform Tools', 'Observability', 'Sessions'].map(tag => (
+                                        <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
                             <div
                                 onClick={() => setFramework('openclaw')}
@@ -142,8 +154,16 @@ export const CreationWizard = ({ open, onOpenChange }: CreationWizardProps) => {
                                 </div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                     Open-source agent framework with flexible tool integration,
-                                    multi-model support, and community-driven extensions.
+                                    multi-model support, dynamic self-configuration, and
+                                    community-driven extensions. Connected to Kaya via A2A gateway.
                                 </p>
+                                <div className="flex flex-wrap gap-1 mt-3">
+                                    {['Open Source', 'Multi-Model', 'Self-Config', 'A2A Gateway'].map(tag => (
+                                        <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -372,7 +392,7 @@ export const CreationWizard = ({ open, onOpenChange }: CreationWizardProps) => {
                         </p>
                         <div className="space-y-3">
                             {[
-                                { label: 'Framework', value: framework === 'pi-agents' ? 'PI Agents' : 'OpenClaw' },
+                                { label: 'Framework', value: framework === 'kaya-agent' ? 'Kaya Agent' : 'OpenClaw' },
                                 { label: 'Name', value: name || '—' },
                                 { label: 'Model', value: `${llmProvider} / ${llmModel}` },
                                 { label: 'Session Mode', value: sessionMode.replace(/-/g, ' ') },

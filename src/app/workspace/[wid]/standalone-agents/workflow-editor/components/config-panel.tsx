@@ -285,7 +285,7 @@ export const ConfigPanel = ({ open, onClose }: ConfigPanelProps) => {
                             </div>
                             <div>
                                 <p className="text-xs font-medium text-gray-200">Customer Support Agent</p>
-                                <p className="text-[10px] text-gray-500 font-mono">v2.1.0 • PI Agents</p>
+                                <p className="text-[10px] text-gray-500 font-mono">v2.1.0 • Kaya Agent</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-1.5 mt-2">
