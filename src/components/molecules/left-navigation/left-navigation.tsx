@@ -14,6 +14,7 @@ type NavItem = {
     href: string;
 };
 
+// Navigation items - Dashboard appears first, before Workspaces
 const navItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="size-5" />, href: '/dashboard' },
     { id: 'workspaces', label: 'Workspaces', icon: <Layers className="size-5" />, href: '/workspaces' },
