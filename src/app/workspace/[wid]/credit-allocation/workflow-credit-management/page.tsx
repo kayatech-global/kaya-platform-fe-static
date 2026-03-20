@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     ChevronRight,
     ChevronDown,
@@ -9,18 +9,12 @@ import {
     Bot,
     Brain,
     Database,
+    Check,
+    X,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/atoms/card';
 import { Badge } from '@/components/atoms/badge';
 import { cn } from '@/lib/utils';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-} from '@/components/atoms/dialog';
-import { Button } from '@/components/atoms/button';
 
 // Types
 interface CEEDBreakdown {
@@ -239,100 +233,61 @@ const CEEDCard: React.FC<{ label: string; value: number; dotColor: string }> = (
     </div>
 );
 
-// Budget Edit Modal Component
-const BudgetEditModal: React.FC<{
-    isOpen: boolean;
-    onClose: () => void;
-    title: string;
-    entityName: string;
+// Inline Budget Edit Component
+const InlineBudgetEdit: React.FC<{
     currentBudget: number | null;
-    consumed: number;
-}> = ({ isOpen, onClose, title, entityName, currentBudget, consumed }) => {
-    const [budgetLimit, setBudgetLimit] = useState<string>(currentBudget?.toString() || '');
-    const [warningThreshold, setWarningThreshold] = useState<number>(80);
-    const [criticalThreshold, setCriticalThreshold] = useState<number>(95);
+    onSave: (newBudget: number | null) => void;
+    onCancel: () => void;
+}> = ({ currentBudget, onSave, onCancel }) => {
+    const [value, setValue] = useState<string>(currentBudget?.toString() || '');
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+    }, []);
+
+    const handleSave = () => {
+        const numValue = value.trim() === '' ? null : parseInt(value, 10);
+        onSave(numValue);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleSave();
+        } else if (e.key === 'Escape') {
+            onCancel();
+        }
+    };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[480px]" aria-describedby="budget-edit-description">
-                <DialogHeader>
-                    <DialogTitle>{title}</DialogTitle>
-                    <DialogDescription id="budget-edit-description">
-                        Configure budget limits and notification thresholds for {entityName}.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-6 py-4">
-                    {/* Current Status */}
-                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Current Consumption</span>
-                        <span className="text-sm font-semibold font-mono text-gray-900 dark:text-gray-100">
-                            {formatNumber(consumed)} CEED
-                        </span>
-                    </div>
-
-                    {/* Budget Limit Input */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Budget Limit (CEED)
-                        </label>
-                        <input
-                            type="text"
-                            value={budgetLimit}
-                            onChange={(e) => setBudgetLimit(e.target.value.replace(/[^0-9]/g, ''))}
-                            placeholder="Enter budget limit or leave empty for unlimited"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
-                        <p className="text-xs text-gray-500">Leave empty for unlimited budget</p>
-                    </div>
-
-                    {/* Warning Threshold Slider */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Warning Threshold
-                            </label>
-                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{warningThreshold}%</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="50"
-                            max="90"
-                            value={warningThreshold}
-                            onChange={(e) => setWarningThreshold(Number(e.target.value))}
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
-                        />
-                    </div>
-
-                    {/* Critical Threshold Slider */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Critical Alert Threshold
-                            </label>
-                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{criticalThreshold}%</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="80"
-                            max="100"
-                            value={criticalThreshold}
-                            onChange={(e) => setCriticalThreshold(Number(e.target.value))}
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
-                        />
-                    </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <Button variant="outline" onClick={onClose}>
-                        Cancel
-                    </Button>
-                    <Button onClick={onClose} className="bg-purple-600 hover:bg-purple-700 text-white">
-                        Save Changes
-                    </Button>
-                </div>
-            </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <input
+                ref={inputRef}
+                type="text"
+                value={value}
+                onChange={(e) => setValue(e.target.value.replace(/[^0-9]/g, ''))}
+                onKeyDown={handleKeyDown}
+                placeholder="Unlimited"
+                className="w-24 px-2 py-1 text-sm font-mono text-right border border-purple-400 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+            <button
+                type="button"
+                onClick={handleSave}
+                className="p-1 hover:bg-green-100 dark:hover:bg-green-900/30 rounded transition-colors"
+                aria-label="Save"
+            >
+                <Check className="size-4 text-green-600" />
+            </button>
+            <button
+                type="button"
+                onClick={onCancel}
+                className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                aria-label="Cancel"
+            >
+                <X className="size-4 text-red-600" />
+            </button>
+        </div>
     );
 };
 
@@ -341,9 +296,11 @@ const WorkflowRow: React.FC<{
     workflow: Workflow;
     isExpanded: boolean;
     onToggle: () => void;
-    onEditWorkflow: (workflow: Workflow) => void;
-    onEditAgent: (agent: WorkflowAgent, workflowName: string) => void;
-}> = ({ workflow, isExpanded, onToggle, onEditWorkflow, onEditAgent }) => {
+    onBudgetChange: (workflowId: string, newBudget: number | null) => void;
+    onAgentBudgetChange: (workflowId: string, agentId: string, newBudget: number | null) => void;
+}> = ({ workflow, isExpanded, onToggle, onBudgetChange, onAgentBudgetChange }) => {
+    const [isEditingBudget, setIsEditingBudget] = useState(false);
+    const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
     const utilization = getUtilization(workflow.consumed, workflow.budgetLimit);
 
     return (
@@ -410,9 +367,20 @@ const WorkflowRow: React.FC<{
 
                 {/* Budget Limit */}
                 <td className="py-4 px-4 text-right">
-                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 font-mono">
-                        {workflow.budgetLimit !== null ? formatNumber(workflow.budgetLimit) : 'Unlimited'}
-                    </span>
+                    {isEditingBudget ? (
+                        <InlineBudgetEdit
+                            currentBudget={workflow.budgetLimit}
+                            onSave={(newBudget) => {
+                                onBudgetChange(workflow.id, newBudget);
+                                setIsEditingBudget(false);
+                            }}
+                            onCancel={() => setIsEditingBudget(false)}
+                        />
+                    ) : (
+                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 font-mono">
+                            {workflow.budgetLimit !== null ? formatNumber(workflow.budgetLimit) : 'Unlimited'}
+                        </span>
+                    )}
                 </td>
 
                 {/* Utilization */}
@@ -426,10 +394,10 @@ const WorkflowRow: React.FC<{
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
-                            onEditWorkflow(workflow);
+                            setIsEditingBudget(true);
                         }}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        aria-label="Workflow settings"
+                        aria-label="Edit budget"
                     >
                         <SlidersHorizontal className="size-4 text-gray-500 dark:text-gray-400" />
                     </button>
@@ -527,9 +495,20 @@ const WorkflowRow: React.FC<{
                                                                 </span>
                                                             </td>
                                                             <td className="py-3 px-3 text-right">
-                                                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                                                    {agent.budgetLimit !== null ? formatNumber(agent.budgetLimit) : 'Unlimited'}
-                                                                </span>
+                                                                {editingAgentId === agent.id ? (
+                                                                    <InlineBudgetEdit
+                                                                        currentBudget={agent.budgetLimit}
+                                                                        onSave={(newBudget) => {
+                                                                            onAgentBudgetChange(workflow.id, agent.id, newBudget);
+                                                                            setEditingAgentId(null);
+                                                                        }}
+                                                                        onCancel={() => setEditingAgentId(null)}
+                                                                    />
+                                                                ) : (
+                                                                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                                        {agent.budgetLimit !== null ? formatNumber(agent.budgetLimit) : 'Unlimited'}
+                                                                    </span>
+                                                                )}
                                                             </td>
                                                             <td className="py-3 px-3 text-center">
                                                                 {agentUtilization !== null ? (
@@ -543,10 +522,10 @@ const WorkflowRow: React.FC<{
                                                                     type="button"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        onEditAgent(agent, workflow.name);
+                                                                        setEditingAgentId(agent.id);
                                                                     }}
                                                                     className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                                                    aria-label="Agent settings"
+                                                                    aria-label="Edit agent budget"
                                                                 >
                                                                     <SlidersHorizontal className="size-4 text-gray-400" />
                                                                 </button>
@@ -570,8 +549,7 @@ const WorkflowRow: React.FC<{
 // Main Page Component
 const WorkflowCreditManagementPage: React.FC = () => {
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-    const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
-    const [editingAgent, setEditingAgent] = useState<{ agent: WorkflowAgent; workflowName: string } | null>(null);
+    const [workflows, setWorkflows] = useState<Workflow[]>(mockWorkflows);
 
     const toggleRow = (workflowId: string) => {
         setExpandedRows((prev) => {
@@ -583,6 +561,29 @@ const WorkflowCreditManagementPage: React.FC = () => {
             }
             return newSet;
         });
+    };
+
+    const handleWorkflowBudgetChange = (workflowId: string, newBudget: number | null) => {
+        setWorkflows((prev) =>
+            prev.map((wf) =>
+                wf.id === workflowId ? { ...wf, budgetLimit: newBudget } : wf
+            )
+        );
+    };
+
+    const handleAgentBudgetChange = (workflowId: string, agentId: string, newBudget: number | null) => {
+        setWorkflows((prev) =>
+            prev.map((wf) =>
+                wf.id === workflowId
+                    ? {
+                          ...wf,
+                          agents: wf.agents.map((agent) =>
+                              agent.id === agentId ? { ...agent, budgetLimit: newBudget } : agent
+                          ),
+                      }
+                    : wf
+            )
+        );
     };
 
     return (
@@ -633,14 +634,14 @@ const WorkflowCreditManagementPage: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {mockWorkflows.map((workflow) => (
+                                {workflows.map((workflow) => (
                                     <WorkflowRow
                                         key={workflow.id}
                                         workflow={workflow}
                                         isExpanded={expandedRows.has(workflow.id)}
                                         onToggle={() => toggleRow(workflow.id)}
-                                        onEditWorkflow={setEditingWorkflow}
-                                        onEditAgent={(agent, workflowName) => setEditingAgent({ agent, workflowName })}
+                                        onBudgetChange={handleWorkflowBudgetChange}
+                                        onAgentBudgetChange={handleAgentBudgetChange}
                                     />
                                 ))}
                             </tbody>
@@ -648,30 +649,6 @@ const WorkflowCreditManagementPage: React.FC = () => {
                     </div>
                 </CardContent>
             </Card>
-
-            {/* Workflow Budget Edit Modal */}
-            {editingWorkflow && (
-                <BudgetEditModal
-                    isOpen={true}
-                    onClose={() => setEditingWorkflow(null)}
-                    title="Edit Workflow Budget"
-                    entityName={editingWorkflow.name}
-                    currentBudget={editingWorkflow.budgetLimit}
-                    consumed={editingWorkflow.consumed}
-                />
-            )}
-
-            {/* Agent Budget Edit Modal */}
-            {editingAgent && (
-                <BudgetEditModal
-                    isOpen={true}
-                    onClose={() => setEditingAgent(null)}
-                    title="Edit Agent Budget"
-                    entityName={`${editingAgent.agent.name} (${editingAgent.workflowName})`}
-                    currentBudget={editingAgent.agent.budgetLimit}
-                    consumed={editingAgent.agent.consumed}
-                />
-            )}
         </div>
     );
 };
