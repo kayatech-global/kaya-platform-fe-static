@@ -11,6 +11,7 @@ import { useAuth } from '@/context';
 import { motion } from 'framer-motion';
 import useLocalStorage from '@/hooks/useLocalStorage';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/atoms/tooltip';
 
@@ -42,9 +43,9 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                 })}
             >
                 {isFullWidth ? (
-                    <div className="logo w-fit h-fit py-[6.5px]">
+                    <Link href="/workspaces" className="logo w-fit h-fit py-[6.5px] cursor-pointer">
                         <Image alt="kaya-logo" width={142} height={29} src={'/png/kaya-logo-light.png'} />
-                    </div>
+                    </Link>
                 ) : (
                     <React.Fragment>
                         {!isSm && (

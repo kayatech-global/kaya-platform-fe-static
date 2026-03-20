@@ -17,21 +17,10 @@ import { DashboardHeaderProps } from './dashboard-header';
 import { cn } from '@/lib/utils';
 import useLocalStorage from '@/hooks/useLocalStorage';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
-import { startCase } from 'lodash';
 
 interface DashboardHeaderBottomProps extends DashboardHeaderProps {
     value: string;
 }
-
-const STATUS_ADMIN_LABELS: Record<string, string> = {
-    incidents: 'Incidents',
-    maintenance: 'Maintenance',
-    components: 'Components',
-    subscribers: 'Subscribers',
-    escalation: 'Escalation',
-    health: 'Health Monitor',
-    'sla-reports': 'SLA Reports',
-};
 
 function DashboardHeaderBottom({ isFullWidth }: Readonly<DashboardHeaderBottomProps>) {
     const pathName = usePathname().split('/');
@@ -42,35 +31,12 @@ function DashboardHeaderBottom({ isFullWidth }: Readonly<DashboardHeaderBottomPr
     const bcClass = cn('text-sm font-regular text-blue-100', { 'text-xs': isMobile });
 
     const renderStatusAdminBreadcrumbs = () => {
-        const subPage = pathName[3]; // e.g. "incidents", "components", etc.
         return (
-            <>
-                <BreadcrumbItem>
-                    <Link href="/workspaces" className={cn(bcClass, 'hover:text-white transition-colors')}>
-                        Workspaces
-                    </Link>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className={bcClass} />
-                <BreadcrumbItem>
-                    {subPage ? (
-                        <Link href="/status/admin" className={cn(bcClass, 'hover:text-white transition-colors')}>
-                            Status Management
-                        </Link>
-                    ) : (
-                        <BreadcrumbPage className={bcClass}>Status Management</BreadcrumbPage>
-                    )}
-                </BreadcrumbItem>
-                {subPage && (
-                    <>
-                        <BreadcrumbSeparator className={bcClass} />
-                        <BreadcrumbItem>
-                            <BreadcrumbPage className={bcClass}>
-                                {STATUS_ADMIN_LABELS[subPage] ?? startCase(subPage.replaceAll(/-/g, ' '))}
-                            </BreadcrumbPage>
-                        </BreadcrumbItem>
-                    </>
-                )}
-            </>
+            <BreadcrumbItem>
+                <Link href="/workspaces" className={cn(bcClass, 'hover:text-white transition-colors flex items-center gap-1')}>
+                    ← Workspaces
+                </Link>
+            </BreadcrumbItem>
         );
     };
 
