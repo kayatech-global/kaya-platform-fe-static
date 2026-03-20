@@ -32,9 +32,6 @@ export interface StatusComponent {
   name: string;
   status: ComponentStatus;
   description?: string;
-  mappedService?: string;
-  healthCheckUrl?: string;
-  pollingIntervalSeconds?: number;
   failureThreshold?: number;
 }
 
@@ -108,7 +105,6 @@ export interface HealthCheckResult {
   lastCheck: string;
   responseTimeMs: number;
   consecutiveFailures: number;
-  healthCheckUrl: string;
   autoIncidentEnabled: boolean;
 }
 
@@ -131,8 +127,6 @@ export interface EscalationRule {
 // ─── SLA Report Models ──────────────────────────────────────────────
 
 export type SlaStatus = "met" | "breached";
-
-export type NetworkAccess = "public" | "private-k8s";
 
 export interface SlaTarget {
   componentId: string;
@@ -177,8 +171,6 @@ export interface SlaReportData {
 export interface ComponentBaselineConfig {
   componentId: string;
   baselineResponseTimeMs: number;
-  pollingIntervalMinutes: number;
-  networkAccess: NetworkAccess;
 }
 
 // ─── Escalation Expectations ────────────────────────────────────────

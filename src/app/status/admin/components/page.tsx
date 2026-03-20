@@ -20,11 +20,9 @@ import {
   DialogFooter,
 } from "@/components/atoms/dialog";
 import { StatusDot } from "@/components/status/status-dot";
-import { componentGroups, componentBaselineConfigs, networkAccessMap } from "@/mocks/status-data";
+import { componentGroups, componentBaselineConfigs } from "@/mocks/status-data";
 import { STATUS_LABELS } from "@/models/status";
 import type { ComponentStatus } from "@/models/status";
-import { cn } from "@/lib/utils";
-
 const statusOptions: ComponentStatus[] = [
   "operational",
   "degraded",
@@ -37,32 +35,23 @@ export default function ComponentsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editGroupDialogOpen, setEditGroupDialogOpen] = useState(false);
   const [editName, setEditName] = useState("");
-  const [editService, setEditService] = useState("");
-  const [editHealthUrl, setEditHealthUrl] = useState("");
-  const [editInterval, setEditInterval] = useState("30");
   const [editThreshold, setEditThreshold] = useState("3");
   const [editGroupName, setEditGroupName] = useState("");
   const [editBaseline, setEditBaseline] = useState("15");
-  const [editPollingMin, setEditPollingMin] = useState("15");
+  const [editSla, setEditSla] = useState("99.9");
 
   const openComponentDialog = (comp?: {
     id?: string;
     name: string;
-    mappedService?: string;
-    healthCheckUrl?: string;
-    pollingIntervalSeconds?: number;
     failureThreshold?: number;
   }) => {
     setEditName(comp?.name ?? "");
-    setEditService(comp?.mappedService ?? "");
-    setEditHealthUrl(comp?.healthCheckUrl ?? "");
-    setEditInterval(String(comp?.pollingIntervalSeconds ?? 30));
     setEditThreshold(String(comp?.failureThreshold ?? 3));
     const cfg = comp?.id
       ? componentBaselineConfigs.find((c) => c.componentId === comp.id)
       : undefined;
     setEditBaseline(String(cfg?.baselineResponseTimeMs ? cfg.baselineResponseTimeMs / 1000 : 15));
-    setEditPollingMin(String(cfg?.pollingIntervalMinutes ?? 15));
+    setEditSla("99.9");
     setEditDialogOpen(true);
   };
 
@@ -138,25 +127,13 @@ export default function ComponentsPage() {
                         Status
                       </th>
                       <th className="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 text-xs">
-                        Mapped Service
-                      </th>
-                      <th className="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 text-xs">
-                        Health Check URL
-                      </th>
-                      <th className="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 text-xs">
-                        Interval
-                      </th>
-                      <th className="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 text-xs">
                         Threshold
                       </th>
                       <th className="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 text-xs">
                         Baseline RT
                       </th>
                       <th className="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 text-xs">
-                        Polling
-                      </th>
-                      <th className="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 text-xs">
-                        Network
+                        SLA Target
                       </th>
                       <th className="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 text-xs">
                         Actions
@@ -177,15 +154,6 @@ export default function ComponentsPage() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400 font-mono">
-                          {comp.mappedService}
-                        </td>
-                        <td className="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400 font-mono max-w-[200px] truncate">
-                          {comp.healthCheckUrl}
-                        </td>
-                        <td className="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
-                          {comp.pollingIntervalSeconds}s
-                        </td>
                         <td className="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
                           {comp.failureThreshold}
                         </td>
@@ -196,17 +164,7 @@ export default function ComponentsPage() {
                           })()}
                         </td>
                         <td className="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
-                          {(() => {
-                            const cfg = componentBaselineConfigs.find((c) => c.componentId === comp.id);
-                            return cfg ? `${cfg.pollingIntervalMinutes} min` : "15 min";
-                          })()}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          {networkAccessMap[comp.id] === "public" ? (
-                            <Badge variant="info" size="sm">Public</Badge>
-                          ) : (
-                            <Badge variant="secondary" size="sm">Private (K8s)</Badge>
-                          )}
+                          99.9%
                         </td>
                         <td className="px-4 py-2.5">
                           <div className="flex gap-1">
@@ -252,46 +210,26 @@ export default function ComponentsPage() {
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
             />
-            <Input
-              label="Mapped Service"
-              placeholder="e.g. kaya-console-web"
-              value={editService}
-              onChange={(e) => setEditService(e.target.value)}
-            />
-            <Input
-              label="Health Check URL"
-              placeholder="https://..."
-              value={editHealthUrl}
-              onChange={(e) => setEditHealthUrl(e.target.value)}
-            />
             <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Polling Interval (s)"
-                type="number"
-                value={editInterval}
-                onChange={(e) => setEditInterval(e.target.value)}
-              />
               <Input
                 label="Failure Threshold"
                 type="number"
                 value={editThreshold}
                 onChange={(e) => setEditThreshold(e.target.value)}
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
               <Input
                 label="Baseline Response Time (s)"
                 type="number"
                 value={editBaseline}
                 onChange={(e) => setEditBaseline(e.target.value)}
               />
-              <Input
-                label="Polling Interval (min)"
-                type="number"
-                value={editPollingMin}
-                onChange={(e) => setEditPollingMin(e.target.value)}
-              />
             </div>
+            <Input
+              label="SLA Target (%)"
+              type="number"
+              value={editSla}
+              onChange={(e) => setEditSla(e.target.value)}
+            />
           </DialogBody>
           <DialogFooter>
             <Button

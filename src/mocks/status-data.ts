@@ -14,7 +14,6 @@ import type {
   SlaReportData,
   ComponentBaselineConfig,
   EscalationExpectations,
-  NetworkAccess,
 } from "@/models/status";
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -72,9 +71,9 @@ export const componentGroups: ComponentGroup[] = [
     name: "Platform Console",
     status: "operational",
     components: [
-      { id: "web-app", name: "Web Application", status: "operational", mappedService: "kaya-console-web", healthCheckUrl: "https://console.kaya.io/health", pollingIntervalSeconds: 30, failureThreshold: 3 },
-      { id: "platform-api", name: "Platform API", status: "operational", mappedService: "kaya-platform-api", healthCheckUrl: "https://api.kaya.io/health", pollingIntervalSeconds: 30, failureThreshold: 3 },
-      { id: "auth-sso", name: "Authentication & SSO", status: "operational", mappedService: "kaya-auth-service", healthCheckUrl: "https://auth.kaya.io/health", pollingIntervalSeconds: 60, failureThreshold: 2 },
+      { id: "web-app", name: "Web Application", status: "operational", failureThreshold: 3 },
+      { id: "platform-api", name: "Platform API", status: "operational", failureThreshold: 3 },
+      { id: "auth-sso", name: "Authentication & SSO", status: "operational", failureThreshold: 2 },
     ],
     uptimeData: generateUptimeData(90, [72], [], [45]),
   },
@@ -83,9 +82,9 @@ export const componentGroups: ComponentGroup[] = [
     name: "Workflow Execution",
     status: "degraded",
     components: [
-      { id: "workflow-engine", name: "Workflow Engine", status: "degraded", mappedService: "kaya-workflow-engine", healthCheckUrl: "https://engine.kaya.io/health", pollingIntervalSeconds: 15, failureThreshold: 2 },
-      { id: "triggers-scheduling", name: "Triggers & Scheduling", status: "operational", mappedService: "kaya-trigger-service", healthCheckUrl: "https://triggers.kaya.io/health", pollingIntervalSeconds: 30, failureThreshold: 3 },
-      { id: "workflow-builder", name: "Workflow Builder", status: "operational", mappedService: "kaya-workflow-builder", healthCheckUrl: "https://builder.kaya.io/health", pollingIntervalSeconds: 30, failureThreshold: 3 },
+      { id: "workflow-engine", name: "Workflow Engine", status: "degraded", failureThreshold: 2 },
+      { id: "triggers-scheduling", name: "Triggers & Scheduling", status: "operational", failureThreshold: 3 },
+      { id: "workflow-builder", name: "Workflow Builder", status: "operational", failureThreshold: 3 },
     ],
     uptimeData: generateUptimeData(90, [0, 1, 15, 42], [30], []),
   },
@@ -94,8 +93,8 @@ export const componentGroups: ComponentGroup[] = [
     name: "Voice AI",
     status: "operational",
     components: [
-      { id: "voice-engine", name: "Voice Engine", status: "operational", mappedService: "kaya-voice-engine", healthCheckUrl: "https://voice.kaya.io/health", pollingIntervalSeconds: 15, failureThreshold: 2 },
-      { id: "telephony-twilio", name: "Telephony (Twilio)", status: "operational", mappedService: "kaya-telephony", healthCheckUrl: "https://telephony.kaya.io/health", pollingIntervalSeconds: 30, failureThreshold: 3 },
+      { id: "voice-engine", name: "Voice Engine", status: "operational", failureThreshold: 2 },
+      { id: "telephony-twilio", name: "Telephony (Twilio)", status: "operational", failureThreshold: 3 },
     ],
     uptimeData: generateUptimeData(90, [60], [], []),
   },
@@ -104,8 +103,8 @@ export const componentGroups: ComponentGroup[] = [
     name: "Messaging & Events",
     status: "operational",
     components: [
-      { id: "event-subscription-mgr", name: "Event Subscription Manager", status: "operational", mappedService: "kaya-event-mgr", healthCheckUrl: "https://events.kaya.io/health", pollingIntervalSeconds: 30, failureThreshold: 3 },
-      { id: "message-broker", name: "Message Broker", status: "operational", mappedService: "kaya-message-broker", healthCheckUrl: "https://broker.kaya.io/health", pollingIntervalSeconds: 15, failureThreshold: 2 },
+      { id: "event-subscription-mgr", name: "Event Subscription Manager", status: "operational", failureThreshold: 3 },
+      { id: "message-broker", name: "Message Broker", status: "operational", failureThreshold: 2 },
     ],
     uptimeData: generateUptimeData(90, [], [55], []),
   },
@@ -114,8 +113,8 @@ export const componentGroups: ComponentGroup[] = [
     name: "Analytics & Insights",
     status: "operational",
     components: [
-      { id: "insights-engine", name: "Insights Engine", status: "operational", mappedService: "kaya-insights-engine", healthCheckUrl: "https://insights.kaya.io/health", pollingIntervalSeconds: 60, failureThreshold: 3 },
-      { id: "metrics-dashboards", name: "Metrics & Dashboards", status: "operational", mappedService: "kaya-metrics", healthCheckUrl: "https://metrics.kaya.io/health", pollingIntervalSeconds: 60, failureThreshold: 3 },
+      { id: "insights-engine", name: "Insights Engine", status: "operational", failureThreshold: 3 },
+      { id: "metrics-dashboards", name: "Metrics & Dashboards", status: "operational", failureThreshold: 3 },
     ],
     uptimeData: generateUptimeData(90, [25], [], []),
   },
@@ -124,8 +123,8 @@ export const componentGroups: ComponentGroup[] = [
     name: "Licensing & Activation",
     status: "operational",
     components: [
-      { id: "license-portal", name: "License Portal", status: "operational", mappedService: "kaya-license-portal", healthCheckUrl: "https://license.kaya.io/health", pollingIntervalSeconds: 60, failureThreshold: 3 },
-      { id: "license-api", name: "License API", status: "operational", mappedService: "kaya-license-api", healthCheckUrl: "https://api.license.kaya.io/health", pollingIntervalSeconds: 60, failureThreshold: 3 },
+      { id: "license-portal", name: "License Portal", status: "operational", failureThreshold: 3 },
+      { id: "license-api", name: "License API", status: "operational", failureThreshold: 3 },
     ],
     uptimeData: generateUptimeData(90, [], [], [80]),
   },
@@ -134,9 +133,9 @@ export const componentGroups: ComponentGroup[] = [
     name: "Infrastructure",
     status: "partial-outage",
     components: [
-      { id: "database", name: "Database", status: "operational", mappedService: "kaya-postgres-cluster", healthCheckUrl: "https://db-monitor.kaya.io/health", pollingIntervalSeconds: 15, failureThreshold: 2 },
-      { id: "cache-layer", name: "Cache Layer", status: "partial-outage", mappedService: "kaya-redis-cluster", healthCheckUrl: "https://cache-monitor.kaya.io/health", pollingIntervalSeconds: 15, failureThreshold: 2 },
-      { id: "secret-management", name: "Secret Management", status: "operational", mappedService: "kaya-vault", healthCheckUrl: "https://vault.kaya.io/health", pollingIntervalSeconds: 60, failureThreshold: 3 },
+      { id: "database", name: "Database", status: "operational", failureThreshold: 2 },
+      { id: "cache-layer", name: "Cache Layer", status: "partial-outage", failureThreshold: 2 },
+      { id: "secret-management", name: "Secret Management", status: "operational", failureThreshold: 3 },
     ],
     uptimeData: generateUptimeData(90, [3, 10], [0, 1], [50]),
   },
@@ -472,7 +471,6 @@ export const healthChecks: HealthCheckResult[] = componentGroups.flatMap((group)
     lastCheck: hoursAgo(Math.random() * 0.01), // just now-ish
     responseTimeMs: comp.status === "operational" ? Math.floor(20 + Math.random() * 80) : comp.status === "degraded" ? Math.floor(200 + Math.random() * 300) : Math.floor(500 + Math.random() * 2000),
     consecutiveFailures: comp.status === "operational" ? 0 : comp.status === "degraded" ? Math.floor(Math.random() * 3) : Math.floor(3 + Math.random() * 5),
-    healthCheckUrl: comp.healthCheckUrl ?? "",
     autoIncidentEnabled: true,
   }))
 );
@@ -517,33 +515,15 @@ export const activityFeed: ActivityFeedItem[] = [
   { id: "act-10", type: "incident_resolved", message: "Incident resolved: Voice Engine audio quality degradation", timestamp: daysAgo(3), actor: "Voice Team" },
 ];
 
-// ─── Network Access Classification ──────────────────────────────────
-
-const publicComponentIds = new Set([
-  "platform-api", // Admin Backend
-  "web-app", // Admin Frontend
-  "workflow-engine", // Workflow Engine
-  "voice-engine", // Voice Engine
-]);
-
-export const networkAccessMap: Record<string, NetworkAccess> = Object.fromEntries(
-  componentGroups.flatMap((g) =>
-    g.components.map((c) => [
-      c.id,
-      publicComponentIds.has(c.id) ? ("public" as const) : ("private-k8s" as const),
-    ])
-  )
-);
-
 // ─── Component Baseline Configs ─────────────────────────────────────
+
+const infrastructureComponentIds = new Set(["database", "cache-layer", "secret-management"]);
 
 export const componentBaselineConfigs: ComponentBaselineConfig[] =
   componentGroups.flatMap((g) =>
     g.components.map((c) => ({
       componentId: c.id,
-      baselineResponseTimeMs: 15000,
-      pollingIntervalMinutes: 15,
-      networkAccess: (publicComponentIds.has(c.id) ? "public" : "private-k8s") as NetworkAccess,
+      baselineResponseTimeMs: infrastructureComponentIds.has(c.id) ? 5000 : 15000,
     }))
   );
 
