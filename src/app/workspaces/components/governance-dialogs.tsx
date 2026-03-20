@@ -128,8 +128,8 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
-                <DialogHeader className="pb-2">
+            <DialogContent className="max-w-md !grid-rows-[auto_1fr_auto] max-h-[85vh]">
+                <DialogHeader className="pb-2 !p-4 !border-b-0">
                     <DialogTitle className="flex items-center gap-2 text-base">
                         <Wallet className="h-4 w-4 text-green-600" />
                         Allocate Credit Budget
@@ -138,16 +138,16 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
                         Allocate credits for {workspaceName || 'this workspace'}
                     </DialogDescription>
                 </DialogHeader>
-                <DialogBody className="space-y-3 py-2 overflow-y-auto flex-1">
+                <DialogBody className="space-y-3 py-2 overflow-y-auto">
                     {/* Total Available Credits */}
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800">
+                    <div className="p-2 rounded-lg bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800">
                         <div className="flex items-center justify-between">
                             <div>
                                 <h4 className="text-xs font-medium text-gray-900 dark:text-gray-100">Total Available Credits</h4>
                                 <p className="text-[10px] text-gray-500 dark:text-gray-400">Organization-wide credit balance</p>
                             </div>
                             <div className="text-right">
-                                <span className="text-lg font-bold text-green-600">{totalAvailableCredits.toLocaleString()}</span>
+                                <span className="text-base font-bold text-green-600">{totalAvailableCredits.toLocaleString()}</span>
                                 <span className="text-xs text-gray-500 ml-1">credits</span>
                             </div>
                         </div>
@@ -165,7 +165,7 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
                             onChange={(e) => handleBudgetChange(e.target.value)}
                             min={0}
                             max={totalAvailableCredits}
-                            className="w-full text-sm h-9"
+                            className="w-full text-sm h-8"
                         />
                         {error && (
                             <p className="text-[10px] text-red-500">{error}</p>
@@ -191,7 +191,7 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
                                 type="number"
                                 value={maxCreditsPerExecution}
                                 onChange={(e) => setMaxCreditsPerExecution(e.target.value.replace(/[^0-9]/g, ''))}
-                                className="w-24 text-right text-xs h-8"
+                                className="w-24 text-right text-xs h-7"
                                 min={0}
                             />
                         </div>
@@ -203,7 +203,7 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
                                 type="number"
                                 value={graceCredits}
                                 onChange={(e) => setGraceCredits(e.target.value.replace(/[^0-9]/g, ''))}
-                                className="w-24 text-right text-xs h-8"
+                                className="w-24 text-right text-xs h-7"
                                 min={0}
                             />
                         </div>
@@ -217,7 +217,7 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
 
                         {/* Budget Warning Threshold */}
                         <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <span className="text-xs text-gray-700 dark:text-gray-300">Budget Warning Threshold (%)</span>
+                            <span className="text-xs text-gray-700 dark:text-gray-300">Warning Threshold (%)</span>
                             <div className="flex items-center gap-2">
                                 <PurpleSlider
                                     value={warningThreshold}
@@ -233,7 +233,7 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
 
                         {/* Critical Alert Threshold */}
                         <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <span className="text-xs text-gray-700 dark:text-gray-300">Critical Alert Threshold (%)</span>
+                            <span className="text-xs text-gray-700 dark:text-gray-300">Critical Threshold (%)</span>
                             <div className="flex items-center gap-2">
                                 <PurpleSlider
                                     value={criticalThreshold}
@@ -248,7 +248,7 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
                         </div>
                     </div>
                 </DialogBody>
-                <DialogFooter className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                <DialogFooter className="!p-4 !pt-3">
                     <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
                         Cancel
                     </Button>
