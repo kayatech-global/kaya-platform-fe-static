@@ -14,6 +14,38 @@ import { Button } from '@/components';
 import { Input } from '@/components/atoms/input';
 import { Wallet } from 'lucide-react';
 
+// Purple Slider Component
+const PurpleSlider: React.FC<{
+    value: number;
+    min: number;
+    max: number;
+    onChange: (value: number) => void;
+}> = ({ value, min, max, onChange }) => {
+    const percentage = ((value - min) / (max - min)) * 100;
+
+    return (
+        <div className="relative w-32 h-2">
+            <div className="absolute inset-0 rounded-full bg-gray-200 dark:bg-gray-700" />
+            <div
+                className="absolute inset-y-0 left-0 rounded-full bg-purple-600"
+                style={{ width: `${percentage}%` }}
+            />
+            <div
+                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-purple-600 shadow-sm cursor-pointer"
+                style={{ left: `calc(${percentage}% - 8px)` }}
+            />
+            <input
+                type="range"
+                min={min}
+                max={max}
+                value={value}
+                onChange={(e) => onChange(Number(e.target.value))}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+        </div>
+    );
+};
+
 // Types
 interface CreditBudgetDialogProps {
     open: boolean;
@@ -22,7 +54,12 @@ interface CreditBudgetDialogProps {
     workspaceName?: string;
     totalAvailableCredits: number;
     currentAllocatedBudget?: number;
-    onSave: (workspaceId: string | number, allocatedBudget: number) => void;
+    onSave: (workspaceId: string | number, allocatedBudget: number, config?: {
+        maxCreditsPerExecution: number;
+        graceCredits: number;
+        warningThreshold: number;
+        criticalThreshold: number;
+    }) => void;
 }
 
 // Allocate Credit Budget Dialog
@@ -37,12 +74,24 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
 }) => {
     const [allocatedBudget, setAllocatedBudget] = useState<string>(currentAllocatedBudget.toString());
     const [error, setError] = useState<string>('');
+    
+    // Execution Limits
+    const [maxCreditsPerExecution, setMaxCreditsPerExecution] = useState<string>('50000');
+    const [graceCredits, setGraceCredits] = useState<string>('5000');
+    
+    // Alert Configuration
+    const [warningThreshold, setWarningThreshold] = useState<number>(80);
+    const [criticalThreshold, setCriticalThreshold] = useState<number>(95);
 
     // Reset state when dialog opens
     useEffect(() => {
         if (open) {
             setAllocatedBudget(currentAllocatedBudget.toString());
             setError('');
+            setMaxCreditsPerExecution('50000');
+            setGraceCredits('5000');
+            setWarningThreshold(80);
+            setCriticalThreshold(95);
         }
     }, [open, currentAllocatedBudget]);
 
@@ -64,7 +113,12 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
     const handleSave = () => {
         const numValue = parseInt(allocatedBudget, 10);
         if (!isNaN(numValue) && numValue >= 0 && numValue <= totalAvailableCredits) {
-            onSave(workspaceId, numValue);
+            onSave(workspaceId, numValue, {
+                maxCreditsPerExecution: parseInt(maxCreditsPerExecution, 10) || 50000,
+                graceCredits: parseInt(graceCredits, 10) || 5000,
+                warningThreshold,
+                criticalThreshold,
+            });
             onOpenChange(false);
         }
     };
@@ -134,6 +188,79 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
                             </div>
                         </div>
                     )}
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-200 dark:border-gray-700" />
+
+                    {/* Execution Limits Section */}
+                    <div className="space-y-4">
+                        <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Execution Limits
+                        </h3>
+                        
+                        {/* Max Credits per Execution */}
+                        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Max Credits per Execution</span>
+                            <Input
+                                type="number"
+                                value={maxCreditsPerExecution}
+                                onChange={(e) => setMaxCreditsPerExecution(e.target.value.replace(/[^0-9]/g, ''))}
+                                className="w-28 text-right text-sm"
+                                min={0}
+                            />
+                        </div>
+
+                        {/* Grace Credits */}
+                        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Grace Credits</span>
+                            <Input
+                                type="number"
+                                value={graceCredits}
+                                onChange={(e) => setGraceCredits(e.target.value.replace(/[^0-9]/g, ''))}
+                                className="w-28 text-right text-sm"
+                                min={0}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Alert Configuration Section */}
+                    <div className="space-y-4">
+                        <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Alert Configuration
+                        </h3>
+
+                        {/* Budget Warning Threshold */}
+                        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Budget Warning Threshold (%)</span>
+                            <div className="flex items-center gap-3">
+                                <PurpleSlider
+                                    value={warningThreshold}
+                                    min={50}
+                                    max={90}
+                                    onChange={setWarningThreshold}
+                                />
+                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 w-10 text-right">
+                                    {warningThreshold}%
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Critical Alert Threshold */}
+                        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Critical Alert Threshold (%)</span>
+                            <div className="flex items-center gap-3">
+                                <PurpleSlider
+                                    value={criticalThreshold}
+                                    min={80}
+                                    max={100}
+                                    onChange={setCriticalThreshold}
+                                />
+                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 w-10 text-right">
+                                    {criticalThreshold}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </DialogBody>
                 <DialogFooter>
                     <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
@@ -144,8 +271,9 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
                         size="sm" 
                         onClick={handleSave}
                         disabled={!isValid}
+                        className="bg-purple-600 hover:bg-purple-700"
                     >
-                        Save
+                        Save Configuration
                     </Button>
                 </DialogFooter>
             </DialogContent>
