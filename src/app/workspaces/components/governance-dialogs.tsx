@@ -257,7 +257,7 @@ export const ResourceQuotasDialog: React.FC<CreditBudgetDialogProps> = ({
                         size="sm" 
                         onClick={handleSave}
                         disabled={!isValid}
-                        className="bg-purple-600 hover:bg-purple-700"
+                        className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-blue-300"
                     >
                         Save Configuration
                     </Button>
