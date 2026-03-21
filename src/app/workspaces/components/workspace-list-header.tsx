@@ -61,12 +61,25 @@ const WorkspaceListHeader = ({
         setDebounceTimer(timer);
     };
 
+    // Governance dimensions to add to the dropdown options
+    const governanceDimensions: IOption[] = [
+        { label: 'Environment (Dev/Prod)', value: '__governance_environment' },
+        { label: 'Compliance Status', value: '__governance_compliance' },
+        { label: 'Cost Center', value: '__governance_cost_center' },
+    ];
+
+    // Combine metadata collection with governance dimensions
+    const dropdownOptions: IOption[] = [
+        ...governanceDimensions,
+        ...(metadataCollection?.map(x => ({ label: x, value: x } as IOption)) || []),
+    ];
+
     return (
         <div className="realm-header bg-[rgba(255,255,255,0.6)] px-6 h-[52px] flex items-center justify-between backdrop-blur-[7px] rounded-t-lg border-b border-b-gray-300 dark:bg-[rgba(31,41,55,0.8)] dark:backdrop-blur-[7px] dark:border-b-gray-700">
             <div className="flex flex-col sm:flex-row gap-2 items-center">
                 <p className="text-md font-medium text-gray-800 dark:text-white">Workspaces</p>
                 <MultiSelect
-                    options={metadataCollection?.map(x => ({ label: x, value: x } as IOption))}
+                    options={dropdownOptions}
                     value={metadataOption || null}
                     menuPortalTarget={document.body}
                     isSearchable
@@ -77,7 +90,7 @@ const WorkspaceListHeader = ({
                         if (selectedOptions) onPageUpdate(-1);
                         else onPageUpdate(1);
                     }}
-                    isDisabled={metadataCollection?.length === 0}
+                    isDisabled={dropdownOptions?.length === 0}
                     className="!w-[200px]"
                     menuClass="!z-50"
                     menuListClass="break-all"

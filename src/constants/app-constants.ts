@@ -294,15 +294,51 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
                 isSingleLink: true,
                 disabledMessage: 'Data Lineage not enabled for the sandbox license',
             },
-            {
-                id: 'learnings',
-                title: 'Learning Records',
-                url: '/workspace/[wid]/learnings',
-                icon: 'BrainCircuit',
-                isSingleLink: true,
-            },
-        ],
-    },
+{
+            id: 'learnings',
+            title: 'Learning Records',
+            url: '/workspace/[wid]/learnings',
+            icon: 'BrainCircuit',
+            isSingleLink: true,
+        },
+    ],
+},
+{
+    id: 'credit_allocation_menu_item',
+    title: 'Credit Allocation',
+    description: 'Manage credit budgets, view reports, and configure allocation settings',
+    icon: 'ri-coin-fill',
+    items: [
+        {
+            id: 'credit-dashboard',
+            title: 'Dashboard',
+            url: '/workspace/[wid]/credit-allocation/dashboard',
+            icon: 'LayoutDashboard',
+            isSingleLink: true,
+        },
+        {
+            id: 'workflow-credit-management',
+            title: 'Workflow Level Credit Management',
+            url: '/workspace/[wid]/credit-allocation/workflow-credit-management',
+            icon: 'Wallet',
+            isSingleLink: true,
+        },
+        {
+            id: 'workspace-reports',
+            title: 'Workspace Reports',
+            url: '/workspace/[wid]/credit-allocation/workspace-reports',
+            icon: 'FileBarChart',
+            isSingleLink: true,
+        },
+        {
+            id: 'settings-configuration',
+            title: 'Settings & Configuration',
+            url: '/workspace/[wid]/credit-allocation/settings-configuration',
+            icon: 'Settings',
+            isSingleLink: true,
+        },
+    ],
+},
 ];
 
 export const SIDEBAR_MAIN_MENU_ITEMS: SidebarMainMenuItemsType[] = [
