@@ -1,13 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Key, CheckCircle2, AlertCircle, Coins, LayoutGrid } from 'lucide-react';
+import { Key, CheckCircle2, AlertCircle, Coins } from 'lucide-react';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/card';
-import { Input } from '@/components/atoms/input';
 import { Button } from '@/components/atoms/button';
 import { Badge } from '@/components/atoms/badge';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/atoms/tabs';
 import { cn } from '@/lib/utils';
 
 // Mock data for credit licenses
@@ -35,26 +33,6 @@ const mockCreditLicenses = [
         licenseKey: 'KAYA-IJKL-7890-1234',
         perCreditRate: 0.005,
         creditsAdded: 50000,
-    },
-];
-
-// Mock data for capacity licenses
-const mockCapacityLicenses = [
-    {
-        id: '1',
-        appliedDate: '2026-03-12',
-        type: 'CAPACITY_UPGRADE',
-        licenseKey: 'KAYA-MNOP-5678-9012',
-        details: '+10 wf/workspace',
-        validUntil: '2027-03-12',
-    },
-    {
-        id: '2',
-        appliedDate: '2026-02-20',
-        type: 'CAPACITY_LIMIT',
-        licenseKey: 'KAYA-QRST-3456-7890',
-        details: '5 ws / 20 wf/ws',
-        validUntil: null,
     },
 ];
 
@@ -105,16 +83,12 @@ const LicensingPage = () => {
         return key;
     };
 
-    const getTypeVariant = (type: string): 'success' | 'info' | 'warning' | 'default' => {
+    const getTypeVariant = (type: string): 'success' | 'info' | 'default' => {
         switch (type) {
             case 'NEW':
                 return 'success';
             case 'CREDIT_TOPUP':
                 return 'info';
-            case 'CAPACITY_UPGRADE':
-                return 'info';
-            case 'CAPACITY_LIMIT':
-                return 'warning';
             default:
                 return 'default';
         }
@@ -183,151 +157,76 @@ const LicensingPage = () => {
                 </CardContent>
             </Card>
 
-            {/* License History Section */}
+            {/* Credit Licenses Section */}
             <Card className="bg-white dark:bg-gray-800">
                 <CardHeader>
-                    <CardTitle className="text-lg">License History</CardTitle>
+                    <div className="flex items-center gap-2">
+                        <Coins className="size-5 text-blue-600" />
+                        <CardTitle className="text-lg">Credit Licenses</CardTitle>
+                        <span className="ml-1 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full dark:bg-blue-900/30 dark:text-blue-400">
+                            {mockCreditLicenses.length}
+                        </span>
+                    </div>
                     <CardDescription>
-                        Applied licenses are categorised by type for easier tracking.
+                        Applied credit licenses for tracking credits added to your account.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="credit" className="w-full">
-                        <TabsList className="mb-4">
-                            <TabsTrigger value="credit" className="gap-2">
-                                <Coins className="size-4" />
-                                Credit Licenses
-                                <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full dark:bg-blue-900/30 dark:text-blue-400">
-                                    {mockCreditLicenses.length}
-                                </span>
-                            </TabsTrigger>
-                            <TabsTrigger value="capacity" className="gap-2">
-                                <LayoutGrid className="size-4" />
-                                Capacity Licenses
-                                <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full dark:bg-blue-900/30 dark:text-blue-400">
-                                    {mockCapacityLicenses.length}
-                                </span>
-                            </TabsTrigger>
-                        </TabsList>
-
-                        {/* Credit Licenses Tab */}
-                        <TabsContent value="credit">
-                            {mockCreditLicenses.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                    No credit licenses have been applied yet.
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b border-gray-200 dark:border-gray-700">
-                                                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
-                                                    Applied Date
-                                                </th>
-                                                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
-                                                    Type
-                                                </th>
-                                                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
-                                                    License Key
-                                                </th>
-                                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
-                                                    Per-Credit Rate
-                                                </th>
-                                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
-                                                    Credits Added
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {mockCreditLicenses.map((license) => (
-                                                <tr
-                                                    key={license.id}
-                                                    className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30"
-                                                >
-                                                    <td className="py-3 px-4 text-gray-900 dark:text-gray-100">
-                                                        {license.appliedDate}
-                                                    </td>
-                                                    <td className="py-3 px-4">
-                                                        <Badge variant={getTypeVariant(license.type)}>
-                                                            {license.type}
-                                                        </Badge>
-                                                    </td>
-                                                    <td className="py-3 px-4 font-mono text-gray-600 dark:text-gray-400">
-                                                        {maskLicenseKey(license.licenseKey)}
-                                                    </td>
-                                                    <td className="py-3 px-4 text-right text-gray-900 dark:text-gray-100">
-                                                        ${license.perCreditRate.toFixed(4)}
-                                                    </td>
-                                                    <td className="py-3 px-4 text-right font-semibold text-green-600 dark:text-green-400">
-                                                        +{license.creditsAdded.toLocaleString()}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </TabsContent>
-
-                        {/* Capacity Licenses Tab */}
-                        <TabsContent value="capacity">
-                            {mockCapacityLicenses.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                    No capacity licenses have been applied yet.
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b border-gray-200 dark:border-gray-700">
-                                                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
-                                                    Applied Date
-                                                </th>
-                                                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
-                                                    Type
-                                                </th>
-                                                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
-                                                    License Key
-                                                </th>
-                                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
-                                                    Details
-                                                </th>
-                                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
-                                                    Valid Until
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {mockCapacityLicenses.map((license) => (
-                                                <tr
-                                                    key={license.id}
-                                                    className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30"
-                                                >
-                                                    <td className="py-3 px-4 text-gray-900 dark:text-gray-100">
-                                                        {license.appliedDate}
-                                                    </td>
-                                                    <td className="py-3 px-4">
-                                                        <Badge variant={getTypeVariant(license.type)}>
-                                                            {license.type}
-                                                        </Badge>
-                                                    </td>
-                                                    <td className="py-3 px-4 font-mono text-gray-600 dark:text-gray-400">
-                                                        {license.licenseKey}
-                                                    </td>
-                                                    <td className="py-3 px-4 text-right font-medium text-gray-900 dark:text-gray-100">
-                                                        {license.details}
-                                                    </td>
-                                                    <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
-                                                        {license.validUntil || '—'}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </TabsContent>
-                    </Tabs>
+                    {mockCreditLicenses.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                            No credit licenses have been applied yet.
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                            Applied Date
+                                        </th>
+                                        <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                            Type
+                                        </th>
+                                        <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                            License Key
+                                        </th>
+                                        <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                            Per-Credit Rate
+                                        </th>
+                                        <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                            Credits Added
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {mockCreditLicenses.map((license) => (
+                                        <tr
+                                            key={license.id}
+                                            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30"
+                                        >
+                                            <td className="py-3 px-4 text-gray-900 dark:text-gray-100">
+                                                {license.appliedDate}
+                                            </td>
+                                            <td className="py-3 px-4">
+                                                <Badge variant={getTypeVariant(license.type)}>
+                                                    {license.type}
+                                                </Badge>
+                                            </td>
+                                            <td className="py-3 px-4 font-mono text-gray-600 dark:text-gray-400">
+                                                {maskLicenseKey(license.licenseKey)}
+                                            </td>
+                                            <td className="py-3 px-4 text-right text-gray-900 dark:text-gray-100">
+                                                ${license.perCreditRate.toFixed(4)}
+                                            </td>
+                                            <td className="py-3 px-4 text-right font-semibold text-green-600 dark:text-green-400">
+                                                +{license.creditsAdded.toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
