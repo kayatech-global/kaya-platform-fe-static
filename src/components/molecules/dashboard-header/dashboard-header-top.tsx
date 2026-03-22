@@ -86,7 +86,7 @@ const DashboardHeaderTop = ({ isFullWidth }: Readonly<DashboardHeaderTopProps>) 
                                 <TooltipTrigger asChild>
                                     <motion.div
                                         whileTap={{ scale: 0.9 }}
-                                        onClick={() => router.push('/status/admin')}
+                                        onClick={() => router.push('/status-management')}
                                         className="cursor-pointer"
                                     >
                                         <Activity width={20} height={20} className="text-white stroke-[1.8px] cursor-pointer" />

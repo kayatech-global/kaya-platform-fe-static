@@ -117,13 +117,6 @@ export interface EscalationContact {
   order: number;
 }
 
-export interface EscalationRule {
-  id: string;
-  incidentImpact: IncidentImpact;
-  delayMinutes: number;
-  contacts: EscalationContact[];
-}
-
 // ─── SLA Report Models ──────────────────────────────────────────────
 
 export type SlaStatus = "met" | "breached";

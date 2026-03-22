@@ -16,14 +16,14 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/status/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/status/admin/incidents", label: "Incidents", icon: AlertTriangle },
-  { href: "/status/admin/maintenance", label: "Maintenance", icon: Wrench },
-  { href: "/status/admin/components", label: "Components", icon: Layers },
-  { href: "/status/admin/subscribers", label: "Subscribers", icon: Users },
-  { href: "/status/admin/escalation", label: "Escalation", icon: ArrowUpRight },
-  { href: "/status/admin/health", label: "Health Monitor", icon: Activity },
-  { href: "/status/admin/sla-reports", label: "SLA Reports", icon: FileBarChart },
+  { href: "/status-management", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/status-management/incidents", label: "Incidents", icon: AlertTriangle },
+  { href: "/status-management/maintenance", label: "Maintenance", icon: Wrench },
+  { href: "/status-management/components", label: "Components", icon: Layers },
+  { href: "/status-management/subscribers", label: "Subscribers", icon: Users },
+  { href: "/status-management/escalation", label: "Escalation", icon: ArrowUpRight },
+  { href: "/status-management/health", label: "Health Monitor", icon: Activity },
+  { href: "/status-management/sla-reports", label: "SLA Reports", icon: FileBarChart },
 ];
 
 export function AdminSidebar() {
@@ -63,11 +63,11 @@ export function AdminSidebar() {
 
       <div className="border-t border-gray-200 p-3 dark:border-gray-800">
         <Link
-          href="/workspaces"
+          href="/status"
           className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-500 transition-colors hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
         >
           <ArrowLeft size={14} />
-          Back to Workspaces
+          Back to Public Status
         </Link>
       </div>
     </aside>

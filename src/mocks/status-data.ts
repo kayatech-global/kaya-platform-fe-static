@@ -5,7 +5,6 @@ import type {
   Subscriber,
   HealthCheckResult,
   EscalationContact,
-  EscalationRule,
   AdminOverview,
   ActivityFeedItem,
   UptimeDay,
@@ -104,7 +103,6 @@ export const componentGroups: ComponentGroup[] = [
     status: "operational",
     components: [
       { id: "event-subscription-mgr", name: "Event Subscription Manager", status: "operational", failureThreshold: 3 },
-      { id: "message-broker", name: "Message Broker", status: "operational", failureThreshold: 2 },
     ],
     uptimeData: generateUptimeData(90, [], [55], []),
   },
@@ -299,21 +297,6 @@ export const pastIncidents: Incident[] = [
     ],
   },
   {
-    id: "inc-009",
-    title: "Message Broker consumer lag spike",
-    status: "resolved",
-    impact: "major",
-    affectedComponents: ["message-broker"],
-    affectedComponentNames: ["Message Broker"],
-    createdAt: daysAgo(10),
-    resolvedAt: daysAgo(10),
-    updates: [
-      { id: "upd-009c", status: "resolved", message: "Consumer lag has returned to normal levels after scaling consumer groups.", createdAt: daysAgo(10), author: "Platform Team" },
-      { id: "upd-009b", status: "identified", message: "Consumer group rebalancing caused a lag spike. Scaling consumers to compensate.", createdAt: daysAgo(10), author: "Platform Team" },
-      { id: "upd-009a", status: "investigating", message: "We are seeing increased consumer lag on the message broker.", createdAt: daysAgo(10), author: "Platform Team" },
-    ],
-  },
-  {
     id: "inc-010",
     title: "License API rate limiting issue",
     status: "resolved",
@@ -485,16 +468,10 @@ export const escalationContacts: EscalationContact[] = [
   { id: "esc-c-5", email: "cto@kaya.io", name: "CTO", order: 5 },
 ];
 
-export const escalationRules: EscalationRule[] = [
-  { id: "esc-r-1", incidentImpact: "critical", delayMinutes: 0, contacts: escalationContacts.slice(0, 3) },
-  { id: "esc-r-2", incidentImpact: "major", delayMinutes: 15, contacts: escalationContacts.slice(0, 2) },
-  { id: "esc-r-3", incidentImpact: "minor", delayMinutes: 30, contacts: escalationContacts.slice(0, 1) },
-];
-
 // ─── Admin Overview ──────────────────────────────────────────────────
 
 export const adminOverview: AdminOverview = {
-  totalComponents: 21,
+  totalComponents: 16,
   activeIncidents: 2,
   scheduledMaintenance: 1,
   totalSubscribers: subscribers.length,
@@ -543,7 +520,6 @@ const slaTargetMap: Record<string, number> = {
   "voice-engine": 99.99,
   "telephony-twilio": 99.95,
   "event-subscription-mgr": 99.9,
-  "message-broker": 99.95,
   "insights-engine": 99.9,
   "metrics-dashboards": 99.9,
   "license-portal": 99.9,

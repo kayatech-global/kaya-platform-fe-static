@@ -19,15 +19,7 @@ import {
   DialogBody,
   DialogFooter,
 } from "@/components/atoms/dialog";
-import { escalationContacts, escalationRules, escalationExpectations } from "@/mocks/status-data";
-import { IMPACT_LABELS } from "@/models/status";
-import type { IncidentImpact } from "@/models/status";
-
-const impactBadgeVariant: Record<IncidentImpact, "secondary" | "warning" | "destructive"> = {
-  minor: "secondary",
-  major: "warning",
-  critical: "destructive",
-};
+import { escalationContacts, escalationExpectations } from "@/mocks/status-data";
 
 export default function EscalationPage() {
   const [addOpen, setAddOpen] = useState(false);
@@ -124,47 +116,6 @@ export default function EscalationPage() {
             <Button variant="primary" size="sm">
               Save Expectations
             </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Escalation Rules */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Incident Type Triggers</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {escalationRules.map((rule) => (
-              <div
-                key={rule.id}
-                className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900"
-              >
-                <div className="flex items-center gap-3">
-                  <Badge variant={impactBadgeVariant[rule.incidentImpact]}>
-                    {IMPACT_LABELS[rule.incidentImpact]}
-                  </Badge>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Escalate after{" "}
-                    <span className="font-semibold">
-                      {rule.delayMinutes === 0
-                        ? "immediately"
-                        : `${rule.delayMinutes} min`}
-                    </span>
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Notify:
-                  </span>
-                  {rule.contacts.map((c) => (
-                    <Badge key={c.id} variant="outline" size="sm">
-                      {c.name}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            ))}
           </div>
         </CardContent>
       </Card>
