@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { Clock } from "lucide-react";
-import { Button } from "@/components/atoms/button";
+import { ChevronDown } from "lucide-react";
 import { PublicLayout } from "@/components/status/public-layout";
 import { StatusBanner } from "@/components/status/status-banner";
 import { ComponentGroup } from "@/components/status/component-group";
@@ -13,32 +11,21 @@ import { getOverallStatus } from "@/models/status";
 import {
   componentGroups,
   activeIncidents,
-  pastIncidents,
   scheduledMaintenance,
 } from "@/mocks/status-data";
 
-const INITIAL_HISTORY_COUNT = 5;
+type UptimeRange = 30 | 60 | 90;
 
 export default function StatusPage() {
   const overallStatus = getOverallStatus(componentGroups);
-  const [historyCount, setHistoryCount] = useState(INITIAL_HISTORY_COUNT);
-  const visiblePast = pastIncidents.slice(0, historyCount);
+  const [selectedRange, setSelectedRange] = useState<UptimeRange>(90);
+  const [maintenanceExpanded, setMaintenanceExpanded] = useState(false);
 
   return (
     <PublicLayout>
       <div className="space-y-8">
-        {/* Overall status */}
+        {/* System Status Banner */}
         <StatusBanner status={overallStatus} />
-
-        {/* Component groups */}
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
-            Components
-          </h2>
-          {componentGroups.map((group) => (
-            <ComponentGroup key={group.id} group={group} />
-          ))}
-        </section>
 
         {/* Active Incidents */}
         {activeIncidents.length > 0 && (
@@ -56,46 +43,60 @@ export default function StatusPage() {
           </section>
         )}
 
-        {/* Scheduled Maintenance */}
+        {/* Scheduled Maintenance (collapsible) */}
         {scheduledMaintenance.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
-              Scheduled Maintenance
-            </h2>
-            {scheduledMaintenance.map((m) => (
-              <MaintenanceCard key={m.id} maintenance={m} />
-            ))}
+            <button
+              type="button"
+              onClick={() => setMaintenanceExpanded((prev) => !prev)}
+              className="flex w-full items-center gap-2"
+            >
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                Scheduled Maintenance
+              </h2>
+              <ChevronDown
+                size={16}
+                className={`text-gray-400 transition-transform ${
+                  maintenanceExpanded ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {maintenanceExpanded && (
+              <div className="space-y-3">
+                {scheduledMaintenance.map((m) => (
+                  <MaintenanceCard key={m.id} maintenance={m} />
+                ))}
+              </div>
+            )}
           </section>
         )}
 
-        {/* Incident History */}
+        {/* Component Groups with Uptime Bars */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
-              Past Incidents
+              Components
             </h2>
-            <Link href="/status/history">
-              <Button variant="ghost" size="sm" leadingIcon={<Clock size={14} />}>
-                Full History
-              </Button>
-            </Link>
-          </div>
-          {visiblePast.map((incident) => (
-            <IncidentCard key={incident.id} incident={incident} />
-          ))}
-          {historyCount < pastIncidents.length && (
-            <div className="flex justify-center pt-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() =>
-                  setHistoryCount((c) => Math.min(c + 5, pastIncidents.length))
-                }
-              >
-                Load More
-              </Button>
+            <div className="flex gap-1">
+              {([30, 60, 90] as UptimeRange[]).map((range) => (
+                <button
+                  key={range}
+                  type="button"
+                  onClick={() => setSelectedRange(range)}
+                  className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+                    selectedRange === range
+                      ? "bg-primary text-white"
+                      : "bg-muted text-gray-600 dark:text-gray-400"
+                  }`}
+                >
+                  {range}d
+                </button>
+              ))}
             </div>
-          )}
+          </div>
+          {componentGroups.map((group) => (
+            <ComponentGroup key={group.id} group={group} />
+          ))}
         </section>
       </div>
     </PublicLayout>

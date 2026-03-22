@@ -112,29 +112,27 @@ export default function ManageSubscriptionPage() {
 
         {/* Severity threshold */}
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-100">
+          <label
+            htmlFor="severity"
+            className="text-sm font-medium text-gray-700 dark:text-gray-100"
+          >
             Severity Threshold
-          </p>
-          <div className="flex gap-2">
+          </label>
+          <select
+            id="severity"
+            value={severity}
+            onChange={(e) => {
+              setSeverity(e.target.value as SeverityThreshold);
+              setSaved(false);
+            }}
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+          >
             {severityOptions.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => {
-                  setSeverity(opt.value);
-                  setSaved(false);
-                }}
-                className={cn(
-                  "flex-1 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors",
-                  severity === opt.value
-                    ? "border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950/20 dark:text-violet-300"
-                    : "border-gray-200 bg-white text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400"
-                )}
-              >
+              <option key={opt.value} value={opt.value}>
                 {opt.label}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
         </div>
 
         {/* Actions */}

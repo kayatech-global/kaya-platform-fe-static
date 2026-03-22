@@ -112,31 +112,24 @@ export default function SubscribePage() {
 
           {/* Severity threshold */}
           <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-100">
+            <label
+              htmlFor="severity"
+              className="text-sm font-medium text-gray-700 dark:text-gray-100"
+            >
               Severity Threshold
-            </p>
-            <div className="flex gap-2">
+            </label>
+            <select
+              id="severity"
+              value={severity}
+              onChange={(e) => setSeverity(e.target.value as SeverityThreshold)}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+            >
               {severityOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setSeverity(opt.value)}
-                  className={cn(
-                    "flex-1 rounded-lg border px-3 py-3 text-left transition-colors",
-                    severity === opt.value
-                      ? "border-violet-300 bg-violet-50 dark:border-violet-800 dark:bg-violet-950/20"
-                      : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
-                  )}
-                >
-                  <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {opt.label}
-                  </span>
-                  <span className="block text-xs text-gray-500 dark:text-gray-400">
-                    {opt.description}
-                  </span>
-                </button>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label} &mdash; {opt.description}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
           <Button type="submit" variant="primary" size="md">
