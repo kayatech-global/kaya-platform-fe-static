@@ -28,6 +28,10 @@ import { FormBody as AgentFormBody } from '@/app/workspace/[wid]/agents/componen
 import { IMCPBody, mapMcpBodyToConfigurationData } from '@/hooks/use-mcp-configuration';
 import { useApp } from '@/context/app-context';
 import { useAgentQuery } from '@/hooks/use-common';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/atoms/tabs';
+import { Bot, BotMessageSquare, Globe, Lock } from 'lucide-react';
+import { mockAgents } from '@/app/workspace/[wid]/standalone-agents/mock-data';
+import type { StandaloneAgent } from '@/app/workspace/[wid]/standalone-agents/mock-data';
 
 type LanguageModel = {
     id: string;
@@ -156,6 +160,105 @@ function ReusableAgentListContent({
                 </div>
             )}
         </>
+    );
+}
+
+const MOCK_EXTERNAL_AGENTS_FOR_SELECTOR = [
+    { id: 'ext-001', name: 'OpenAI Assistant', description: 'GPT-4 powered assistant via A2A', protocol: 'a2a' as const, endpointUrl: 'https://api.openai.com/v1/a2a', status: 'reachable' },
+    { id: 'ext-002', name: 'Langchain Research Agent', description: 'External research agent via ACP', protocol: 'acp' as const, endpointUrl: 'https://langchain-agent.acme.io/api/v1', status: 'reachable' },
+    { id: 'ext-003', name: 'AutoGen Task Planner', description: 'Microsoft AutoGen orchestrator via A2A', protocol: 'a2a' as const, endpointUrl: 'https://autogen.contoso.com/a2a', status: 'auth_error' },
+];
+
+interface AgentSelectorTabsProps {
+    isFetching: boolean;
+    searchTerm: string;
+    reusableAgentsList: Agent[] | undefined;
+    sortedAgentsList: ReadonlyArray<Agent>;
+    selectedReusableAgentId: string | undefined;
+    selectedReusableAgentIdFromList: string | undefined;
+    onSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onSelectReusableAgent: (agent: Agent) => void;
+    onEdit: (id: string) => void;
+}
+
+function AgentSelectorTabs({
+    isFetching, searchTerm, reusableAgentsList, sortedAgentsList,
+    selectedReusableAgentId, selectedReusableAgentIdFromList,
+    onSearch, onSelectReusableAgent, onEdit,
+}: AgentSelectorTabsProps) {
+    const standaloneAgents = mockAgents.filter(a => a.status === 'running');
+
+    return (
+        <Tabs defaultValue="reusable" className="flex flex-col h-full min-h-0">
+            <TabsList className="bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg shrink-0 self-start">
+                <TabsTrigger value="reusable" className="flex items-center gap-x-1 text-xs px-2.5 py-1">
+                    <Bot className="h-3 w-3" /> Reusable
+                </TabsTrigger>
+                <TabsTrigger value="standalone" className="flex items-center gap-x-1 text-xs px-2.5 py-1">
+                    <BotMessageSquare className="h-3 w-3" /> Standalone
+                </TabsTrigger>
+                <TabsTrigger value="external" className="flex items-center gap-x-1 text-xs px-2.5 py-1">
+                    <Globe className="h-3 w-3" /> External
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="reusable" className="flex-1 min-h-0 mt-2 overflow-hidden flex flex-col gap-y-2 data-[state=inactive]:hidden">
+                <ReusableAgentListContent
+                    isFetching={isFetching}
+                    searchTerm={searchTerm}
+                    reusableAgentsList={reusableAgentsList}
+                    sortedAgentsList={sortedAgentsList}
+                    selectedReusableAgentId={selectedReusableAgentId}
+                    selectedReusableAgentIdFromList={selectedReusableAgentIdFromList}
+                    onSearch={onSearch}
+                    onSelectAgent={onSelectReusableAgent}
+                    onEdit={onEdit}
+                />
+            </TabsContent>
+
+            <TabsContent value="standalone" className="flex-1 min-h-0 mt-2 overflow-y-auto flex flex-col gap-y-2 data-[state=inactive]:hidden">
+                <p className="text-xs text-gray-500 dark:text-gray-400 shrink-0">Select a deployed standalone agent to use in this workflow node. Connection settings auto-configure.</p>
+                <div className="flex flex-col gap-y-1.5">
+                    {standaloneAgents.map((sa: StandaloneAgent) => (
+                        <button key={sa.id} type="button" className="w-full flex items-center gap-x-3 px-3 py-2.5 text-left rounded-lg border border-gray-200 dark:border-gray-700 hover:border-violet-400 hover:bg-violet-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+                                <BotMessageSquare className="h-4 w-4 text-[#6c3def]" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{sa.name}</p>
+                                <p className="text-[11px] text-gray-400 truncate">{sa.description} · v{sa.version}</p>
+                            </div>
+                            <div className="flex items-center gap-x-1.5 shrink-0">
+                                <Lock className="h-3 w-3 text-gray-400" />
+                                <span className="text-[10px] text-gray-400 font-medium">A2A</span>
+                                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </TabsContent>
+
+            <TabsContent value="external" className="flex-1 min-h-0 mt-2 overflow-y-auto flex flex-col gap-y-2 data-[state=inactive]:hidden">
+                <p className="text-xs text-gray-500 dark:text-gray-400 shrink-0">Select a configured external agent connection. Manage external agents from the Agents page.</p>
+                <div className="flex flex-col gap-y-1.5">
+                    {MOCK_EXTERNAL_AGENTS_FOR_SELECTOR.map(ea => (
+                        <button key={ea.id} type="button" className="w-full flex items-center gap-x-3 px-3 py-2.5 text-left rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                                <Globe className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{ea.name}</p>
+                                <p className="text-[11px] text-gray-400 truncate">{ea.description}</p>
+                            </div>
+                            <div className="flex items-center gap-x-1.5 shrink-0">
+                                <span className="text-[10px] text-gray-400 font-mono font-semibold">{ea.protocol.toUpperCase()}</span>
+                                <span className={`h-1.5 w-1.5 rounded-full ${ea.status === 'reachable' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </TabsContent>
+        </Tabs>
     );
 }
 
@@ -529,18 +632,18 @@ export const ReusableAgentSelector = ({
                 }
             />
             <Dialog open={openModal} onOpenChange={onModalClose}>
-                <DialogContent className="max-w-[unset] w-[580px]">
+                <DialogContent className="max-w-[unset] w-[620px]">
                     <DialogHeader className="px-0">
                         <DialogTitle asChild>
                             <div className="px-4">
                                 <p className="text-lg font-semibold text-gray-700 dark:text-gray-100">
-                                    {isOpen ? 'Edit Agent' : 'Reusable Agents'}
+                                    {isOpen ? 'Edit Agent' : 'Select Agent'}
                                 </p>
                             </div>
                         </DialogTitle>
                     </DialogHeader>
                     <DialogDescription asChild>
-                        <div className="px-4 flex flex-col gap-y-4 h-[351px]">
+                        <div className="px-4 flex flex-col gap-y-4 h-[400px]">
                             {isOpen ? (
                                 <div className="item-list-container overflow-y-auto flex flex-col gap-y-2">
                                     <AgentFormBody
@@ -592,7 +695,7 @@ export const ReusableAgentSelector = ({
                                     />
                                 </div>
                             ) : (
-                                <ReusableAgentListContent
+                                <AgentSelectorTabs
                                     isFetching={isFetching}
                                     searchTerm={searchTerm}
                                     reusableAgentsList={reusableAgentsList}
@@ -600,7 +703,7 @@ export const ReusableAgentSelector = ({
                                     selectedReusableAgentId={selectedReusableAgentId}
                                     selectedReusableAgentIdFromList={selectedReusableAgentIdFromList}
                                     onSearch={handleSearch}
-                                    onSelectAgent={agent => {
+                                    onSelectReusableAgent={agent => {
                                         setSelectedReusableAgentId(agent.id);
                                         setSelectedReusableAgentIdFromList(agent.description.toLowerCase());
                                     }}

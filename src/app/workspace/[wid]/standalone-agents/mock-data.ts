@@ -10,6 +10,7 @@ export interface StandaloneAgent {
     id: string;
     name: string;
     description: string;
+    instructions: string;
     framework: AgentFramework;
     status: AgentStatus;
     a2aEndpoint: string;
@@ -19,17 +20,18 @@ export interface StandaloneAgent {
     llmModel: string;
     sessionMode: SessionMode;
     cluster: string;
-    cpuLimit: string;
-    memoryLimit: string;
+    namespace?: string;
     tools: string[];
+    protocolMetricsEnabled?: boolean;
+    metricsPrefix?: string;
+    includeCostEstimate?: boolean;
+    dataLineageEnabled?: boolean;
 }
 
 export interface MonitoringMetric {
     timestamp: string;
     requestCount: number;
     avgResponseTime: number;
-    cpuUsage: number;
-    memoryUsage: number;
 }
 
 export interface LogEntry {
@@ -70,6 +72,7 @@ export const mockAgents: StandaloneAgent[] = [
         id: 'agent-001',
         name: 'Customer Support Agent',
         description: 'Handles customer inquiries and ticket resolution via A2A protocol',
+        instructions: 'You are a customer support agent. Resolve customer tickets efficiently by checking order status, processing refunds, and escalating complex issues.',
         framework: 'kaya-agent',
         status: 'running',
         a2aEndpoint: 'https://agents.kaya.ai/a2a/customer-support',
@@ -79,14 +82,14 @@ export const mockAgents: StandaloneAgent[] = [
         llmModel: 'gpt-4o',
         sessionMode: 'per-workflow',
         cluster: 'prod-us-east-1',
-        cpuLimit: '500m',
-        memoryLimit: '512Mi',
+        namespace: 'tenant-acme-prod',
         tools: ['email', 'web', 'memory', 'workflow-variables'],
     },
     {
         id: 'agent-002',
         name: 'Code Review Agent',
         description: 'Automated code review and suggestions using OpenClaw framework',
+        instructions: 'You are a code reviewer. Analyze pull requests for bugs, style issues, security vulnerabilities, and suggest improvements following team coding standards.',
         framework: 'openclaw',
         status: 'running',
         a2aEndpoint: 'https://agents.kaya.ai/a2a/code-review',
@@ -96,14 +99,14 @@ export const mockAgents: StandaloneAgent[] = [
         llmModel: 'claude-sonnet-4-20250514',
         sessionMode: 'per-execution',
         cluster: 'prod-us-east-1',
-        cpuLimit: '1000m',
-        memoryLimit: '1Gi',
+        namespace: 'tenant-acme-prod',
         tools: ['shell', 'code-execution', 'file-ops', 'memory'],
     },
     {
         id: 'agent-003',
         name: 'Data Pipeline Orchestrator',
         description: 'Manages ETL pipelines and data transformations',
+        instructions: 'You orchestrate ETL data pipelines. Monitor pipeline health, handle failures with retry logic, and optimize data transformations.',
         framework: 'kaya-agent',
         status: 'stopped',
         a2aEndpoint: 'https://agents.kaya.ai/a2a/data-pipeline',
@@ -113,14 +116,14 @@ export const mockAgents: StandaloneAgent[] = [
         llmModel: 'gpt-4o-mini',
         sessionMode: 'single',
         cluster: 'prod-eu-west-1',
-        cpuLimit: '2000m',
-        memoryLimit: '2Gi',
+        namespace: 'tenant-acme-eu',
         tools: ['shell', 'code-execution', 'file-ops', 'task-scheduling', 'retry'],
     },
     {
         id: 'agent-004',
         name: 'QA Test Generator',
         description: 'Generates test cases and automation scripts from requirements',
+        instructions: 'You generate test cases from requirements. Create comprehensive BDD scenarios, automation scripts, and edge case coverage.',
         framework: 'openclaw',
         status: 'error',
         a2aEndpoint: 'https://agents.kaya.ai/a2a/qa-test-gen',
@@ -130,14 +133,14 @@ export const mockAgents: StandaloneAgent[] = [
         llmModel: 'gemini-2.0-flash',
         sessionMode: 'per-execution',
         cluster: 'staging-us-east-1',
-        cpuLimit: '500m',
-        memoryLimit: '512Mi',
+        namespace: 'tenant-acme-staging',
         tools: ['code-execution', 'file-ops', 'browser', 'planning'],
     },
     {
         id: 'agent-005',
         name: 'Document Summarizer',
         description: 'Summarizes documents and extracts key insights using Kaya Agent Framework',
+        instructions: 'You summarize documents and extract key insights. Provide concise, well-structured summaries with cited sources and actionable takeaways.',
         framework: 'kaya-agent',
         status: 'deploying',
         a2aEndpoint: 'https://agents.kaya.ai/a2a/doc-summarizer',
@@ -147,14 +150,14 @@ export const mockAgents: StandaloneAgent[] = [
         llmModel: 'gpt-4o',
         sessionMode: 'per-workflow',
         cluster: 'prod-us-east-1',
-        cpuLimit: '500m',
-        memoryLimit: '1Gi',
+        namespace: 'tenant-acme-prod',
         tools: ['file-ops', 'memory', 'web', 'planning'],
     },
     {
         id: 'agent-006',
         name: 'Sales Lead Qualifier',
         description: 'Qualifies and scores sales leads from CRM data',
+        instructions: 'You qualify and score sales leads. Analyze CRM data, apply scoring criteria, and prioritize high-value prospects for the sales team.',
         framework: 'openclaw',
         status: 'running',
         a2aEndpoint: 'https://agents.kaya.ai/a2a/sales-qualifier',
@@ -164,8 +167,7 @@ export const mockAgents: StandaloneAgent[] = [
         llmModel: 'claude-sonnet-4-20250514',
         sessionMode: 'single',
         cluster: 'prod-us-east-1',
-        cpuLimit: '500m',
-        memoryLimit: '512Mi',
+        namespace: 'tenant-acme-prod',
         tools: ['email', 'web', 'workflow-variables', 'self-configuration'],
     },
 ];
@@ -174,8 +176,6 @@ export const mockMonitoringMetrics: MonitoringMetric[] = Array.from({ length: 24
     timestamp: new Date(2026, 2, 19, i, 0, 0).toISOString(),
     requestCount: Math.floor(Math.random() * 150) + 20,
     avgResponseTime: Math.floor(Math.random() * 800) + 200,
-    cpuUsage: Math.floor(Math.random() * 60) + 15,
-    memoryUsage: Math.floor(Math.random() * 40) + 30,
 }));
 
 export const mockLogEntries: LogEntry[] = [
@@ -239,7 +239,7 @@ export const mockLogEntries: LogEntry[] = [
         id: 'log-009',
         timestamp: '2026-03-19T10:18:00.567Z',
         level: 'debug',
-        message: 'Health check passed: CPU 34%, Memory 256Mi/512Mi',
+        message: 'Health check passed: all probes healthy',
         source: 'health-monitor',
     },
     {
@@ -299,7 +299,7 @@ export const mockVersions: AgentVersion[] = [
         version: '2.1.0',
         deployedAt: '2026-03-15T14:30:00Z',
         status: 'active',
-        configDiffSummary: 'Updated LLM model to gpt-4o, increased memory limit to 512Mi',
+        configDiffSummary: 'Updated LLM model to gpt-4o, added email tool capability',
         deployedBy: 'john.doe@kaya.ai',
     },
     {

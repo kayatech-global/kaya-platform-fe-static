@@ -6,19 +6,19 @@ import { Node, useReactFlow } from '@xyflow/react';
 import { useDnD } from '@/context';
 import { cn } from '@/lib/utils';
 import { Button, Input, Label, Select, Switch } from '@/components/atoms';
-import { ChevronDown, ChevronRight, Info, Lock, Search, Bot, Unlink } from 'lucide-react';
+import { ChevronDown, ChevronRight, Info, Lock, Search, Bot, Settings } from 'lucide-react';
+import { CreationWizard } from '@/app/workspace/[wid]/standalone-agents/components/creation-wizard';
+import type { StandaloneAgent } from '@/app/workspace/[wid]/standalone-agents/mock-data';
 import { toast } from 'sonner';
 
-type AgentSourceMode = 'standalone' | 'manual';
 type ProtocolType = 'a2a' | 'acp';
 type AuthMode = 'none' | 'bearer' | 'apikey' | 'oauth' | 'jwt' | 'platform_managed';
 type ExecutionMode = 'sync' | 'async_wait' | 'async_fire_forget';
-type SessionOverride = 'none' | 'single' | 'per_workflow' | 'per_execution';
+type SessionOverride = 'single' | 'per_workflow' | 'per_execution';
 type TracePropagation = 'w3c_traceparent' | 'otel_meta' | 'both';
 type TraceLogLevel = 'none' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
 
 export type ExternalAgentNodeData = {
-    agentSourceMode?: AgentSourceMode;
     standaloneAgentId?: string;
     standaloneAgentName?: string;
     name?: string;
@@ -59,6 +59,7 @@ export type ExternalAgentNodeData = {
     otelExporterEndpoint?: string;
     otelServiceName?: string;
     customSpanAttributes?: string;
+    customMetricMappings?: Array<{ metricName: string; protocolKey: string }>;
 };
 
 interface ExternalAgentFormProps {
@@ -66,25 +67,12 @@ interface ExternalAgentFormProps {
     isReadOnly?: boolean;
 }
 
-interface MockStandaloneAgent {
-    id: string;
-    name: string;
-    description: string;
-    framework: string;
-    status: string;
-    a2aEndpoint: string;
-    version: string;
-    sessionMode: string;
-    llmProvider: string;
-    llmModel: string;
-}
-
-const MOCK_STANDALONE_AGENTS: MockStandaloneAgent[] = [
-    { id: 'agent-001', name: 'Customer Support Agent', description: 'Handles customer inquiries and ticket resolution', framework: 'kaya-agent', status: 'running', a2aEndpoint: 'https://agents.kaya.ai/a2a/customer-support', version: '2.1.0', sessionMode: 'per-workflow', llmProvider: 'OpenAI', llmModel: 'gpt-4o' },
-    { id: 'agent-002', name: 'Code Review Agent', description: 'Automated code review and suggestions', framework: 'openclaw', status: 'running', a2aEndpoint: 'https://agents.kaya.ai/a2a/code-review', version: '1.3.0', sessionMode: 'per-execution', llmProvider: 'Anthropic', llmModel: 'claude-sonnet-4-20250514' },
-    { id: 'agent-003', name: 'Data Pipeline Orchestrator', description: 'Manages ETL pipelines and data transformations', framework: 'kaya-agent', status: 'stopped', a2aEndpoint: 'https://agents.kaya.ai/a2a/data-pipeline', version: '1.0.2', sessionMode: 'single', llmProvider: 'OpenAI', llmModel: 'gpt-4o-mini' },
-    { id: 'agent-004', name: 'QA Test Generator', description: 'Generates test cases and automation scripts', framework: 'openclaw', status: 'running', a2aEndpoint: 'https://agents.kaya.ai/a2a/qa-test-gen', version: '0.9.1', sessionMode: 'per-execution', llmProvider: 'Google', llmModel: 'gemini-2.0-flash' },
-    { id: 'agent-005', name: 'Research Assistant', description: 'Long-running research with web and RAG', framework: 'kaya-agent', status: 'running', a2aEndpoint: 'https://agents.kaya.ai/a2a/research-assistant', version: '3.0.0', sessionMode: 'single', llmProvider: 'Anthropic', llmModel: 'claude-sonnet-4-20250514' },
+const MOCK_STANDALONE_AGENTS: StandaloneAgent[] = [
+    { id: 'agent-001', name: 'Customer Support Agent', description: 'Handles customer inquiries and ticket resolution', instructions: 'You are a customer support agent. Resolve customer tickets efficiently by checking order status, processing refunds, and escalating complex issues.', framework: 'kaya-agent', status: 'running', a2aEndpoint: 'https://agents.kaya.ai/a2a/customer-support', version: '2.1.0', sessionMode: 'per-workflow', llmProvider: 'OpenAI', llmModel: 'gpt-4o', lastDeployed: '2026-03-15T14:30:00Z', cluster: 'prod-us-east-1', tools: ['email', 'web', 'memory', 'workflow-variables'] },
+    { id: 'agent-002', name: 'Code Review Agent', description: 'Automated code review and suggestions', instructions: 'You are a code reviewer. Analyze pull requests for bugs, style issues, security vulnerabilities, and suggest improvements following team coding standards.', framework: 'openclaw', status: 'running', a2aEndpoint: 'https://agents.kaya.ai/a2a/code-review', version: '1.3.0', sessionMode: 'per-execution', llmProvider: 'Anthropic', llmModel: 'claude-sonnet-4-20250514', lastDeployed: '2026-03-14T09:15:00Z', cluster: 'prod-us-east-1', tools: ['shell', 'code-execution', 'file-ops', 'memory'] },
+    { id: 'agent-003', name: 'Data Pipeline Orchestrator', description: 'Manages ETL pipelines and data transformations', instructions: 'You orchestrate ETL data pipelines. Monitor pipeline health, handle failures with retry logic, and optimize data transformations.', framework: 'kaya-agent', status: 'stopped', a2aEndpoint: 'https://agents.kaya.ai/a2a/data-pipeline', version: '1.0.2', sessionMode: 'single', llmProvider: 'OpenAI', llmModel: 'gpt-4o-mini', lastDeployed: '2026-03-10T11:00:00Z', cluster: 'prod-eu-west-1', tools: ['shell', 'code-execution', 'file-ops', 'task-scheduling', 'retry'] },
+    { id: 'agent-004', name: 'QA Test Generator', description: 'Generates test cases and automation scripts', instructions: 'You generate test cases from requirements. Create comprehensive BDD scenarios, automation scripts, and edge case coverage.', framework: 'openclaw', status: 'running', a2aEndpoint: 'https://agents.kaya.ai/a2a/qa-test-gen', version: '0.9.1', sessionMode: 'per-execution', llmProvider: 'Google', llmModel: 'gemini-2.0-flash', lastDeployed: '2026-03-12T16:45:00Z', cluster: 'staging-us-east-1', tools: ['code-execution', 'file-ops', 'browser', 'planning'] },
+    { id: 'agent-005', name: 'Research Assistant', description: 'Long-running research with web and RAG', instructions: 'You are a research assistant. Conduct thorough web research, synthesize findings, and provide well-structured reports with citations.', framework: 'kaya-agent', status: 'running', a2aEndpoint: 'https://agents.kaya.ai/a2a/research-assistant', version: '3.0.0', sessionMode: 'single', llmProvider: 'Anthropic', llmModel: 'claude-sonnet-4-20250514', lastDeployed: '2026-03-19T08:00:00Z', cluster: 'prod-us-east-1', tools: ['web', 'memory', 'file-ops', 'planning'] },
 ];
 
 const SectionHeader = ({
@@ -118,22 +106,9 @@ const SectionHeader = ({
 );
 
 const InfoBanner = ({ text }: { text: string }) => (
-    <div className="flex items-start gap-x-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-gray-700/50 border border-blue-200 dark:border-gray-600">
-        <Info className="w-4 h-4 mt-0.5 shrink-0 text-[#0DA2E7]" />
+    <div className="flex items-start gap-x-2 px-3 py-2 rounded-lg bg-violet-50 dark:bg-gray-700/50 border border-violet-200 dark:border-gray-600">
+        <Info className="w-4 h-4 mt-0.5 shrink-0 text-[#6c3def]" />
         <p className="text-xs text-gray-600 dark:text-gray-300">{text}</p>
-    </div>
-);
-
-const LockedField = ({ label, value, description }: { label: string; value: string; description?: string }) => (
-    <div className="flex flex-col gap-y-1">
-        <div className="flex items-center gap-x-1.5">
-            <Lock className="w-3 h-3 text-gray-400" />
-            <Label className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</Label>
-        </div>
-        <div className="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-700 dark:text-gray-200 font-mono truncate">{value}</p>
-        </div>
-        {description && <p className="text-xs text-gray-400 dark:text-gray-500">{description}</p>}
     </div>
 );
 
@@ -142,7 +117,6 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
     const { updateNodeData } = useReactFlow();
 
     // --- Agent Source ---
-    const [agentSourceMode, setAgentSourceMode] = useState<AgentSourceMode>('standalone');
     const [standaloneAgentId, setStandaloneAgentId] = useState('');
     const [agentSearch, setAgentSearch] = useState('');
     const [showAgentPicker, setShowAgentPicker] = useState(false);
@@ -186,7 +160,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
     const [metadataKeyPrefix, setMetadataKeyPrefix] = useState('');
 
     // --- Session ---
-    const [sessionOverride, setSessionOverride] = useState<SessionOverride>('none');
+    const [sessionOverride, setSessionOverride] = useState<SessionOverride>('per_workflow');
 
     // --- Tracing ---
     const [tracingEnabled, setTracingEnabled] = useState(true);
@@ -200,22 +174,34 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
     const [otelExporterEndpoint, setOtelExporterEndpoint] = useState('');
     const [otelServiceName, setOtelServiceName] = useState('');
     const [customSpanAttributes, setCustomSpanAttributes] = useState('');
+    const [customMetricMappings, setCustomMetricMappings] = useState<Array<{ metricName: string; protocolKey: string }>>([
+        { metricName: 'agent.token.input', protocolKey: 'token_input' },
+        { metricName: 'agent.token.output', protocolKey: 'token_output' },
+        { metricName: 'agent.execution.duration', protocolKey: 'execution_time_ms' },
+        { metricName: 'agent.llm.calls', protocolKey: 'llm_call_count' },
+        { metricName: 'agent.tool.calls', protocolKey: 'tool_call_count' },
+        { metricName: 'agent.model', protocolKey: 'model' },
+        { metricName: 'agent.cost.estimated', protocolKey: 'estimated_cost' },
+        { metricName: 'agent.error.count', protocolKey: 'error_count' },
+    ]);
 
     // --- Section toggles ---
     const [showA2aAdvanced, setShowA2aAdvanced] = useState(false);
     const [showAcpAdvanced, setShowAcpAdvanced] = useState(false);
     const [showTracingDetails, setShowTracingDetails] = useState(false);
     const [showOtelConfig, setShowOtelConfig] = useState(false);
+    const [showMetricMappings, setShowMetricMappings] = useState(false);
+    const [showAgentConfigModal, setShowAgentConfigModal] = useState(false);
 
     const selectedAgent = MOCK_STANDALONE_AGENTS.find(a => a.id === standaloneAgentId);
-    const isStandaloneMode = agentSourceMode === 'standalone' && !!selectedAgent;
+    const isStandaloneMode = !!selectedAgent;
 
     const filteredAgents = MOCK_STANDALONE_AGENTS.filter(a =>
         a.name.toLowerCase().includes(agentSearch.toLowerCase()) ||
         a.description.toLowerCase().includes(agentSearch.toLowerCase())
     );
 
-    const handleSelectAgent = (agent: MockStandaloneAgent) => {
+    const handleSelectAgent = (agent: StandaloneAgent) => {
         setStandaloneAgentId(agent.id);
         setShowAgentPicker(false);
         setAgentSearch('');
@@ -241,7 +227,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
             'per-workflow': 'per_workflow',
             'per-execution': 'per_execution',
         };
-        setSessionOverride(sessionMap[agent.sessionMode] ?? 'none');
+        setSessionOverride(sessionMap[agent.sessionMode] ?? 'per_workflow');
 
         toast.success(`Connected to "${agent.name}" — configuration auto-mapped`);
     };
@@ -252,13 +238,12 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
         setEndpointUrl('');
         setAuthMode('none');
         setAgentCardUrl('');
-        setSessionOverride('none');
+        setSessionOverride('per_workflow');
         setOtelServiceName('');
     };
 
     const initFormData = useCallback(() => {
         const d = selectedNode?.data as ExternalAgentNodeData;
-        setAgentSourceMode(d?.agentSourceMode ?? 'standalone');
         setStandaloneAgentId(d?.standaloneAgentId ?? '');
         setName(d?.name ?? '');
         setProtocol(d?.protocol ?? 'a2a');
@@ -286,7 +271,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
         setSendWorkflowVarsAsMetadata(d?.sendWorkflowVarsAsMetadata ?? true);
         setIncludeExecutionContext(d?.includeExecutionContext ?? true);
         setMetadataKeyPrefix(d?.metadataKeyPrefix ?? '');
-        setSessionOverride(d?.sessionOverride ?? 'none');
+        setSessionOverride(d?.sessionOverride ?? 'per_workflow');
         setTracingEnabled(d?.tracingEnabled ?? true);
         setTracePropagation(d?.tracePropagation ?? 'w3c_traceparent');
         setCaptureTaskStateTransitions(d?.captureTaskStateTransitions ?? true);
@@ -298,6 +283,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
         setOtelExporterEndpoint(d?.otelExporterEndpoint ?? '');
         setOtelServiceName(d?.otelServiceName ?? '');
         setCustomSpanAttributes(d?.customSpanAttributes ?? '');
+        if (d?.customMetricMappings) setCustomMetricMappings(d.customMetricMappings);
     }, [selectedNode?.data]);
 
     useEffect(() => {
@@ -306,8 +292,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
 
     const constructNodeData = useCallback((): ExternalAgentNodeData => {
         const base: ExternalAgentNodeData = {
-            agentSourceMode,
-            ...(agentSourceMode === 'standalone' ? { standaloneAgentId, standaloneAgentName: selectedAgent?.name } : {}),
+            ...(selectedAgent ? { standaloneAgentId, standaloneAgentName: selectedAgent?.name } : {}),
             name,
             protocol,
             endpointUrl,
@@ -353,12 +338,13 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                 otelExporterEndpoint: otelExporterEndpoint || undefined,
                 otelServiceName: otelServiceName || undefined,
                 customSpanAttributes: customSpanAttributes || undefined,
+                customMetricMappings: customMetricMappings.filter(m => m.protocolKey && m.metricName),
             });
         }
 
         return base;
     }, [
-        agentSourceMode, standaloneAgentId, selectedAgent,
+        standaloneAgentId, selectedAgent,
         name, protocol, endpointUrl, authMode, bearerToken, apiKey, apiKeyHeader,
         oauthTokenUrl, oauthClientId, oauthClientSecret, oauthScopes, jwtSecret, jwtIssuer,
         executionMode, timeoutMs, pollingIntervalMs,
@@ -387,56 +373,19 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                     'external-agent-form pr-1 flex flex-col gap-y-6 h-[calc(100vh-270px)] overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700'
                 )}
             >
-                {/* ─── Agent Source Mode ─── */}
+                {/* ─── Connect Standalone Agent ─── */}
                 <div className="flex flex-col gap-y-3 pb-4 bottom-gradient-border">
-                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">Agent Source</Label>
-                    <div className="flex gap-2">
-                        {([
-                            { value: 'standalone' as const, label: 'Standalone Agent', icon: Bot },
-                            { value: 'manual' as const, label: 'Manual Config', icon: Unlink },
-                        ]).map(option => (
-                            <button
-                                key={option.value}
-                                type="button"
-                                disabled={isReadOnly}
-                                onClick={() => {
-                                    setAgentSourceMode(option.value);
-                                    if (option.value === 'manual') {
-                                        setStandaloneAgentId('');
-                                        setAuthMode('none');
-                                    }
-                                }}
-                                className={cn(
-                                    'flex-1 flex items-center justify-center gap-x-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-colors',
-                                    agentSourceMode === option.value
-                                        ? 'bg-[#0DA2E7] text-white border-[#0DA2E7]'
-                                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600',
-                                    isReadOnly && 'opacity-50 cursor-not-allowed'
-                                )}
-                            >
-                                <option.icon className="w-3.5 h-3.5" />
-                                {option.label}
-                            </button>
-                        ))}
-                    </div>
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">Connect Standalone Agent</Label>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {agentSourceMode === 'standalone'
-                            ? 'Select a deployed standalone agent — configuration auto-maps from the agent registry'
-                            : 'Manually configure an external agent outside the platform'}
+                        Optionally connect a deployed standalone agent to auto-configure connection settings, or configure manually below.
                     </p>
-                </div>
-
-                {/* ─── Standalone Agent Picker ─── */}
-                {agentSourceMode === 'standalone' && (
-                    <div className="flex flex-col gap-y-3 pb-4 bottom-gradient-border">
-                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">Select Agent</Label>
 
                         {selectedAgent ? (
-                            <div className="rounded-lg border border-[#0DA2E7] bg-blue-50 dark:bg-gray-700/50 p-3">
+                            <div className="rounded-lg border border-[#6c3def] bg-violet-50 dark:bg-gray-700/50 p-3">
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-x-2">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0DA2E7]/20">
-                                            <Bot className="h-4 w-4 text-[#0DA2E7]" />
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6c3def]/20">
+                                            <Bot className="h-4 w-4 text-[#6c3def]" />
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{selectedAgent.name}</p>
@@ -453,12 +402,22 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                     </button>
                                 </div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{selectedAgent.description}</p>
-                                <div className="flex items-center gap-x-3 mt-2 text-xs text-gray-400">
-                                    <span className={cn('flex items-center gap-x-1', selectedAgent.status === 'running' ? 'text-green-500' : 'text-gray-400')}>
-                                        <span className={cn('h-1.5 w-1.5 rounded-full', selectedAgent.status === 'running' ? 'bg-green-500' : 'bg-gray-400')} />
-                                        {selectedAgent.status}
-                                    </span>
-                                    <span>{selectedAgent.llmProvider} / {selectedAgent.llmModel}</span>
+                                <div className="flex items-center justify-between mt-2">
+                                    <div className="flex items-center gap-x-3 text-xs text-gray-400">
+                                        <span className={cn('flex items-center gap-x-1', selectedAgent.status === 'running' ? 'text-green-500' : 'text-gray-400')}>
+                                            <span className={cn('h-1.5 w-1.5 rounded-full', selectedAgent.status === 'running' ? 'bg-green-500' : 'bg-gray-400')} />
+                                            {selectedAgent.status}
+                                        </span>
+                                        <span>{selectedAgent.llmProvider} / {selectedAgent.llmModel}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAgentConfigModal(true)}
+                                        className="flex items-center gap-x-1 text-xs font-medium text-[#6c3def] hover:text-[#5925DC] transition-colors"
+                                    >
+                                        Edit Config
+                                        <Settings className="h-3 w-3" />
+                                    </button>
                                 </div>
                             </div>
                         ) : (
@@ -467,7 +426,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                     className={cn(
                                         'flex items-center gap-x-2 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors',
                                         showAgentPicker
-                                            ? 'border-[#0DA2E7] ring-2 ring-[#0DA2E7]/20'
+                                            ? 'border-[#6c3def] ring-2 ring-[#6c3def]/20'
                                             : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
                                     )}
                                     onClick={() => setShowAgentPicker(!showAgentPicker)}
@@ -493,8 +452,8 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                                 onClick={() => handleSelectAgent(agent)}
                                                 className="w-full flex items-center gap-x-2.5 px-3 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                                             >
-                                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#0DA2E7]/10">
-                                                    <Bot className="h-3.5 w-3.5 text-[#0DA2E7]" />
+                                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#6c3def]/10">
+                                                    <Bot className="h-3.5 w-3.5 text-[#6c3def]" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-xs font-medium text-gray-800 dark:text-gray-100 truncate">{agent.name}</p>
@@ -513,163 +472,158 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                             </div>
                         )}
 
-                        {selectedAgent && (
-                            <InfoBanner text="All connection settings are auto-configured from the agent registry. You can override execution mode and session type below." />
-                        )}
-                    </div>
-                )}
+                    {selectedAgent && (
+                        <InfoBanner text="Connection settings are auto-configured from the agent registry. Locked fields are managed by the platform." />
+                    )}
+                </div>
 
-                {/* ─── Auto-Configured Summary (Standalone Mode) ─── */}
-                {isStandaloneMode && (
+                {/* ─── Name ─── */}
+                <div className="flex flex-col gap-y-5 pb-4 bottom-gradient-border">
+                    <Input
+                        label="Name"
+                        helperInfo="Display name for this external agent node in the workflow canvas and execution logs"
+                        placeholder="Name of the external agent"
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        disabled={isReadOnly || isStandaloneMode}
+                    />
+                </div>
+
+                {/* ─── Protocol Selection ─── */}
+                <div className="flex flex-col gap-y-2 pb-4 bottom-gradient-border">
+                    <div className="flex items-center gap-x-1.5">
+                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">Protocol</Label>
+                        {isStandaloneMode && <Lock className="w-3 h-3 text-gray-400" />}
+                    </div>
+                    <div className="flex gap-2">
+                        {(['a2a', 'acp'] as const).map(p => (
+                            <button
+                                key={p}
+                                type="button"
+                                disabled={isReadOnly || isStandaloneMode}
+                                onClick={() => setProtocol(p)}
+                                className={cn(
+                                    'flex-1 px-3 py-2 text-sm font-medium rounded-lg border transition-colors',
+                                    protocol === p
+                                        ? 'bg-[#6c3def] text-white border-[#6c3def]'
+                                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600',
+                                    (isReadOnly || isStandaloneMode) && 'opacity-50 cursor-not-allowed'
+                                )}
+                            >
+                                {p.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {protocol === 'a2a'
+                            ? 'Google Agent-to-Agent — JSON-RPC 2.0 over HTTP, Agent Card discovery, SSE streaming'
+                            : 'Agent Communication Protocol — RESTful API, OpenAPI schema, config-then-invoke pattern'}
+                    </p>
+                </div>
+
+                {/* ─── A2A-specific Configuration ─── */}
+                {protocol === 'a2a' && (
                     <div className="flex flex-col gap-y-3 pb-4 bottom-gradient-border">
                         <div className="flex items-center gap-x-1.5">
-                            <Lock className="w-3.5 h-3.5 text-gray-400" />
-                            <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Auto-Configured (Platform Managed)</Label>
+                            <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">A2A Agent Discovery</Label>
+                            {isStandaloneMode && <Lock className="w-3 h-3 text-gray-400" />}
                         </div>
-                        <LockedField label="Protocol" value="A2A (Agent-to-Agent)" />
-                        <LockedField label="Endpoint URL" value={endpointUrl} />
-                        <LockedField label="Authentication" value="Platform Managed (internal service auth)" description="Uses KAYA_API_TOKEN for service-to-service authentication" />
-                        <LockedField label="Agent Card URL" value={agentCardUrl} />
-                        <LockedField label="Tracing" value="Enabled — all metrics, data lineage, W3C trace propagation" />
-                        <LockedField label="Session Mode" value={sessionOverride === 'per_workflow' ? 'Per-Workflow' : sessionOverride === 'per_execution' ? 'Per-Execution' : sessionOverride === 'single' ? 'Single Session' : 'Inherited'} description="From agent configuration — can be overridden below" />
+                        <Input label="Agent Card URL" helperInfo="URL to the agent's JSON metadata card describing its identity, skills, and supported auth schemes" placeholder="https://agent.example.com/.well-known/agent.json" value={agentCardUrl} onChange={e => setAgentCardUrl(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                        <InfoBanner text="The Agent Card (JSON) describes the agent's identity, capabilities, skills, and supported auth schemes. Typically at /.well-known/agent.json" />
+                        <SectionHeader title="A2A Advanced Settings" description="Input/output modes, push notifications" expanded={showA2aAdvanced} onToggle={() => setShowA2aAdvanced(!showA2aAdvanced)} />
+                        {showA2aAdvanced && (
+                            <div className="flex flex-col gap-y-3 pl-6">
+                                <Input label="Supported Input Modes" helperInfo="MIME types the agent accepts as input (comma-separated)" placeholder="text/plain, application/json" value={a2aInputModes} onChange={e => setA2aInputModes(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                                <Input label="Supported Output Modes" helperInfo="MIME types the agent produces as output (comma-separated)" placeholder="text/plain, application/json" value={a2aOutputModes} onChange={e => setA2aOutputModes(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                                <Input label="Push Notification URL (optional)" helperInfo="Callback URL for A2A push notifications when tasks complete asynchronously" placeholder="https://your-platform.com/a2a/callback" value={a2aPushNotificationUrl} onChange={e => setA2aPushNotificationUrl(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {/* ─── Manual Configuration Sections ─── */}
-                {!isStandaloneMode && (
-                    <>
-                        {/* ─── Name ─── */}
-                        <div className="flex flex-col gap-y-5 pb-4 bottom-gradient-border">
-                            <Input
-                                label="Name"
-                                placeholder="Name of the external agent"
-                                value={name}
-                                onChange={e => setName(e.target.value)}
-                                disabled={isReadOnly}
-                            />
+                {/* ─── ACP-specific Configuration ─── */}
+                {protocol === 'acp' && (
+                    <div className="flex flex-col gap-y-3 pb-4 bottom-gradient-border">
+                        <div className="flex items-center gap-x-1.5">
+                            <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">ACP Agent Configuration</Label>
+                            {isStandaloneMode && <Lock className="w-3 h-3 text-gray-400" />}
                         </div>
-
-                        {/* ─── Protocol Selection ─── */}
-                        <div className="flex flex-col gap-y-2 pb-4 bottom-gradient-border">
-                            <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">Protocol</Label>
-                            <div className="flex gap-2">
-                                {(['a2a', 'acp'] as const).map(p => (
-                                    <button
-                                        key={p}
-                                        type="button"
-                                        disabled={isReadOnly}
-                                        onClick={() => setProtocol(p)}
-                                        className={cn(
-                                            'flex-1 px-3 py-2 text-sm font-medium rounded-lg border transition-colors',
-                                            protocol === p
-                                                ? 'bg-[#0DA2E7] text-white border-[#0DA2E7]'
-                                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600',
-                                            isReadOnly && 'opacity-50 cursor-not-allowed'
-                                        )}
-                                    >
-                                        {p.toUpperCase()}
-                                    </button>
-                                ))}
-                            </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {protocol === 'a2a'
-                                    ? 'Google Agent-to-Agent — JSON-RPC 2.0 over HTTP, Agent Card discovery, SSE streaming'
-                                    : 'Agent Communication Protocol — RESTful API, OpenAPI schema, config-then-invoke pattern'}
-                            </p>
-                        </div>
-
-                        {/* ─── A2A-specific Configuration ─── */}
-                        {protocol === 'a2a' && (
-                            <div className="flex flex-col gap-y-3 pb-4 bottom-gradient-border">
-                                <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">A2A Agent Discovery</Label>
-                                <Input label="Agent Card URL" placeholder="https://agent.example.com/.well-known/agent.json" value={agentCardUrl} onChange={e => setAgentCardUrl(e.target.value)} disabled={isReadOnly} />
-                                <InfoBanner text="The Agent Card (JSON) describes the agent's identity, capabilities, skills, and supported auth schemes. Typically at /.well-known/agent.json" />
-                                <SectionHeader title="A2A Advanced Settings" description="Input/output modes, push notifications" expanded={showA2aAdvanced} onToggle={() => setShowA2aAdvanced(!showA2aAdvanced)} />
-                                {showA2aAdvanced && (
-                                    <div className="flex flex-col gap-y-3 pl-6">
-                                        <Input label="Supported Input Modes" placeholder="text/plain, application/json" value={a2aInputModes} onChange={e => setA2aInputModes(e.target.value)} disabled={isReadOnly} />
-                                        <Input label="Supported Output Modes" placeholder="text/plain, application/json" value={a2aOutputModes} onChange={e => setA2aOutputModes(e.target.value)} disabled={isReadOnly} />
-                                        <Input label="Push Notification URL (optional)" placeholder="https://your-platform.com/a2a/callback" value={a2aPushNotificationUrl} onChange={e => setA2aPushNotificationUrl(e.target.value)} disabled={isReadOnly} />
+                        <Input label="Agent Name" helperInfo="The agent_name parameter used in ACP POST /runs requests to identify which agent to invoke" placeholder="Required — the agent_name for POST /runs" value={acpAgentName} onChange={e => setAcpAgentName(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                        <Input label="Configuration ID (optional)" helperInfo="Pre-configured instance ID from the /configure endpoint. Reuses a saved agent configuration" placeholder="Pre-configured instance ID from /configure endpoint" value={acpConfigId} onChange={e => setAcpConfigId(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                        <InfoBanner text="ACP uses a config-then-invoke pattern. If a Configuration ID is provided, it will be sent with each run request to use a pre-configured agent instance." />
+                        <SectionHeader title="ACP Advanced Settings" description="Await/resume pattern" expanded={showAcpAdvanced} onToggle={() => setShowAcpAdvanced(!showAcpAdvanced)} />
+                        {showAcpAdvanced && (
+                            <div className="flex flex-col gap-y-3 pl-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex flex-col gap-y-0.5">
+                                        <Label className="text-sm text-gray-700 dark:text-gray-100">Await / Resume</Label>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Allow agent to pause and request additional input</p>
                                     </div>
-                                )}
+                                    <Switch checked={acpAwaitResumeEnabled} onCheckedChange={setAcpAwaitResumeEnabled} disabled={isReadOnly || isStandaloneMode} />
+                                </div>
                             </div>
                         )}
-
-                        {/* ─── ACP-specific Configuration ─── */}
-                        {protocol === 'acp' && (
-                            <div className="flex flex-col gap-y-3 pb-4 bottom-gradient-border">
-                                <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">ACP Agent Configuration</Label>
-                                <Input label="Agent Name" placeholder="Required — the agent_name for POST /runs" value={acpAgentName} onChange={e => setAcpAgentName(e.target.value)} disabled={isReadOnly} />
-                                <Input label="Configuration ID (optional)" placeholder="Pre-configured instance ID from /configure endpoint" value={acpConfigId} onChange={e => setAcpConfigId(e.target.value)} disabled={isReadOnly} />
-                                <InfoBanner text="ACP uses a config-then-invoke pattern. If a Configuration ID is provided, it will be sent with each run request to use a pre-configured agent instance." />
-                                <SectionHeader title="ACP Advanced Settings" description="Await/resume pattern" expanded={showAcpAdvanced} onToggle={() => setShowAcpAdvanced(!showAcpAdvanced)} />
-                                {showAcpAdvanced && (
-                                    <div className="flex flex-col gap-y-3 pl-6">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex flex-col gap-y-0.5">
-                                                <Label className="text-sm text-gray-700 dark:text-gray-100">Await / Resume</Label>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">Allow agent to pause and request additional input</p>
-                                            </div>
-                                            <Switch checked={acpAwaitResumeEnabled} onCheckedChange={setAcpAwaitResumeEnabled} disabled={isReadOnly} />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* ─── Endpoint URL ─── */}
-                        <div className="flex flex-col gap-y-2 pb-4 bottom-gradient-border">
-                            <Input
-                                label={protocol === 'a2a' ? 'JSON-RPC Endpoint URL' : 'REST API Base URL'}
-                                placeholder={protocol === 'a2a' ? 'https://agent.example.com/a2a' : 'https://agent.example.com/api/v1'}
-                                value={endpointUrl}
-                                onChange={e => setEndpointUrl(e.target.value)}
-                                disabled={isReadOnly}
-                            />
-                        </div>
-
-                        {/* ─── Authentication ─── */}
-                        <div className="flex flex-col gap-y-3 pb-4 bottom-gradient-border">
-                            <Select
-                                label="Authentication"
-                                placeholder="Select authentication mode"
-                                options={[
-                                    { name: 'None', value: 'none' },
-                                    { name: 'Bearer Token', value: 'bearer' },
-                                    { name: 'API Key', value: 'apikey' },
-                                    { name: 'OAuth 2.0 (Client Credentials)', value: 'oauth' },
-                                    { name: 'JWT', value: 'jwt' },
-                                ]}
-                                value={authMode}
-                                onChange={e => setAuthMode(e.target.value as AuthMode)}
-                                disabled={isReadOnly}
-                            />
-                            {authMode === 'bearer' && <Input label="Bearer Token" placeholder="Enter bearer token" type="password" value={bearerToken} onChange={e => setBearerToken(e.target.value)} disabled={isReadOnly} />}
-                            {authMode === 'apikey' && (
-                                <>
-                                    <Input label="API Key Header" placeholder="X-API-Key" value={apiKeyHeader} onChange={e => setApiKeyHeader(e.target.value)} disabled={isReadOnly} />
-                                    <Input label="API Key" placeholder="Enter API key" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} disabled={isReadOnly} />
-                                </>
-                            )}
-                            {authMode === 'oauth' && (
-                                <>
-                                    <Input label="Token URL" placeholder="https://auth.example.com/oauth/token" value={oauthTokenUrl} onChange={e => setOauthTokenUrl(e.target.value)} disabled={isReadOnly} />
-                                    <Input label="Client ID" placeholder="Enter OAuth client ID" value={oauthClientId} onChange={e => setOauthClientId(e.target.value)} disabled={isReadOnly} />
-                                    <Input label="Client Secret" placeholder="Enter OAuth client secret" type="password" value={oauthClientSecret} onChange={e => setOauthClientSecret(e.target.value)} disabled={isReadOnly} />
-                                    <Input label="Scopes" placeholder="agent:invoke agent:read (space-separated)" value={oauthScopes} onChange={e => setOauthScopes(e.target.value)} disabled={isReadOnly} />
-                                </>
-                            )}
-                            {authMode === 'jwt' && (
-                                <>
-                                    <Input label="JWT Signing Secret" placeholder="Enter signing secret" type="password" value={jwtSecret} onChange={e => setJwtSecret(e.target.value)} disabled={isReadOnly} />
-                                    <Input label="Issuer (iss)" placeholder="e.g. kaya-platform" value={jwtIssuer} onChange={e => setJwtIssuer(e.target.value)} disabled={isReadOnly} />
-                                </>
-                            )}
-                        </div>
-                    </>
+                    </div>
                 )}
 
-                {/* ─── Execution Mode (always visible) ─── */}
+                {/* ─── Endpoint URL ─── */}
+                <div className="flex flex-col gap-y-2 pb-4 bottom-gradient-border">
+                    <Input
+                        label={protocol === 'a2a' ? 'JSON-RPC Endpoint URL' : 'REST API Base URL'}
+                        helperInfo={protocol === 'a2a' ? 'The JSON-RPC 2.0 endpoint where A2A tasks/send and tasks/get requests are sent' : 'Base URL for ACP REST API calls including /runs and /configure endpoints'}
+                        placeholder={protocol === 'a2a' ? 'https://agent.example.com/a2a' : 'https://agent.example.com/api/v1'}
+                        value={endpointUrl}
+                        onChange={e => setEndpointUrl(e.target.value)}
+                        disabled={isReadOnly || isStandaloneMode}
+                    />
+                </div>
+
+                {/* ─── Authentication ─── */}
+                <div className="flex flex-col gap-y-3 pb-4 bottom-gradient-border">
+                    <div className="flex items-center gap-x-1.5">
+                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">Authentication</Label>
+                        {isStandaloneMode && <Lock className="w-3 h-3 text-gray-400" />}
+                    </div>
+                    <Select
+                        label=""
+                        helperInfo="Authentication method for service-to-service communication with the external agent"
+                        placeholder="Select authentication mode"
+                        options={[
+                            ...(isStandaloneMode ? [{ name: 'Platform Managed', value: 'platform_managed' }] : []),
+                            { name: 'None', value: 'none' },
+                            { name: 'Bearer Token', value: 'bearer' },
+                            { name: 'API Key', value: 'apikey' },
+                            { name: 'OAuth 2.0 (Client Credentials)', value: 'oauth' },
+                            { name: 'JWT', value: 'jwt' },
+                        ]}
+                        value={authMode}
+                        onChange={e => setAuthMode(e.target.value as AuthMode)}
+                        disabled={isReadOnly || isStandaloneMode}
+                    />
+                    {authMode === 'bearer' && <Input label="Bearer Token" placeholder="Enter bearer token" type="password" value={bearerToken} onChange={e => setBearerToken(e.target.value)} disabled={isReadOnly || isStandaloneMode} />}
+                    {authMode === 'apikey' && (
+                        <>
+                            <Input label="API Key Header" placeholder="X-API-Key" value={apiKeyHeader} onChange={e => setApiKeyHeader(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                            <Input label="API Key" placeholder="Enter API key" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                        </>
+                    )}
+                    {authMode === 'oauth' && (
+                        <>
+                            <Input label="Token URL" placeholder="https://auth.example.com/oauth/token" value={oauthTokenUrl} onChange={e => setOauthTokenUrl(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                            <Input label="Client ID" placeholder="Enter OAuth client ID" value={oauthClientId} onChange={e => setOauthClientId(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                            <Input label="Client Secret" placeholder="Enter OAuth client secret" type="password" value={oauthClientSecret} onChange={e => setOauthClientSecret(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                            <Input label="Scopes" placeholder="agent:invoke agent:read (space-separated)" value={oauthScopes} onChange={e => setOauthScopes(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                        </>
+                    )}
+                    {authMode === 'jwt' && (
+                        <>
+                            <Input label="JWT Signing Secret" placeholder="Enter signing secret" type="password" value={jwtSecret} onChange={e => setJwtSecret(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                            <Input label="Issuer (iss)" placeholder="e.g. kaya-platform" value={jwtIssuer} onChange={e => setJwtIssuer(e.target.value)} disabled={isReadOnly || isStandaloneMode} />
+                        </>
+                    )}
+                </div>
+
+                {/* ─── Execution Mode ─── */}
                 <div className="flex flex-col gap-y-3 pb-4 bottom-gradient-border">
                     <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">Execution Mode</Label>
                     <div className="flex flex-col gap-y-2">
@@ -683,12 +637,12 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                 className={cn(
                                     'flex items-start gap-x-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors',
                                     executionMode === option.value
-                                        ? 'border-[#0DA2E7] bg-blue-50 dark:bg-gray-700'
+                                        ? 'border-[#6c3def] bg-violet-50 dark:bg-gray-700'
                                         : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700',
                                     isReadOnly && 'opacity-50 cursor-not-allowed'
                                 )}
                             >
-                                <input type="radio" name="executionMode" value={option.value} checked={executionMode === option.value} onChange={() => setExecutionMode(option.value)} disabled={isReadOnly} className="accent-[#0DA2E7] mt-0.5" />
+                                <input type="radio" name="executionMode" value={option.value} checked={executionMode === option.value} onChange={() => setExecutionMode(option.value)} disabled={isReadOnly} className="accent-[#6c3def] mt-0.5" />
                                 <div className="flex flex-col">
                                     <span className="text-sm text-gray-700 dark:text-gray-200">{option.label}</span>
                                     <span className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</span>
@@ -696,8 +650,8 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                             </label>
                         ))}
                     </div>
-                    {showTimeout && <Input label="Timeout (ms)" type="number" placeholder="30000" value={String(timeoutMs)} onChange={e => setTimeoutMs(Number(e.target.value))} disabled={isReadOnly} />}
-                    {showPolling && <Input label="Polling Interval (ms)" type="number" placeholder="5000" value={String(pollingIntervalMs)} onChange={e => setPollingIntervalMs(Number(e.target.value))} disabled={isReadOnly} />}
+                    {showTimeout && <Input label="Timeout (ms)" helperInfo="Maximum time to wait for a response before the request is considered failed" type="number" placeholder="30000" value={String(timeoutMs)} onChange={e => setTimeoutMs(Number(e.target.value))} disabled={isReadOnly} />}
+                    {showPolling && <Input label="Polling Interval (ms)" helperInfo="How often to poll the agent for task completion status in async mode" type="number" placeholder="5000" value={String(pollingIntervalMs)} onChange={e => setPollingIntervalMs(Number(e.target.value))} disabled={isReadOnly} />}
                 </div>
 
                 {/* ─── Metadata ─── */}
@@ -720,16 +674,16 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                         </div>
                         <Switch checked={includeExecutionContext} onCheckedChange={setIncludeExecutionContext} disabled={isReadOnly} />
                     </div>
-                    <Input label="Metadata Key Prefix (optional)" placeholder="e.g. kaya_ — prefixes all metadata keys" value={metadataKeyPrefix} onChange={e => setMetadataKeyPrefix(e.target.value)} disabled={isReadOnly} />
+                    <Input label="Metadata Key Prefix (optional)" helperInfo="Prefix added to all metadata keys to avoid naming collisions with the agent's own metadata" placeholder="e.g. kaya_ — prefixes all metadata keys" value={metadataKeyPrefix} onChange={e => setMetadataKeyPrefix(e.target.value)} disabled={isReadOnly} />
                 </div>
 
-                {/* ─── Session Override ─── */}
+                {/* ─── Session Mode ─── */}
                 <div className="flex flex-col gap-y-2 pb-4 bottom-gradient-border">
                     <Select
-                        label="Session Type Override"
-                        placeholder="Select session type"
+                        label="Session Mode"
+                        helperInfo="Controls conversation state persistence. Single: one shared session. Per-Workflow: isolated per workflow instance. Per-Execution: fresh session each run"
+                        placeholder="Select session mode"
                         options={[
-                            { name: 'None (inherit workflow setting)', value: 'none' },
                             { name: 'Single Session', value: 'single' },
                             { name: 'Per-Workflow', value: 'per_workflow' },
                             { name: 'Per-Execution', value: 'per_execution' },
@@ -741,48 +695,101 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                 </div>
 
                 {/* ─── Tracing & Observability ─── */}
-                {!isStandaloneMode && (
-                    <div className="flex flex-col gap-y-4 pb-4 bottom-gradient-border">
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col gap-y-0.5">
-                                <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">Tracing & Observability</Label>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Distributed tracing, metrics collection, and data lineage</p>
-                            </div>
-                            <Switch checked={tracingEnabled} onCheckedChange={setTracingEnabled} disabled={isReadOnly} />
+                <div className="flex flex-col gap-y-4 pb-4 bottom-gradient-border">
+                    <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-y-0.5">
+                            <Label className="text-sm font-medium text-gray-700 dark:text-gray-100">Tracing & Observability</Label>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Distributed tracing, metrics collection, and data lineage</p>
                         </div>
-
-                        {tracingEnabled && (
-                            <div className="flex flex-col gap-y-3">
-                                <Select label="Trace Context Propagation" placeholder="Select propagation method" options={protocol === 'a2a' ? [{ name: 'W3C traceparent header', value: 'w3c_traceparent' }, { name: 'Both (W3C + OTel _meta)', value: 'both' }] : [{ name: 'OTel via params._meta', value: 'otel_meta' }, { name: 'W3C traceparent header', value: 'w3c_traceparent' }, { name: 'Both (W3C + OTel _meta)', value: 'both' }]} value={tracePropagation} onChange={e => setTracePropagation(e.target.value as TracePropagation)} disabled={isReadOnly} />
-                                <Select label="Trace Log Level" placeholder="Select log level" options={[{ name: 'None', value: 'none' }, { name: 'Error', value: 'error' }, { name: 'Warn', value: 'warn' }, { name: 'Info', value: 'info' }, { name: 'Debug', value: 'debug' }, { name: 'Trace', value: 'trace' }]} value={traceLogLevel} onChange={e => setTraceLogLevel(e.target.value as TraceLogLevel)} disabled={isReadOnly} />
-
-                                <SectionHeader title="Metrics & Data Capture" description="Token usage, latency, cost, data lineage" expanded={showTracingDetails} onToggle={() => setShowTracingDetails(!showTracingDetails)} />
-                                {showTracingDetails && (
-                                    <div className="flex flex-col gap-y-3 pl-6">
-                                        <div className="flex items-center justify-between"><Label className="text-sm text-gray-700 dark:text-gray-100">Capture Task State Transitions</Label><Switch checked={captureTaskStateTransitions} onCheckedChange={setCaptureTaskStateTransitions} disabled={isReadOnly} /></div>
-                                        <div className="flex items-center justify-between"><Label className="text-sm text-gray-700 dark:text-gray-100">Capture Token Usage</Label><Switch checked={captureTokenUsage} onCheckedChange={setCaptureTokenUsage} disabled={isReadOnly} /></div>
-                                        <div className="flex items-center justify-between"><Label className="text-sm text-gray-700 dark:text-gray-100">Capture Latency Metrics</Label><Switch checked={captureLatencyMetrics} onCheckedChange={setCaptureLatencyMetrics} disabled={isReadOnly} /></div>
-                                        <div className="flex items-center justify-between"><Label className="text-sm text-gray-700 dark:text-gray-100">Capture Cost Metrics</Label><Switch checked={captureCostMetrics} onCheckedChange={setCaptureCostMetrics} disabled={isReadOnly} /></div>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex flex-col gap-y-0.5"><Label className="text-sm text-gray-700 dark:text-gray-100">Data Lineage</Label><p className="text-xs text-gray-500 dark:text-gray-400">Record input/output artifacts for lineage tracking</p></div>
-                                            <Switch checked={dataLineageEnabled} onCheckedChange={setDataLineageEnabled} disabled={isReadOnly} />
-                                        </div>
-                                    </div>
-                                )}
-
-                                <SectionHeader title="OpenTelemetry Exporter" description="OTLP endpoint, service name, custom span attributes" expanded={showOtelConfig} onToggle={() => setShowOtelConfig(!showOtelConfig)} />
-                                {showOtelConfig && (
-                                    <div className="flex flex-col gap-y-3 pl-6">
-                                        <Input label="OTLP Exporter Endpoint" placeholder="http://otel-collector:4318/v1/traces" value={otelExporterEndpoint} onChange={e => setOtelExporterEndpoint(e.target.value)} disabled={isReadOnly} />
-                                        <Input label="Service Name" placeholder="e.g. kaya-external-agent" value={otelServiceName} onChange={e => setOtelServiceName(e.target.value)} disabled={isReadOnly} />
-                                        <Input label="Custom Span Attributes (JSON)" placeholder='{"team":"platform","env":"prod"}' value={customSpanAttributes} onChange={e => setCustomSpanAttributes(e.target.value)} disabled={isReadOnly} />
-                                        <InfoBanner text="If left empty, the platform's default OpenTelemetry collector endpoint and service name will be used." />
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                        <Switch checked={tracingEnabled} onCheckedChange={setTracingEnabled} disabled={isReadOnly} />
                     </div>
-                )}
+
+                    {tracingEnabled && (
+                        <div className="flex flex-col gap-y-3">
+                            <Select label="Trace Context Propagation" helperInfo="How distributed trace context is forwarded to the external agent for end-to-end tracing" placeholder="Select propagation method" options={protocol === 'a2a' ? [{ name: 'W3C traceparent header', value: 'w3c_traceparent' }, { name: 'Both (W3C + OTel _meta)', value: 'both' }] : [{ name: 'OTel via params._meta', value: 'otel_meta' }, { name: 'W3C traceparent header', value: 'w3c_traceparent' }, { name: 'Both (W3C + OTel _meta)', value: 'both' }]} value={tracePropagation} onChange={e => setTracePropagation(e.target.value as TracePropagation)} disabled={isReadOnly} />
+                            <Select label="Trace Log Level" helperInfo="Minimum severity level for trace span logs captured from this agent" placeholder="Select log level" options={[{ name: 'None', value: 'none' }, { name: 'Error', value: 'error' }, { name: 'Warn', value: 'warn' }, { name: 'Info', value: 'info' }, { name: 'Debug', value: 'debug' }, { name: 'Trace', value: 'trace' }]} value={traceLogLevel} onChange={e => setTraceLogLevel(e.target.value as TraceLogLevel)} disabled={isReadOnly} />
+
+                            <SectionHeader title="Metrics & Data Capture" description="Token usage, latency, cost, data lineage" expanded={showTracingDetails} onToggle={() => setShowTracingDetails(!showTracingDetails)} />
+                            {showTracingDetails && (
+                                <div className="flex flex-col gap-y-3 pl-6">
+                                    <div className="flex items-center justify-between"><Label className="text-sm text-gray-700 dark:text-gray-100">Capture Task State Transitions</Label><Switch checked={captureTaskStateTransitions} onCheckedChange={setCaptureTaskStateTransitions} disabled={isReadOnly} /></div>
+                                    <div className="flex items-center justify-between"><Label className="text-sm text-gray-700 dark:text-gray-100">Capture Token Usage</Label><Switch checked={captureTokenUsage} onCheckedChange={setCaptureTokenUsage} disabled={isReadOnly} /></div>
+                                    <div className="flex items-center justify-between"><Label className="text-sm text-gray-700 dark:text-gray-100">Capture Latency Metrics</Label><Switch checked={captureLatencyMetrics} onCheckedChange={setCaptureLatencyMetrics} disabled={isReadOnly} /></div>
+                                    <div className="flex items-center justify-between"><Label className="text-sm text-gray-700 dark:text-gray-100">Capture Cost Metrics</Label><Switch checked={captureCostMetrics} onCheckedChange={setCaptureCostMetrics} disabled={isReadOnly} /></div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex flex-col gap-y-0.5"><Label className="text-sm text-gray-700 dark:text-gray-100">Data Lineage</Label><p className="text-xs text-gray-500 dark:text-gray-400">Record input/output artifacts for lineage tracking</p></div>
+                                        <Switch checked={dataLineageEnabled} onCheckedChange={setDataLineageEnabled} disabled={isReadOnly} />
+                                    </div>
+                                </div>
+                            )}
+
+                            <SectionHeader title="Protocol Metric Mappings" description={`Map ${protocol === 'a2a' ? 'A2A Task.metadata' : 'ACP output part'} keys to platform metrics`} expanded={showMetricMappings} onToggle={() => setShowMetricMappings(!showMetricMappings)} />
+                            {showMetricMappings && (
+                                <div className="flex flex-col gap-y-3 pl-6">
+                                    <InfoBanner text={isStandaloneMode
+                                        ? 'Standalone agents use Kaya default metric keys. Mappings are auto-configured.'
+                                        : `Map the external agent's metadata keys to platform metric names. The platform reads these keys from ${protocol === 'a2a' ? 'A2A Task.metadata or push notification metadata' : 'ACP output parts with trajectory metadata'}.`
+                                    } />
+                                    <div className="space-y-2">
+                                        <div className="grid grid-cols-[1fr_1fr_32px] gap-2 text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1">
+                                            <span>Platform Metric</span>
+                                            <span>{protocol === 'a2a' ? 'A2A Metadata Key' : 'ACP Metrics Key'}</span>
+                                            <span />
+                                        </div>
+                                        {customMetricMappings.map((mapping, idx) => (
+                                            <div key={idx} className="grid grid-cols-[1fr_1fr_32px] gap-2 items-center">
+                                                <input
+                                                    className="rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-2 py-1.5 text-xs text-gray-900 dark:text-gray-100 font-mono"
+                                                    placeholder="agent.token.input"
+                                                    value={mapping.metricName}
+                                                    onChange={e => {
+                                                        const updated = [...customMetricMappings];
+                                                        updated[idx] = { ...updated[idx], metricName: e.target.value };
+                                                        setCustomMetricMappings(updated);
+                                                    }}
+                                                    disabled={isReadOnly || isStandaloneMode}
+                                                />
+                                                <input
+                                                    className="rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-2 py-1.5 text-xs text-gray-900 dark:text-gray-100 font-mono"
+                                                    placeholder="token_input"
+                                                    value={mapping.protocolKey}
+                                                    onChange={e => {
+                                                        const updated = [...customMetricMappings];
+                                                        updated[idx] = { ...updated[idx], protocolKey: e.target.value };
+                                                        setCustomMetricMappings(updated);
+                                                    }}
+                                                    disabled={isReadOnly || isStandaloneMode}
+                                                />
+                                                {!isStandaloneMode && !isReadOnly && (
+                                                    <button
+                                                        onClick={() => setCustomMetricMappings(customMetricMappings.filter((_, i) => i !== idx))}
+                                                        className="text-gray-400 hover:text-red-500 text-xs font-mono"
+                                                    >×</button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {!isStandaloneMode && !isReadOnly && (
+                                            <button
+                                                onClick={() => setCustomMetricMappings([...customMetricMappings, { metricName: '', protocolKey: '' }])}
+                                                className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1"
+                                            >+ Add mapping</button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            <SectionHeader title="OpenTelemetry Exporter" description="OTLP endpoint, service name, custom span attributes" expanded={showOtelConfig} onToggle={() => setShowOtelConfig(!showOtelConfig)} />
+                            {showOtelConfig && (
+                                <div className="flex flex-col gap-y-3 pl-6">
+                                    <Input label="OTLP Exporter Endpoint" helperInfo="OpenTelemetry collector endpoint for exporting trace data. Defaults to the platform collector if empty" placeholder="http://otel-collector:4318/v1/traces" value={otelExporterEndpoint} onChange={e => setOtelExporterEndpoint(e.target.value)} disabled={isReadOnly} />
+                                    <Input label="Service Name" helperInfo="Service identifier in trace data, used to distinguish this agent's spans in observability dashboards" placeholder="e.g. kaya-external-agent" value={otelServiceName} onChange={e => setOtelServiceName(e.target.value)} disabled={isReadOnly} />
+                                    <Input label="Custom Span Attributes (JSON)" helperInfo="Additional key-value pairs attached to every trace span for filtering and grouping in your observability tool" placeholder='{"team":"platform","env":"prod"}' value={customSpanAttributes} onChange={e => setCustomSpanAttributes(e.target.value)} disabled={isReadOnly} />
+                                    <InfoBanner text="If left empty, the platform's default OpenTelemetry collector endpoint and service name will be used." />
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 {/* ─── Form Actions ─── */}
                 <div className="external-agent-form-footer flex gap-x-3 justify-end pb-4">
@@ -794,6 +801,15 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                     </Button>
                 </div>
             </div>
+
+            {/* ─── Standalone Agent Config Modal (reuses CreationWizard in edit mode) ─── */}
+            {selectedAgent && (
+                <CreationWizard
+                    open={showAgentConfigModal}
+                    onOpenChange={setShowAgentConfigModal}
+                    agent={selectedAgent}
+                />
+            )}
         </div>
     );
 };

@@ -70,6 +70,7 @@ const DeleteRecord = ({ row, onDelete }: { row: Row<StandaloneAgent>; onDelete: 
 
 const generateColumns = (
     onView: (id: string) => void,
+    onEdit: (agent: StandaloneAgent) => void,
     onDelete: (id: string) => void
 ): ColumnDef<StandaloneAgent>[] => [
     {
@@ -153,7 +154,7 @@ const generateColumns = (
                             <button
                                 type="button"
                                 className="text-gray-500 cursor-pointer dark:text-gray-200 bg-transparent border-none p-0 inline-flex"
-                                onClick={() => onView(row.original.id)}
+                                onClick={() => onEdit(row.original)}
                                 aria-label="Edit Agent"
                             >
                                 <Pencil size={18} />
@@ -250,6 +251,7 @@ export const AgentListingContainer = () => {
     const [frameworkFilter, setFrameworkFilter] = useState<AgentFramework | 'all'>('all');
     const [statusFilter, setStatusFilter] = useState<AgentStatus | 'all'>('all');
     const [wizardOpen, setWizardOpen] = useState(false);
+    const [editAgent, setEditAgent] = useState<StandaloneAgent | undefined>();
     const { register, handleSubmit } = useForm<AgentFilterData>({ mode: 'onChange' });
     const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
@@ -266,6 +268,11 @@ export const AgentListingContainer = () => {
 
     const handleAgentClick = (agentId: string) => {
         router.push(`/workspace/${params.wid}/standalone-agents/${agentId}`);
+    };
+
+    const handleEdit = (agent: StandaloneAgent) => {
+        setEditAgent(agent);
+        setWizardOpen(true);
     };
 
     const handleDelete = (agentId: string) => {
@@ -285,7 +292,7 @@ export const AgentListingContainer = () => {
         setStatusFilter(status);
     };
 
-    const columns = generateColumns(handleAgentClick, handleDelete);
+    const columns = generateColumns(handleAgentClick, handleEdit, handleDelete);
 
     const agentCount = `${filteredAgents.length} of ${mockAgents.length} agents`;
 
@@ -318,7 +325,7 @@ export const AgentListingContainer = () => {
                                                 onApply={handleFilterApply}
                                             />
                                             <div className="flex ml-2">
-                                                <Button size="sm" onClick={() => setWizardOpen(true)}>
+                                                <Button size="sm" onClick={() => { setEditAgent(undefined); setWizardOpen(true); }}>
                                                     Create Agent
                                                 </Button>
                                             </div>
@@ -335,7 +342,14 @@ export const AgentListingContainer = () => {
                     </div>
                 </div>
             </div>
-            <CreationWizard open={wizardOpen} onOpenChange={setWizardOpen} />
+            <CreationWizard
+                open={wizardOpen}
+                onOpenChange={(open) => {
+                    setWizardOpen(open);
+                    if (!open) setEditAgent(undefined);
+                }}
+                agent={editAgent}
+            />
         </div>
     );
 };

@@ -12,7 +12,7 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from 'recharts';
-import { Activity, Clock, Cpu, HardDrive } from 'lucide-react';
+import { Activity, Clock } from 'lucide-react';
 import { mockMonitoringMetrics } from '../../mock-data';
 
 const formatHour = (timestamp: string) => {
@@ -34,26 +34,12 @@ const metricCards = [
         color: 'text-amber-500',
         bg: 'bg-amber-500/10',
     },
-    {
-        label: 'Avg CPU Usage',
-        value: `${Math.round(mockMonitoringMetrics.reduce((sum, m) => sum + m.cpuUsage, 0) / mockMonitoringMetrics.length)}%`,
-        icon: Cpu,
-        color: 'text-green-500',
-        bg: 'bg-green-500/10',
-    },
-    {
-        label: 'Avg Memory Usage',
-        value: `${Math.round(mockMonitoringMetrics.reduce((sum, m) => sum + m.memoryUsage, 0) / mockMonitoringMetrics.length)}%`,
-        icon: HardDrive,
-        color: 'text-sky-500',
-        bg: 'bg-sky-500/10',
-    },
 ];
 
 export const MonitoringTab = () => {
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 {metricCards.map(card => (
                     <div
                         key={card.label}
@@ -108,52 +94,6 @@ export const MonitoringTab = () => {
                             />
                             <Line type="monotone" dataKey="avgResponseTime" stroke="#F59F0A" strokeWidth={2} dot={false} />
                         </LineChart>
-                    </ResponsiveContainer>
-                </div>
-
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">CPU Usage (%)</h4>
-                    <ResponsiveContainer width="100%" height={240}>
-                        <AreaChart data={mockMonitoringMetrics}>
-                            <defs>
-                                <linearGradient id="cpuGrad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#21C45D" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#21C45D" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                            <XAxis dataKey="timestamp" tickFormatter={formatHour} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                            <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', fontSize: 12 }}
-                                labelFormatter={formatHour}
-                                labelStyle={{ color: '#9CA3AF' }}
-                            />
-                            <Area type="monotone" dataKey="cpuUsage" stroke="#21C45D" fill="url(#cpuGrad)" strokeWidth={2} />
-                        </AreaChart>
-                    </ResponsiveContainer>
-                </div>
-
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Memory Usage (%)</h4>
-                    <ResponsiveContainer width="100%" height={240}>
-                        <AreaChart data={mockMonitoringMetrics}>
-                            <defs>
-                                <linearGradient id="memGrad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#0DA2E7" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#0DA2E7" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                            <XAxis dataKey="timestamp" tickFormatter={formatHour} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                            <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', fontSize: 12 }}
-                                labelFormatter={formatHour}
-                                labelStyle={{ color: '#9CA3AF' }}
-                            />
-                            <Area type="monotone" dataKey="memoryUsage" stroke="#0DA2E7" fill="url(#memGrad)" strokeWidth={2} />
-                        </AreaChart>
                     </ResponsiveContainer>
                 </div>
             </div>

@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import { AgentStatusBadge } from '../../components/agent-status-badge';
-import { Play, Square, RotateCw, ExternalLink, Copy, Bot } from 'lucide-react';
+import { CreationWizard } from '../../components/creation-wizard';
+import { Play, Square, RotateCw, ExternalLink, Copy, Bot, Settings } from 'lucide-react';
 import type { StandaloneAgent } from '../../mock-data';
 
 interface OverviewTabProps {
@@ -12,6 +13,7 @@ interface OverviewTabProps {
 }
 
 export const OverviewTab = ({ agent }: OverviewTabProps) => {
+    const [showEditWizard, setShowEditWizard] = useState(false);
     const frameworkLabel = agent.framework === 'kaya-agent' ? 'Kaya Agent' : 'OpenClaw';
     const deployedDate = new Date(agent.lastDeployed).toLocaleString('en-US', {
         month: 'short',
@@ -82,18 +84,14 @@ export const OverviewTab = ({ agent }: OverviewTabProps) => {
 
             <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Deployment Info</h3>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cluster</p>
                         <p className="text-sm font-mono text-gray-900 dark:text-gray-100">{agent.cluster}</p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">CPU Limit</p>
-                        <p className="text-sm font-mono text-gray-900 dark:text-gray-100">{agent.cpuLimit}</p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Memory Limit</p>
-                        <p className="text-sm font-mono text-gray-900 dark:text-gray-100">{agent.memoryLimit}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Namespace</p>
+                        <p className="text-sm font-mono text-gray-900 dark:text-gray-100">{agent.namespace ?? 'default'}</p>
                     </div>
                 </div>
                 <div className="mt-4">
@@ -109,12 +107,15 @@ export const OverviewTab = ({ agent }: OverviewTabProps) => {
             <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Quick Actions</h3>
                 <div className="flex gap-3">
+                    <Button variant="primary" size="sm" onClick={() => setShowEditWizard(true)} leadingIcon={<Settings className="h-4 w-4" />}>
+                        Edit Configuration
+                    </Button>
                     {agent.status === 'running' ? (
                         <Button variant="secondary" size="sm" leadingIcon={<Square className="h-4 w-4" />}>
                             Stop Agent
                         </Button>
                     ) : (
-                        <Button variant="primary" size="sm" leadingIcon={<Play className="h-4 w-4" />}>
+                        <Button variant="secondary" size="sm" leadingIcon={<Play className="h-4 w-4" />}>
                             Start Agent
                         </Button>
                     )}
@@ -126,6 +127,8 @@ export const OverviewTab = ({ agent }: OverviewTabProps) => {
                     </Button>
                 </div>
             </div>
+
+            <CreationWizard open={showEditWizard} onOpenChange={setShowEditWizard} agent={agent} />
         </div>
     );
 };

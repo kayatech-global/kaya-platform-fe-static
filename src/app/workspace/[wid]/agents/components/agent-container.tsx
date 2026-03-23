@@ -9,6 +9,10 @@ import AppDrawer from '@/components/molecules/drawer/app-drawer';
 import AgentForm from './agent-form';
 import { useAgent } from '@/hooks/use-agent';
 import { PlatformConfigurationSuiteSkeleton } from '@/components/organisms';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/atoms/tabs';
+import { Bot, BotMessageSquare, Globe } from 'lucide-react';
+import { AgentListingContainer } from '@/app/workspace/[wid]/standalone-agents/components/agent-listing-container';
+import { ExternalAgentTab } from './external-agent-tab';
 
 export const AgentContainer = () => {
     const {
@@ -94,25 +98,51 @@ export const AgentContainer = () => {
     return (
         <React.Fragment>
             <div className="metric-page pb-4">
-                <div className="flex justify-between gap-x-9">
-                    <div
-                        ref={workflowAuthoringPageRef}
-                        className={cn('dashboard-left-section flex flex-col w-full', {
-                            'gap-y-9': isLg,
-                        })}
-                    >
-                        <AgentTableContainer
-                            agents={agentConfigurationTableData}
-                            onAgentFilter={onAgentFilter}
-                            onNewButtonClick={() => handleCreate()}
-                            onEditButtonClick={handleEdit}
-                            onDelete={onDelete}
-                            onRecentActivity={handleClick}
-                        />
-                    </div>
-                </div>
+                <Tabs defaultValue="reusable" className="w-full">
+                    <TabsList className="mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                        <TabsTrigger value="reusable" className="flex items-center gap-x-1.5 text-sm">
+                            <Bot className="h-3.5 w-3.5" />
+                            Reusable Agents
+                        </TabsTrigger>
+                        <TabsTrigger value="standalone" className="flex items-center gap-x-1.5 text-sm">
+                            <BotMessageSquare className="h-3.5 w-3.5" />
+                            Standalone Agents
+                        </TabsTrigger>
+                        <TabsTrigger value="external" className="flex items-center gap-x-1.5 text-sm">
+                            <Globe className="h-3.5 w-3.5" />
+                            External Agents
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="reusable">
+                        <div className="flex justify-between gap-x-9">
+                            <div
+                                ref={workflowAuthoringPageRef}
+                                className={cn('dashboard-left-section flex flex-col w-full', {
+                                    'gap-y-9': isLg,
+                                })}
+                            >
+                                <AgentTableContainer
+                                    agents={agentConfigurationTableData}
+                                    onAgentFilter={onAgentFilter}
+                                    onNewButtonClick={() => handleCreate()}
+                                    onEditButtonClick={handleEdit}
+                                    onDelete={onDelete}
+                                    onRecentActivity={handleClick}
+                                />
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="standalone">
+                        <AgentListingContainer />
+                    </TabsContent>
+
+                    <TabsContent value="external">
+                        <ExternalAgentTab />
+                    </TabsContent>
+                </Tabs>
             </div>
-            {/* Recent activities will be shown in the below drawer on small screens */}
             <AppDrawer
                 open={isDrawerOpen}
                 direction={isMobile ? 'bottom' : 'right'}

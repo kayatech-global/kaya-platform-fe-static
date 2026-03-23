@@ -204,13 +204,6 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
                 isSingleLink: true,
             },
             {
-                id: 'standalone-agents',
-                title: 'Standalone Agents',
-                url: '/workspace/[wid]/standalone-agents',
-                icon: 'BotMessageSquare',
-                isSingleLink: true,
-            },
-            {
                 id: 'prompt-templates',
                 title: 'Design Prompt Templates',
                 url: '/workspace/[wid]/prompt-templates',

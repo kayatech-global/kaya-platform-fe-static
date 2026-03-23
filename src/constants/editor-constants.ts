@@ -591,18 +591,6 @@ export const NODE_LIST: NodeListTypeDef[] = [
                 icon: '/png/nodes/decision_agent.png',
                 iconType: 'png',
             },
-            {
-                id: 'external_agent_init_menu',
-                data: {},
-                title: 'External Agent',
-                type: CustomNodeTypes.externalAgentNode,
-                showTitle: true,
-                showInteractions: false,
-                isActive: false,
-                color: '#0DA2E7',
-                icon: '/png/nodes/external-agent-node.svg',
-                iconType: 'png',
-            },
         ],
     },
     {

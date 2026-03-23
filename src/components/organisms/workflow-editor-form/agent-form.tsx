@@ -199,6 +199,63 @@ export type McpToolResponseType = {
     configurations: IConfiguration;
 };
 
+const ExternalAgentExecutionConfig = () => {
+    const [executionMode, setExecutionMode] = React.useState<'sync' | 'async_wait' | 'async_fire_forget'>('sync');
+    const [sessionOverride, setSessionOverride] = React.useState('per_workflow');
+    const [timeoutMs, setTimeoutMs] = React.useState(30000);
+    const [tracingEnabled, setTracingEnabled] = React.useState(true);
+
+    return (
+        <div className="pb-4 bottom-gradient-border flex flex-col gap-y-3">
+            <div className="flex items-start gap-x-2 px-3 py-2 rounded-lg bg-violet-50 dark:bg-gray-700/50 border border-violet-200 dark:border-gray-600">
+                <span className="text-xs text-gray-600 dark:text-gray-300">
+                    This agent node is connected to a standalone or external agent. Connection settings are auto-configured. You can override execution settings below.
+                </span>
+            </div>
+
+            <div className="flex flex-col gap-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-100">Execution Mode</label>
+                <div className="flex flex-col gap-y-1.5">
+                    {([
+                        { value: 'sync', label: 'Synchronous (SSE)', desc: 'Block until response — streams tokens via SSE' },
+                        { value: 'async_wait', label: 'Async (Wait)', desc: 'Pause workflow until task completes' },
+                        { value: 'async_fire_forget', label: 'Fire & Forget', desc: 'Send and continue without waiting' },
+                    ] as const).map(opt => (
+                        <label key={opt.value}
+                            className={cn('flex items-start gap-x-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-sm',
+                                executionMode === opt.value ? 'border-[#6c3def] bg-violet-50 dark:bg-gray-700' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50'
+                            )}>
+                            <input type="radio" name="exec_mode" value={opt.value} checked={executionMode === opt.value} onChange={() => setExecutionMode(opt.value)} className="accent-[#6c3def] mt-0.5" />
+                            <div className="flex flex-col">
+                                <span className="text-gray-700 dark:text-gray-200">{opt.label}</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{opt.desc}</span>
+                            </div>
+                        </label>
+                    ))}
+                </div>
+                {(executionMode === 'sync' || executionMode === 'async_wait') && (
+                    <Input label="Timeout (ms)" type="number" value={String(timeoutMs)} onChange={e => setTimeoutMs(Number(e.target.value))} />
+                )}
+            </div>
+
+            <div className="flex flex-col gap-y-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-100">Session Override</label>
+                <select value={sessionOverride} onChange={e => setSessionOverride(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+                    <option value="single">Single Session</option>
+                    <option value="per_workflow">Per-Workflow</option>
+                    <option value="per_execution">Per-Execution</option>
+                </select>
+            </div>
+
+            <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-100">Tracing & Observability</label>
+                <input type="checkbox" checked={tracingEnabled} onChange={e => setTracingEnabled(e.target.checked)} className="accent-[#6c3def]" />
+            </div>
+        </div>
+    );
+};
+
 type ReusableAgentPayloadType = {
     name: string;
     description: string;
@@ -969,6 +1026,10 @@ export const AgentForm = ({
                             }}
                         />
                     </div>
+                    {/* External/Standalone Agent Execution Config — shown when such an agent type is selected */}
+                    {agent?.isReusableAgentSelected && (agent as any)?.externalAgentConfig && (
+                        <ExternalAgentExecutionConfig />
+                    )}
                     <div className="flex flex-col gap-y-5 pb-4 bottom-gradient-border">
                         <Input
                             label="Name"

@@ -15,7 +15,6 @@ import { EndNodeForm } from '@/components/organisms/workflow-editor-form/end-nod
 import { CustomNodeTypes } from '@/enums';
 import { PlannerReplannerForm } from '@/components/organisms/workflow-editor-form/planner-replanner-form';
 import { FileProcessingAgentForm } from '@/components/organisms/workflow-editor-form/file-processing-agent-form';
-import { ExternalAgentForm } from '@/components/organisms/workflow-editor-form/external-agent-form';
 import {
     ApiToolResponseType,
     ExecutableFunctionResponseType,
@@ -102,8 +101,6 @@ export const EditorPanel = (props: EditorPanelProps) => {
                 return '/png/nodes/workflow-node-preview.png';
             case CustomNodeTypes.toolExecutorNode:
                 return '/png/nodes/tool_executor_preview.png';
-            case CustomNodeTypes.externalAgentNode:
-                return '/png/nodes/external_agent_node_preview.svg';
         }
     };
 
@@ -209,9 +206,6 @@ export const EditorPanel = (props: EditorPanelProps) => {
                         selectedNode={selectedNodeInfo}
                         isReadOnly={isReadOnly}
                     />
-                )}
-                {selectedNodeInfo.type === CustomNodeTypes.externalAgentNode && (
-                    <ExternalAgentForm selectedNode={selectedNodeInfo} isReadOnly={isReadOnly} />
                 )}
             </div>
         </div>
