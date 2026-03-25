@@ -19,13 +19,6 @@ import AppDrawer from '@/components/molecules/drawer/app-drawer';
 import { cn } from '@/lib/utils';
 import { Alert } from '@/components/atoms/alert';
 import { AlertVariant } from '@/enums/component-type';
-import {
-    SelectV2 as Select,
-    SelectContentV2 as SelectContent,
-    SelectItemV2 as SelectItem,
-    SelectTriggerV2 as SelectTrigger,
-    SelectValueV2 as SelectValue,
-} from '@/components/atoms/select-v2';
 import { IAllModel, IVectorRag, ISLMForm, IEmbedding, IReRanking, IDatabase } from '@/models';
 import { FormBody } from './form-body';
 import { PromptResponse } from '../../../agents/components/agent-form';
@@ -86,7 +79,6 @@ export type VectorRagConfigurationFormProps = {
     refetchSLM: () => void;
     onRefetchPrompt: () => void;
     onTestConnection?: () => Promise<{ success: boolean; data?: VectorRagTestConnectionSuccess; error?: VectorRagTestConnectionError }>;
-    showTestConnectionScenarioToggle?: boolean;
 };
 
 export const VectorRagConfigurationForm = (props: VectorRagConfigurationFormProps) => {
@@ -103,24 +95,11 @@ export const VectorRagConfigurationForm = (props: VectorRagConfigurationFormProp
         watch,
         trigger,
         onTestConnection,
-        showTestConnectionScenarioToggle,
     } = props;
 
     const [testState, setTestState] = useState<TestConnectionState>('idle');
     const [testSuccess, setTestSuccess] = useState<VectorRagTestConnectionSuccess | null>(null);
     const [testError, setTestError] = useState<VectorRagTestConnectionError | null>(null);
-    const [scenarioState, setScenarioState] = useState<TestConnectionState | 'auto'>('auto');
-
-    // Demo data for scenario toggles
-    const demoSuccess: VectorRagTestConnectionSuccess = {
-        message: 'Vector RAG connection validated successfully.',
-        details: 'DB connectivity, table/collection, and embedding model all verified.',
-    };
-    const demoError: VectorRagTestConnectionError = {
-        step: 'Embedding Model',
-        message: 'Unable to connect to embedding model service',
-        details: 'Connection timeout after 30 seconds',
-    };
 
     const handleTestConnection = async () => {
         setTestState('loading');
@@ -149,14 +128,13 @@ export const VectorRagConfigurationForm = (props: VectorRagConfigurationFormProp
             // Default mock behavior for demo
             setTimeout(() => {
                 setTestState('success');
-                setTestSuccess(demoSuccess);
+                setTestSuccess({
+                    message: 'Vector RAG connection validated successfully.',
+                    details: 'DB connectivity, table/collection, and embedding model all verified.',
+                });
             }, 1500);
         }
     };
-
-    const displayState = scenarioState !== 'auto' ? scenarioState : testState;
-    const displaySuccess = scenarioState === 'success' ? demoSuccess : testSuccess;
-    const displayError = scenarioState === 'error' ? demoError : testError;
 
     const buttonLabel = useMemo(() => {
         if (currentStep === 3) {
@@ -192,40 +170,16 @@ export const VectorRagConfigurationForm = (props: VectorRagConfigurationFormProp
             header={isEdit ? 'Edit Vector RAG Configurations' : 'New Vector RAG Configurations'}
             footer={
                 <div className="flex flex-col gap-3">
-                    {/* Scenario Toggle for Reviewers */}
-                    {showTestConnectionScenarioToggle && (
-                        <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-md border border-dashed border-gray-300 dark:border-gray-600">
-                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                                Preview State:
-                            </span>
-                            <Select
-                                value={scenarioState}
-                                onValueChange={(value) => setScenarioState(value as TestConnectionState | 'auto')}
-                            >
-                                <SelectTrigger className="h-7 w-[120px] text-xs">
-                                    <SelectValue placeholder="Select state" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="auto">Auto</SelectItem>
-                                    <SelectItem value="idle">Idle</SelectItem>
-                                    <SelectItem value="loading">Loading</SelectItem>
-                                    <SelectItem value="success">Success</SelectItem>
-                                    <SelectItem value="error">Error</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-
                     {/* Success Banner */}
-                    {displayState === 'success' && displaySuccess && (
+                    {testState === 'success' && testSuccess && (
                         <Alert
                             variant={AlertVariant.Success}
                             title="Connection Successful"
                             message={
                                 <div className="flex flex-col gap-1">
-                                    <span>{displaySuccess.message}</span>
-                                    {displaySuccess.details && (
-                                        <span className="text-xs opacity-80">{displaySuccess.details}</span>
+                                    <span>{testSuccess.message}</span>
+                                    {testSuccess.details && (
+                                        <span className="text-xs opacity-80">{testSuccess.details}</span>
                                     )}
                                 </div>
                             }
@@ -234,15 +188,15 @@ export const VectorRagConfigurationForm = (props: VectorRagConfigurationFormProp
                     )}
 
                     {/* Error Banner with Segmented Error */}
-                    {displayState === 'error' && displayError && (
+                    {testState === 'error' && testError && (
                         <Alert
                             variant={AlertVariant.Error}
-                            title={`Failed at: ${displayError.step}`}
+                            title={`Failed at: ${testError.step}`}
                             message={
                                 <div className="flex flex-col gap-1">
-                                    <span>{displayError.message}</span>
-                                    {displayError.details && (
-                                        <span className="text-xs opacity-70">{displayError.details}</span>
+                                    <span>{testError.message}</span>
+                                    {testError.details && (
+                                        <span className="text-xs opacity-70">{testError.details}</span>
                                     )}
                                 </div>
                             }
@@ -256,10 +210,10 @@ export const VectorRagConfigurationForm = (props: VectorRagConfigurationFormProp
                                 type="button"
                                 variant="secondary"
                                 size="sm"
-                                disabled={!isValid || displayState === 'loading' || (isEdit && !!watch('isReadOnly'))}
+                                disabled={!isValid || testState === 'loading' || (isEdit && !!watch('isReadOnly'))}
                                 onClick={handleTestConnection}
                             >
-                                {displayState === 'loading' ? (
+                                {testState === 'loading' ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Testing...

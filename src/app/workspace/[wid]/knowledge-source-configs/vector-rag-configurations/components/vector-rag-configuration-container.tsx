@@ -117,7 +117,6 @@ export const VectorRagConfigurationContainer = () => {
                 refetchLlms={refetchLlms}
                 refetchSLM={refetchSLM}
                 onRefetchPrompt={refetchPrompts}
-                showTestConnectionScenarioToggle={true}
             />
         </>
     );

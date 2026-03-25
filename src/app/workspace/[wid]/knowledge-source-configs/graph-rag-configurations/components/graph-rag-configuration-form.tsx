@@ -21,13 +21,6 @@ import { cn } from '@/lib/utils';
 import { SendToBack, Loader2, PlugZap } from 'lucide-react';
 import { Alert } from '@/components/atoms/alert';
 import { AlertVariant } from '@/enums/component-type';
-import {
-    SelectV2 as Select,
-    SelectContentV2 as SelectContent,
-    SelectItemV2 as SelectItem,
-    SelectTriggerV2 as SelectTrigger,
-    SelectValueV2 as SelectValue,
-} from '@/components/atoms/select-v2';
 import { IAllModel, IDatabase, IEmbedding, IGraphRag, IReRanking, ISLMForm } from '@/models';
 import { PromptResponse } from '@/app/workspace/[wid]/agents/components/agent-form';
 import { BasicInfoTab } from './forms/basic-info-tab';
@@ -89,7 +82,6 @@ export interface GraphRagConfigurationFormProps {
     refetchSLM: () => void;
     refetchPrompt: () => void;
     onTestConnection?: () => Promise<{ success: boolean; data?: GraphRagTestConnectionSuccess; error?: GraphRagTestConnectionError }>;
-    showTestConnectionScenarioToggle?: boolean;
 }
 export const FormBody = (props: GraphRagConfigurationFormProps) => {
     const { currentStep, completed, isEdit, setCurrentStep } = props;
@@ -167,24 +159,11 @@ export const GraphRagConfigurationForm = (props: GraphRagConfigurationFormProps)
         watch,
         trigger,
         onTestConnection,
-        showTestConnectionScenarioToggle,
     } = props;
 
     const [testState, setTestState] = useState<TestConnectionState>('idle');
     const [testSuccess, setTestSuccess] = useState<GraphRagTestConnectionSuccess | null>(null);
     const [testError, setTestError] = useState<GraphRagTestConnectionError | null>(null);
-    const [scenarioState, setScenarioState] = useState<TestConnectionState | 'auto'>('auto');
-
-    // Demo data for scenario toggles
-    const demoSuccess: GraphRagTestConnectionSuccess = {
-        message: 'Graph RAG connection validated successfully.',
-        details: 'DB connectivity, node label, embedding property, and query execution all verified.',
-    };
-    const demoError: GraphRagTestConnectionError = {
-        step: 'Node Label',
-        message: 'Node label not found in the graph database',
-        details: 'The specified node label does not exist in the database schema',
-    };
 
     const handleTestConnection = async () => {
         setTestState('loading');
@@ -213,14 +192,13 @@ export const GraphRagConfigurationForm = (props: GraphRagConfigurationFormProps)
             // Default mock behavior for demo
             setTimeout(() => {
                 setTestState('success');
-                setTestSuccess(demoSuccess);
+                setTestSuccess({
+                    message: 'Graph RAG connection validated successfully.',
+                    details: 'DB connectivity, node label, embedding property, and query execution all verified.',
+                });
             }, 1500);
         }
     };
-
-    const displayState = scenarioState !== 'auto' ? scenarioState : testState;
-    const displaySuccess = scenarioState === 'success' ? demoSuccess : testSuccess;
-    const displayError = scenarioState === 'error' ? demoError : testError;
 
     // Show test connection only on Step 2: Retrieval Settings
     const showTestConnection = currentStep === 2;
@@ -259,40 +237,16 @@ export const GraphRagConfigurationForm = (props: GraphRagConfigurationFormProps)
             header={isEdit ? 'Edit Graph RAG Configurations' : 'New Graph RAG Configurations'}
             footer={
                 <div className="flex flex-col gap-3">
-                    {/* Scenario Toggle for Reviewers - only show on Step 2 */}
-                    {showTestConnection && showTestConnectionScenarioToggle && (
-                        <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-md border border-dashed border-gray-300 dark:border-gray-600">
-                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                                Preview State:
-                            </span>
-                            <Select
-                                value={scenarioState}
-                                onValueChange={(value) => setScenarioState(value as TestConnectionState | 'auto')}
-                            >
-                                <SelectTrigger className="h-7 w-[120px] text-xs">
-                                    <SelectValue placeholder="Select state" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="auto">Auto</SelectItem>
-                                    <SelectItem value="idle">Idle</SelectItem>
-                                    <SelectItem value="loading">Loading</SelectItem>
-                                    <SelectItem value="success">Success</SelectItem>
-                                    <SelectItem value="error">Error</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-
                     {/* Success Banner - only show on Step 2 */}
-                    {showTestConnection && displayState === 'success' && displaySuccess && (
+                    {showTestConnection && testState === 'success' && testSuccess && (
                         <Alert
                             variant={AlertVariant.Success}
                             title="Connection Successful"
                             message={
                                 <div className="flex flex-col gap-1">
-                                    <span>{displaySuccess.message}</span>
-                                    {displaySuccess.details && (
-                                        <span className="text-xs opacity-80">{displaySuccess.details}</span>
+                                    <span>{testSuccess.message}</span>
+                                    {testSuccess.details && (
+                                        <span className="text-xs opacity-80">{testSuccess.details}</span>
                                     )}
                                 </div>
                             }
@@ -301,15 +255,15 @@ export const GraphRagConfigurationForm = (props: GraphRagConfigurationFormProps)
                     )}
 
                     {/* Error Banner with Segmented Error - only show on Step 2 */}
-                    {showTestConnection && displayState === 'error' && displayError && (
+                    {showTestConnection && testState === 'error' && testError && (
                         <Alert
                             variant={AlertVariant.Error}
-                            title={`Failed at: ${displayError.step}`}
+                            title={`Failed at: ${testError.step}`}
                             message={
                                 <div className="flex flex-col gap-1">
-                                    <span>{displayError.message}</span>
-                                    {displayError.details && (
-                                        <span className="text-xs opacity-70">{displayError.details}</span>
+                                    <span>{testError.message}</span>
+                                    {testError.details && (
+                                        <span className="text-xs opacity-70">{testError.details}</span>
                                     )}
                                 </div>
                             }
@@ -325,10 +279,10 @@ export const GraphRagConfigurationForm = (props: GraphRagConfigurationFormProps)
                                     type="button"
                                     variant="secondary"
                                     size="sm"
-                                    disabled={!isValid || displayState === 'loading' || (isEdit && !!watch('isReadOnly'))}
+                                    disabled={!isValid || testState === 'loading' || (isEdit && !!watch('isReadOnly'))}
                                     onClick={handleTestConnection}
                                 >
-                                    {displayState === 'loading' ? (
+                                    {testState === 'loading' ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                             Testing...

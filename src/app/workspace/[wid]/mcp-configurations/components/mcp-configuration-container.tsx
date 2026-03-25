@@ -127,7 +127,6 @@ export const McpConfigurationContainer = () => {
                 tools={tools}
                 getAllTool={getAllTool}
                 toolLoading={toolLoading}
-                showTestConnectionScenarioToggle={true}
             />
         </>
     );

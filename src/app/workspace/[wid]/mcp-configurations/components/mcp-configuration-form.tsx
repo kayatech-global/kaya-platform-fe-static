@@ -20,13 +20,6 @@ import { TransportType } from '@/enums/transport-type';
 import { AvailableTool } from '@/hooks/use-mcp-configuration';
 import { cn, getSubmitButtonLabel, validateSpaces, validateUrl } from '@/lib/utils';
 import { TestConnectionState, TestConnectionError, TestConnectionSuccess } from '@/components/molecules/test-connection';
-import {
-    SelectV2 as ScenarioSelect,
-    SelectContentV2 as SelectContent,
-    SelectItemV2 as SelectItem,
-    SelectTriggerV2 as SelectTrigger,
-    SelectValueV2 as SelectValue,
-} from '@/components/atoms/select-v2';
 import { Alert } from '@/components/atoms/alert';
 import { AlertVariant } from '@/enums/component-type';
 import { Loader2, PlugZap, RefreshCcw, ServerCog } from 'lucide-react';
@@ -64,7 +57,6 @@ export type McpConfigurationFormProps = {
     getAllTool: () => void;
     toolLoading: boolean;
     onTestConnection?: () => Promise<{ success: boolean; data?: TestConnectionSuccess; error?: TestConnectionError }>;
-    showTestConnectionScenarioToggle?: boolean;
 };
 
 export const FormBody = (props: McpConfigurationFormProps) => {
@@ -484,21 +476,10 @@ export const FormBody = (props: McpConfigurationFormProps) => {
 };
 
 export const McpConfigurationForm = (props: McpConfigurationFormProps) => {
-    const { isOpen, setOpen, handleSubmit, onHandleSubmit, watch, isEdit, isValid, isSaving, onTestConnection, showTestConnectionScenarioToggle, tools } = props;
+    const { isOpen, setOpen, handleSubmit, onHandleSubmit, watch, isEdit, isValid, isSaving, onTestConnection, tools } = props;
     const [testState, setTestState] = React.useState<TestConnectionState>('idle');
     const [testSuccess, setTestSuccess] = React.useState<TestConnectionSuccess | null>(null);
     const [testError, setTestError] = React.useState<TestConnectionError | null>(null);
-    const [scenarioState, setScenarioState] = React.useState<TestConnectionState | 'auto'>('auto');
-
-    // Demo data for scenario toggles
-    const demoSuccess: TestConnectionSuccess = {
-        message: `MCP connection successful. ${tools.length || 5} tools discovered.`,
-        details: tools.length > 0 ? `Tools: ${tools.slice(0, 3).map(t => t.name).join(', ')}${tools.length > 3 ? '...' : ''}` : undefined,
-    };
-    const demoError: TestConnectionError = {
-        message: 'Unable to connect to MCP server',
-        details: '404 Not Found - The server URL could not be reached',
-    };
 
     const handleTestConnection = async () => {
         setTestState('loading');
@@ -526,14 +507,13 @@ export const McpConfigurationForm = (props: McpConfigurationFormProps) => {
             // Default mock behavior for demo
             setTimeout(() => {
                 setTestState('success');
-                setTestSuccess(demoSuccess);
+                setTestSuccess({
+                    message: `MCP connection successful. ${tools.length || 5} tools discovered.`,
+                    details: tools.length > 0 ? `Tools: ${tools.slice(0, 3).map(t => t.name).join(', ')}${tools.length > 3 ? '...' : ''}` : undefined,
+                });
             }, 1500);
         }
     };
-
-    const displayState = scenarioState !== 'auto' ? scenarioState : testState;
-    const displaySuccess = scenarioState === 'success' ? demoSuccess : testSuccess;
-    const displayError = scenarioState === 'error' ? demoError : testError;
 
     return (
         <AppDrawer
@@ -547,40 +527,16 @@ export const McpConfigurationForm = (props: McpConfigurationFormProps) => {
             dismissible={false}
             footer={
                 <div className="flex flex-col gap-3">
-                    {/* Scenario Toggle for Reviewers */}
-                    {showTestConnectionScenarioToggle && (
-                        <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-md border border-dashed border-gray-300 dark:border-gray-600">
-                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                                Preview State:
-                            </span>
-                            <ScenarioSelect
-                                value={scenarioState}
-                                onValueChange={(value) => setScenarioState(value as TestConnectionState | 'auto')}
-                            >
-                                <SelectTrigger className="h-7 w-[120px] text-xs">
-                                    <SelectValue placeholder="Select state" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="auto">Auto</SelectItem>
-                                    <SelectItem value="idle">Idle</SelectItem>
-                                    <SelectItem value="loading">Loading</SelectItem>
-                                    <SelectItem value="success">Success</SelectItem>
-                                    <SelectItem value="error">Error</SelectItem>
-                                </SelectContent>
-                            </ScenarioSelect>
-                        </div>
-                    )}
-                    
                     {/* Success Banner */}
-                    {displayState === 'success' && displaySuccess && (
+                    {testState === 'success' && testSuccess && (
                         <Alert
                             variant={AlertVariant.Success}
                             title="Connection Successful"
                             message={
                                 <div className="flex flex-col gap-1">
-                                    <span>{displaySuccess.message}</span>
-                                    {displaySuccess.details && (
-                                        <span className="text-xs opacity-80">{displaySuccess.details}</span>
+                                    <span>{testSuccess.message}</span>
+                                    {testSuccess.details && (
+                                        <span className="text-xs opacity-80">{testSuccess.details}</span>
                                     )}
                                 </div>
                             }
@@ -589,15 +545,15 @@ export const McpConfigurationForm = (props: McpConfigurationFormProps) => {
                     )}
 
                     {/* Error Banner */}
-                    {displayState === 'error' && displayError && (
+                    {testState === 'error' && testError && (
                         <Alert
                             variant={AlertVariant.Error}
                             title="Connection Failed"
                             message={
                                 <div className="flex flex-col gap-1">
-                                    <span>{displayError.message}</span>
-                                    {displayError.details && (
-                                        <span className="text-xs opacity-70">{displayError.details}</span>
+                                    <span>{testError.message}</span>
+                                    {testError.details && (
+                                        <span className="text-xs opacity-70">{testError.details}</span>
                                     )}
                                 </div>
                             }
@@ -611,10 +567,10 @@ export const McpConfigurationForm = (props: McpConfigurationFormProps) => {
                                 type="button"
                                 variant="secondary"
                                 size="sm"
-                                disabled={!isValid || displayState === 'loading' || (isEdit && !!watch('isReadOnly'))}
+                                disabled={!isValid || testState === 'loading' || (isEdit && !!watch('isReadOnly'))}
                                 onClick={handleTestConnection}
                             >
-                                {displayState === 'loading' ? (
+                                {testState === 'loading' ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Testing...
