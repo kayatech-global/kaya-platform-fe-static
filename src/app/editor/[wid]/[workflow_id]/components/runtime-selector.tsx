@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { Server, Cloud, ChevronDown, Check, ExternalLink, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/atoms/badge';
@@ -10,6 +11,8 @@ import {
     PopoverTrigger,
 } from '@/components/atoms/popover';
 import { Button } from '@/components';
+import { ExecutionRuntimeForm } from '@/app/workspace/[wid]/execution-runtimes/components/execution-runtime-form';
+import { ExecutionRuntimeData } from '@/mocks/execution-runtimes-data';
 
 interface RuntimeOption {
     id: string;
@@ -19,7 +22,7 @@ interface RuntimeOption {
     status: 'active' | 'provisioning' | 'error' | 'inactive';
 }
 
-const mockRuntimeOptions: RuntimeOption[] = [
+const initialRuntimeOptions: RuntimeOption[] = [
     {
         id: 'rt-001',
         name: 'kaya-default-runtime',
@@ -50,13 +53,41 @@ const mockRuntimeOptions: RuntimeOption[] = [
 ];
 
 export const RuntimeSelector = () => {
-    const [selectedRuntime, setSelectedRuntime] = useState<RuntimeOption>(mockRuntimeOptions[0]);
+    const params = useParams();
+    const router = useRouter();
+    const wid = params.wid as string;
+
+    const [runtimeOptions, setRuntimeOptions] = useState<RuntimeOption[]>(initialRuntimeOptions);
+    const [selectedRuntime, setSelectedRuntime] = useState<RuntimeOption>(initialRuntimeOptions[0]);
     const [open, setOpen] = useState(false);
+    const [showCreateForm, setShowCreateForm] = useState(false);
 
     const handleSelect = (runtime: RuntimeOption) => {
         if (runtime.status !== 'active') return;
         setSelectedRuntime(runtime);
         setOpen(false);
+    };
+
+    const handleManageClick = () => {
+        setOpen(false);
+        router.push(`/workspace/${wid}/execution-runtimes`);
+    };
+
+    const handleCreateClick = () => {
+        setOpen(false);
+        setShowCreateForm(true);
+    };
+
+    const handleCreateSubmit = (data: Partial<ExecutionRuntimeData>) => {
+        const newRuntime: RuntimeOption = {
+            id: `rt-${Date.now()}`,
+            name: data.name || 'new-runtime',
+            provider: (data.provider as RuntimeOption['provider']) || 'kaya-runtime',
+            region: data.region,
+            status: data.provider === 'aws-agentcore' ? 'provisioning' : 'active',
+        };
+        setRuntimeOptions((prev) => [...prev, newRuntime]);
+        setShowCreateForm(false);
     };
 
     return (
@@ -80,7 +111,7 @@ export const RuntimeSelector = () => {
                         <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                             Execution Runtime
                         </p>
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700">
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700" onClick={handleManageClick}>
                             <Settings size={12} className="mr-1" />
                             Manage
                         </Button>
@@ -90,7 +121,7 @@ export const RuntimeSelector = () => {
                     </p>
                 </div>
                 <div className="py-1 max-h-64 overflow-y-auto">
-                    {mockRuntimeOptions.map((runtime) => (
+                    {runtimeOptions.map((runtime) => (
                         <button
                             key={runtime.id}
                             className={cn(
@@ -148,12 +179,22 @@ export const RuntimeSelector = () => {
                     ))}
                 </div>
                 <div className="px-3 py-2 border-t border-gray-200 dark:border-gray-700">
-                    <button className="w-full flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+                    <button
+                        className="w-full flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                        onClick={handleCreateClick}
+                    >
                         <ExternalLink size={12} />
                         Create new runtime configuration
                     </button>
                 </div>
             </PopoverContent>
+            <ExecutionRuntimeForm
+                isOpen={showCreateForm}
+                isEdit={false}
+                editingRuntime={null}
+                setOpen={setShowCreateForm}
+                onSubmit={handleCreateSubmit}
+            />
         </Popover>
     );
 };
