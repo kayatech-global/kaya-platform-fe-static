@@ -14,6 +14,7 @@ import { AvatarConfigurationFormContainer } from '@/app/editor/[wid]/[workflow_i
 import { GuardrailsButtonWrapper } from './guardrails-button-wrapper';
 import { useAvatarConfiguration } from '@/hooks/use-avatar-configuration';
 import { VoiceWorkflowPlayground } from '@/app/workspace/[wid]/workflows/workflow-authoring/components/voice-workflow-playground';
+import { RuntimeSelector } from './runtime-selector';
 
 interface EditorHeaderProps {
     isReadOnly?: boolean;
@@ -184,25 +185,11 @@ export const EditorHeader = ({
                         }
                     />
                 </div>
-                {/* Commented out as it may be useful in the future for reference.
-                <div className="flex items-center gap-x-2">
-                    <div className="flex justify-between">
-                        <div className="flex items-center gap-2">
-                            <IconSwitch
-                                disabled={isFetching}
-                                checked={videoMode}
-                                onCheckedChange={handleVideoModeChange}
-                                label={'Video Mode'}
-                                icon={videoMode ? <Video size={16} /> : <VideoOff size={16} />}
-                                onEdit={() => {
-                                    setOpenAvatarForm(true);
-                                }}
-                            />
-                        </div>
-                    </div>
-                </div> */}
 
                 <div className="flex items-center gap-x-2">
+                    {/* Runtime Selector */}
+                    <RuntimeSelector />
+                    <hr aria-orientation="vertical" className="h-6 w-px bg-gray-200 dark:bg-gray-700 border-0" />
                     <button
                         className="bg-white border-gray-300 dark:bg-gray-800 border dark:border-gray-700 rounded flex items-center px-2 py-1 gap-x-2"
                         onClick={() => setOpenAvatarForm(true)}

@@ -49,6 +49,13 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
                 isSingleLink: true,
             },
             {
+                id: 'execution_runtimes',
+                title: 'Execution Runtimes',
+                url: '/workspace/[wid]/execution-runtimes',
+                icon: 'Server',
+                isSingleLink: true,
+            },
+            {
                 id: 'guardrails',
                 title: 'Guardrails',
                 url: '#',
@@ -361,6 +368,13 @@ export const SIDEBAR_MAIN_MENU_ITEMS: SidebarMainMenuItemsType[] = [
         title: 'API Configurations',
         url: '/workspace/[wid]/api-configurations',
         icon: 'CloudCog',
+        isSingleLink: true,
+    },
+    {
+        id: 'execution_runtimes',
+        title: 'Execution Runtimes',
+        url: '/workspace/[wid]/execution-runtimes',
+        icon: 'Server',
         isSingleLink: true,
     },
     {
