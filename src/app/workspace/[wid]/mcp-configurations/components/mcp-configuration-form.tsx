@@ -535,6 +535,8 @@ export const McpConfigurationForm = (props: McpConfigurationFormProps) => {
     const displaySuccess = scenarioState === 'success' ? demoSuccess : testSuccess;
     const displayError = scenarioState === 'error' ? demoError : testError;
 
+    console.log('[v0] MCP Form - showTestConnectionScenarioToggle:', showTestConnectionScenarioToggle, 'displayState:', displayState);
+
     return (
         <AppDrawer
             open={isOpen}
