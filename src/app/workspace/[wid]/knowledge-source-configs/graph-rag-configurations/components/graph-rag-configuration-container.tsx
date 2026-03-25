@@ -116,6 +116,7 @@ export const GraphRagConfigurationContainer = () => {
                 refetchLLM={refetchLLM}
                 refetchSLM={refetchSLM}
                 refetchPrompt={refetchPrompt}
+                showTestConnectionScenarioToggle={true}
             />
         </>
     );

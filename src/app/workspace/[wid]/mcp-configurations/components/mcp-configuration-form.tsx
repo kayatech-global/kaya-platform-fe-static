@@ -1,4 +1,5 @@
 'use client';
+import React from 'react';
 import {
     Button,
     Input,
@@ -18,9 +19,19 @@ import { AuthorizationType } from '@/enums';
 import { TransportType } from '@/enums/transport-type';
 import { AvailableTool } from '@/hooks/use-mcp-configuration';
 import { cn, getSubmitButtonLabel, validateSpaces, validateUrl } from '@/lib/utils';
+import { TestConnectionState, TestConnectionError, TestConnectionSuccess } from '@/components/molecules/test-connection';
+import {
+    SelectV2 as ScenarioSelect,
+    SelectContentV2 as SelectContent,
+    SelectItemV2 as SelectItem,
+    SelectTriggerV2 as SelectTrigger,
+    SelectValueV2 as SelectValue,
+} from '@/components/atoms/select-v2';
+import { Alert } from '@/components/atoms/alert';
+import { AlertVariant } from '@/enums/component-type';
+import { Loader2, PlugZap, RefreshCcw, ServerCog } from 'lucide-react';
 import { IMcpConfigForm } from '@/models';
 import { validateField } from '@/utils/validation';
-import { RefreshCcw, ServerCog } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import {
     Control,
@@ -52,6 +63,8 @@ export type McpConfigurationFormProps = {
     tools: AvailableTool[];
     getAllTool: () => void;
     toolLoading: boolean;
+    onTestConnection?: () => Promise<{ success: boolean; data?: TestConnectionSuccess; error?: TestConnectionError }>;
+    showTestConnectionScenarioToggle?: boolean;
 };
 
 export const FormBody = (props: McpConfigurationFormProps) => {
@@ -471,7 +484,56 @@ export const FormBody = (props: McpConfigurationFormProps) => {
 };
 
 export const McpConfigurationForm = (props: McpConfigurationFormProps) => {
-    const { isOpen, setOpen, handleSubmit, onHandleSubmit, watch, isEdit, isValid, isSaving } = props;
+    const { isOpen, setOpen, handleSubmit, onHandleSubmit, watch, isEdit, isValid, isSaving, onTestConnection, showTestConnectionScenarioToggle, tools } = props;
+    const [testState, setTestState] = React.useState<TestConnectionState>('idle');
+    const [testSuccess, setTestSuccess] = React.useState<TestConnectionSuccess | null>(null);
+    const [testError, setTestError] = React.useState<TestConnectionError | null>(null);
+    const [scenarioState, setScenarioState] = React.useState<TestConnectionState | 'auto'>('auto');
+
+    // Demo data for scenario toggles
+    const demoSuccess: TestConnectionSuccess = {
+        message: `MCP connection successful. ${tools.length || 5} tools discovered.`,
+        details: tools.length > 0 ? `Tools: ${tools.slice(0, 3).map(t => t.name).join(', ')}${tools.length > 3 ? '...' : ''}` : undefined,
+    };
+    const demoError: TestConnectionError = {
+        message: 'Unable to connect to MCP server',
+        details: '404 Not Found - The server URL could not be reached',
+    };
+
+    const handleTestConnection = async () => {
+        setTestState('loading');
+        setTestSuccess(null);
+        setTestError(null);
+
+        if (onTestConnection) {
+            try {
+                const result = await onTestConnection();
+                if (result.success && result.data) {
+                    setTestState('success');
+                    setTestSuccess(result.data);
+                } else if (!result.success && result.error) {
+                    setTestState('error');
+                    setTestError(result.error);
+                }
+            } catch (err) {
+                setTestState('error');
+                setTestError({
+                    message: 'An unexpected error occurred',
+                    details: err instanceof Error ? err.message : 'Unknown error',
+                });
+            }
+        } else {
+            // Default mock behavior for demo
+            setTimeout(() => {
+                setTestState('success');
+                setTestSuccess(demoSuccess);
+            }, 1500);
+        }
+    };
+
+    const displayState = scenarioState !== 'auto' ? scenarioState : testState;
+    const displaySuccess = scenarioState === 'success' ? demoSuccess : testSuccess;
+    const displayError = scenarioState === 'error' ? demoError : testError;
 
     return (
         <AppDrawer
@@ -484,35 +546,111 @@ export const McpConfigurationForm = (props: McpConfigurationFormProps) => {
             headerIcon={<ServerCog />}
             dismissible={false}
             footer={
-                <div className="flex justify-between">
-                    <div className="flex gap-2">
-                        {/* <Button variant="secondary" size={'sm'} disabled>
-                            Test Connection
-                        </Button> */}
-                    </div>
-                    <div className="flex justify-end gap-2">
-                        <Button variant={'secondary'} size={'sm'} onClick={() => setOpen(false)}>
-                            Cancel
-                        </Button>
-                        <div>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            size={'sm'}
-                                            disabled={!isValid || isSaving || (isEdit && !!watch('isReadOnly'))}
-                                            onClick={handleSubmit(onHandleSubmit)}
-                                        >
-                                            {getSubmitButtonLabel(isSaving, isEdit)}
-                                        </Button>
-                                    </TooltipTrigger>
-                                    {!isValid && (
-                                        <TooltipContent side="left" align="center">
-                                            All details need to be filled before the form can be saved
-                                        </TooltipContent>
+                <div className="flex flex-col gap-3">
+                    {/* Scenario Toggle for Reviewers */}
+                    {showTestConnectionScenarioToggle && (
+                        <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-md border border-dashed border-gray-300 dark:border-gray-600">
+                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                Preview State:
+                            </span>
+                            <ScenarioSelect
+                                value={scenarioState}
+                                onValueChange={(value) => setScenarioState(value as TestConnectionState | 'auto')}
+                            >
+                                <SelectTrigger className="h-7 w-[120px] text-xs">
+                                    <SelectValue placeholder="Select state" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="auto">Auto</SelectItem>
+                                    <SelectItem value="idle">Idle</SelectItem>
+                                    <SelectItem value="loading">Loading</SelectItem>
+                                    <SelectItem value="success">Success</SelectItem>
+                                    <SelectItem value="error">Error</SelectItem>
+                                </SelectContent>
+                            </ScenarioSelect>
+                        </div>
+                    )}
+                    
+                    {/* Success Banner */}
+                    {displayState === 'success' && displaySuccess && (
+                        <Alert
+                            variant={AlertVariant.Success}
+                            title="Connection Successful"
+                            message={
+                                <div className="flex flex-col gap-1">
+                                    <span>{displaySuccess.message}</span>
+                                    {displaySuccess.details && (
+                                        <span className="text-xs opacity-80">{displaySuccess.details}</span>
                                     )}
-                                </Tooltip>
-                            </TooltipProvider>
+                                </div>
+                            }
+                            small
+                        />
+                    )}
+
+                    {/* Error Banner */}
+                    {displayState === 'error' && displayError && (
+                        <Alert
+                            variant={AlertVariant.Error}
+                            title="Connection Failed"
+                            message={
+                                <div className="flex flex-col gap-1">
+                                    <span>{displayError.message}</span>
+                                    {displayError.details && (
+                                        <span className="text-xs opacity-70">{displayError.details}</span>
+                                    )}
+                                </div>
+                            }
+                            small
+                        />
+                    )}
+
+                    <div className="flex justify-between">
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                disabled={!isValid || displayState === 'loading' || (isEdit && !!watch('isReadOnly'))}
+                                onClick={handleTestConnection}
+                            >
+                                {displayState === 'loading' ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Testing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <PlugZap className="mr-2 h-4 w-4" />
+                                        Test Connection
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button variant={'secondary'} size={'sm'} onClick={() => setOpen(false)}>
+                                Cancel
+                            </Button>
+                            <div>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                size={'sm'}
+                                                disabled={!isValid || isSaving || (isEdit && !!watch('isReadOnly'))}
+                                                onClick={handleSubmit(onHandleSubmit)}
+                                            >
+                                                {getSubmitButtonLabel(isSaving, isEdit)}
+                                            </Button>
+                                        </TooltipTrigger>
+                                        {!isValid && (
+                                            <TooltipContent side="left" align="center">
+                                                All details need to be filled before the form can be saved
+                                            </TooltipContent>
+                                        )}
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                         </div>
                     </div>
                 </div>
