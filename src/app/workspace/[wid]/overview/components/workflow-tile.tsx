@@ -6,14 +6,13 @@ import { useParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/atoms/card';
 import { Badge } from '@/components/atoms/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/atoms/tooltip';
-import { RecentlyModifiedWorkflow, TimeRangeFilter } from '../types/types';
+import { RecentlyModifiedWorkflow } from '../types/types';
 import { cn } from '@/lib/utils';
 import { Play, CheckCircle, Coins, Lock, Clock } from 'lucide-react';
 import moment from 'moment';
 
 interface WorkflowTileProps {
     workflow: RecentlyModifiedWorkflow;
-    timeRange: TimeRangeFilter;
     canViewTokenUsage: boolean;
 }
 
@@ -27,22 +26,8 @@ const formatNumber = (value: number): string => {
     return value.toString();
 };
 
-const getTimeRangeTooltip = (timeRange: TimeRangeFilter): string => {
-    switch (timeRange) {
-        case 'last24h':
-            return 'in the last 24 hours';
-        case 'last7d':
-            return 'in the last 7 days';
-        case 'last30d':
-            return 'in the last 30 days';
-        default:
-            return '';
-    }
-};
-
 export const WorkflowTile: React.FC<WorkflowTileProps> = ({
     workflow,
-    timeRange,
     canViewTokenUsage,
 }) => {
     const params = useParams();
@@ -52,8 +37,6 @@ export const WorkflowTile: React.FC<WorkflowTileProps> = ({
     const statusColor = workflow.status === 'Published' 
         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
         : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400';
-
-    const timeRangeTooltip = getTimeRangeTooltip(timeRange);
 
     return (
         <Link href={`/editor/${workspaceId}/${workflow.id}`}>
@@ -129,7 +112,7 @@ export const WorkflowTile: React.FC<WorkflowTileProps> = ({
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent side="bottom">
-                                {workflow.totalExecutions.toLocaleString()} executions {timeRangeTooltip}
+                                {workflow.totalExecutions.toLocaleString()} total executions
                             </TooltipContent>
                         </Tooltip>
 
@@ -147,7 +130,7 @@ export const WorkflowTile: React.FC<WorkflowTileProps> = ({
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent side="bottom">
-                                {workflow.successRate.toFixed(1)}% success rate {timeRangeTooltip}
+                                {workflow.successRate.toFixed(1)}% success rate
                             </TooltipContent>
                         </Tooltip>
 
@@ -180,7 +163,7 @@ export const WorkflowTile: React.FC<WorkflowTileProps> = ({
                             </TooltipTrigger>
                             <TooltipContent side="bottom">
                                 {canViewTokenUsage 
-                                    ? `${workflow.totalTokens.toLocaleString()} tokens ${timeRangeTooltip}`
+                                    ? `${workflow.totalTokens.toLocaleString()} total tokens`
                                     : 'You do not have permission to view token usage'
                                 }
                             </TooltipContent>

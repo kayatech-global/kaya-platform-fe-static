@@ -56,11 +56,8 @@ export const WorkspaceOverviewSkeleton = () => {
             </div>
 
             <div className="flex flex-col gap-y-6 w-full opacity-30">
-                {/* Header area with filter */}
-                <div className="flex justify-between items-center">
-                    <div className="h-8 w-[200px] bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                    <div className="h-9 w-[150px] bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                </div>
+                {/* Header area */}
+                <div className="h-8 w-[200px] bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
 
                 {/* KPI Cards - 6 total (Workflows, Executions, Success Rate, Failed, Tokens, Health) */}
                 <div

@@ -235,7 +235,10 @@ const fetchWorkspaceOverview = async (
     }
 };
 
-export const useWorkspaceOverview = (timeRange: TimeRangeFilter) => {
+// Default time range used internally for data fetching
+const DEFAULT_TIME_RANGE: TimeRangeFilter = 'last30d';
+
+export const useWorkspaceOverview = () => {
     const params = useParams();
     const workspaceId = params.wid as string;
     const { token, user } = useAuth();
@@ -264,8 +267,7 @@ export const useWorkspaceOverview = (timeRange: TimeRangeFilter) => {
         canViewCostMetrics: true,
     });
 
-    // Query key includes timeRange to refetch when filter changes
-    const queryKey = ['workspace-overview', workspaceId, timeRange];
+    const queryKey = ['workspace-overview', workspaceId];
 
     const {
         data,
@@ -273,7 +275,7 @@ export const useWorkspaceOverview = (timeRange: TimeRangeFilter) => {
         refetch,
     } = useQuery(
         queryKey,
-        () => fetchWorkspaceOverview(workspaceId, timeRange),
+        () => fetchWorkspaceOverview(workspaceId, DEFAULT_TIME_RANGE),
         {
             enabled: !!token && !!workspaceId,
             refetchOnWindowFocus: false,
