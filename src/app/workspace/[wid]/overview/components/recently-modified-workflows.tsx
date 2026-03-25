@@ -5,20 +5,18 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/atoms/button';
 import { WorkflowTile } from './workflow-tile';
-import { RecentlyModifiedWorkflow, TimeRangeFilter } from '../types/types';
+import { RecentlyModifiedWorkflow } from '../types/types';
 import { cn } from '@/lib/utils';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
-import { Workflow, Plus, ArrowRight, AlertCircle } from 'lucide-react';
+import { Workflow, Plus, ArrowRight } from 'lucide-react';
 
 interface RecentlyModifiedWorkflowsProps {
     workflows: RecentlyModifiedWorkflow[];
-    timeRange: TimeRangeFilter;
     canViewTokenUsage: boolean;
 }
 
 export const RecentlyModifiedWorkflows: React.FC<RecentlyModifiedWorkflowsProps> = ({
     workflows,
-    timeRange,
     canViewTokenUsage,
 }) => {
     const params = useParams();
@@ -94,20 +92,11 @@ export const RecentlyModifiedWorkflows: React.FC<RecentlyModifiedWorkflowsProps>
                     <WorkflowTile
                         key={workflow.id}
                         workflow={workflow}
-                        timeRange={timeRange}
                         canViewTokenUsage={canViewTokenUsage}
                     />
                 ))}
             </div>
 
-            {/* Info note about data source */}
-            <div className="flex items-start gap-x-2 text-xs text-gray-500 dark:text-gray-400 mt-2">
-                <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
-                <p>
-                    Workflows are sorted by last modified date. Execution metrics (Total Executions, Success Rate, Tokens) 
-                    reflect data from the selected time range filter.
-                </p>
             </div>
-        </div>
     );
 };
