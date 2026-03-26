@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/atoms/card';
-import { Layers, Activity, Calculator, Zap, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { Layers, Activity, AlertCircle, Zap, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import {
     AreaChart,
     Area,
@@ -322,14 +322,13 @@ export default function WorkspaceDashboardPage() {
                     iconColor="text-blue-600 dark:text-blue-400"
                 />
                 <MetricCard
-                    title="Pre-Calculated Jobs"
-                    value="68%"
-                    footer="Saving ~12,400 credits/mo"
-                    icon={Calculator}
-                    iconBgColor="bg-green-100 dark:bg-green-900/30"
-                    iconColor="text-green-600 dark:text-green-400"
-                    valueColor="text-green-600 dark:text-green-400"
-                    footerColor="text-green-600 dark:text-green-400"
+                    title="Critical Alerts"
+                    value="3"
+                    footer="iFlows >90% utilization"
+                    icon={AlertCircle}
+                    iconBgColor="bg-red-100 dark:bg-red-900/30"
+                    iconColor="text-red-600 dark:text-red-400"
+                    valueColor="text-red-600 dark:text-red-400"
                 />
                 <MetricCard
                     title="Remaining Credits"
