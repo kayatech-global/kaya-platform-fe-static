@@ -518,6 +518,18 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
             const sourceNode = nodes.find(n => n.id === connection.source);
             const targetNode = nodes.find(n => n.id === connection.target);
 
+            // Block edges between nodes inside an Iterator and nodes outside it
+            const sourceInsideIterator = !!sourceNode?.parentId;
+            const targetInsideIterator = !!targetNode?.parentId;
+            if (sourceInsideIterator && !targetInsideIterator && sourceNode?.parentId !== targetNode?.id) {
+                toast.error('Cannot connect nodes inside an Iterator to nodes outside it.');
+                return;
+            }
+            if (targetInsideIterator && !sourceInsideIterator && targetNode?.parentId !== sourceNode?.id) {
+                toast.error('Cannot connect nodes outside an Iterator to nodes inside it.');
+                return;
+            }
+
             const validation = validateConnection(sourceNode, targetNode);
             if (!validation.isValid) {
                 toast.error(validation.message);
@@ -617,6 +629,27 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
                     toast.error('Cannot mix other agents with a Voice Agent template');
                     return;
                 }
+
+                // Block nested Iterators
+                if (nodeType === CustomNodeTypes.iteratorNode) {
+                    const dropPosition = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+                    const parentIterator = nodes.find(
+                        n =>
+                            n.type === CustomNodeTypes.iteratorNode &&
+                            n.position &&
+                            n.measured?.width &&
+                            n.measured?.height &&
+                            dropPosition.x >= n.position.x &&
+                            dropPosition.x <= n.position.x + (n.measured.width ?? 0) &&
+                            dropPosition.y >= n.position.y &&
+                            dropPosition.y <= n.position.y + (n.measured.height ?? 0)
+                    );
+                    if (parentIterator) {
+                        toast.error('Nested Iterators are not supported.');
+                        return;
+                    }
+                }
+
                 // Get drop position in flow coordinates
                 const position = screenToFlowPosition({
                     x: event.clientX,

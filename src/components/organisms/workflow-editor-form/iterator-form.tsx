@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, Input, Checkbox, TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/atoms';
+import { AlertTriangle } from 'lucide-react';
 import { WorkflowConditionEditor } from '@/components/molecules/custom-edge-base/workflow-condition-editor';
 import config from '@/config/environment-variables';
 import { useAuth, useDnD } from '@/context';
@@ -286,6 +287,17 @@ export const IteratorForm = ({ selectedNode, isReadOnly }: IteratorFormProps) =>
                             </p>
                         </div>
                     </div>
+                    {parallelExecution && (
+                        <div className="flex items-start gap-x-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md border border-yellow-200 dark:border-yellow-700">
+                            <AlertTriangle size={16} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                            <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                                Parallel execution processes multiple items simultaneously. Ensure Agent actions are safe
+                                for concurrent execution.{' '}
+                                <strong>HITL interrupts are not supported in parallel mode</strong> — use sequential
+                                execution for HITL workflows.
+                            </p>
+                        </div>
+                    )}
                 </div>
                 <div className={cn('agent-form-footer flex gap-x-3 justify-end pb-4', {})}>
                     <Button variant="secondary" onClick={() => setSelectedNodeId(undefined)} disabled={isReadOnly}>

@@ -8,13 +8,14 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/atoms/dialog';
-import { useReactFlow, NodeResizer, Handle, Position } from '@xyflow/react';
+import { useReactFlow, NodeResizer, Handle, Position, useNodes } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import { NodeListModalBody } from '../node-list-modal-body/node-list-modal-body';
 import { generateNodeId, getNodeLabel } from '@/app/editor/[wid]/[workflow_id]/components/editor-playground';
 import { useState } from 'react';
 import { useDnD } from '@/context';
 import { CustomNodeTypes } from '@/enums';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/atoms';
 
 interface GroupNodeProps {
     id: string;
@@ -28,6 +29,8 @@ export const IteratorNode = ({ id, data, selected, allowedNodes }: GroupNodeProp
     const { setNodes } = useReactFlow();
     const [open, setOpen] = useState(false);
     const { setSelectedNodeId, selectedNodeId } = useDnD();
+    const allNodes = useNodes();
+    const hasChild = allNodes.some(n => n.parentId === id);
 
     const addChildToGroup = (nodeType: CustomNodeTypes) => {
         const newChildNode = {
@@ -117,24 +120,39 @@ export const IteratorNode = ({ id, data, selected, allowedNodes }: GroupNodeProp
                             {`Iterator ${data.name ? '|' : ''} ${data.name ?? ''}` || 'Iterator'}
                         </p>
                     </div>
-                    <Dialog open={open} onOpenChange={setOpen}>
-                        <DialogTrigger>
-                            <div
-                                title="Add Nodes"
-                                className="cursor-pointer p-1 rounded-lg bg-blue-700 hover:bg-blue-800 transition-all duration-100"
-                            >
-                                <Plus size={20} className="text-gray-100 font-bold" />
-                            </div>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Select Nodes</DialogTitle>
-                                <DialogDescription>
-                                    <NodeListModalBody allowedNodes={allowedNodes} addChildToGroup={addChildToGroup} />
-                                </DialogDescription>
-                            </DialogHeader>
-                        </DialogContent>
-                    </Dialog>
+                    {hasChild ? (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="cursor-not-allowed p-1 rounded-lg bg-blue-700/50">
+                                        <Plus size={20} className="text-gray-300 font-bold" />
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom">
+                                    Only one child component (Agent or Sub-Workflow) is allowed per Iterator
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    ) : (
+                        <Dialog open={open} onOpenChange={setOpen}>
+                            <DialogTrigger>
+                                <div
+                                    title="Add Nodes"
+                                    className="cursor-pointer p-1 rounded-lg bg-blue-700 hover:bg-blue-800 transition-all duration-100"
+                                >
+                                    <Plus size={20} className="text-gray-100 font-bold" />
+                                </div>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Select Nodes</DialogTitle>
+                                    <DialogDescription>
+                                        <NodeListModalBody allowedNodes={allowedNodes} addChildToGroup={addChildToGroup} />
+                                    </DialogDescription>
+                                </DialogHeader>
+                            </DialogContent>
+                        </Dialog>
+                    )}
                 </div>
 
                 {/* Selection indicator */}
