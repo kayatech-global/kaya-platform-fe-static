@@ -6,10 +6,10 @@ import '../globals.css';
 import React from 'react';
 
 export const metadata: Metadata = {
-    title: 'KAYA AI Platform',
+    title: 'KAYA AI Platform - Dashboard',
 };
 
-const WorkspacesLayout = ({
+const DashboardLayout = ({
     children,
 }: Readonly<{
     children: React.ReactNode;
@@ -19,12 +19,12 @@ const WorkspacesLayout = ({
             <LeftNavigation />
             <div className="flex flex-col flex-1 overflow-hidden">
                 <DashboardHeader isFullWidth />
-                <div className={cn('flex-1 overflow-auto bg-[#F1F1F1] px-8', 'dark:bg-[#2B3340]')}>
-                    <div className="w-fit mx-auto pt-8">{children}</div>
+                <div className={cn('flex-1 overflow-auto bg-[#F1F1F1] px-8 py-8', 'dark:bg-[#2B3340]')}>
+                    {children}
                 </div>
             </div>
         </div>
     );
 };
 
-export default WorkspacesLayout;
+export default DashboardLayout;
