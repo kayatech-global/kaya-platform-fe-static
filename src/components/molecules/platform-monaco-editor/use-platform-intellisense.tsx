@@ -1,4 +1,4 @@
-import { IntellisenseCategory } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
+import { IntellisenseCategory } from './types';
 import { useMemo } from 'react';
 
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -41,7 +41,7 @@ export function usePlatformIntellisense(intellisenseData: IntellisenseCategory[]
             mcpPatterns: get('MCPs'),
             ragPatterns: get('Vector RAGs'),
             graphRagPatterns: get('Graph RAGs'),
-            attributePatterns:get('Attributes'),
+            attributePatterns: get('Attributes'),
             variablePatterns,
             metaDataPatterns,
             metaDataChildrenPatterns,

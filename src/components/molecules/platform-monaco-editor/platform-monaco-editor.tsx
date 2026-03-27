@@ -8,7 +8,6 @@ import Editor, { type Monaco, type OnMount } from '@monaco-editor/react';
 import type { editor, IDisposable } from 'monaco-editor';
 import { useTheme } from '@/theme';
 import { cn, isNullOrEmpty } from '@/lib/utils';
-import { useVariable } from '@/hooks/use-variable';
 import IntellisenseWidget, {
     IntellisenseWidgetHandle,
 } from '@/app/workspace/[wid]/prompt-templates/components/intellisense-widget';
@@ -17,8 +16,7 @@ import { useKeyboardNavigation } from './use-keyboard-navigation';
 import { applyMonacoTheme } from './apply-monaco-theme';
 import { setupMonarchTokens } from './setup-monarch-tokens';
 import { IntellisenseOption } from '@/app/workspace/[wid]/prompt-templates/components/monaco-editor';
-import { VariableDialog } from './variable-dialog';
-import { IntellisenseTools, PlatformMonacoEditorProps } from './types';
+import { PlatformMonacoEditorProps } from './types';
 import { registerCustomSQLIntellisense, registerPythonIntellisense } from './apply-platform-intellisense';
 import './platform-monaco-editor-styles.css';
 import { ICoord } from '@/models';
@@ -59,21 +57,8 @@ export default function PlatformMonacoEditor({
     const { theme } = useTheme();
 
     const patterns = usePlatformIntellisense(intellisenseData);
-    const {
-        isOpen,
-        errors,
-        isEdit,
-        isValid,
-        isSaving,
-        newRecord,
-        setOpen,
-        register,
-        watch,
-        setValue,
-        handleSubmit,
-        onHandleSubmit,
-        control,
-    } = useVariable({ triggerQuery: false });
+    // Demo stub: no real API calls needed in fe-static
+    const [isVariableDialogOpen, setVariableDialogOpen] = useState(false);
 
     // attach keyboard navigation
     useKeyboardNavigation(
@@ -118,20 +103,7 @@ export default function PlatformMonacoEditor({
         }
     }, [disableIntelligencePopover, showIntellisense, currentCoords, editorCurrentDomNode, intellisenseHeight]);
 
-    useEffect(() => {
-        if (!isSaving && newRecord) {
-            (async () => {
-                await onRefetchVariables();
-                handleOptionSelect({
-                    label: newRecord?.name,
-                    value: `${IntellisenseTools.Variable}:${newRecord.name}`,
-                });
-                if (patterns && monacoRef?.current) {
-                    setupMonarchTokens(monacoRef?.current, patterns);
-                }
-            })();
-        }
-    }, [isSaving, newRecord, patterns]);
+    // (variable creation effect omitted — demo mode, no real API)
 
     const handleEditorDidMount: OnMount = (editor, monaco) => {
         editorRef.current = editor;
@@ -293,7 +265,7 @@ export default function PlatformMonacoEditor({
                             enableCategoryIcon={enableCategoryIcon}
                             onSelect={handleOptionSelect}
                             onClose={() => setShowIntellisense(false)}
-                            onNewVariable={() => setOpen(true)}
+                            onNewVariable={() => setVariableDialogOpen(true)}
                             isAtTrigger={isAtTrigger}
                             onHeightChange={value => setIntellisenseHeight(value)}
                         />
@@ -313,20 +285,29 @@ export default function PlatformMonacoEditor({
                 </p>
             )}
 
-            <VariableDialog
-                isOpen={isOpen}
-                setOpen={setOpen}
-                isValid={isValid}
-                isSaving={isSaving}
-                errors={errors}
-                isEdit={isEdit}
-                register={register}
-                watch={watch}
-                setValue={setValue}
-                handleSubmit={handleSubmit}
-                onHandleSubmit={onHandleSubmit}
-                control={control}
-            />
+            {/* Variable dialog stub — demo only */}
+            {isVariableDialogOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+                    onClick={() => setVariableDialogOpen(false)}
+                >
+                    <div
+                        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-[400px]"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-100 mb-1">New Variable</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+                            Variable creation is available in the full platform.
+                        </p>
+                        <button
+                            className="text-xs px-3 py-1.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+                            onClick={() => setVariableDialogOpen(false)}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
