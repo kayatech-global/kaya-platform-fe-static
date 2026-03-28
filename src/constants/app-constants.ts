@@ -324,6 +324,13 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
             isSingleLink: true,
         },
         {
+            id: 'credit-reports',
+            title: 'Reports',
+            url: '/workspace/[wid]/credit-allocation/reports',
+            icon: 'FileBarChart',
+            isSingleLink: true,
+        },
+        {
             id: 'settings-configuration',
             title: 'Settings & Configuration',
             url: '/workspace/[wid]/credit-allocation/settings-configuration',
