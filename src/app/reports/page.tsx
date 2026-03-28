@@ -49,8 +49,8 @@ const getCEEDTrendData = (filter: FilterPeriod) => {
     return baseData;
 };
 
-// Mock data for Consumption Trend - By Workflow
-const getWorkflowTrendData = (filter: FilterPeriod) => {
+// Mock data for Consumption Trend - By Workspace
+const getWorkspaceTrendData = (filter: FilterPeriod) => {
     const multiplier = {
         'last24h': 0.15,
         'last7d': 0.5,
@@ -59,13 +59,13 @@ const getWorkflowTrendData = (filter: FilterPeriod) => {
     }[filter];
 
     const baseData = [
-        { day: 'Mon', auditCompliance: Math.round(7500 * multiplier), expenseApproval: Math.round(5500 * multiplier), invoiceProcessing: Math.round(2800 * multiplier) },
-        { day: 'Tue', auditCompliance: Math.round(8500 * multiplier), expenseApproval: Math.round(6500 * multiplier), invoiceProcessing: Math.round(3200 * multiplier) },
-        { day: 'Wed', auditCompliance: Math.round(13000 * multiplier), expenseApproval: Math.round(8000 * multiplier), invoiceProcessing: Math.round(4000 * multiplier) },
-        { day: 'Thu', auditCompliance: Math.round(9500 * multiplier), expenseApproval: Math.round(7000 * multiplier), invoiceProcessing: Math.round(3500 * multiplier) },
-        { day: 'Fri', auditCompliance: Math.round(8000 * multiplier), expenseApproval: Math.round(6000 * multiplier), invoiceProcessing: Math.round(3000 * multiplier) },
-        { day: 'Sat', auditCompliance: Math.round(9000 * multiplier), expenseApproval: Math.round(6500 * multiplier), invoiceProcessing: Math.round(3200 * multiplier) },
-        { day: 'Sun', auditCompliance: Math.round(10000 * multiplier), expenseApproval: Math.round(7500 * multiplier), invoiceProcessing: Math.round(3500 * multiplier) },
+        { day: 'Mon', financeAutomation: Math.round(7500 * multiplier), customerSupport: Math.round(5500 * multiplier), legalReview: Math.round(2800 * multiplier), hrTools: Math.round(1500 * multiplier) },
+        { day: 'Tue', financeAutomation: Math.round(8500 * multiplier), customerSupport: Math.round(6500 * multiplier), legalReview: Math.round(3200 * multiplier), hrTools: Math.round(1800 * multiplier) },
+        { day: 'Wed', financeAutomation: Math.round(13000 * multiplier), customerSupport: Math.round(8000 * multiplier), legalReview: Math.round(4000 * multiplier), hrTools: Math.round(2200 * multiplier) },
+        { day: 'Thu', financeAutomation: Math.round(9500 * multiplier), customerSupport: Math.round(7000 * multiplier), legalReview: Math.round(3500 * multiplier), hrTools: Math.round(2000 * multiplier) },
+        { day: 'Fri', financeAutomation: Math.round(8000 * multiplier), customerSupport: Math.round(6000 * multiplier), legalReview: Math.round(3000 * multiplier), hrTools: Math.round(1700 * multiplier) },
+        { day: 'Sat', financeAutomation: Math.round(9000 * multiplier), customerSupport: Math.round(6500 * multiplier), legalReview: Math.round(3200 * multiplier), hrTools: Math.round(1900 * multiplier) },
+        { day: 'Sun', financeAutomation: Math.round(10000 * multiplier), customerSupport: Math.round(7500 * multiplier), legalReview: Math.round(3500 * multiplier), hrTools: Math.round(2100 * multiplier) },
     ];
     return baseData;
 };
@@ -127,20 +127,21 @@ const COLORS = {
     execution: '#22C55E',    // Green
 };
 
-// Workflow Colors
-const WORKFLOW_COLORS = {
-    auditCompliance: '#22C55E',   // Green
-    expenseApproval: '#3B82F6',   // Blue
-    invoiceProcessing: '#A855F7', // Purple
+// Workspace Colors
+const WORKSPACE_COLORS = {
+    financeAutomation: '#22C55E',   // Green
+    customerSupport: '#3B82F6',     // Blue
+    legalReview: '#A855F7',         // Purple
+    hrTools: '#F59E0B',             // Amber
 };
 
 export default function ReportsPage() {
     const [filter, setFilter] = useState<FilterPeriod>('last30d');
-    const [chartView, setChartView] = useState<'ceed' | 'workflow'>('ceed');
+    const [chartView, setChartView] = useState<'ceed' | 'workspace'>('ceed');
     
     const metricData = getMetricData(filter);
     const ceedTrendData = getCEEDTrendData(filter);
-    const workflowTrendData = getWorkflowTrendData(filter);
+    const workspaceTrendData = getWorkspaceTrendData(filter);
     const monthlySummaryData = getMonthlySummaryData(filter);
 
     const filterOptions: { value: FilterPeriod; label: string }[] = [
@@ -267,14 +268,14 @@ export default function ReportsPage() {
                             By CEED Layer
                         </button>
                         <button
-                            onClick={() => setChartView('workflow')}
+                            onClick={() => setChartView('workspace')}
                             className={`px-4 py-2 text-sm font-medium transition-colors ${
-                                chartView === 'workflow'
+                                chartView === 'workspace'
                                     ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                                     : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400'
                             }`}
                         >
-                            By Workflow
+                            By Workspace
                         </button>
                     </div>
                 </div>
@@ -310,28 +311,33 @@ export default function ReportsPage() {
                             <Area type="monotone" dataKey="execution" stackId="1" stroke={COLORS.dataFlow} fill="url(#colorExecution)" name="Execution" />
                         </AreaChart>
                     ) : (
-                        <AreaChart data={workflowTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <AreaChart data={workspaceTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <defs>
-                                <linearGradient id="colorAudit" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={WORKFLOW_COLORS.auditCompliance} stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor={WORKFLOW_COLORS.auditCompliance} stopOpacity={0.05} />
+                                <linearGradient id="colorFinance" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={WORKSPACE_COLORS.financeAutomation} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={WORKSPACE_COLORS.financeAutomation} stopOpacity={0.05} />
                                 </linearGradient>
-                                <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={WORKFLOW_COLORS.expenseApproval} stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor={WORKFLOW_COLORS.expenseApproval} stopOpacity={0.05} />
+                                <linearGradient id="colorCustomer" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={WORKSPACE_COLORS.customerSupport} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={WORKSPACE_COLORS.customerSupport} stopOpacity={0.05} />
                                 </linearGradient>
-                                <linearGradient id="colorInvoice" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={WORKFLOW_COLORS.invoiceProcessing} stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor={WORKFLOW_COLORS.invoiceProcessing} stopOpacity={0.05} />
+                                <linearGradient id="colorLegal" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={WORKSPACE_COLORS.legalReview} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={WORKSPACE_COLORS.legalReview} stopOpacity={0.05} />
+                                </linearGradient>
+                                <linearGradient id="colorHR" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={WORKSPACE_COLORS.hrTools} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={WORKSPACE_COLORS.hrTools} stopOpacity={0.05} />
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="day" />
                             <YAxis tickFormatter={(value) => value.toLocaleString()} />
                             <Tooltip formatter={(value: number) => value.toLocaleString()} />
-                            <Area type="monotone" dataKey="auditCompliance" stackId="1" stroke={WORKFLOW_COLORS.auditCompliance} fill="url(#colorAudit)" name="Audit Compliance" />
-                            <Area type="monotone" dataKey="expenseApproval" stackId="1" stroke={WORKFLOW_COLORS.expenseApproval} fill="url(#colorExpense)" name="Expense Approval" />
-                            <Area type="monotone" dataKey="invoiceProcessing" stackId="1" stroke={WORKFLOW_COLORS.invoiceProcessing} fill="url(#colorInvoice)" name="Invoice Processing" />
+                            <Area type="monotone" dataKey="financeAutomation" stackId="1" stroke={WORKSPACE_COLORS.financeAutomation} fill="url(#colorFinance)" name="Finance Automation" />
+                            <Area type="monotone" dataKey="customerSupport" stackId="1" stroke={WORKSPACE_COLORS.customerSupport} fill="url(#colorCustomer)" name="Customer Support" />
+                            <Area type="monotone" dataKey="legalReview" stackId="1" stroke={WORKSPACE_COLORS.legalReview} fill="url(#colorLegal)" name="Legal Review" />
+                            <Area type="monotone" dataKey="hrTools" stackId="1" stroke={WORKSPACE_COLORS.hrTools} fill="url(#colorHR)" name="HR Tools" />
                         </AreaChart>
                     )}
                 </ResponsiveContainer>
@@ -360,16 +366,20 @@ export default function ReportsPage() {
                     ) : (
                         <>
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKFLOW_COLORS.auditCompliance }} />
-                                <span className="text-xs text-gray-600 dark:text-gray-400">Audit Compliance</span>
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKSPACE_COLORS.financeAutomation }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Finance Automation</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKFLOW_COLORS.expenseApproval }} />
-                                <span className="text-xs text-gray-600 dark:text-gray-400">Expense Approval</span>
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKSPACE_COLORS.customerSupport }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Customer Support</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKFLOW_COLORS.invoiceProcessing }} />
-                                <span className="text-xs text-gray-600 dark:text-gray-400">Invoice Processing</span>
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKSPACE_COLORS.legalReview }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Legal Review</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKSPACE_COLORS.hrTools }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">HR Tools</span>
                             </div>
                         </>
                     )}
