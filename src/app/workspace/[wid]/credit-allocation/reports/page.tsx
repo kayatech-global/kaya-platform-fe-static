@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Download, FileText, ChevronDown, ChevronRight, Wallet, TrendingUp } from 'lucide-react';
+import { Download, FileText, ChevronDown, Wallet, TrendingUp } from 'lucide-react';
 import { Button } from '@/components';
 import { Card } from '@/components/atoms/card';
 import {
@@ -20,10 +20,10 @@ type FilterPeriod = 'last24h' | 'last7d' | 'last30d' | 'last7m';
 // Mock data for metric cards based on filter
 const getMetricData = (filter: FilterPeriod) => {
     const data = {
-        'last24h': { available: 995000, consumed: 5000 },
-        'last7d': { available: 965000, consumed: 35000 },
-        'last30d': { available: 850000, consumed: 150000 },
-        'last7m': { available: 500000, consumed: 500000 },
+        'last24h': { available: 495000, consumed: 5000 },
+        'last7d': { available: 465000, consumed: 35000 },
+        'last30d': { available: 350000, consumed: 150000 },
+        'last7m': { available: 200000, consumed: 300000 },
     };
     return data[filter];
 };
@@ -38,19 +38,19 @@ const getCEEDTrendData = (filter: FilterPeriod) => {
     }[filter];
 
     const baseData = [
-        { day: 'Mon', capability: Math.round(5500 * multiplier), data: Math.round(3500 * multiplier), entity: Math.round(7500 * multiplier), execution: Math.round(1200 * multiplier) },
-        { day: 'Tue', capability: Math.round(6000 * multiplier), data: Math.round(4000 * multiplier), entity: Math.round(8000 * multiplier), execution: Math.round(1500 * multiplier) },
-        { day: 'Wed', capability: Math.round(7200 * multiplier), data: Math.round(5500 * multiplier), entity: Math.round(9500 * multiplier), execution: Math.round(2500 * multiplier) },
-        { day: 'Thu', capability: Math.round(6500 * multiplier), data: Math.round(4800 * multiplier), entity: Math.round(8800 * multiplier), execution: Math.round(2000 * multiplier) },
-        { day: 'Fri', capability: Math.round(5800 * multiplier), data: Math.round(4200 * multiplier), entity: Math.round(8200 * multiplier), execution: Math.round(1800 * multiplier) },
-        { day: 'Sat', capability: Math.round(6200 * multiplier), data: Math.round(4500 * multiplier), entity: Math.round(8500 * multiplier), execution: Math.round(2200 * multiplier) },
-        { day: 'Sun', capability: Math.round(6800 * multiplier), data: Math.round(5000 * multiplier), entity: Math.round(9000 * multiplier), execution: Math.round(2400 * multiplier) },
+        { day: 'Mon', capability: Math.round(2500 * multiplier), data: Math.round(1500 * multiplier), entity: Math.round(3500 * multiplier), execution: Math.round(800 * multiplier) },
+        { day: 'Tue', capability: Math.round(3000 * multiplier), data: Math.round(2000 * multiplier), entity: Math.round(4000 * multiplier), execution: Math.round(1000 * multiplier) },
+        { day: 'Wed', capability: Math.round(4200 * multiplier), data: Math.round(3500 * multiplier), entity: Math.round(5500 * multiplier), execution: Math.round(1500 * multiplier) },
+        { day: 'Thu', capability: Math.round(3500 * multiplier), data: Math.round(2800 * multiplier), entity: Math.round(4800 * multiplier), execution: Math.round(1200 * multiplier) },
+        { day: 'Fri', capability: Math.round(2800 * multiplier), data: Math.round(2200 * multiplier), entity: Math.round(4200 * multiplier), execution: Math.round(1000 * multiplier) },
+        { day: 'Sat', capability: Math.round(3200 * multiplier), data: Math.round(2500 * multiplier), entity: Math.round(4500 * multiplier), execution: Math.round(1300 * multiplier) },
+        { day: 'Sun', capability: Math.round(3800 * multiplier), data: Math.round(3000 * multiplier), entity: Math.round(5000 * multiplier), execution: Math.round(1400 * multiplier) },
     ];
     return baseData;
 };
 
-// Mock data for Consumption Trend - By Workspace
-const getWorkspaceTrendData = (filter: FilterPeriod) => {
+// Mock data for Consumption Trend - By Workflow
+const getWorkflowTrendData = (filter: FilterPeriod) => {
     const multiplier = {
         'last24h': 0.15,
         'last7d': 0.5,
@@ -59,18 +59,18 @@ const getWorkspaceTrendData = (filter: FilterPeriod) => {
     }[filter];
 
     const baseData = [
-        { day: 'Mon', financeAutomation: Math.round(7500 * multiplier), customerSupport: Math.round(5500 * multiplier), legalReview: Math.round(2800 * multiplier), hrTools: Math.round(1500 * multiplier) },
-        { day: 'Tue', financeAutomation: Math.round(8500 * multiplier), customerSupport: Math.round(6500 * multiplier), legalReview: Math.round(3200 * multiplier), hrTools: Math.round(1800 * multiplier) },
-        { day: 'Wed', financeAutomation: Math.round(13000 * multiplier), customerSupport: Math.round(8000 * multiplier), legalReview: Math.round(4000 * multiplier), hrTools: Math.round(2200 * multiplier) },
-        { day: 'Thu', financeAutomation: Math.round(9500 * multiplier), customerSupport: Math.round(7000 * multiplier), legalReview: Math.round(3500 * multiplier), hrTools: Math.round(2000 * multiplier) },
-        { day: 'Fri', financeAutomation: Math.round(8000 * multiplier), customerSupport: Math.round(6000 * multiplier), legalReview: Math.round(3000 * multiplier), hrTools: Math.round(1700 * multiplier) },
-        { day: 'Sat', financeAutomation: Math.round(9000 * multiplier), customerSupport: Math.round(6500 * multiplier), legalReview: Math.round(3200 * multiplier), hrTools: Math.round(1900 * multiplier) },
-        { day: 'Sun', financeAutomation: Math.round(10000 * multiplier), customerSupport: Math.round(7500 * multiplier), legalReview: Math.round(3500 * multiplier), hrTools: Math.round(2100 * multiplier) },
+        { day: 'Mon', claimsProcessing: Math.round(3500 * multiplier), customerSupport: Math.round(2500 * multiplier), invoiceProcessing: Math.round(1800 * multiplier), dataValidation: Math.round(1200 * multiplier) },
+        { day: 'Tue', claimsProcessing: Math.round(4500 * multiplier), customerSupport: Math.round(3500 * multiplier), invoiceProcessing: Math.round(2200 * multiplier), dataValidation: Math.round(1500 * multiplier) },
+        { day: 'Wed', claimsProcessing: Math.round(6000 * multiplier), customerSupport: Math.round(4500 * multiplier), invoiceProcessing: Math.round(3000 * multiplier), dataValidation: Math.round(2000 * multiplier) },
+        { day: 'Thu', claimsProcessing: Math.round(4800 * multiplier), customerSupport: Math.round(3800 * multiplier), invoiceProcessing: Math.round(2500 * multiplier), dataValidation: Math.round(1800 * multiplier) },
+        { day: 'Fri', claimsProcessing: Math.round(4000 * multiplier), customerSupport: Math.round(3200 * multiplier), invoiceProcessing: Math.round(2200 * multiplier), dataValidation: Math.round(1500 * multiplier) },
+        { day: 'Sat', claimsProcessing: Math.round(4500 * multiplier), customerSupport: Math.round(3500 * multiplier), invoiceProcessing: Math.round(2400 * multiplier), dataValidation: Math.round(1700 * multiplier) },
+        { day: 'Sun', claimsProcessing: Math.round(5200 * multiplier), customerSupport: Math.round(4000 * multiplier), invoiceProcessing: Math.round(2800 * multiplier), dataValidation: Math.round(1900 * multiplier) },
     ];
     return baseData;
 };
 
-// Mock data for Monthly Summary
+// Mock data for Monthly Summary (by Workflow)
 const getMonthlySummaryData = (filter: FilterPeriod) => {
     const multiplier = {
         'last24h': 0.03,
@@ -82,39 +82,39 @@ const getMonthlySummaryData = (filter: FilterPeriod) => {
     return [
         {
             id: 1,
-            workspaceName: 'Finance Automation',
-            capability: Math.round(85000 * multiplier),
-            entity: Math.round(105000 * multiplier),
-            execution: Math.round(110000 * multiplier),
-            data: Math.round(65000 * multiplier),
-            totalCredits: Math.round(365000 * multiplier),
-        },
-        {
-            id: 2,
-            workspaceName: 'Customer Support Bot',
-            capability: Math.round(150000 * multiplier),
-            entity: Math.round(180000 * multiplier),
-            execution: Math.round(210000 * multiplier),
-            data: Math.round(120000 * multiplier),
-            totalCredits: Math.round(660000 * multiplier),
-        },
-        {
-            id: 3,
-            workspaceName: 'Legal Document Review',
-            capability: Math.round(40000 * multiplier),
+            workflowName: 'Claims Processing Workflow',
+            capability: Math.round(45000 * multiplier),
             entity: Math.round(55000 * multiplier),
-            execution: Math.round(65000 * multiplier),
+            execution: Math.round(60000 * multiplier),
             data: Math.round(35000 * multiplier),
             totalCredits: Math.round(195000 * multiplier),
         },
         {
-            id: 4,
-            workspaceName: 'Internal HR Tools',
+            id: 2,
+            workflowName: 'Customer Support Bot',
+            capability: Math.round(35000 * multiplier),
+            entity: Math.round(42000 * multiplier),
+            execution: Math.round(48000 * multiplier),
+            data: Math.round(28000 * multiplier),
+            totalCredits: Math.round(153000 * multiplier),
+        },
+        {
+            id: 3,
+            workflowName: 'Invoice Processing',
             capability: Math.round(25000 * multiplier),
-            entity: Math.round(35000 * multiplier),
-            execution: Math.round(45000 * multiplier),
-            data: Math.round(20000 * multiplier),
-            totalCredits: Math.round(125000 * multiplier),
+            entity: Math.round(32000 * multiplier),
+            execution: Math.round(38000 * multiplier),
+            data: Math.round(22000 * multiplier),
+            totalCredits: Math.round(117000 * multiplier),
+        },
+        {
+            id: 4,
+            workflowName: 'Data Validation Pipeline',
+            capability: Math.round(18000 * multiplier),
+            entity: Math.round(24000 * multiplier),
+            execution: Math.round(28000 * multiplier),
+            data: Math.round(16000 * multiplier),
+            totalCredits: Math.round(86000 * multiplier),
         },
     ];
 };
@@ -127,21 +127,21 @@ const COLORS = {
     execution: '#22C55E',    // Green
 };
 
-// Workspace Colors
-const WORKSPACE_COLORS = {
-    financeAutomation: '#22C55E',   // Green
+// Workflow Colors
+const WORKFLOW_COLORS = {
+    claimsProcessing: '#22C55E',   // Green
     customerSupport: '#3B82F6',     // Blue
-    legalReview: '#A855F7',         // Purple
-    hrTools: '#F59E0B',             // Amber
+    invoiceProcessing: '#A855F7',   // Purple
+    dataValidation: '#F59E0B',      // Amber
 };
 
-export default function ReportsPage() {
+export default function WorkspaceReportsPage() {
     const [filter, setFilter] = useState<FilterPeriod>('last30d');
-    const [chartView, setChartView] = useState<'ceed' | 'workspace'>('ceed');
+    const [chartView, setChartView] = useState<'ceed' | 'workflow'>('ceed');
     
     const metricData = getMetricData(filter);
     const ceedTrendData = getCEEDTrendData(filter);
-    const workspaceTrendData = getWorkspaceTrendData(filter);
+    const workflowTrendData = getWorkflowTrendData(filter);
     const monthlySummaryData = getMonthlySummaryData(filter);
 
     const filterOptions: { value: FilterPeriod; label: string }[] = [
@@ -152,10 +152,9 @@ export default function ReportsPage() {
     ];
 
     const handleExportCSV = () => {
-        // CSV export logic
-        const headers = ['Workspace Name', 'Capability', 'Entity', 'Execution', 'Data', 'Total Credits'];
+        const headers = ['Workflow Name', 'Capability', 'Entity', 'Execution', 'Data', 'Total Credits'];
         const rows = monthlySummaryData.map(row => [
-            row.workspaceName,
+            row.workflowName,
             row.capability,
             row.entity,
             row.execution,
@@ -167,12 +166,11 @@ export default function ReportsPage() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `reports-${filter}.csv`;
+        a.download = `workspace-reports-${filter}.csv`;
         a.click();
     };
 
     const handleExportPDF = () => {
-        // In a real implementation, this would use a PDF library
         window.print();
     };
 
@@ -209,8 +207,6 @@ export default function ReportsPage() {
                 </div>
             </div>
 
-
-
             {/* Metric Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Available Credits Card */}
@@ -246,7 +242,7 @@ export default function ReportsPage() {
                 </Card>
             </div>
 
-            {/* Total Consumption Trend Chart with Tabs */}
+            {/* Consumption Trend Chart with Tabs */}
             <Card className="p-6 bg-white dark:bg-gray-800">
                 <div className="flex items-center justify-between mb-4">
                     <div>
@@ -268,14 +264,14 @@ export default function ReportsPage() {
                             By CEED Layer
                         </button>
                         <button
-                            onClick={() => setChartView('workspace')}
+                            onClick={() => setChartView('workflow')}
                             className={`px-4 py-2 text-sm font-medium transition-colors ${
-                                chartView === 'workspace'
+                                chartView === 'workflow'
                                     ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                                     : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400'
                             }`}
                         >
-                            By Workspace
+                            By Workflow
                         </button>
                     </div>
                 </div>
@@ -284,19 +280,19 @@ export default function ReportsPage() {
                     {chartView === 'ceed' ? (
                         <AreaChart data={ceedTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <defs>
-                                <linearGradient id="colorCapability" x1="0" y1="0" x2="0" y2="1">
+                                <linearGradient id="colorCapabilityWs" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor={COLORS.capabilities} stopOpacity={0.3} />
                                     <stop offset="95%" stopColor={COLORS.capabilities} stopOpacity={0.05} />
                                 </linearGradient>
-                                <linearGradient id="colorData" x1="0" y1="0" x2="0" y2="1">
+                                <linearGradient id="colorDataWs" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor={COLORS.execution} stopOpacity={0.3} />
                                     <stop offset="95%" stopColor={COLORS.execution} stopOpacity={0.05} />
                                 </linearGradient>
-                                <linearGradient id="colorEntity" x1="0" y1="0" x2="0" y2="1">
+                                <linearGradient id="colorEntityWs" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor={COLORS.entity} stopOpacity={0.3} />
                                     <stop offset="95%" stopColor={COLORS.entity} stopOpacity={0.05} />
                                 </linearGradient>
-                                <linearGradient id="colorExecution" x1="0" y1="0" x2="0" y2="1">
+                                <linearGradient id="colorExecutionWs" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor={COLORS.dataFlow} stopOpacity={0.3} />
                                     <stop offset="95%" stopColor={COLORS.dataFlow} stopOpacity={0.05} />
                                 </linearGradient>
@@ -305,39 +301,39 @@ export default function ReportsPage() {
                             <XAxis dataKey="day" />
                             <YAxis tickFormatter={(value) => value.toLocaleString()} />
                             <Tooltip formatter={(value: number) => value.toLocaleString()} />
-                            <Area type="monotone" dataKey="capability" stackId="1" stroke={COLORS.capabilities} fill="url(#colorCapability)" name="Capability" />
-                            <Area type="monotone" dataKey="data" stackId="1" stroke={COLORS.execution} fill="url(#colorData)" name="Data" />
-                            <Area type="monotone" dataKey="entity" stackId="1" stroke={COLORS.entity} fill="url(#colorEntity)" name="Entity" />
-                            <Area type="monotone" dataKey="execution" stackId="1" stroke={COLORS.dataFlow} fill="url(#colorExecution)" name="Execution" />
+                            <Area type="monotone" dataKey="capability" stackId="1" stroke={COLORS.capabilities} fill="url(#colorCapabilityWs)" name="Capability" />
+                            <Area type="monotone" dataKey="data" stackId="1" stroke={COLORS.execution} fill="url(#colorDataWs)" name="Data" />
+                            <Area type="monotone" dataKey="entity" stackId="1" stroke={COLORS.entity} fill="url(#colorEntityWs)" name="Entity" />
+                            <Area type="monotone" dataKey="execution" stackId="1" stroke={COLORS.dataFlow} fill="url(#colorExecutionWs)" name="Execution" />
                         </AreaChart>
                     ) : (
-                        <AreaChart data={workspaceTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <AreaChart data={workflowTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <defs>
-                                <linearGradient id="colorFinance" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={WORKSPACE_COLORS.financeAutomation} stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor={WORKSPACE_COLORS.financeAutomation} stopOpacity={0.05} />
+                                <linearGradient id="colorClaimsWs" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={WORKFLOW_COLORS.claimsProcessing} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={WORKFLOW_COLORS.claimsProcessing} stopOpacity={0.05} />
                                 </linearGradient>
-                                <linearGradient id="colorCustomer" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={WORKSPACE_COLORS.customerSupport} stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor={WORKSPACE_COLORS.customerSupport} stopOpacity={0.05} />
+                                <linearGradient id="colorCustomerWs" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={WORKFLOW_COLORS.customerSupport} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={WORKFLOW_COLORS.customerSupport} stopOpacity={0.05} />
                                 </linearGradient>
-                                <linearGradient id="colorLegal" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={WORKSPACE_COLORS.legalReview} stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor={WORKSPACE_COLORS.legalReview} stopOpacity={0.05} />
+                                <linearGradient id="colorInvoiceWs" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={WORKFLOW_COLORS.invoiceProcessing} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={WORKFLOW_COLORS.invoiceProcessing} stopOpacity={0.05} />
                                 </linearGradient>
-                                <linearGradient id="colorHR" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={WORKSPACE_COLORS.hrTools} stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor={WORKSPACE_COLORS.hrTools} stopOpacity={0.05} />
+                                <linearGradient id="colorValidationWs" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={WORKFLOW_COLORS.dataValidation} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={WORKFLOW_COLORS.dataValidation} stopOpacity={0.05} />
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="day" />
                             <YAxis tickFormatter={(value) => value.toLocaleString()} />
                             <Tooltip formatter={(value: number) => value.toLocaleString()} />
-                            <Area type="monotone" dataKey="financeAutomation" stackId="1" stroke={WORKSPACE_COLORS.financeAutomation} fill="url(#colorFinance)" name="Finance Automation" />
-                            <Area type="monotone" dataKey="customerSupport" stackId="1" stroke={WORKSPACE_COLORS.customerSupport} fill="url(#colorCustomer)" name="Customer Support" />
-                            <Area type="monotone" dataKey="legalReview" stackId="1" stroke={WORKSPACE_COLORS.legalReview} fill="url(#colorLegal)" name="Legal Review" />
-                            <Area type="monotone" dataKey="hrTools" stackId="1" stroke={WORKSPACE_COLORS.hrTools} fill="url(#colorHR)" name="HR Tools" />
+                            <Area type="monotone" dataKey="claimsProcessing" stackId="1" stroke={WORKFLOW_COLORS.claimsProcessing} fill="url(#colorClaimsWs)" name="Claims Processing" />
+                            <Area type="monotone" dataKey="customerSupport" stackId="1" stroke={WORKFLOW_COLORS.customerSupport} fill="url(#colorCustomerWs)" name="Customer Support" />
+                            <Area type="monotone" dataKey="invoiceProcessing" stackId="1" stroke={WORKFLOW_COLORS.invoiceProcessing} fill="url(#colorInvoiceWs)" name="Invoice Processing" />
+                            <Area type="monotone" dataKey="dataValidation" stackId="1" stroke={WORKFLOW_COLORS.dataValidation} fill="url(#colorValidationWs)" name="Data Validation" />
                         </AreaChart>
                     )}
                 </ResponsiveContainer>
@@ -366,20 +362,20 @@ export default function ReportsPage() {
                     ) : (
                         <>
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKSPACE_COLORS.financeAutomation }} />
-                                <span className="text-xs text-gray-600 dark:text-gray-400">Finance Automation</span>
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKFLOW_COLORS.claimsProcessing }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Claims Processing</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKSPACE_COLORS.customerSupport }} />
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKFLOW_COLORS.customerSupport }} />
                                 <span className="text-xs text-gray-600 dark:text-gray-400">Customer Support</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKSPACE_COLORS.legalReview }} />
-                                <span className="text-xs text-gray-600 dark:text-gray-400">Legal Review</span>
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKFLOW_COLORS.invoiceProcessing }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Invoice Processing</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKSPACE_COLORS.hrTools }} />
-                                <span className="text-xs text-gray-600 dark:text-gray-400">HR Tools</span>
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKFLOW_COLORS.dataValidation }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Data Validation</span>
                             </div>
                         </>
                     )}
@@ -392,44 +388,78 @@ export default function ReportsPage() {
                     Monthly Summary
                 </h2>
                 <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-gray-200 dark:border-gray-700">
-                                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Workspace Name</th>
-                                <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Capability</th>
-                                <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Entity</th>
-                                <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Execution</th>
-                                <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Data</th>
-                                <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Total Credits</th>
+                                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                    Workflow Name
+                                </th>
+                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                    Capability
+                                </th>
+                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                    Entity
+                                </th>
+                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                    Execution
+                                </th>
+                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                    Data
+                                </th>
+                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                    Total Credits
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             {monthlySummaryData.map((row) => (
                                 <tr
                                     key={row.id}
-                                    className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                    className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30"
                                 >
-                                    <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {row.workspaceName}
+                                    <td className="py-3 px-4 text-gray-900 dark:text-gray-100 font-medium">
+                                        {row.workflowName}
                                     </td>
-                                    <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">
+                                    <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
                                         {row.capability.toLocaleString()}
                                     </td>
-                                    <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">
+                                    <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
                                         {row.entity.toLocaleString()}
                                     </td>
-                                    <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">
+                                    <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
                                         {row.execution.toLocaleString()}
                                     </td>
-                                    <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">
+                                    <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
                                         {row.data.toLocaleString()}
                                     </td>
-                                    <td className="py-3 px-4 text-sm text-right font-semibold text-purple-600">
+                                    <td className="py-3 px-4 text-right font-semibold text-gray-900 dark:text-gray-100">
                                         {row.totalCredits.toLocaleString()}
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
+                        <tfoot>
+                            <tr className="bg-gray-50 dark:bg-gray-700/50">
+                                <td className="py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
+                                    Total
+                                </td>
+                                <td className="py-3 px-4 text-right font-semibold text-gray-900 dark:text-gray-100">
+                                    {monthlySummaryData.reduce((sum, row) => sum + row.capability, 0).toLocaleString()}
+                                </td>
+                                <td className="py-3 px-4 text-right font-semibold text-gray-900 dark:text-gray-100">
+                                    {monthlySummaryData.reduce((sum, row) => sum + row.entity, 0).toLocaleString()}
+                                </td>
+                                <td className="py-3 px-4 text-right font-semibold text-gray-900 dark:text-gray-100">
+                                    {monthlySummaryData.reduce((sum, row) => sum + row.execution, 0).toLocaleString()}
+                                </td>
+                                <td className="py-3 px-4 text-right font-semibold text-gray-900 dark:text-gray-100">
+                                    {monthlySummaryData.reduce((sum, row) => sum + row.data, 0).toLocaleString()}
+                                </td>
+                                <td className="py-3 px-4 text-right font-bold text-blue-600 dark:text-blue-400">
+                                    {monthlySummaryData.reduce((sum, row) => sum + row.totalCredits, 0).toLocaleString()}
+                                </td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </Card>

@@ -324,9 +324,9 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
             isSingleLink: true,
         },
         {
-            id: 'workspace-reports',
-            title: 'Workspace Reports',
-            url: '/workspace/[wid]/credit-allocation/workspace-reports',
+            id: 'credit-reports',
+            title: 'Reports',
+            url: '/workspace/[wid]/credit-allocation/reports',
             icon: 'FileBarChart',
             isSingleLink: true,
         },
