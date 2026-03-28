@@ -5,8 +5,6 @@ import { Download, FileText, ChevronDown, ChevronRight, Wallet, TrendingUp } fro
 import { Button } from '@/components';
 import { Card } from '@/components/atoms/card';
 import {
-    BarChart,
-    Bar,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -57,25 +55,6 @@ const getWorkflowTrendData = (filter: FilterPeriod) => {
     ];
     return baseData;
 };
-
-// Mock data for Consumption by Workspace (horizontal bar chart)
-const workspaceConsumptionData = [
-    { name: 'Finance Automation', capabilities: 45000, dataFlow: 80000, entity: 120000, execution: 75000 },
-    { name: 'Customer Support Bot', capabilities: 60000, dataFlow: 95000, entity: 100000, execution: 65000 },
-    { name: 'Legal Document Review', capabilities: 15000, dataFlow: 25000, entity: 35000, execution: 20000 },
-    { name: 'Internal HR Tools', capabilities: 20000, dataFlow: 30000, entity: 25000, execution: 15000 },
-];
-
-// Mock data for Daily Consumption Trends (vertical bar chart)
-const dailyConsumptionData = [
-    { day: 'Mon', capabilities: 3000, dataFlow: 1500, entity: 4500, execution: 800 },
-    { day: 'Tue', capabilities: 3500, dataFlow: 2000, entity: 5000, execution: 1000 },
-    { day: 'Wed', capabilities: 4000, dataFlow: 2200, entity: 5500, execution: 1200 },
-    { day: 'Thu', capabilities: 4500, dataFlow: 2500, entity: 6000, execution: 1400 },
-    { day: 'Fri', capabilities: 5000, dataFlow: 2800, entity: 6500, execution: 1600 },
-    { day: 'Sat', capabilities: 4200, dataFlow: 2400, entity: 5800, execution: 1300 },
-    { day: 'Sun', capabilities: 3800, dataFlow: 2100, entity: 5200, execution: 1100 },
-];
 
 // Mock data for Monthly Summary
 const getMonthlySummaryData = (filter: FilterPeriod) => {
@@ -181,13 +160,20 @@ export default function ReportsPage() {
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
                 <div className="flex items-center gap-3">
-                    {/* Environment Dropdown */}
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <span>Environment:</span>
-                        <button className="flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
-                            All Environments
-                            <ChevronDown className="h-4 w-4" />
-                        </button>
+                    {/* Filter Dropdown */}
+                    <div className="relative">
+                        <select
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value as FilterPeriod)}
+                            className="appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 pr-10 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                        >
+                            {filterOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                     </div>
                     {/* Export Buttons */}
                     <Button variant="secondary" size="sm" className="flex items-center gap-2" onClick={handleExportCSV}>
@@ -201,22 +187,7 @@ export default function ReportsPage() {
                 </div>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-2">
-                {filterOptions.map((option) => (
-                    <button
-                        key={option.value}
-                        onClick={() => setFilter(option.value)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                            filter === option.value
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                        }`}
-                    >
-                        {option.label}
-                    </button>
-                ))}
-            </div>
+
 
             {/* Metric Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -248,92 +219,6 @@ export default function ReportsPage() {
                         </div>
                         <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/30">
                             <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                        </div>
-                    </div>
-                </Card>
-            </div>
-
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Consumption by Workspace (CEED Breakdown) - Horizontal Bar Chart */}
-                <Card className="p-6 bg-white dark:bg-gray-800">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                        Consumption by Workspace (CEED Breakdown)
-                    </h2>
-                    <ResponsiveContainer width="100%" height={280}>
-                        <BarChart
-                            layout="vertical"
-                            data={workspaceConsumptionData}
-                            margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                            <XAxis type="number" tickFormatter={(value) => value.toLocaleString()} />
-                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12 }} />
-                            <Tooltip formatter={(value: number) => value.toLocaleString()} />
-                            <Bar dataKey="capabilities" stackId="a" fill={COLORS.capabilities} name="Capabilities" />
-                            <Bar dataKey="dataFlow" stackId="a" fill={COLORS.dataFlow} name="Data Flow" />
-                            <Bar dataKey="entity" stackId="a" fill={COLORS.entity} name="Entity" />
-                            <Bar dataKey="execution" stackId="a" fill={COLORS.execution} name="Execution" />
-                        </BarChart>
-                    </ResponsiveContainer>
-                    {/* Legend */}
-                    <div className="flex items-center justify-center gap-6 mt-4">
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS.capabilities }} />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">Capabilities</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS.dataFlow }} />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">Data Flow</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS.entity }} />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">Entity</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS.execution }} />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">Execution</span>
-                        </div>
-                    </div>
-                </Card>
-
-                {/* Daily Consumption Trends (CEED) - Vertical Stacked Bar Chart */}
-                <Card className="p-6 bg-white dark:bg-gray-800">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                        Daily Consumption Trends (CEED)
-                    </h2>
-                    <ResponsiveContainer width="100%" height={280}>
-                        <BarChart
-                            data={dailyConsumptionData}
-                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="day" />
-                            <YAxis tickFormatter={(value) => value.toLocaleString()} />
-                            <Tooltip formatter={(value: number) => value.toLocaleString()} />
-                            <Bar dataKey="capabilities" stackId="a" fill={COLORS.capabilities} name="Capabilities" />
-                            <Bar dataKey="dataFlow" stackId="a" fill={COLORS.dataFlow} name="Data Flow" />
-                            <Bar dataKey="entity" stackId="a" fill={COLORS.entity} name="Entity" />
-                            <Bar dataKey="execution" stackId="a" fill={COLORS.execution} name="Execution" />
-                        </BarChart>
-                    </ResponsiveContainer>
-                    {/* Legend */}
-                    <div className="flex items-center justify-center gap-6 mt-4">
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS.capabilities }} />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">Capabilities</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS.dataFlow }} />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">Data Flow</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS.entity }} />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">Entity</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS.execution }} />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">Execution</span>
                         </div>
                     </div>
                 </Card>
