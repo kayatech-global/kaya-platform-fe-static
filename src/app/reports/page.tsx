@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Download, FileText, ChevronDown, ChevronRight } from 'lucide-react';
+import { Download, FileText, ChevronDown, ChevronRight, Wallet, TrendingUp } from 'lucide-react';
 import { Button } from '@/components';
+import { Card } from '@/components/atoms/card';
 import {
     BarChart,
     Bar,
@@ -10,9 +11,52 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    Legend,
     ResponsiveContainer,
+    AreaChart,
+    Area,
 } from 'recharts';
+
+// Filter options
+type FilterPeriod = 'last24h' | 'last7d' | 'last30d' | 'last7m';
+
+// Mock data for metric cards based on filter
+const getMetricData = (filter: FilterPeriod) => {
+    const data = {
+        'last24h': { available: 995000, consumed: 5000 },
+        'last7d': { available: 965000, consumed: 35000 },
+        'last30d': { available: 850000, consumed: 150000 },
+        'last7m': { available: 500000, consumed: 500000 },
+    };
+    return data[filter];
+};
+
+// Mock data for Consumption Trend - By CEED Layer
+const getCEEDTrendData = (filter: FilterPeriod) => {
+    const baseData = [
+        { day: 'Mon', capability: 5500, data: 3500, entity: 7500, execution: 1200 },
+        { day: 'Tue', capability: 6000, data: 4000, entity: 8000, execution: 1500 },
+        { day: 'Wed', capability: 7200, data: 5500, entity: 9500, execution: 2500 },
+        { day: 'Thu', capability: 6500, data: 4800, entity: 8800, execution: 2000 },
+        { day: 'Fri', capability: 5800, data: 4200, entity: 8200, execution: 1800 },
+        { day: 'Sat', capability: 6200, data: 4500, entity: 8500, execution: 2200 },
+        { day: 'Sun', capability: 6800, data: 5000, entity: 9000, execution: 2400 },
+    ];
+    return baseData;
+};
+
+// Mock data for Consumption Trend - By Workflow
+const getWorkflowTrendData = (filter: FilterPeriod) => {
+    const baseData = [
+        { day: 'Mon', auditCompliance: 7500, expenseApproval: 5500, invoiceProcessing: 2800 },
+        { day: 'Tue', auditCompliance: 8500, expenseApproval: 6500, invoiceProcessing: 3200 },
+        { day: 'Wed', auditCompliance: 13000, expenseApproval: 8000, invoiceProcessing: 4000 },
+        { day: 'Thu', auditCompliance: 9500, expenseApproval: 7000, invoiceProcessing: 3500 },
+        { day: 'Fri', auditCompliance: 8000, expenseApproval: 6000, invoiceProcessing: 3000 },
+        { day: 'Sat', auditCompliance: 9000, expenseApproval: 6500, invoiceProcessing: 3200 },
+        { day: 'Sun', auditCompliance: 10000, expenseApproval: 7500, invoiceProcessing: 3500 },
+    ];
+    return baseData;
+};
 
 // Mock data for Consumption by Workspace (horizontal bar chart)
 const workspaceConsumptionData = [
@@ -24,63 +68,56 @@ const workspaceConsumptionData = [
 
 // Mock data for Daily Consumption Trends (vertical bar chart)
 const dailyConsumptionData = [
-    { day: 'Mon', capabilities: 800, dataFlow: 1200, entity: 1500, execution: 1000 },
-    { day: 'Tue', capabilities: 1000, dataFlow: 1400, entity: 1800, execution: 1200 },
-    { day: 'Wed', capabilities: 900, dataFlow: 1300, entity: 1600, execution: 1100 },
-    { day: 'Thu', capabilities: 1100, dataFlow: 1500, entity: 2000, execution: 1300 },
-    { day: 'Fri', capabilities: 1200, dataFlow: 1600, entity: 2200, execution: 1400 },
-    { day: 'Sat', capabilities: 600, dataFlow: 900, entity: 1100, execution: 700 },
-    { day: 'Sun', capabilities: 500, dataFlow: 800, entity: 1000, execution: 600 },
+    { day: 'Mon', capabilities: 3000, dataFlow: 1500, entity: 4500, execution: 800 },
+    { day: 'Tue', capabilities: 3500, dataFlow: 2000, entity: 5000, execution: 1000 },
+    { day: 'Wed', capabilities: 4000, dataFlow: 2200, entity: 5500, execution: 1200 },
+    { day: 'Thu', capabilities: 4500, dataFlow: 2500, entity: 6000, execution: 1400 },
+    { day: 'Fri', capabilities: 5000, dataFlow: 2800, entity: 6500, execution: 1600 },
+    { day: 'Sat', capabilities: 4200, dataFlow: 2400, entity: 5800, execution: 1300 },
+    { day: 'Sun', capabilities: 3800, dataFlow: 2100, entity: 5200, execution: 1100 },
 ];
 
 // Mock data for Monthly Summary
-const monthlySummaryData = [
-    {
-        id: 1,
-        month: 'February 2026 (MTD)',
-        entity: 105000,
-        capability: 85000,
-        execution: 110000,
-        data: 65000,
-        totalCredits: 365000,
-        rawIFT: '365M',
-        costEst: 1825.00,
-        entityIFT: 105000000,
-        capabilityIFT: 85000000,
-        executionIFT: 110000000,
-        dataIFT: 65000000,
-    },
-    {
-        id: 2,
-        month: 'January 2026',
-        entity: 180000,
-        capability: 150000,
-        execution: 210000,
-        data: 120000,
-        totalCredits: 660000,
-        rawIFT: '660M',
-        costEst: 3300.00,
-        entityIFT: 180000000,
-        capabilityIFT: 150000000,
-        executionIFT: 210000000,
-        dataIFT: 120000000,
-    },
-    {
-        id: 3,
-        month: 'December 2025',
-        entity: 165000,
-        capability: 140000,
-        execution: 195000,
-        data: 100000,
-        totalCredits: 600000,
-        rawIFT: '600M',
-        costEst: 3000.00,
-        entityIFT: 165000000,
-        capabilityIFT: 140000000,
-        executionIFT: 195000000,
-        dataIFT: 100000000,
-    },
-];
+const getMonthlySummaryData = (filter: FilterPeriod) => {
+    return [
+        {
+            id: 1,
+            workspaceName: 'Finance Automation',
+            capability: 85000,
+            entity: 105000,
+            execution: 110000,
+            data: 65000,
+            totalCredits: 365000,
+        },
+        {
+            id: 2,
+            workspaceName: 'Customer Support Bot',
+            capability: 150000,
+            entity: 180000,
+            execution: 210000,
+            data: 120000,
+            totalCredits: 660000,
+        },
+        {
+            id: 3,
+            workspaceName: 'Legal Document Review',
+            capability: 40000,
+            entity: 55000,
+            execution: 65000,
+            data: 35000,
+            totalCredits: 195000,
+        },
+        {
+            id: 4,
+            workspaceName: 'Internal HR Tools',
+            capability: 25000,
+            entity: 35000,
+            execution: 45000,
+            data: 20000,
+            totalCredits: 125000,
+        },
+    ];
+};
 
 // CEED Colors
 const COLORS = {
@@ -90,13 +127,52 @@ const COLORS = {
     execution: '#22C55E',    // Green
 };
 
-export default function ReportsPage() {
-    const [expandedRows, setExpandedRows] = useState<number[]>([1]); // First row expanded by default
+// Workflow Colors
+const WORKFLOW_COLORS = {
+    auditCompliance: '#22C55E',   // Green
+    expenseApproval: '#3B82F6',   // Blue
+    invoiceProcessing: '#A855F7', // Purple
+};
 
-    const toggleRow = (id: number) => {
-        setExpandedRows(prev => 
-            prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]
-        );
+export default function ReportsPage() {
+    const [filter, setFilter] = useState<FilterPeriod>('last30d');
+    const [chartView, setChartView] = useState<'ceed' | 'workflow'>('ceed');
+    
+    const metricData = getMetricData(filter);
+    const ceedTrendData = getCEEDTrendData(filter);
+    const workflowTrendData = getWorkflowTrendData(filter);
+    const monthlySummaryData = getMonthlySummaryData(filter);
+
+    const filterOptions: { value: FilterPeriod; label: string }[] = [
+        { value: 'last24h', label: 'Last 24 Hours' },
+        { value: 'last7d', label: 'Last 7 Days' },
+        { value: 'last30d', label: 'Last 30 Days' },
+        { value: 'last7m', label: 'Last 7 Months' },
+    ];
+
+    const handleExportCSV = () => {
+        // CSV export logic
+        const headers = ['Workspace Name', 'Capability', 'Entity', 'Execution', 'Data', 'Total Credits'];
+        const rows = monthlySummaryData.map(row => [
+            row.workspaceName,
+            row.capability,
+            row.entity,
+            row.execution,
+            row.data,
+            row.totalCredits
+        ]);
+        const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reports-${filter}.csv`;
+        a.click();
+    };
+
+    const handleExportPDF = () => {
+        // In a real implementation, this would use a PDF library
+        window.print();
     };
 
     return (
@@ -108,27 +184,79 @@ export default function ReportsPage() {
                     {/* Environment Dropdown */}
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                         <span>Environment:</span>
-                        <button className="flex items-center gap-1 text-gray-400">
+                        <button className="flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
                             All Environments
                             <ChevronDown className="h-4 w-4" />
                         </button>
                     </div>
                     {/* Export Buttons */}
-                    <Button variant="secondary" size="sm" className="flex items-center gap-2">
+                    <Button variant="secondary" size="sm" className="flex items-center gap-2" onClick={handleExportCSV}>
                         <Download className="h-4 w-4" />
                         Export CSV
                     </Button>
-                    <Button variant="secondary" size="sm" className="flex items-center gap-2">
+                    <Button variant="secondary" size="sm" className="flex items-center gap-2" onClick={handleExportPDF}>
                         <FileText className="h-4 w-4" />
                         Export PDF
                     </Button>
                 </div>
             </div>
 
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-2">
+                {filterOptions.map((option) => (
+                    <button
+                        key={option.value}
+                        onClick={() => setFilter(option.value)}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            filter === option.value
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                        }`}
+                    >
+                        {option.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Metric Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Available Credits Card */}
+                <Card className="p-6 bg-white dark:bg-gray-800">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Available Credits</p>
+                            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">
+                                {metricData.available.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">Remaining credits balance</p>
+                        </div>
+                        <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/30">
+                            <Wallet className="h-6 w-6 text-green-600 dark:text-green-400" />
+                        </div>
+                    </div>
+                </Card>
+
+                {/* Consumed Credits Card */}
+                <Card className="p-6 bg-white dark:bg-gray-800">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Consumed Credits</p>
+                            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">
+                                {metricData.consumed.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">Used to date</p>
+                        </div>
+                        <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                            <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                    </div>
+                </Card>
+            </div>
+
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Consumption by Workspace (CEED Breakdown) - Horizontal Bar Chart */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+                <Card className="p-6 bg-white dark:bg-gray-800">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                         Consumption by Workspace (CEED Breakdown)
                     </h2>
@@ -167,10 +295,10 @@ export default function ReportsPage() {
                             <span className="text-xs text-gray-600 dark:text-gray-400">Execution</span>
                         </div>
                     </div>
-                </div>
+                </Card>
 
                 {/* Daily Consumption Trends (CEED) - Vertical Stacked Bar Chart */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+                <Card className="p-6 bg-white dark:bg-gray-800">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                         Daily Consumption Trends (CEED)
                     </h2>
@@ -208,11 +336,142 @@ export default function ReportsPage() {
                             <span className="text-xs text-gray-600 dark:text-gray-400">Execution</span>
                         </div>
                     </div>
-                </div>
+                </Card>
             </div>
 
+            {/* Total Consumption Trend Chart with Tabs */}
+            <Card className="p-6 bg-white dark:bg-gray-800">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            Consumption Trend
+                        </h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Daily credit consumption breakdown.</p>
+                    </div>
+                    {/* Toggle Tabs */}
+                    <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                        <button
+                            onClick={() => setChartView('ceed')}
+                            className={`px-4 py-2 text-sm font-medium transition-colors ${
+                                chartView === 'ceed'
+                                    ? 'bg-blue-50 text-blue-600 border-r border-blue-200 dark:bg-blue-900/30 dark:text-blue-400'
+                                    : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400'
+                            }`}
+                        >
+                            By CEED Layer
+                        </button>
+                        <button
+                            onClick={() => setChartView('workflow')}
+                            className={`px-4 py-2 text-sm font-medium transition-colors ${
+                                chartView === 'workflow'
+                                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                                    : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400'
+                            }`}
+                        >
+                            By Workflow
+                        </button>
+                    </div>
+                </div>
+
+                <ResponsiveContainer width="100%" height={350}>
+                    {chartView === 'ceed' ? (
+                        <AreaChart data={ceedTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="colorCapability" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={COLORS.capabilities} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={COLORS.capabilities} stopOpacity={0.05} />
+                                </linearGradient>
+                                <linearGradient id="colorData" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={COLORS.execution} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={COLORS.execution} stopOpacity={0.05} />
+                                </linearGradient>
+                                <linearGradient id="colorEntity" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={COLORS.entity} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={COLORS.entity} stopOpacity={0.05} />
+                                </linearGradient>
+                                <linearGradient id="colorExecution" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={COLORS.dataFlow} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={COLORS.dataFlow} stopOpacity={0.05} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="day" />
+                            <YAxis tickFormatter={(value) => value.toLocaleString()} />
+                            <Tooltip formatter={(value: number) => value.toLocaleString()} />
+                            <Area type="monotone" dataKey="capability" stackId="1" stroke={COLORS.capabilities} fill="url(#colorCapability)" name="Capability" />
+                            <Area type="monotone" dataKey="data" stackId="1" stroke={COLORS.execution} fill="url(#colorData)" name="Data" />
+                            <Area type="monotone" dataKey="entity" stackId="1" stroke={COLORS.entity} fill="url(#colorEntity)" name="Entity" />
+                            <Area type="monotone" dataKey="execution" stackId="1" stroke={COLORS.dataFlow} fill="url(#colorExecution)" name="Execution" />
+                        </AreaChart>
+                    ) : (
+                        <AreaChart data={workflowTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="colorAudit" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={WORKFLOW_COLORS.auditCompliance} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={WORKFLOW_COLORS.auditCompliance} stopOpacity={0.05} />
+                                </linearGradient>
+                                <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={WORKFLOW_COLORS.expenseApproval} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={WORKFLOW_COLORS.expenseApproval} stopOpacity={0.05} />
+                                </linearGradient>
+                                <linearGradient id="colorInvoice" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={WORKFLOW_COLORS.invoiceProcessing} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={WORKFLOW_COLORS.invoiceProcessing} stopOpacity={0.05} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="day" />
+                            <YAxis tickFormatter={(value) => value.toLocaleString()} />
+                            <Tooltip formatter={(value: number) => value.toLocaleString()} />
+                            <Area type="monotone" dataKey="auditCompliance" stackId="1" stroke={WORKFLOW_COLORS.auditCompliance} fill="url(#colorAudit)" name="Audit Compliance" />
+                            <Area type="monotone" dataKey="expenseApproval" stackId="1" stroke={WORKFLOW_COLORS.expenseApproval} fill="url(#colorExpense)" name="Expense Approval" />
+                            <Area type="monotone" dataKey="invoiceProcessing" stackId="1" stroke={WORKFLOW_COLORS.invoiceProcessing} fill="url(#colorInvoice)" name="Invoice Processing" />
+                        </AreaChart>
+                    )}
+                </ResponsiveContainer>
+
+                {/* Legend */}
+                <div className="flex items-center justify-center gap-6 mt-4">
+                    {chartView === 'ceed' ? (
+                        <>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.capabilities }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Capability</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.execution }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Data</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.entity }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Entity</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.dataFlow }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Execution</span>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKFLOW_COLORS.auditCompliance }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Audit Compliance</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKFLOW_COLORS.expenseApproval }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Expense Approval</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: WORKFLOW_COLORS.invoiceProcessing }} />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Invoice Processing</span>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </Card>
+
             {/* Monthly Summary Table */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+            <Card className="p-6 bg-white dark:bg-gray-800">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                     Monthly Summary
                 </h2>
@@ -220,108 +479,44 @@ export default function ReportsPage() {
                     <table className="w-full">
                         <thead>
                             <tr className="border-b border-gray-200 dark:border-gray-700">
-                                <th className="text-left py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 w-8"></th>
-                                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Month</th>
-                                <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Entity</th>
+                                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Workspace Name</th>
                                 <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Capability</th>
+                                <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Entity</th>
                                 <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Execution</th>
                                 <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Data</th>
                                 <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Total Credits</th>
-                                <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Raw iFT</th>
-                                <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Cost (Est.)</th>
                             </tr>
                         </thead>
                         <tbody>
                             {monthlySummaryData.map((row) => (
-                                <React.Fragment key={row.id}>
-                                    {/* Main Row */}
-                                    <tr 
-                                        className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
-                                        onClick={() => toggleRow(row.id)}
-                                    >
-                                        <td className="py-3 px-2">
-                                            {expandedRows.includes(row.id) ? (
-                                                <ChevronDown className="h-4 w-4 text-gray-400" />
-                                            ) : (
-                                                <ChevronRight className="h-4 w-4 text-gray-400" />
-                                            )}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            {row.month}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">
-                                            {row.entity.toLocaleString()}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">
-                                            {row.capability.toLocaleString()}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">
-                                            {row.execution.toLocaleString()}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">
-                                            {row.data.toLocaleString()}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-right font-semibold text-purple-600">
-                                            {row.totalCredits.toLocaleString()}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-right text-gray-400">
-                                            {row.rawIFT}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-right font-semibold text-gray-900 dark:text-gray-100">
-                                            ${row.costEst.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                        </td>
-                                    </tr>
-                                    {/* Expanded Row - iFT Breakdown */}
-                                    {expandedRows.includes(row.id) && (
-                                        <tr>
-                                            <td colSpan={9} className="bg-gray-50 dark:bg-gray-700/30 py-4 px-6">
-                                                <div className="grid grid-cols-4 gap-4">
-                                                    {/* Entity iFT Card */}
-                                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                                                            ENTITY iFT
-                                                        </p>
-                                                        <p className="text-xl font-bold" style={{ color: COLORS.entity }}>
-                                                            {row.entityIFT.toLocaleString()}
-                                                        </p>
-                                                    </div>
-                                                    {/* Capability iFT Card */}
-                                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                                                            CAPABILITY iFT
-                                                        </p>
-                                                        <p className="text-xl font-bold" style={{ color: COLORS.capabilities }}>
-                                                            {row.capabilityIFT.toLocaleString()}
-                                                        </p>
-                                                    </div>
-                                                    {/* Execution iFT Card */}
-                                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                                                            EXECUTION iFT
-                                                        </p>
-                                                        <p className="text-xl font-bold" style={{ color: COLORS.execution }}>
-                                                            {row.executionIFT.toLocaleString()}
-                                                        </p>
-                                                    </div>
-                                                    {/* Data iFT Card */}
-                                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                                                            DATA iFT
-                                                        </p>
-                                                        <p className="text-xl font-bold" style={{ color: COLORS.dataFlow }}>
-                                                            {row.dataIFT.toLocaleString()}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )}
-                                </React.Fragment>
+                                <tr
+                                    key={row.id}
+                                    className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                >
+                                    <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {row.workspaceName}
+                                    </td>
+                                    <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">
+                                        {row.capability.toLocaleString()}
+                                    </td>
+                                    <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">
+                                        {row.entity.toLocaleString()}
+                                    </td>
+                                    <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">
+                                        {row.execution.toLocaleString()}
+                                    </td>
+                                    <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">
+                                        {row.data.toLocaleString()}
+                                    </td>
+                                    <td className="py-3 px-4 text-sm text-right font-semibold text-purple-600">
+                                        {row.totalCredits.toLocaleString()}
+                                    </td>
+                                </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </Card>
         </div>
     );
 }
