@@ -30,70 +30,91 @@ const getMetricData = (filter: FilterPeriod) => {
 
 // Mock data for Consumption Trend - By CEED Layer
 const getCEEDTrendData = (filter: FilterPeriod) => {
+    const multiplier = {
+        'last24h': 0.15,
+        'last7d': 0.5,
+        'last30d': 1,
+        'last7m': 3,
+    }[filter];
+
     const baseData = [
-        { day: 'Mon', capability: 5500, data: 3500, entity: 7500, execution: 1200 },
-        { day: 'Tue', capability: 6000, data: 4000, entity: 8000, execution: 1500 },
-        { day: 'Wed', capability: 7200, data: 5500, entity: 9500, execution: 2500 },
-        { day: 'Thu', capability: 6500, data: 4800, entity: 8800, execution: 2000 },
-        { day: 'Fri', capability: 5800, data: 4200, entity: 8200, execution: 1800 },
-        { day: 'Sat', capability: 6200, data: 4500, entity: 8500, execution: 2200 },
-        { day: 'Sun', capability: 6800, data: 5000, entity: 9000, execution: 2400 },
+        { day: 'Mon', capability: Math.round(5500 * multiplier), data: Math.round(3500 * multiplier), entity: Math.round(7500 * multiplier), execution: Math.round(1200 * multiplier) },
+        { day: 'Tue', capability: Math.round(6000 * multiplier), data: Math.round(4000 * multiplier), entity: Math.round(8000 * multiplier), execution: Math.round(1500 * multiplier) },
+        { day: 'Wed', capability: Math.round(7200 * multiplier), data: Math.round(5500 * multiplier), entity: Math.round(9500 * multiplier), execution: Math.round(2500 * multiplier) },
+        { day: 'Thu', capability: Math.round(6500 * multiplier), data: Math.round(4800 * multiplier), entity: Math.round(8800 * multiplier), execution: Math.round(2000 * multiplier) },
+        { day: 'Fri', capability: Math.round(5800 * multiplier), data: Math.round(4200 * multiplier), entity: Math.round(8200 * multiplier), execution: Math.round(1800 * multiplier) },
+        { day: 'Sat', capability: Math.round(6200 * multiplier), data: Math.round(4500 * multiplier), entity: Math.round(8500 * multiplier), execution: Math.round(2200 * multiplier) },
+        { day: 'Sun', capability: Math.round(6800 * multiplier), data: Math.round(5000 * multiplier), entity: Math.round(9000 * multiplier), execution: Math.round(2400 * multiplier) },
     ];
     return baseData;
 };
 
 // Mock data for Consumption Trend - By Workflow
 const getWorkflowTrendData = (filter: FilterPeriod) => {
+    const multiplier = {
+        'last24h': 0.15,
+        'last7d': 0.5,
+        'last30d': 1,
+        'last7m': 3,
+    }[filter];
+
     const baseData = [
-        { day: 'Mon', auditCompliance: 7500, expenseApproval: 5500, invoiceProcessing: 2800 },
-        { day: 'Tue', auditCompliance: 8500, expenseApproval: 6500, invoiceProcessing: 3200 },
-        { day: 'Wed', auditCompliance: 13000, expenseApproval: 8000, invoiceProcessing: 4000 },
-        { day: 'Thu', auditCompliance: 9500, expenseApproval: 7000, invoiceProcessing: 3500 },
-        { day: 'Fri', auditCompliance: 8000, expenseApproval: 6000, invoiceProcessing: 3000 },
-        { day: 'Sat', auditCompliance: 9000, expenseApproval: 6500, invoiceProcessing: 3200 },
-        { day: 'Sun', auditCompliance: 10000, expenseApproval: 7500, invoiceProcessing: 3500 },
+        { day: 'Mon', auditCompliance: Math.round(7500 * multiplier), expenseApproval: Math.round(5500 * multiplier), invoiceProcessing: Math.round(2800 * multiplier) },
+        { day: 'Tue', auditCompliance: Math.round(8500 * multiplier), expenseApproval: Math.round(6500 * multiplier), invoiceProcessing: Math.round(3200 * multiplier) },
+        { day: 'Wed', auditCompliance: Math.round(13000 * multiplier), expenseApproval: Math.round(8000 * multiplier), invoiceProcessing: Math.round(4000 * multiplier) },
+        { day: 'Thu', auditCompliance: Math.round(9500 * multiplier), expenseApproval: Math.round(7000 * multiplier), invoiceProcessing: Math.round(3500 * multiplier) },
+        { day: 'Fri', auditCompliance: Math.round(8000 * multiplier), expenseApproval: Math.round(6000 * multiplier), invoiceProcessing: Math.round(3000 * multiplier) },
+        { day: 'Sat', auditCompliance: Math.round(9000 * multiplier), expenseApproval: Math.round(6500 * multiplier), invoiceProcessing: Math.round(3200 * multiplier) },
+        { day: 'Sun', auditCompliance: Math.round(10000 * multiplier), expenseApproval: Math.round(7500 * multiplier), invoiceProcessing: Math.round(3500 * multiplier) },
     ];
     return baseData;
 };
 
 // Mock data for Monthly Summary
 const getMonthlySummaryData = (filter: FilterPeriod) => {
+    const multiplier = {
+        'last24h': 0.03,
+        'last7d': 0.25,
+        'last30d': 1,
+        'last7m': 7,
+    }[filter];
+
     return [
         {
             id: 1,
             workspaceName: 'Finance Automation',
-            capability: 85000,
-            entity: 105000,
-            execution: 110000,
-            data: 65000,
-            totalCredits: 365000,
+            capability: Math.round(85000 * multiplier),
+            entity: Math.round(105000 * multiplier),
+            execution: Math.round(110000 * multiplier),
+            data: Math.round(65000 * multiplier),
+            totalCredits: Math.round(365000 * multiplier),
         },
         {
             id: 2,
             workspaceName: 'Customer Support Bot',
-            capability: 150000,
-            entity: 180000,
-            execution: 210000,
-            data: 120000,
-            totalCredits: 660000,
+            capability: Math.round(150000 * multiplier),
+            entity: Math.round(180000 * multiplier),
+            execution: Math.round(210000 * multiplier),
+            data: Math.round(120000 * multiplier),
+            totalCredits: Math.round(660000 * multiplier),
         },
         {
             id: 3,
             workspaceName: 'Legal Document Review',
-            capability: 40000,
-            entity: 55000,
-            execution: 65000,
-            data: 35000,
-            totalCredits: 195000,
+            capability: Math.round(40000 * multiplier),
+            entity: Math.round(55000 * multiplier),
+            execution: Math.round(65000 * multiplier),
+            data: Math.round(35000 * multiplier),
+            totalCredits: Math.round(195000 * multiplier),
         },
         {
             id: 4,
             workspaceName: 'Internal HR Tools',
-            capability: 25000,
-            entity: 35000,
-            execution: 45000,
-            data: 20000,
-            totalCredits: 125000,
+            capability: Math.round(25000 * multiplier),
+            entity: Math.round(35000 * multiplier),
+            execution: Math.round(45000 * multiplier),
+            data: Math.round(20000 * multiplier),
+            totalCredits: Math.round(125000 * multiplier),
         },
     ];
 };
