@@ -310,28 +310,36 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
     icon: 'ri-coin-fill',
     items: [
         {
-            id: 'credit-dashboard',
-            title: 'Dashboard',
-            url: '/workspace/[wid]/credit-allocation/dashboard',
-            icon: 'LayoutDashboard',
-            isSingleLink: true,
-        },
-        {
-            id: 'workflow-credit-management',
-            title: 'Workflow Level Credit Management',
-            url: '/workspace/[wid]/credit-allocation/workflow-credit-management',
-            icon: 'Wallet',
-            isSingleLink: true,
-        },
-        {
             id: 'credit-reports',
             title: 'Reports',
             url: '/workspace/[wid]/credit-allocation/reports',
             icon: 'FileBarChart',
             isSingleLink: true,
         },
+    ],
+},
+{
+    id: 'v2_menu_item',
+    title: 'V2',
+    description: 'Next generation workspace management and configuration',
+    icon: 'ri-rocket-2-fill',
+    items: [
         {
-            id: 'settings-configuration',
+            id: 'v2-dashboard',
+            title: 'Dashboard',
+            url: '/workspace/[wid]/credit-allocation/dashboard',
+            icon: 'LayoutDashboard',
+            isSingleLink: true,
+        },
+        {
+            id: 'v2-workflow-credit-management',
+            title: 'Workflow Level Credit Management',
+            url: '/workspace/[wid]/credit-allocation/workflow-credit-management',
+            icon: 'Wallet',
+            isSingleLink: true,
+        },
+        {
+            id: 'v2-settings-configuration',
             title: 'Settings & Configuration',
             url: '/workspace/[wid]/credit-allocation/settings-configuration',
             icon: 'Settings',
