@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Key, CheckCircle2, AlertCircle, Coins, History, Shield, Calendar, CreditCard, Clock, Layers, Building2, GitBranch } from 'lucide-react';
+import { Key, CheckCircle2, AlertCircle, Coins, History, Shield, Calendar, CreditCard, Clock, Layers, Building2, GitBranch, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/atoms/tooltip';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/card';
 import { Button } from '@/components/atoms/button';
@@ -267,26 +268,50 @@ const LicensingPage = () => {
                                 </div>
                             </div>
                         </div>
-                        {/* Row 2: Subscription Credits, Subscription Expiry */}
+                        {/* Row 2: Carry Forward Credits, Carry Forward Credits Expiry */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
-                                <Layers className="size-5 text-purple-600 dark:text-purple-400 mt-0.5" />
-                                <div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Subscription Credits</p>
-                                    <p className="text-sm font-semibold text-purple-600 dark:text-purple-400">
-                                        {mockCreditLicenses[0].subscriptionCredits.toLocaleString()}
-                                    </p>
+                            <TooltipProvider>
+                                <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                    <Layers className="size-5 text-purple-600 dark:text-purple-400 mt-0.5" />
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">Carry Forward Credits</p>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Info className="size-3 text-gray-400 cursor-help" />
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="max-w-xs">
+                                                    <p>The balance of credits issued with your subscription that can be carried forward to the next billing period.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                        <p className="text-sm font-semibold text-purple-600 dark:text-purple-400">
+                                            {mockCreditLicenses[0].subscriptionCredits.toLocaleString()}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
-                                <Clock className="size-5 text-orange-600 dark:text-orange-400 mt-0.5" />
-                                <div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Subscription Expiry</p>
-                                    <p className="text-sm font-medium text-orange-600 dark:text-orange-400">
-                                        {mockCreditLicenses[0].subscriptionExpiryDate}
-                                    </p>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                                <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                    <Clock className="size-5 text-orange-600 dark:text-orange-400 mt-0.5" />
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">Carry Forward Credits Expiry</p>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Info className="size-3 text-gray-400 cursor-help" />
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="max-w-xs">
+                                                    <p>The carry forward credits will expire on this date. Any unused credits will be forfeited after this date.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                        <p className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                                            {mockCreditLicenses[0].subscriptionExpiryDate}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
+                            </TooltipProvider>
                         </div>
                     </CardContent>
                 </Card>
