@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Key, CheckCircle2, AlertCircle, Coins, History, Shield, Calendar, CreditCard } from 'lucide-react';
+import { Key, CheckCircle2, AlertCircle, Coins, History, Shield, Calendar, CreditCard, Clock, Layers } from 'lucide-react';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/card';
 import { Button } from '@/components/atoms/button';
@@ -49,6 +49,8 @@ const mockCreditLicenses = [
         licenseKey: 'KAYA-ABCD-1234-5678',
         perCreditRate: 0.005,
         creditsAdded: 10000,
+        subscriptionCredits: 100000,
+        subscriptionExpiryDate: '2027-03-15',
     },
     {
         id: '2',
@@ -57,6 +59,8 @@ const mockCreditLicenses = [
         licenseKey: 'KAYA-EFGH-9012-3456',
         perCreditRate: 0.0045,
         creditsAdded: 25000,
+        subscriptionCredits: 100000,
+        subscriptionExpiryDate: '2027-03-15',
     },
     {
         id: '3',
@@ -65,6 +69,8 @@ const mockCreditLicenses = [
         licenseKey: 'KAYA-IJKL-7890-1234',
         perCreditRate: 0.005,
         creditsAdded: 50000,
+        subscriptionCredits: 100000,
+        subscriptionExpiryDate: '2027-02-28',
     },
 ];
 
@@ -222,7 +228,7 @@ const LicensingPage = () => {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                             <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
                                 <Key className="size-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                                 <div>
@@ -256,6 +262,24 @@ const LicensingPage = () => {
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Credits Added</p>
                                     <p className="text-sm font-semibold text-green-600 dark:text-green-400">
                                         +{mockCreditLicenses[0].creditsAdded.toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <Layers className="size-5 text-purple-600 dark:text-purple-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Subscription Credits</p>
+                                    <p className="text-sm font-semibold text-purple-600 dark:text-purple-400">
+                                        {mockCreditLicenses[0].subscriptionCredits.toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <Clock className="size-5 text-orange-600 dark:text-orange-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Subscription Expiry</p>
+                                    <p className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                                        {mockCreditLicenses[0].subscriptionExpiryDate}
                                     </p>
                                 </div>
                             </div>
