@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Key, CheckCircle2, AlertCircle, Coins, History } from 'lucide-react';
+import { Key, CheckCircle2, AlertCircle, Coins, History, Shield, Calendar, CreditCard } from 'lucide-react';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/card';
 import { Button } from '@/components/atoms/button';
@@ -207,6 +207,62 @@ const LicensingPage = () => {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Active License Card */}
+            {mockCreditLicenses.length > 0 && (
+                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2">
+                            <Shield className="size-5 text-blue-600 dark:text-blue-400" />
+                            <CardTitle className="text-lg text-blue-900 dark:text-blue-100">Active Credit License</CardTitle>
+                            <Badge variant="success" className="ml-2">Active</Badge>
+                        </div>
+                        <CardDescription className="text-blue-700 dark:text-blue-300">
+                            Your currently active license key details
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <Key className="size-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">License Key</p>
+                                    <p className="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {maskLicenseKey(mockCreditLicenses[0].licenseKey)}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <Calendar className="size-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Applied Date</p>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {mockCreditLicenses[0].appliedDate}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <CreditCard className="size-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Per-Credit Rate</p>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        ${mockCreditLicenses[0].perCreditRate.toFixed(4)}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <Coins className="size-5 text-green-600 dark:text-green-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Credits Added</p>
+                                    <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                                        +{mockCreditLicenses[0].creditsAdded.toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Credit Licenses Section */}
             <Card className="bg-white dark:bg-gray-800">
