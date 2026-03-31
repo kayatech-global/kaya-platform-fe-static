@@ -1,13 +1,134 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mail } from 'lucide-react';
+import { Mail, Plus, Trash2, Pencil, X, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+
+interface Alert {
+    id: string;
+    threshold: number;
+    emails: string[];
+}
 
 export default function SettingsPage() {
-    const [emailNotifications, setEmailNotifications] = useState(true);
-    const [alert50, setAlert50] = useState(true);
-    const [alert25, setAlert25] = useState(true);
-    const [alert10, setAlert10] = useState(true);
+    const [alerts, setAlerts] = useState<Alert[]>([
+        { id: '1', threshold: 50, emails: ['admin@acme.com'] },
+        { id: '2', threshold: 25, emails: ['admin@acme.com', 'finance@acme.com'] },
+        { id: '3', threshold: 10, emails: ['admin@acme.com'] },
+    ]);
+
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [editingAlert, setEditingAlert] = useState<Alert | null>(null);
+    const [thresholdInput, setThresholdInput] = useState('');
+    const [emailInput, setEmailInput] = useState('');
+    const [emailList, setEmailList] = useState<string[]>([]);
+    const [error, setError] = useState('');
+
+    const openAddDialog = () => {
+        setEditingAlert(null);
+        setThresholdInput('');
+        setEmailInput('');
+        setEmailList([]);
+        setError('');
+        setIsDialogOpen(true);
+    };
+
+    const openEditDialog = (alert: Alert) => {
+        setEditingAlert(alert);
+        setThresholdInput(alert.threshold.toString());
+        setEmailList([...alert.emails]);
+        setEmailInput('');
+        setError('');
+        setIsDialogOpen(true);
+    };
+
+    const handleAddEmail = () => {
+        const email = emailInput.trim().toLowerCase();
+        if (!email) return;
+
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setError('Please enter a valid email address');
+            return;
+        }
+
+        if (emailList.includes(email)) {
+            setError('This email is already added');
+            return;
+        }
+
+        setEmailList([...emailList, email]);
+        setEmailInput('');
+        setError('');
+    };
+
+    const handleRemoveEmail = (emailToRemove: string) => {
+        setEmailList(emailList.filter(email => email !== emailToRemove));
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddEmail();
+        }
+    };
+
+    const handleSave = () => {
+        const threshold = parseInt(thresholdInput);
+
+        if (isNaN(threshold) || threshold < 1 || threshold > 100) {
+            setError('Please enter a valid threshold between 1 and 100');
+            return;
+        }
+
+        if (emailList.length === 0) {
+            setError('Please add at least one email address');
+            return;
+        }
+
+        // Check for duplicate threshold (except when editing the same alert)
+        const isDuplicate = alerts.some(
+            a => a.threshold === threshold && a.id !== editingAlert?.id
+        );
+        if (isDuplicate) {
+            setError('An alert with this threshold already exists');
+            return;
+        }
+
+        if (editingAlert) {
+            // Update existing alert
+            setAlerts(alerts.map(a =>
+                a.id === editingAlert.id
+                    ? { ...a, threshold, emails: emailList }
+                    : a
+            ));
+        } else {
+            // Add new alert
+            const newAlert: Alert = {
+                id: Date.now().toString(),
+                threshold,
+                emails: emailList,
+            };
+            setAlerts([...alerts, newAlert].sort((a, b) => b.threshold - a.threshold));
+        }
+
+        setIsDialogOpen(false);
+    };
+
+    const handleDelete = (alertId: string) => {
+        setAlerts(alerts.filter(a => a.id !== alertId));
+    };
+
+    const isCritical = (threshold: number) => threshold <= 10;
 
     return (
         <div className="space-y-6">
@@ -16,101 +137,180 @@ export default function SettingsPage() {
                 Settings
             </h1>
 
-            {/* Configuration Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Notifications Channels Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-                    {/* Card Header */}
-                    <div className="p-5 border-b border-gray-200 dark:border-gray-700">
+            {/* Credit Usage Alerts Section */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                {/* Card Header */}
+                <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <div>
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Notifications Channels
+                            Credit Usage Alerts
                         </h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            Where should we send credit alerts?
+                            Get notified when your credit balance drops below certain thresholds.
                         </p>
                     </div>
+                    <Button onClick={openAddDialog} className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        Add Alert
+                    </Button>
+                </div>
 
-                    {/* Card Content */}
-                    <div className="p-5">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
-                                    <Mail className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                {/* Alerts List */}
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {alerts.length === 0 ? (
+                        <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                            <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                            <p>No alerts configured yet.</p>
+                            <p className="text-sm">Click &quot;Add Alert&quot; to create your first alert.</p>
+                        </div>
+                    ) : (
+                        alerts.map((alert) => (
+                            <div
+                                key={alert.id}
+                                className="flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                        <Mail className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                    </div>
+                                    <div>
+                                        <p className={`text-sm font-medium ${
+                                            isCritical(alert.threshold)
+                                                ? 'text-red-600 dark:text-red-400'
+                                                : 'text-gray-900 dark:text-white'
+                                        }`}>
+                                            {alert.threshold}% usage alert
+                                            {isCritical(alert.threshold) && ' (Critical)'}
+                                        </p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            {alert.emails.join(', ')}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                        Email Notifications
-                                    </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        Send to admin@acme.com
-                                    </p>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => openEditDialog(alert)}
+                                        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                        title="Edit alert"
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(alert.id)}
+                                        className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                        title="Delete alert"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
                                 </div>
                             </div>
-                            <input
-                                type="checkbox"
-                                checked={emailNotifications}
-                                onChange={(e) => setEmailNotifications(e.target.checked)}
-                                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Alert Thresholds Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-                    {/* Card Header */}
-                    <div className="p-5 border-b border-gray-200 dark:border-gray-700">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Alert Thresholds
-                        </h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            Notify me when balance drops below...
-                        </p>
-                    </div>
-
-                    {/* Card Content */}
-                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                        {/* 50% Remaining */}
-                        <div className="flex items-center justify-between p-5">
-                            <span className="text-sm text-gray-900 dark:text-white">
-                                50% Remaining
-                            </span>
-                            <input
-                                type="checkbox"
-                                checked={alert50}
-                                onChange={(e) => setAlert50(e.target.checked)}
-                                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                            />
-                        </div>
-
-                        {/* 25% Remaining */}
-                        <div className="flex items-center justify-between p-5">
-                            <span className="text-sm text-gray-900 dark:text-white">
-                                25% Remaining
-                            </span>
-                            <input
-                                type="checkbox"
-                                checked={alert25}
-                                onChange={(e) => setAlert25(e.target.checked)}
-                                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                            />
-                        </div>
-
-                        {/* 10% Remaining (Critical) */}
-                        <div className="flex items-center justify-between p-5">
-                            <span className="text-sm font-semibold text-red-600">
-                                10% Remaining (Critical)
-                            </span>
-                            <input
-                                type="checkbox"
-                                checked={alert10}
-                                onChange={(e) => setAlert10(e.target.checked)}
-                                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                            />
-                        </div>
-                    </div>
+                        ))
+                    )}
                 </div>
             </div>
+
+            {/* Add/Edit Alert Dialog */}
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {editingAlert ? 'Edit Alert' : 'Add New Alert'}
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        {/* Threshold Input */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Alert when credit usage exceeds
+                            </label>
+                            <div className="relative">
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    max="100"
+                                    value={thresholdInput}
+                                    onChange={(e) => setThresholdInput(e.target.value)}
+                                    placeholder="Enter percentage"
+                                    className="pr-8"
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                    %
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Email Recipients */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Send alerts to
+                            </label>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Add email addresses to receive alerts when this threshold is reached.
+                            </p>
+
+                            {/* Email Input */}
+                            <div className="flex gap-2">
+                                <Input
+                                    type="email"
+                                    value={emailInput}
+                                    onChange={(e) => setEmailInput(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="Enter email address"
+                                    className="flex-1"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleAddEmail}
+                                >
+                                    Add
+                                </Button>
+                            </div>
+
+                            {/* Email Chips */}
+                            {emailList.length > 0 && (
+                                <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 min-h-[60px]">
+                                    {emailList.map((email) => (
+                                        <span
+                                            key={email}
+                                            className="inline-flex items-center gap-1 px-2 py-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300"
+                                        >
+                                            {email}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveEmail(email)}
+                                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Error Message */}
+                        {error && (
+                            <p className="text-sm text-red-600 dark:text-red-400">
+                                {error}
+                            </p>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsDialogOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSave}>
+                            Save
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
