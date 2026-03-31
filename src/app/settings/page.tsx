@@ -146,7 +146,7 @@ export default function SettingsPage() {
                             Credit Usage Alerts
                         </h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            Get notified when your credit balance drops below certain thresholds.
+                            Get notified when the credit usage exceeds certain thresholds.
                         </p>
                     </div>
                     <Button onClick={openAddDialog} leadingIcon={<Plus className="h-4 w-4" />}>
