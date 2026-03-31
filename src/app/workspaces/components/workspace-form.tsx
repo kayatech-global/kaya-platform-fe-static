@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Input, MaskedInput, Metadata, Spinner, Textarea } from '@/components';
+import { Button, Input, Metadata, Spinner, Textarea } from '@/components';
 import UserInputs from './user-input';
 import { DialogBody, DialogFooter } from '@/components/atoms/dialog';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/atoms/tooltip';
@@ -7,7 +7,7 @@ import { EmailType } from '@/enums';
 import { useWorkspace } from '@/hooks/use-workspace';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context';
-import { Controller } from 'react-hook-form';
+
 
 export interface WorkspaceFormProps {
     onClose: () => void;
@@ -27,10 +27,8 @@ const WorkspaceForm = ({ onClose, refetchEnvironment, workspaceId, metadataColle
         errors,
         requiredUserEmail,
         workspaceNameValidation,
-        licenseKeyValidation,
         workspaceDescriptionValidation,
         admins,
-        defaultKey,
         control,
         metadata,
         metadataList,
@@ -70,33 +68,6 @@ const WorkspaceForm = ({ onClose, refetchEnvironment, workspaceId, metadataColle
                     <DialogBody className="pb-2 max-h-[calc(90vh-200px)] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
                         <div className={cn('flex gap-y-4 gap-x-4 flex-col')}>
                             <div className={cn('flex flex-col gap-y-4')}>
-                                {isSuperAdmin && (
-                                    <Controller
-                                        name="licenseKey"
-                                        control={control}
-                                        {...(!workspaceId && {
-                                            rules: licenseKeyValidation,
-                                        })}
-                                        render={({ field }) => (
-                                            <MaskedInput
-                                                placeholder="Enter your license key"
-                                                label={`${
-                                                    workspaceId
-                                                        ? 'Upgrade Workspace License (Enter an upgrade license key to override the current one)'
-                                                        : 'License Key *'
-                                                }`}
-                                                initialValue={defaultKey}
-                                                isDestructive={!!errors?.licenseKey?.message}
-                                                supportiveText={errors?.licenseKey?.message}
-                                                onMaskChange={value => field.onChange(value)}
-                                                onBlur={() => {
-                                                    field.onBlur();
-                                                    trigger('licenseKey');
-                                                }}
-                                            />
-                                        )}
-                                    />
-                                )}
                                 <Input
                                     {...register('name', {
                                         ...workspaceNameValidation,
