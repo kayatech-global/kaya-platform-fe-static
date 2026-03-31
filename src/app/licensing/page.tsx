@@ -281,7 +281,7 @@ const LicensingPage = () => {
                                                     <Info className="size-3 text-gray-400 cursor-help" />
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top" className="max-w-xs">
-                                                    <p>The balance of credits issued with your subscription that can be carried forward to the next billing period.</p>
+                                                    <p>The balance of credits issued with your subscription.</p>
                                                 </TooltipContent>
                                             </Tooltip>
                                         </div>
