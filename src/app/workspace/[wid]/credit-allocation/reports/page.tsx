@@ -382,10 +382,10 @@ export default function WorkspaceReportsPage() {
                 </div>
             </Card>
 
-            {/* Monthly Summary Table */}
+            {/* Credit Summary Table */}
             <Card className="p-6 bg-white dark:bg-gray-800">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                    Monthly Summary
+                    Credit Summary
                 </h2>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
