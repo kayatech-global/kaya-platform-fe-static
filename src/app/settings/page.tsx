@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { Mail, Plus, Trash2, Pencil, X, AlertTriangle } from 'lucide-react';
-import { Button, Input } from '@/components';
+import { Button } from '@/components/atoms/button';
+import { Input } from '@/components/atoms/input';
 import {
     Dialog,
     DialogContent,
