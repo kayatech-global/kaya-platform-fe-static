@@ -2,15 +2,15 @@
 
 import React, { useState } from 'react';
 import { Mail, Plus, Trash2, Pencil, X, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, Input } from '@/components';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+    DialogBody,
+} from '@/components/atoms/dialog';
 
 interface Alert {
     id: string;
@@ -149,8 +149,7 @@ export default function SettingsPage() {
                             Get notified when your credit balance drops below certain thresholds.
                         </p>
                     </div>
-                    <Button onClick={openAddDialog} className="flex items-center gap-2">
-                        <Plus className="h-4 w-4" />
+                    <Button onClick={openAddDialog} leadingIcon={<Plus className="h-4 w-4" />}>
                         Add Alert
                     </Button>
                 </div>
@@ -218,7 +217,7 @@ export default function SettingsPage() {
                         </DialogTitle>
                     </DialogHeader>
 
-                    <div className="space-y-4 py-4">
+                    <DialogBody className="space-y-4 py-4">
                         {/* Threshold Input */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -227,8 +226,8 @@ export default function SettingsPage() {
                             <div className="relative">
                                 <Input
                                     type="number"
-                                    min="1"
-                                    max="100"
+                                    min={1}
+                                    max={100}
                                     value={thresholdInput}
                                     onChange={(e) => setThresholdInput(e.target.value)}
                                     placeholder="Enter percentage"
@@ -261,7 +260,7 @@ export default function SettingsPage() {
                                 />
                                 <Button
                                     type="button"
-                                    variant="outline"
+                                    variant="secondary"
                                     onClick={handleAddEmail}
                                 >
                                     Add
@@ -296,11 +295,11 @@ export default function SettingsPage() {
                                 {error}
                             </p>
                         )}
-                    </div>
+                    </DialogBody>
 
                     <DialogFooter>
                         <Button
-                            variant="outline"
+                            variant="secondary"
                             onClick={() => setIsDialogOpen(false)}
                         >
                             Cancel
