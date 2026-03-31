@@ -227,8 +227,9 @@ const LicensingPage = () => {
                             Your currently active license key details
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <CardContent className="space-y-4">
+                        {/* Row 1: License Key, Applied Date, Per-Credit Rate, Credits Added */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
                                 <Key className="size-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                                 <div>
@@ -265,6 +266,9 @@ const LicensingPage = () => {
                                     </p>
                                 </div>
                             </div>
+                        </div>
+                        {/* Row 2: Subscription Credits, Subscription Expiry */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
                                 <Layers className="size-5 text-purple-600 dark:text-purple-400 mt-0.5" />
                                 <div>
