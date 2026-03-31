@@ -281,12 +281,12 @@ const LicensingPage = () => {
                 </CardContent>
             </Card>
 
-            {/* License History Section */}
+            {/* Capacity Licenses Section */}
             <Card className="bg-white dark:bg-gray-800">
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <History className="size-5 text-blue-600" />
-                        <CardTitle className="text-lg">License History</CardTitle>
+                        <CardTitle className="text-lg">Capacity Licenses</CardTitle>
                     </div>
                     <CardDescription>
                         Applied licenses are categorised by type for easier tracking.
