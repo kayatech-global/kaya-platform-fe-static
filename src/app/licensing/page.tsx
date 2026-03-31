@@ -1,12 +1,44 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Key, CheckCircle2, AlertCircle, Coins } from 'lucide-react';
+import { Key, CheckCircle2, AlertCircle, Coins, History } from 'lucide-react';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/card';
 import { Button } from '@/components/atoms/button';
 import { Badge } from '@/components/atoms/badge';
 import { cn } from '@/lib/utils';
+
+// Mock data for license history
+const mockLicenseHistory = [
+    {
+        id: '1',
+        appliedDate: '2025-03-16',
+        type: 'CAPACITY_LIMIT',
+        licenseKey: 'ACME-XXXX-XXXX-2025',
+        details: { workspaces: 50, workflowsPerWorkspace: 500 },
+    },
+    {
+        id: '2',
+        appliedDate: '2025-02-10',
+        type: 'TOPUP',
+        licenseKey: 'GLBX-XXXX-XXXX-2025',
+        details: { workspaces: 20, workflowsPerWorkspace: 200 },
+    },
+    {
+        id: '3',
+        appliedDate: '2025-01-05',
+        type: 'CAPACITY_LIMIT',
+        licenseKey: 'S0YL-XXXX-XXXX-2025',
+        details: { workspaces: 10, workflowsPerWorkspace: 100 },
+    },
+    {
+        id: '4',
+        appliedDate: '2025-03-01',
+        type: 'CAPACITY_LIMIT',
+        licenseKey: 'INIT-XXXX-XXXX-2025',
+        details: { workspaces: 30, workflowsPerWorkspace: 300 },
+    },
+];
 
 // Mock data for credit licenses
 const mockCreditLicenses = [
@@ -92,6 +124,25 @@ const LicensingPage = () => {
             default:
                 return 'default';
         }
+    };
+
+    const getHistoryTypeStyle = (type: string) => {
+        switch (type) {
+            case 'CAPACITY_LIMIT':
+                return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+            case 'TOPUP':
+                return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+            default:
+                return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+        }
+    };
+
+    const maskHistoryLicenseKey = (key: string) => {
+        const parts = key.split('-');
+        if (parts.length === 4) {
+            return `${parts[0]}${'–••••–••••–'}${parts[3]}`;
+        }
+        return key;
     };
 
     return (
@@ -220,6 +271,73 @@ const LicensingPage = () => {
                                             </td>
                                             <td className="py-3 px-4 text-right font-semibold text-green-600 dark:text-green-400">
                                                 +{license.creditsAdded.toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Capacity Licenses Section */}
+            <Card className="bg-white dark:bg-gray-800">
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <History className="size-5 text-blue-600" />
+                        <CardTitle className="text-lg">Capacity Licenses</CardTitle>
+                    </div>
+                    <CardDescription>
+                        Applied licenses are categorised by type for easier tracking.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {mockLicenseHistory.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                            No license history available.
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                            Applied Date
+                                        </th>
+                                        <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                            Type
+                                        </th>
+                                        <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                            License Key
+                                        </th>
+                                        <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">
+                                            Details
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {mockLicenseHistory.map((license) => (
+                                        <tr
+                                            key={license.id}
+                                            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30"
+                                        >
+                                            <td className="py-3 px-4 text-gray-900 dark:text-gray-100">
+                                                {license.appliedDate}
+                                            </td>
+                                            <td className="py-3 px-4">
+                                                <span className={cn(
+                                                    'inline-block px-2.5 py-1 text-xs font-medium rounded-full',
+                                                    getHistoryTypeStyle(license.type)
+                                                )}>
+                                                    {license.type.replace('_', ' ')}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-4 font-mono text-gray-600 dark:text-gray-400">
+                                                {maskHistoryLicenseKey(license.licenseKey)}
+                                            </td>
+                                            <td className="py-3 px-4 font-semibold text-blue-600 dark:text-blue-400">
+                                                {license.details.workspaces} ws / {license.details.workflowsPerWorkspace} wf/ws
                                             </td>
                                         </tr>
                                     ))}
