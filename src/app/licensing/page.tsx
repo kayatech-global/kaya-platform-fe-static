@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Key, CheckCircle2, AlertCircle, Coins, History } from 'lucide-react';
+import { Key, CheckCircle2, AlertCircle, Coins, History, Shield, Calendar, CreditCard, Clock, Layers, Building2, GitBranch, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/atoms/tooltip';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/card';
 import { Button } from '@/components/atoms/button';
@@ -49,6 +50,8 @@ const mockCreditLicenses = [
         licenseKey: 'KAYA-ABCD-1234-5678',
         perCreditRate: 0.005,
         creditsAdded: 10000,
+        subscriptionCredits: 100000,
+        subscriptionExpiryDate: '2027-03-15',
     },
     {
         id: '2',
@@ -57,6 +60,8 @@ const mockCreditLicenses = [
         licenseKey: 'KAYA-EFGH-9012-3456',
         perCreditRate: 0.0045,
         creditsAdded: 25000,
+        subscriptionCredits: 100000,
+        subscriptionExpiryDate: '2027-03-15',
     },
     {
         id: '3',
@@ -65,6 +70,8 @@ const mockCreditLicenses = [
         licenseKey: 'KAYA-IJKL-7890-1234',
         perCreditRate: 0.005,
         creditsAdded: 50000,
+        subscriptionCredits: 100000,
+        subscriptionExpiryDate: '2027-02-28',
     },
 ];
 
@@ -208,6 +215,108 @@ const LicensingPage = () => {
                 </CardContent>
             </Card>
 
+            {/* Active License Card */}
+            {mockCreditLicenses.length > 0 && (
+                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2">
+                            <Shield className="size-5 text-blue-600 dark:text-blue-400" />
+                            <CardTitle className="text-lg text-blue-900 dark:text-blue-100">Active Credit License</CardTitle>
+                            <Badge variant="success" className="ml-2">Active</Badge>
+                        </div>
+                        <CardDescription className="text-blue-700 dark:text-blue-300">
+                            Your currently active license key details
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {/* Row 1: License Key, Applied Date, Per-Credit Rate, Credits Added */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <Key className="size-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">License Key</p>
+                                    <p className="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {maskLicenseKey(mockCreditLicenses[0].licenseKey)}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <Calendar className="size-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Applied Date</p>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {mockCreditLicenses[0].appliedDate}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <CreditCard className="size-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Per-Credit Rate</p>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        ${mockCreditLicenses[0].perCreditRate.toFixed(4)}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <Coins className="size-5 text-green-600 dark:text-green-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Credits Added</p>
+                                    <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                                        +{mockCreditLicenses[0].creditsAdded.toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {/* Row 2: Carry Forward Credits, Carry Forward Credits Expiry */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <TooltipProvider>
+                                <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                    <Layers className="size-5 text-purple-600 dark:text-purple-400 mt-0.5" />
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">Carry Forward Credits</p>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Info className="size-3 text-gray-400 cursor-help" />
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="max-w-xs">
+                                                    <p>The balance of credits issued with your subscription.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                        <p className="text-sm font-semibold text-purple-600 dark:text-purple-400">
+                                            {mockCreditLicenses[0].subscriptionCredits.toLocaleString()}
+                                        </p>
+                                    </div>
+                                </div>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                                <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                    <Clock className="size-5 text-orange-600 dark:text-orange-400 mt-0.5" />
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">Carry Forward Credits Expiry</p>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Info className="size-3 text-gray-400 cursor-help" />
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="max-w-xs">
+                                                    <p>The carry forward credits will expire on this date. Any unused credits will be forfeited after this date.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                        <p className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                                            {mockCreditLicenses[0].subscriptionExpiryDate}
+                                        </p>
+                                    </div>
+                                </div>
+                            </TooltipProvider>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* Credit Licenses Section */}
             <Card className="bg-white dark:bg-gray-800">
                 <CardHeader>
@@ -280,6 +389,62 @@ const LicensingPage = () => {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Active Capacity License Card */}
+            {mockLicenseHistory.length > 0 && (
+                <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-emerald-200 dark:border-emerald-800">
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2">
+                            <Shield className="size-5 text-emerald-600 dark:text-emerald-400" />
+                            <CardTitle className="text-lg text-emerald-900 dark:text-emerald-100">Active Capacity License</CardTitle>
+                            <Badge variant="success" className="ml-2">Active</Badge>
+                        </div>
+                        <CardDescription className="text-emerald-700 dark:text-emerald-300">
+                            Your currently active capacity limits
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <Key className="size-5 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">License Key</p>
+                                    <p className="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {maskHistoryLicenseKey(mockLicenseHistory[0].licenseKey)}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <Calendar className="size-5 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Applied Date</p>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {mockLicenseHistory[0].appliedDate}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <Building2 className="size-5 text-teal-600 dark:text-teal-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Workspaces Limit</p>
+                                    <p className="text-sm font-semibold text-teal-600 dark:text-teal-400">
+                                        {mockLicenseHistory[0].details.workspaces} workspaces
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                <GitBranch className="size-5 text-cyan-600 dark:text-cyan-400 mt-0.5" />
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Workflows per Workspace</p>
+                                    <p className="text-sm font-semibold text-cyan-600 dark:text-cyan-400">
+                                        {mockLicenseHistory[0].details.workflowsPerWorkspace} wf/ws
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Capacity Licenses Section */}
             <Card className="bg-white dark:bg-gray-800">
