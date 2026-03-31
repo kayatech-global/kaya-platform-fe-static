@@ -23,7 +23,6 @@ export default function SettingsPage() {
     const [alerts, setAlerts] = useState<Alert[]>([
         { id: '1', threshold: 50, emails: ['admin@acme.com'] },
         { id: '2', threshold: 25, emails: ['admin@acme.com', 'finance@acme.com'] },
-        { id: '3', threshold: 10, emails: ['admin@acme.com'] },
     ]);
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
