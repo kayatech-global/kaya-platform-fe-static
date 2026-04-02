@@ -17,57 +17,88 @@ import {
 // Filter options
 type FilterPeriod = 'last24h' | 'last7d' | 'last30d' | 'last7m';
 
-// Mock data for metric cards based on filter
-const getMetricData = (filter: FilterPeriod) => {
-    const data = {
-        'last24h': { available: 995000, consumed: 5000 },
-        'last7d': { available: 965000, consumed: 35000 },
-        'last30d': { available: 850000, consumed: 150000 },
-        'last7m': { available: 500000, consumed: 500000 },
-    };
-    return data[filter];
+// Static credit data - these values don't change with filter
+const creditData = {
+    available: 850000,
+    consumed: 150000,
+};
+
+// Generate X-axis labels based on filter
+const generateTimeLabels = (filter: FilterPeriod): string[] => {
+    switch (filter) {
+        case 'last24h':
+            // Hours of the day
+            return Array.from({ length: 24 }, (_, i) => {
+                const hour = i;
+                if (hour === 0) return '12 AM';
+                if (hour === 12) return '12 PM';
+                return hour < 12 ? `${hour} AM` : `${hour - 12} PM`;
+            });
+        case 'last7d':
+            // Days of the week
+            return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        case 'last30d':
+            // Days of the month
+            return Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`);
+        case 'last7m':
+            // Last 7 months
+            const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+            const currentMonth = new Date().getMonth(); // 0-11
+            const result = [];
+            for (let i = 6; i >= 0; i--) {
+                const monthIndex = (currentMonth - i + 12) % 12;
+                result.push(months[monthIndex]);
+            }
+            return result;
+        default:
+            return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    }
 };
 
 // Mock data for Consumption Trend - By CEED Layer
 const getCEEDTrendData = (filter: FilterPeriod) => {
+    const labels = generateTimeLabels(filter);
     const multiplier = {
-        'last24h': 0.15,
+        'last24h': 0.05,
         'last7d': 0.5,
-        'last30d': 1,
+        'last30d': 0.15,
         'last7m': 3,
     }[filter];
 
-    const baseData = [
-        { day: 'Mon', capability: Math.round(5500 * multiplier), data: Math.round(3500 * multiplier), entity: Math.round(7500 * multiplier), execution: Math.round(1200 * multiplier) },
-        { day: 'Tue', capability: Math.round(6000 * multiplier), data: Math.round(4000 * multiplier), entity: Math.round(8000 * multiplier), execution: Math.round(1500 * multiplier) },
-        { day: 'Wed', capability: Math.round(7200 * multiplier), data: Math.round(5500 * multiplier), entity: Math.round(9500 * multiplier), execution: Math.round(2500 * multiplier) },
-        { day: 'Thu', capability: Math.round(6500 * multiplier), data: Math.round(4800 * multiplier), entity: Math.round(8800 * multiplier), execution: Math.round(2000 * multiplier) },
-        { day: 'Fri', capability: Math.round(5800 * multiplier), data: Math.round(4200 * multiplier), entity: Math.round(8200 * multiplier), execution: Math.round(1800 * multiplier) },
-        { day: 'Sat', capability: Math.round(6200 * multiplier), data: Math.round(4500 * multiplier), entity: Math.round(8500 * multiplier), execution: Math.round(2200 * multiplier) },
-        { day: 'Sun', capability: Math.round(6800 * multiplier), data: Math.round(5000 * multiplier), entity: Math.round(9000 * multiplier), execution: Math.round(2400 * multiplier) },
-    ];
-    return baseData;
+    return labels.map((label, index) => {
+        // Add some variation based on index
+        const variation = 0.7 + (Math.sin(index * 0.5) * 0.3) + (Math.random() * 0.2);
+        return {
+            label,
+            capability: Math.round(5500 * multiplier * variation),
+            data: Math.round(3500 * multiplier * variation),
+            entity: Math.round(7500 * multiplier * variation),
+            execution: Math.round(1200 * multiplier * variation),
+        };
+    });
 };
 
 // Mock data for Consumption Trend - By Workspace
 const getWorkspaceTrendData = (filter: FilterPeriod) => {
+    const labels = generateTimeLabels(filter);
     const multiplier = {
-        'last24h': 0.15,
+        'last24h': 0.05,
         'last7d': 0.5,
-        'last30d': 1,
+        'last30d': 0.15,
         'last7m': 3,
     }[filter];
 
-    const baseData = [
-        { day: 'Mon', financeAutomation: Math.round(7500 * multiplier), customerSupport: Math.round(5500 * multiplier), legalReview: Math.round(2800 * multiplier), hrTools: Math.round(1500 * multiplier) },
-        { day: 'Tue', financeAutomation: Math.round(8500 * multiplier), customerSupport: Math.round(6500 * multiplier), legalReview: Math.round(3200 * multiplier), hrTools: Math.round(1800 * multiplier) },
-        { day: 'Wed', financeAutomation: Math.round(13000 * multiplier), customerSupport: Math.round(8000 * multiplier), legalReview: Math.round(4000 * multiplier), hrTools: Math.round(2200 * multiplier) },
-        { day: 'Thu', financeAutomation: Math.round(9500 * multiplier), customerSupport: Math.round(7000 * multiplier), legalReview: Math.round(3500 * multiplier), hrTools: Math.round(2000 * multiplier) },
-        { day: 'Fri', financeAutomation: Math.round(8000 * multiplier), customerSupport: Math.round(6000 * multiplier), legalReview: Math.round(3000 * multiplier), hrTools: Math.round(1700 * multiplier) },
-        { day: 'Sat', financeAutomation: Math.round(9000 * multiplier), customerSupport: Math.round(6500 * multiplier), legalReview: Math.round(3200 * multiplier), hrTools: Math.round(1900 * multiplier) },
-        { day: 'Sun', financeAutomation: Math.round(10000 * multiplier), customerSupport: Math.round(7500 * multiplier), legalReview: Math.round(3500 * multiplier), hrTools: Math.round(2100 * multiplier) },
-    ];
-    return baseData;
+    return labels.map((label, index) => {
+        // Add some variation based on index
+        const variation = 0.7 + (Math.sin(index * 0.5) * 0.3) + (Math.random() * 0.2);
+        return {
+            label,
+            financeAutomation: Math.round(7500 * multiplier * variation),
+            customerSupport: Math.round(5500 * multiplier * variation),
+            legalReview: Math.round(2800 * multiplier * variation),
+            hrTools: Math.round(1500 * multiplier * variation),
+        };
+    });
 };
 
 // Mock data for Monthly Summary
@@ -139,7 +170,6 @@ export default function ReportsPage() {
     const [filter, setFilter] = useState<FilterPeriod>('last30d');
     const [chartView, setChartView] = useState<'ceed' | 'workspace'>('ceed');
     
-    const metricData = getMetricData(filter);
     const ceedTrendData = getCEEDTrendData(filter);
     const workspaceTrendData = getWorkspaceTrendData(filter);
     const monthlySummaryData = getMonthlySummaryData(filter);
@@ -219,7 +249,7 @@ export default function ReportsPage() {
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Available Credits</p>
                             <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-                                {metricData.available.toLocaleString()}
+                                {creditData.available.toLocaleString()}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">Remaining credits balance</p>
                         </div>
@@ -235,7 +265,7 @@ export default function ReportsPage() {
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Consumed Credits</p>
                             <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-                                {metricData.consumed.toLocaleString()}
+                                {creditData.consumed.toLocaleString()}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">Used to date</p>
                         </div>
@@ -302,7 +332,7 @@ export default function ReportsPage() {
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="day" />
+                            <XAxis dataKey="label" tick={{ fontSize: 11 }} interval={filter === 'last30d' ? 4 : filter === 'last24h' ? 3 : 0} />
                             <YAxis tickFormatter={(value) => value.toLocaleString()} />
                             <Tooltip formatter={(value: number) => value.toLocaleString()} />
                             <Area type="monotone" dataKey="capability" stackId="1" stroke={COLORS.capabilities} fill="url(#colorCapability)" name="Capability" />
@@ -331,7 +361,7 @@ export default function ReportsPage() {
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="day" />
+                            <XAxis dataKey="label" tick={{ fontSize: 11 }} interval={filter === 'last30d' ? 4 : filter === 'last24h' ? 3 : 0} />
                             <YAxis tickFormatter={(value) => value.toLocaleString()} />
                             <Tooltip formatter={(value: number) => value.toLocaleString()} />
                             <Area type="monotone" dataKey="financeAutomation" stackId="1" stroke={WORKSPACE_COLORS.financeAutomation} fill="url(#colorFinance)" name="Finance Automation" />
