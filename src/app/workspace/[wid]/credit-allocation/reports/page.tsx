@@ -17,57 +17,86 @@ import {
 // Filter options
 type FilterPeriod = 'last24h' | 'last7d' | 'last30d' | 'last7m';
 
-// Mock data for metric cards based on filter
-const getMetricData = (filter: FilterPeriod) => {
-    const data = {
-        'last24h': { available: 495000, consumed: 5000 },
-        'last7d': { available: 465000, consumed: 35000 },
-        'last30d': { available: 350000, consumed: 150000 },
-        'last7m': { available: 200000, consumed: 300000 },
-    };
-    return data[filter];
+// Static credit data - these values don't change with filter
+const creditData = {
+    available: 350000,
+    consumed: 150000,
+};
+
+// Generate X-axis labels based on filter
+const generateTimeLabels = (filter: FilterPeriod): string[] => {
+    switch (filter) {
+        case 'last24h':
+            // Hours of the day
+            return Array.from({ length: 24 }, (_, i) => {
+                const hour = i;
+                if (hour === 0) return '12 AM';
+                if (hour === 12) return '12 PM';
+                return hour < 12 ? `${hour} AM` : `${hour - 12} PM`;
+            });
+        case 'last7d':
+            // Days of the week
+            return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        case 'last30d':
+            // Days of the month
+            return Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`);
+        case 'last7m':
+            // Last 7 months
+            const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+            const currentMonth = new Date().getMonth(); // 0-11
+            const result = [];
+            for (let i = 6; i >= 0; i--) {
+                const monthIndex = (currentMonth - i + 12) % 12;
+                result.push(months[monthIndex]);
+            }
+            return result;
+        default:
+            return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    }
 };
 
 // Mock data for Consumption Trend - By CEED Layer
 const getCEEDTrendData = (filter: FilterPeriod) => {
+    const labels = generateTimeLabels(filter);
     const multiplier = {
-        'last24h': 0.15,
+        'last24h': 0.05,
         'last7d': 0.5,
-        'last30d': 1,
+        'last30d': 0.15,
         'last7m': 3,
     }[filter];
 
-    const baseData = [
-        { day: 'Mon', capability: Math.round(2500 * multiplier), data: Math.round(1500 * multiplier), entity: Math.round(3500 * multiplier), execution: Math.round(800 * multiplier) },
-        { day: 'Tue', capability: Math.round(3000 * multiplier), data: Math.round(2000 * multiplier), entity: Math.round(4000 * multiplier), execution: Math.round(1000 * multiplier) },
-        { day: 'Wed', capability: Math.round(4200 * multiplier), data: Math.round(3500 * multiplier), entity: Math.round(5500 * multiplier), execution: Math.round(1500 * multiplier) },
-        { day: 'Thu', capability: Math.round(3500 * multiplier), data: Math.round(2800 * multiplier), entity: Math.round(4800 * multiplier), execution: Math.round(1200 * multiplier) },
-        { day: 'Fri', capability: Math.round(2800 * multiplier), data: Math.round(2200 * multiplier), entity: Math.round(4200 * multiplier), execution: Math.round(1000 * multiplier) },
-        { day: 'Sat', capability: Math.round(3200 * multiplier), data: Math.round(2500 * multiplier), entity: Math.round(4500 * multiplier), execution: Math.round(1300 * multiplier) },
-        { day: 'Sun', capability: Math.round(3800 * multiplier), data: Math.round(3000 * multiplier), entity: Math.round(5000 * multiplier), execution: Math.round(1400 * multiplier) },
-    ];
-    return baseData;
+    return labels.map((label, index) => {
+        const variation = 0.7 + (Math.sin(index * 0.5) * 0.3) + (Math.random() * 0.2);
+        return {
+            label,
+            capability: Math.round(2500 * multiplier * variation),
+            data: Math.round(1500 * multiplier * variation),
+            entity: Math.round(3500 * multiplier * variation),
+            execution: Math.round(800 * multiplier * variation),
+        };
+    });
 };
 
 // Mock data for Consumption Trend - By Workflow
 const getWorkflowTrendData = (filter: FilterPeriod) => {
+    const labels = generateTimeLabels(filter);
     const multiplier = {
-        'last24h': 0.15,
+        'last24h': 0.05,
         'last7d': 0.5,
-        'last30d': 1,
+        'last30d': 0.15,
         'last7m': 3,
     }[filter];
 
-    const baseData = [
-        { day: 'Mon', claimsProcessing: Math.round(3500 * multiplier), customerSupport: Math.round(2500 * multiplier), invoiceProcessing: Math.round(1800 * multiplier), dataValidation: Math.round(1200 * multiplier) },
-        { day: 'Tue', claimsProcessing: Math.round(4500 * multiplier), customerSupport: Math.round(3500 * multiplier), invoiceProcessing: Math.round(2200 * multiplier), dataValidation: Math.round(1500 * multiplier) },
-        { day: 'Wed', claimsProcessing: Math.round(6000 * multiplier), customerSupport: Math.round(4500 * multiplier), invoiceProcessing: Math.round(3000 * multiplier), dataValidation: Math.round(2000 * multiplier) },
-        { day: 'Thu', claimsProcessing: Math.round(4800 * multiplier), customerSupport: Math.round(3800 * multiplier), invoiceProcessing: Math.round(2500 * multiplier), dataValidation: Math.round(1800 * multiplier) },
-        { day: 'Fri', claimsProcessing: Math.round(4000 * multiplier), customerSupport: Math.round(3200 * multiplier), invoiceProcessing: Math.round(2200 * multiplier), dataValidation: Math.round(1500 * multiplier) },
-        { day: 'Sat', claimsProcessing: Math.round(4500 * multiplier), customerSupport: Math.round(3500 * multiplier), invoiceProcessing: Math.round(2400 * multiplier), dataValidation: Math.round(1700 * multiplier) },
-        { day: 'Sun', claimsProcessing: Math.round(5200 * multiplier), customerSupport: Math.round(4000 * multiplier), invoiceProcessing: Math.round(2800 * multiplier), dataValidation: Math.round(1900 * multiplier) },
-    ];
-    return baseData;
+    return labels.map((label, index) => {
+        const variation = 0.7 + (Math.sin(index * 0.5) * 0.3) + (Math.random() * 0.2);
+        return {
+            label,
+            claimsProcessing: Math.round(3500 * multiplier * variation),
+            customerSupport: Math.round(2500 * multiplier * variation),
+            invoiceProcessing: Math.round(1800 * multiplier * variation),
+            dataValidation: Math.round(1200 * multiplier * variation),
+        };
+    });
 };
 
 // Mock data for Monthly Summary (by Workflow)
@@ -139,7 +168,6 @@ export default function WorkspaceReportsPage() {
     const [filter, setFilter] = useState<FilterPeriod>('last30d');
     const [chartView, setChartView] = useState<'ceed' | 'workflow'>('ceed');
     
-    const metricData = getMetricData(filter);
     const ceedTrendData = getCEEDTrendData(filter);
     const workflowTrendData = getWorkflowTrendData(filter);
     const monthlySummaryData = getMonthlySummaryData(filter);
@@ -215,7 +243,7 @@ export default function WorkspaceReportsPage() {
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Available Credits</p>
                             <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-                                {metricData.available.toLocaleString()}
+                                {creditData.available.toLocaleString()}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">Remaining credits balance</p>
                         </div>
@@ -231,7 +259,7 @@ export default function WorkspaceReportsPage() {
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Consumed Credits</p>
                             <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-                                {metricData.consumed.toLocaleString()}
+                                {creditData.consumed.toLocaleString()}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">Used to date</p>
                         </div>
@@ -298,7 +326,7 @@ export default function WorkspaceReportsPage() {
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="day" />
+                            <XAxis dataKey="label" tick={{ fontSize: 11 }} interval={filter === 'last30d' ? 4 : filter === 'last24h' ? 3 : 0} />
                             <YAxis tickFormatter={(value) => value.toLocaleString()} />
                             <Tooltip formatter={(value: number) => value.toLocaleString()} />
                             <Area type="monotone" dataKey="capability" stackId="1" stroke={COLORS.capabilities} fill="url(#colorCapabilityWs)" name="Capability" />
@@ -327,7 +355,7 @@ export default function WorkspaceReportsPage() {
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="day" />
+                            <XAxis dataKey="label" tick={{ fontSize: 11 }} interval={filter === 'last30d' ? 4 : filter === 'last24h' ? 3 : 0} />
                             <YAxis tickFormatter={(value) => value.toLocaleString()} />
                             <Tooltip formatter={(value: number) => value.toLocaleString()} />
                             <Area type="monotone" dataKey="claimsProcessing" stackId="1" stroke={WORKFLOW_COLORS.claimsProcessing} fill="url(#colorClaimsWs)" name="Claims Processing" />
