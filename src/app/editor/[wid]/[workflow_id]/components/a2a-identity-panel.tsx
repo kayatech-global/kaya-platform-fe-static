@@ -13,6 +13,7 @@ import {
 import {
     Dialog,
     DialogContent,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -529,18 +530,17 @@ export const A2AIdentityPanel = ({
                                 {JSON.stringify(agentCardJson, null, 2)}
                             </pre>
                         </div>
-                        
-                        {/* Actions */}
-                        <div className="flex justify-end gap-3 pr-2">
-                            <Button variant="primary" onClick={copyJson}>
-                                {copiedJson ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                                {copiedJson ? 'Copied!' : 'Copy JSON'}
-                            </Button>
-                            <Button variant="outline" onClick={() => setIsCardModalOpen(false)}>
-                                Close
-                            </Button>
-                        </div>
                     </div>
+                    
+                    <DialogFooter>
+                        <Button variant="primary" onClick={copyJson}>
+                            {copiedJson ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                            {copiedJson ? 'Copied!' : 'Copy JSON'}
+                        </Button>
+                        <Button variant="secondary" onClick={() => setIsCardModalOpen(false)}>
+                            Close
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
