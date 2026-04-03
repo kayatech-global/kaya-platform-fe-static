@@ -50,3 +50,4 @@ export * from './execution-metric-card';
 export * from './execution-step-badge';
 export * from './test-case-number-badge';
 export * from './slider';
+export * from './dialog';

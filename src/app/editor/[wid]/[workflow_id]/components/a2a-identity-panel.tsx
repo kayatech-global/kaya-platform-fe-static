@@ -1,9 +1,20 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Button, Badge, Switch } from '@/components/atoms';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/atoms/tooltip';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/atoms/dialog';
+import {
+    Button,
+    Badge,
+    Switch,
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/atoms';
 import {
     Table,
     TableBody,
