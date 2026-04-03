@@ -484,6 +484,26 @@ export const A2AIdentityPanel = ({
                             <FileText className="w-5 h-5 text-primary" />
                             Agent Card Preview
                         </DialogTitle>
+                        {/* Agent Context Info */}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400 pt-1">
+                            <span className="flex items-center gap-1">
+                                <span className="font-medium text-gray-700 dark:text-gray-300">Workspace:</span>
+                                {workspaceSlug}
+                            </span>
+                            <span className="text-gray-300 dark:text-gray-600">|</span>
+                            <span className="flex items-center gap-1">
+                                <span className="font-medium text-gray-700 dark:text-gray-300">Workflow:</span>
+                                {workflowSlug}
+                            </span>
+                            <span className="text-gray-300 dark:text-gray-600">|</span>
+                            <span className="flex items-center gap-1">
+                                <span className="font-medium text-gray-700 dark:text-gray-300">Agent:</span>
+                                {agentCardJson.name}
+                            </span>
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
+                                v{agentCardJson.version}
+                            </Badge>
+                        </div>
                     </DialogHeader>
                     
                     <div className="flex-1 overflow-hidden flex flex-col gap-4">
@@ -512,7 +532,10 @@ export const A2AIdentityPanel = ({
                         
                         {/* Actions */}
                         <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={copyJson}>
+                            <Button variant="secondary" onClick={() => setIsCardModalOpen(false)}>
+                                Close
+                            </Button>
+                            <Button variant="primary" onClick={copyJson}>
                                 {copiedJson ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                                 {copiedJson ? 'Copied!' : 'Copy JSON'}
                             </Button>
