@@ -538,7 +538,7 @@ export const A2AIdentityPanel = ({
                             {copiedJson ? 'Copied!' : 'Copy JSON'}
                         </Button>
                         <Button variant="secondary" onClick={() => setIsCardModalOpen(false)}>
-                            Close
+                            Cancel
                         </Button>
                     </DialogFooter>
                 </DialogContent>
