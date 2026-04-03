@@ -9,18 +9,9 @@ import {
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
 } from '@/components/atoms';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/atoms/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/molecules';
 import { cn } from '@/lib/utils';
 import {
     Copy,

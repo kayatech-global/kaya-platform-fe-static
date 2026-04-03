@@ -6,10 +6,6 @@ import {
     Input,
     Textarea,
     Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
     Switch,
     Slider,
     Badge,
@@ -653,21 +649,17 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                         {expandedSections.auth && (
                             <div className="p-3 flex flex-col gap-3">
                                 <div className="flex flex-col gap-1">
-                                    <Label className="text-xs text-gray-500 dark:text-gray-400">Auth Type</Label>
                                     <Select
-                                        value={authType}
-                                        onValueChange={(v: 'none' | 'bearer' | 'oauth2') => setAuthType(v)}
+                                        label="Auth Type"
+                                        currentValue={authType}
+                                        onChange={(e) => setAuthType(e.target.value as 'none' | 'bearer' | 'oauth2')}
                                         disabled={isReadOnly}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">None</SelectItem>
-                                            <SelectItem value="bearer">Bearer Token</SelectItem>
-                                            <SelectItem value="oauth2">OAuth2 Client Credentials</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                        options={[
+                                            { name: 'None', value: 'none' },
+                                            { name: 'Bearer Token', value: 'bearer' },
+                                            { name: 'OAuth2 Client Credentials', value: 'oauth2' },
+                                        ]}
+                                    />
                                 </div>
 
                                 {authType === 'bearer' && (
@@ -789,23 +781,17 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
 
                                 {/* Retry strategy */}
                                 <div className="flex flex-col gap-2">
-                                    <Label className="text-sm text-gray-700 dark:text-gray-200">
-                                        Retry Strategy
-                                    </Label>
                                     <Select
-                                        value={retryStrategy}
-                                        onValueChange={(v: 'none' | 'linear' | 'exponential') => setRetryStrategy(v)}
+                                        label="Retry Strategy"
+                                        currentValue={retryStrategy}
+                                        onChange={(e) => setRetryStrategy(e.target.value as 'none' | 'linear' | 'exponential')}
                                         disabled={isReadOnly}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">No Retry</SelectItem>
-                                            <SelectItem value="linear">Linear Backoff</SelectItem>
-                                            <SelectItem value="exponential">Exponential Backoff</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                        options={[
+                                            { name: 'No Retry', value: 'none' },
+                                            { name: 'Linear Backoff', value: 'linear' },
+                                            { name: 'Exponential Backoff', value: 'exponential' },
+                                        ]}
+                                    />
                                 </div>
 
                                 {retryStrategy !== 'none' && (
