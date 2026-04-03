@@ -342,13 +342,12 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
     };
 
     // Filter skills by search
-    const filteredSkills =
-        agentCard?.skills.filter(
-            skill =>
-                skill.name.toLowerCase().includes(skillSearch.toLowerCase()) ||
-                skill.description?.toLowerCase().includes(skillSearch.toLowerCase()) ||
-                skill.tags?.some(tag => tag.toLowerCase().includes(skillSearch.toLowerCase()))
-        ) || [];
+    const filteredSkills = (agentCard?.skills || []).filter(
+        skill =>
+            skill.name.toLowerCase().includes(skillSearch.toLowerCase()) ||
+            skill.description?.toLowerCase().includes(skillSearch.toLowerCase()) ||
+            skill.tags?.some(tag => tag.toLowerCase().includes(skillSearch.toLowerCase()))
+    );
 
     // Save node data
     const handleSave = () => {
@@ -548,6 +547,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                         {/* Skills Selection Section */}
                         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                             <button
+                                type="button"
                                 onClick={() => toggleSection('skills')}
                                 className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
@@ -557,7 +557,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                         Remote Skills
                                     </span>
                                     <Badge variant="secondary" className="text-xs">
-                                        {selectedSkills.length}/{agentCard.skills.length}
+                                        {selectedSkills.length}/{agentCard?.skills?.length || 0}
                                     </Badge>
                                 </div>
                                 {expandedSections.skills ? (
@@ -674,6 +674,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                         {/* Authentication Section */}
                         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                             <button
+                                type="button"
                                 onClick={() => toggleSection('auth')}
                                 className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
@@ -763,6 +764,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                         {/* Runtime Options Section */}
                         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                             <button
+                                type="button"
                                 onClick={() => toggleSection('runtime')}
                                 className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
