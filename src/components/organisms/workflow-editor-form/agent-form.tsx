@@ -49,6 +49,7 @@ import MessagePublisher from '@/app/editor/[wid]/[workflow_id]/components/end-no
 import HumanInput from '@/app/editor/[wid]/[workflow_id]/components/human-input';
 import { InputDataConnectContainer } from '@/app/editor/[wid]/[workflow_id]/components/input-data-connect/input-data-connect-container';
 import { SelectedInputConnects } from '@/app/editor/[wid]/[workflow_id]/components/input-data-connect/selected-input-connects';
+import { A2AIdentityPanel } from '@/app/editor/[wid]/[workflow_id]/components/a2a-identity-panel';
 import { useApp } from '@/context/app-context';
 import { EditorPanelAgentProps } from '@/app/editor/[wid]/[workflow_id]/components/editor-panel';
 import { agentService } from '@/services';
@@ -1198,6 +1199,23 @@ export const AgentForm = ({
                                 isReadOnly={isReadOnly}
                                 workflowId={params?.workflow_id as string}
                                 setMessagePublisher={setOutputBroadcasting}
+                            />
+                        </div>
+
+                        {/* A2A Identity Section */}
+                        <div className="mt-6 bottom-gradient-border pb-4">
+                            <A2AIdentityPanel
+                                agentName={agent?.isReusableAgentSelected ? agent.name : agentName}
+                                agentDescription={agent?.isReusableAgentSelected ? agent.description : description}
+                                tools={[
+                                    ...(apis?.map(api => ({ id: api.id || '', name: api.name, type: 'API' })) ?? []),
+                                    ...(mcpServers?.map(mcp => ({ id: mcp.id || '', name: mcp.name || '', type: 'MCP' })) ?? []),
+                                    ...(vectorRags?.map(rag => ({ id: rag.id || '', name: rag.name || '', type: 'VECTOR_RAG' })) ?? []),
+                                    ...(graphRags?.map(rag => ({ id: rag.id || '', name: rag.name || '', type: 'GRAPH_RAG' })) ?? []),
+                                    ...(executableFunctions?.map(fn => ({ id: fn.id || '', name: fn.name, type: 'EXECUTABLE_FUNCTION' })) ?? []),
+                                    ...(selectedConnector?.map(c => ({ id: c.id || '', name: c.name, type: 'CONNECTOR' })) ?? []),
+                                ]}
+                                isReadOnly={isReadOnly}
                             />
                         </div>
 

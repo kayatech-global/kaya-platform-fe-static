@@ -667,6 +667,17 @@ export const NODE_LIST: NodeListTypeDef[] = [
                 color: '#0891B2',
                 icon: 'ri-tools-fill text-[50px] antialiased text-white',
             },
+            {
+                id: 'external_agent_init_menu',
+                data: {},
+                title: 'External Agent',
+                type: CustomNodeTypes.externalAgentNode,
+                showTitle: true,
+                showInteractions: false,
+                isActive: false,
+                color: '#7C3AED',
+                icon: 'ri-links-fill text-[50px] antialiased text-white',
+            },
         ],
     },
     {

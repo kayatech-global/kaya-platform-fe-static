@@ -8,3 +8,4 @@ export * from './schedule-trigger/schedule-trigger-form';
 export * from './workflow-editor-form/iterator-form';
 export * from './execution-step-linear-graph/execution-step-linear-graph';
 export * from './workflow-editor-form/tool-executor-form';
+export * from './workflow-editor-form/external-agent-form';
