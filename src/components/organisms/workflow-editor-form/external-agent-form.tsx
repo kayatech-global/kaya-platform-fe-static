@@ -379,8 +379,8 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
     };
 
     return (
-        <div className="group flex flex-col h-[calc(100vh-270px)]">
-            <div className="external-agent-form pr-1 flex flex-col gap-y-4 flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700">
+        <div className="group">
+            <div className="external-agent-form pr-1 flex flex-col gap-y-6 h-[calc(100vh-270px)] overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700">
                 {/* Validation Banners */}
             {validationErrors.length > 0 && (
                 <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
@@ -852,12 +852,12 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                 </>
             )}
 
-            </div>
-            {/* Save Button - outside scrollable area */}
-            <div className="pt-3 bg-white dark:bg-gray-900 flex-shrink-0">
-                <Button onClick={handleSave} disabled={isReadOnly || !agentCard} className="w-full">
-                    Save Configuration
-                </Button>
+                {/* Save Button */}
+                <div className="pt-3">
+                    <Button onClick={handleSave} disabled={isReadOnly || !agentCard} className="w-full">
+                        Save Configuration
+                    </Button>
+                </div>
             </div>
         </div>
     );
