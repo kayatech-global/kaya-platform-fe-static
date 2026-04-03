@@ -368,7 +368,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                 maxRetries: retryStrategy !== 'none' ? maxRetries : undefined,
             },
         });
-        setTrigger(!trigger);
+        setTrigger((trigger ?? 0) + 1);
         toast.success('External Agent configuration saved');
     };
 
