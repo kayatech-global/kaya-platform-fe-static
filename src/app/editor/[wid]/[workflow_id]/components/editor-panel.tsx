@@ -139,7 +139,7 @@ export const EditorPanel = (props: EditorPanelProps) => {
     return (
         <div
             className={cn(
-                'bg-white dark:bg-gray-900 rounded flex flex-col gap-y-6 pl-[10px] pr-[2px] pt-3 min-w-[335px] !w-[335px]'
+                'bg-white dark:bg-gray-900 rounded flex flex-col gap-y-6 pl-[10px] pr-[2px] pt-3 min-w-[335px] !w-[335px] h-full max-h-screen'
             )}
         >
             <div className="editor-header flex flex-col gap-y-3 pb-5 bottom-gradient-border">
@@ -148,7 +148,7 @@ export const EditorPanel = (props: EditorPanelProps) => {
                 </p>
                 <NodeSnippetSection surroundingNodeImages={surroundingNodeImages} />
             </div>
-            <div className="editor-fields">
+            <div className="editor-fields flex-1 overflow-hidden">
                 {(selectedNodeInfo.type === CustomNodeTypes.agentNode ||
                     selectedNodeInfo.type === CustomNodeTypes.decisionNode ||
                     selectedNodeInfo.type === CustomNodeTypes.loaderNode ||
