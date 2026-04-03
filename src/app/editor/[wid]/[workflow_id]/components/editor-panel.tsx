@@ -99,12 +99,12 @@ export const EditorPanel = (props: EditorPanelProps) => {
                 return '/png/nodes/iterator-node-preview.png';
             case CustomNodeTypes.subflowNode:
                 return '/png/nodes/workflow-node-preview.png';
-                case CustomNodeTypes.toolExecutorNode:
-                    return '/png/nodes/tool_executor_preview.png';
-                case CustomNodeTypes.externalAgentNode:
-                    return '/png/nodes/external_agent_preview.png';
-            }
-        };
+            case CustomNodeTypes.toolExecutorNode:
+                return '/png/nodes/tool_executor_preview.png';
+            case CustomNodeTypes.externalAgentNode:
+                return '/png/nodes/external_agent_preview.png';
+        }
+    };
 
     const getSurroundingNodes = (nodes: Node[], edges: Edge[], selectedNode: Node) => {
         if (!selectedNode) return [null, null, null];
