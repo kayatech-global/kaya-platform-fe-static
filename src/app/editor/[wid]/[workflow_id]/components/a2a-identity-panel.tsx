@@ -11,7 +11,7 @@ import {
     TooltipTrigger,
 } from '@/components/atoms';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/atoms/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/molecules';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/molecules/table/table';
 import { cn } from '@/lib/utils';
 import {
     Copy,
