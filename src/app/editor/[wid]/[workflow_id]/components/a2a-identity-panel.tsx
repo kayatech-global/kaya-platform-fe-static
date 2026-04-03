@@ -1,23 +1,11 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Button, Badge } from '@/components/atoms';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/atoms/dialog';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/molecules/table/table';
+import { Button, Badge, Input, Label, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/atoms';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/atoms/dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/atoms/collapsible';
 import { cn } from '@/lib/utils';
+import { Copy, Check, Globe, Lock, Shield, ChevronDown, AlertTriangle, FileText, Eye } from 'lucide-react';
 
 // Types for A2A Identity
 export interface A2AToolMapping {
@@ -192,338 +180,288 @@ export const A2AIdentityPanel = ({
         setTimeout(() => setCopiedJson(false), 2000);
     };
 
-    // Icons as inline SVGs for consistency with mockup
-    const ShieldIcon = () => (
-        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5z"/>
-        </svg>
-    );
-
-    const CopyIcon = () => (
-        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-        </svg>
-    );
-
-    const CheckIcon = () => (
-        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-        </svg>
-    );
-
-    const GlobeIcon = () => (
-        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-        </svg>
-    );
-
-    const LockIcon = () => (
-        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-        </svg>
-    );
-
-    const FileIcon = () => (
-        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-        </svg>
-    );
-
-    const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
-        <svg className={cn("w-4 h-4 transition-transform", expanded && "rotate-180")} viewBox="0 0 24 24" fill="currentColor">
-            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-        </svg>
-    );
-
-    const WarningIcon = () => (
-        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-        </svg>
-    );
-
     if (!isEnabled) {
         return null;
     }
 
     return (
-        <div className="relative bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/30 border-y border-sky-200 dark:border-sky-800 p-4">
-            {/* NEW Badge */}
-            <span className="absolute top-3 right-4 bg-green-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
-                NEW
-            </span>
-
+        <div className="space-y-4">
             {/* Section Header */}
-            <div className="flex items-center gap-2 mb-3">
-                <div className="w-5 h-5 bg-sky-500 rounded-md flex items-center justify-center text-white">
-                    <ShieldIcon />
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-sky-500 rounded flex items-center justify-center">
+                        <Shield className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        A2A IDENTITY
+                    </span>
                 </div>
-                <span className="text-xs font-bold text-sky-700 dark:text-sky-300 uppercase tracking-wide">
-                    A2A Identity
-                </span>
+                <Badge variant="default" className="bg-green-500 hover:bg-green-500 text-white text-[10px] px-2 py-0.5">
+                    NEW
+                </Badge>
             </div>
 
             {/* Status Badge */}
-            <div className="mb-3">
-                <span className="inline-flex items-center gap-1.5 bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-full px-2 py-0.5">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                    <span className="text-[11px] font-semibold text-green-600 dark:text-green-400">A2A Enabled</span>
+            <div>
+                <span className="inline-flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-full px-2.5 py-1">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span className="text-xs font-medium text-green-700 dark:text-green-400">A2A Enabled</span>
                 </span>
             </div>
 
-            {/* Agent URI Chip */}
-            <div className="flex items-center gap-2 mb-3">
-                <div className="flex-1 bg-sky-100 dark:bg-sky-900/40 border border-sky-300 dark:border-sky-700 rounded-md px-2 py-1.5">
-                    <span className="text-[11px] font-mono text-sky-800 dark:text-sky-200 break-all leading-tight">
+            {/* Agent URI */}
+            <div className="flex items-center gap-2">
+                <div className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
+                    <code className="text-xs text-gray-700 dark:text-gray-300 font-mono break-all">
                         {a2aUri}
-                    </span>
+                    </code>
                 </div>
-                <button
-                    onClick={() => copyToClipboard(a2aUri, setCopiedUri)}
-                    className="w-7 h-7 bg-sky-100 dark:bg-sky-900/40 border border-sky-300 dark:border-sky-700 rounded-md flex items-center justify-center text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-800 transition-colors flex-shrink-0"
-                    title="Copy A2A URI"
-                >
-                    {copiedUri ? <CheckIcon /> : <CopyIcon />}
-                </button>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-9 w-9 flex-shrink-0"
+                                onClick={() => copyToClipboard(a2aUri, setCopiedUri)}
+                            >
+                                {copiedUri ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{copiedUri ? 'Copied!' : 'Copy URI'}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
 
-            {/* Discovery Visibility Toggle */}
-            <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold text-sky-700 dark:text-sky-300 uppercase tracking-wide">
+            {/* Discovery Visibility */}
+            <div className="space-y-2">
+                <Label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                     Discovery Visibility
-                </span>
-                <div className="flex bg-sky-100 dark:bg-sky-900/40 border border-sky-300 dark:border-sky-700 rounded-lg p-0.5 gap-0.5">
+                </Label>
+                <div className="flex bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
                     <button
                         onClick={() => !isReadOnly && handleSetVisibility('public')}
+                        disabled={isReadOnly}
                         className={cn(
-                            "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all",
+                            "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all",
                             visibility === 'public'
                                 ? "bg-green-500 text-white shadow-sm"
-                                : "text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-800"
+                                : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
                         )}
                     >
-                        <GlobeIcon />
+                        <Globe className="w-3.5 h-3.5" />
                         Public
                     </button>
                     <button
                         onClick={() => !isReadOnly && handleSetVisibility('private')}
+                        disabled={isReadOnly}
                         className={cn(
-                            "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all",
+                            "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all",
                             visibility === 'private'
-                                ? "bg-gray-500 text-white shadow-sm"
-                                : "text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-800"
+                                ? "bg-gray-600 text-white shadow-sm"
+                                : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
                         )}
                     >
-                        <LockIcon />
+                        <Lock className="w-3.5 h-3.5" />
                         Private
                     </button>
                 </div>
             </div>
 
-            {/* Public: Externally Discoverable Box */}
+            {/* Public: Externally Discoverable */}
             {visibility === 'public' && (
-                <div className="bg-green-50 dark:bg-green-950/30 border border-green-300 dark:border-green-700 rounded-lg p-2.5 mb-3">
-                    <div className="flex items-center gap-1.5 mb-2">
-                        <GlobeIcon />
-                        <span className="text-[10px] font-bold text-green-700 dark:text-green-300 uppercase tracking-wide">
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 space-y-3">
+                    <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        <span className="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wide">
                             Externally Discoverable (US-A2A-004)
                         </span>
                     </div>
                     
-                    {/* Discovery Endpoint URL */}
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                        <div className="flex-1 bg-green-100 dark:bg-green-900/40 border border-green-300 dark:border-green-700 rounded px-2 py-1">
-                            <span className="text-[10px] font-mono text-green-800 dark:text-green-200 break-all leading-tight">
+                    {/* Discovery Endpoint */}
+                    <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-white dark:bg-gray-900 border border-green-200 dark:border-green-800 rounded px-2 py-1.5">
+                            <code className="text-[11px] text-green-700 dark:text-green-300 font-mono break-all">
                                 {discoveryEndpoint}
-                            </span>
+                            </code>
                         </div>
                         <button
                             onClick={() => copyToClipboard(discoveryEndpoint, setCopiedDiscovery)}
-                            className="w-5 h-5 bg-green-200 dark:bg-green-800 border border-green-300 dark:border-green-700 rounded flex items-center justify-center text-green-700 dark:text-green-300 hover:bg-green-300 dark:hover:bg-green-700 transition-colors flex-shrink-0"
-                            title="Copy discovery endpoint"
+                            className="w-7 h-7 flex items-center justify-center rounded border border-green-200 dark:border-green-800 bg-white dark:bg-gray-900 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/40 transition-colors"
                         >
-                            {copiedDiscovery ? <CheckIcon /> : <CopyIcon />}
+                            {copiedDiscovery ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                         </button>
                     </div>
                     
                     {/* Agent Card Path */}
-                    <div className="flex items-center gap-1.5 mb-2">
-                        <div className="flex-1 bg-green-100 dark:bg-green-900/40 border border-green-300 dark:border-green-700 rounded px-2 py-1">
-                            <span className="text-[10px] font-mono text-green-800 dark:text-green-200 break-all leading-tight">
+                    <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-white dark:bg-gray-900 border border-green-200 dark:border-green-800 rounded px-2 py-1.5">
+                            <code className="text-[11px] text-green-700 dark:text-green-300 font-mono break-all">
                                 {agentCardPath}
-                            </span>
+                            </code>
                         </div>
                         <button
                             onClick={() => copyToClipboard(agentCardPath, setCopiedAgentCard)}
-                            className="w-5 h-5 bg-green-200 dark:bg-green-800 border border-green-300 dark:border-green-700 rounded flex items-center justify-center text-green-700 dark:text-green-300 hover:bg-green-300 dark:hover:bg-green-700 transition-colors flex-shrink-0"
-                            title="Copy agent card endpoint"
+                            className="w-7 h-7 flex items-center justify-center rounded border border-green-200 dark:border-green-800 bg-white dark:bg-gray-900 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/40 transition-colors"
                         >
-                            {copiedAgentCard ? <CheckIcon /> : <CopyIcon />}
+                            {copiedAgentCard ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                         </button>
                     </div>
                     
-                    <p className="text-[10px] text-green-600 dark:text-green-400">
-                        🌐 Listed in workspace agent registry · Auth required for full card
+                    <p className="text-[11px] text-green-600 dark:text-green-400 flex items-center gap-1">
+                        <Globe className="w-3 h-3" />
+                        Listed in workspace agent registry · Auth required for full card
                     </p>
                 </div>
             )}
 
             {/* Private: Internal Access Notice */}
             {visibility === 'private' && (
-                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700 rounded-lg p-2.5 mb-3 flex items-start gap-2">
-                    <div className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5">
-                        <LockIcon />
-                    </div>
-                    <p className="text-[11px] text-amber-800 dark:text-amber-200 leading-relaxed">
-                        <strong className="text-amber-600 dark:text-amber-400">Internal access only (US-A2A-005).</strong>{' '}
-                        This agent is not listed in the workspace discovery endpoint. It can only be invoked by agents within the <strong>{workspaceSlug.toUpperCase()} workspace</strong> using a scoped bearer token.
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex items-start gap-2">
+                    <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+                        <strong className="font-semibold">Internal access only (US-A2A-005).</strong>{' '}
+                        This agent is not listed in the workspace discovery endpoint. It can only be invoked by agents within the <strong>{workspaceSlug.toUpperCase()}</strong> workspace using a scoped bearer token.
                     </p>
                 </div>
             )}
 
             {/* Skill Type Tags */}
             {Object.keys(skillTypeCounts).length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-3">
+                <div className="flex flex-wrap gap-1.5">
                     {Object.entries(skillTypeCounts).map(([type, count]) => (
-                        <span
+                        <Badge
                             key={type}
-                            className="bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 text-[10px] font-medium px-1.5 py-0.5 rounded"
+                            variant="outline"
+                            className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-[11px] font-medium"
                         >
                             {type} {count > 1 ? `×${count}` : ''}
-                        </span>
+                        </Badge>
                     ))}
                 </div>
             )}
 
-            {/* Tool-to-Skill Mapping Table (Collapsible) */}
+            {/* Tool-to-Skill Mapping (Collapsible) */}
             {toolMappings.length > 0 && (
-                <div className="mb-3">
-                    <button
-                        onClick={() => setIsMappingExpanded(!isMappingExpanded)}
-                        className="flex items-center justify-between w-full text-left py-1.5"
-                    >
-                        <span className="text-[11px] font-semibold text-sky-700 dark:text-sky-300 flex items-center gap-1.5">
+                <Collapsible open={isMappingExpanded} onOpenChange={setIsMappingExpanded}>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-left">
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                             Tool-to-Skill Mapping
                             {toolsWithWarnings.length > 0 && (
-                                <span className="text-amber-500 flex items-center gap-0.5">
-                                    <WarningIcon />
+                                <span className="flex items-center gap-1 text-amber-500">
+                                    <AlertTriangle className="w-3.5 h-3.5" />
                                     <span className="text-[10px]">{toolsWithWarnings.length}</span>
                                 </span>
                             )}
                         </span>
-                        <ChevronIcon expanded={isMappingExpanded} />
-                    </button>
+                        <ChevronDown className={cn(
+                            "w-4 h-4 text-gray-500 transition-transform",
+                            isMappingExpanded && "rotate-180"
+                        )} />
+                    </CollapsibleTrigger>
                     
-                    {isMappingExpanded && (
-                        <div className="mt-2 border border-sky-200 dark:border-sky-800 rounded-lg overflow-hidden">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-sky-50 dark:bg-sky-950/50">
-                                        <TableHead className="text-[10px] font-semibold text-sky-700 dark:text-sky-300 py-2 px-2">Tool</TableHead>
-                                        <TableHead className="text-[10px] font-semibold text-sky-700 dark:text-sky-300 py-2 px-2">Type</TableHead>
-                                        <TableHead className="text-[10px] font-semibold text-sky-700 dark:text-sky-300 py-2 px-2">Skill</TableHead>
-                                        <TableHead className="text-[10px] font-semibold text-sky-700 dark:text-sky-300 py-2 px-2 w-8"></TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {toolMappings.map((mapping) => (
-                                        <TableRow
-                                            key={mapping.toolId}
-                                            className={cn(
-                                                "text-[10px]",
-                                                (!mapping.hasMetadata || mapping.warningMessage) && "bg-amber-50 dark:bg-amber-950/20"
+                    <CollapsibleContent>
+                        <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                            <div className="bg-gray-50 dark:bg-gray-800 px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+                                <div className="grid grid-cols-4 gap-2">
+                                    <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 uppercase">Tool</span>
+                                    <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 uppercase">Type</span>
+                                    <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 uppercase">Skill</span>
+                                    <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 uppercase text-right">Status</span>
+                                </div>
+                            </div>
+                            <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-40 overflow-y-auto">
+                                {toolMappings.map((mapping) => (
+                                    <div
+                                        key={mapping.toolId}
+                                        className={cn(
+                                            "px-3 py-2 grid grid-cols-4 gap-2 items-center",
+                                            (!mapping.hasMetadata || mapping.warningMessage) && "bg-amber-50 dark:bg-amber-900/10"
+                                        )}
+                                    >
+                                        <span className="text-[11px] text-gray-700 dark:text-gray-300 truncate" title={mapping.toolName}>
+                                            {mapping.toolName}
+                                        </span>
+                                        <Badge variant="outline" className="text-[9px] w-fit">
+                                            {mapping.toolType}
+                                        </Badge>
+                                        <span className="text-[11px] text-gray-600 dark:text-gray-400 font-mono truncate" title={mapping.skillName}>
+                                            {mapping.skillName}
+                                        </span>
+                                        <div className="flex justify-end">
+                                            {mapping.hasMetadata && !mapping.warningMessage ? (
+                                                <Check className="w-3.5 h-3.5 text-green-500" />
+                                            ) : (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger>
+                                                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p className="text-xs">{mapping.warningMessage || 'Missing metadata'}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
                                             )}
-                                        >
-                                            <TableCell className="py-1.5 px-2 font-medium text-gray-700 dark:text-gray-200">
-                                                {mapping.toolName}
-                                            </TableCell>
-                                            <TableCell className="py-1.5 px-2">
-                                                <Badge variant="outline" className="text-[9px] px-1 py-0">
-                                                    {mapping.toolType}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="py-1.5 px-2 font-mono text-gray-600 dark:text-gray-400">
-                                                {mapping.skillName}
-                                            </TableCell>
-                                            <TableCell className="py-1.5 px-2">
-                                                {(!mapping.hasMetadata || mapping.warningMessage) && (
-                                                    <span className="text-amber-500" title={mapping.warningMessage || 'Missing metadata'}>
-                                                        <WarningIcon />
-                                                    </span>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    )}
-                </div>
+                    </CollapsibleContent>
+                </Collapsible>
             )}
 
             {/* View A2A Card Button */}
             <Dialog open={isCardModalOpen} onOpenChange={setIsCardModalOpen}>
                 <DialogTrigger asChild>
-                    <button className="w-full py-2 rounded-lg text-[13px] font-semibold bg-gradient-to-r from-sky-500 to-cyan-500 text-white flex items-center justify-center gap-2 shadow-md hover:shadow-lg hover:from-sky-600 hover:to-cyan-600 transition-all">
-                        <FileIcon />
+                    <Button
+                        variant="default"
+                        className="w-full bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white"
+                    >
+                        <FileText className="w-4 h-4 mr-2" />
                         View A2A Card
-                    </button>
+                    </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0">
-                    <DialogHeader className="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-sky-500 to-cyan-500 rounded-lg flex items-center justify-center text-white">
-                                <FileIcon />
-                            </div>
-                            <div>
-                                <DialogTitle className="text-base font-bold text-gray-900 dark:text-white">
-                                    A2A Agent Card
-                                </DialogTitle>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    {agentName} · Schema v{agentCardJson.schemaVersion}
-                                </p>
-                            </div>
-                        </div>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-sky-500" />
+                            Agent Card Preview
+                        </DialogTitle>
                     </DialogHeader>
                     
-                    {/* Meta Chips */}
-                    <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-2.5 py-1">
-                            <span className="text-[10px] text-gray-500">Schema</span>
-                            <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-200">v{agentCardJson.schemaVersion}</span>
+                    <div className="flex-1 overflow-hidden flex flex-col gap-4">
+                        {/* Card Metadata */}
+                        <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline" className="text-xs">
+                                Schema v{agentCardJson.schemaVersion}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                                Streaming
+                            </Badge>
+                            <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                                {agentCardJson.skills.length} Skills
+                            </Badge>
+                            <Badge variant="outline" className="text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                                Auth Required
+                            </Badge>
                         </div>
-                        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-2.5 py-1">
-                            <span className="text-[10px] text-gray-500">Skills</span>
-                            <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-200">{agentCardJson.skills.length}</span>
+                        
+                        {/* JSON Preview */}
+                        <div className="flex-1 overflow-auto bg-gray-900 rounded-lg p-4">
+                            <pre className="text-xs text-gray-100 font-mono whitespace-pre-wrap">
+                                {JSON.stringify(agentCardJson, null, 2)}
+                            </pre>
                         </div>
-                        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-2.5 py-1">
-                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                            <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-200">Streaming</span>
-                        </div>
-                        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-2.5 py-1">
-                            <span className="text-[10px] text-gray-500">Auth</span>
-                            <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-200">Bearer, OAuth2</span>
-                        </div>
-                    </div>
-                    
-                    {/* JSON Preview */}
-                    <div className="flex-1 overflow-y-auto bg-slate-900 p-4">
-                        <pre className="text-xs font-mono text-slate-200 whitespace-pre-wrap leading-relaxed">
-                            {JSON.stringify(agentCardJson, null, 2)}
-                        </pre>
-                    </div>
-                    
-                    {/* Footer */}
-                    <div className="flex items-center justify-between p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                        <p className="text-[11px] text-gray-500">
-                            Based on <a href="https://google.github.io/A2A" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">A2A Protocol Spec</a>
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={copyJson}>
-                                {copiedJson ? <CheckIcon /> : <CopyIcon />}
-                                <span className="ml-1.5">{copiedJson ? 'Copied!' : 'Copy JSON'}</span>
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => setIsCardModalOpen(false)}>
-                                Close
+                        
+                        {/* Actions */}
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={copyJson}>
+                                {copiedJson ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                                {copiedJson ? 'Copied!' : 'Copy JSON'}
                             </Button>
                         </div>
                     </div>
