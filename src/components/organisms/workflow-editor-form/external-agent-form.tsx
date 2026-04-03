@@ -346,7 +346,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
             return;
         }
 
-        const nodeData: ExternalAgentData = {
+        updateNodeData(selectedNode.id, {
             agentCardUrl,
             friendlyName,
             description,
@@ -367,9 +367,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                 retryStrategy,
                 maxRetries: retryStrategy !== 'none' ? maxRetries : undefined,
             },
-        };
-
-        updateNodeData(selectedNode.id, nodeData);
+        });
         setTrigger(!trigger);
         toast.success('External Agent configuration saved');
     };
