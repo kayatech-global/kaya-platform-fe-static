@@ -1,15 +1,14 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { Button, Badge } from '@/components/atoms';
 import {
-    Button,
-    Badge,
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from '@/components/atoms';
+} from '@/components/atoms/dialog';
 import {
     Table,
     TableBody,
