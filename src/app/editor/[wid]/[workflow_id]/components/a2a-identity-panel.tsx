@@ -1,17 +1,17 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import {
-    Button,
-    Badge,
-    Switch,
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/atoms';
+import { Button, Badge, Switch } from '@/components/atoms';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/atoms/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/atoms/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/molecules/table/table';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/molecules/table/table';
 import { cn } from '@/lib/utils';
 import {
     Copy,

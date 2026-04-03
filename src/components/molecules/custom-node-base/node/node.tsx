@@ -322,5 +322,24 @@ export const Node: React.FC<NodeProps> = ({ id, data, type }) => {
         );
     }
 
+    if (type === CustomNodeTypes.externalAgentNode) {
+        return (
+            <CustomNodeBase
+                id={id}
+                data={data}
+                title="External Agent"
+                type={type}
+                color="#7C3AED"
+                activeColor="#6D28D9"
+                icon="ri-links-fill text-[50px] antialiased text-white"
+                handleConfig={{ showSource: true, showTarget: true }}
+                showInteractions
+                iconType="icon"
+                showTitle
+                customTitle={data?.name as string}
+            />
+        );
+    }
+
     return null;
 };
