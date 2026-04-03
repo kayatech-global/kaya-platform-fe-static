@@ -198,6 +198,8 @@ export const getNodeLabel = (nodeType: CustomNodeTypes): string => {
             return 'Iterator';
         case CustomNodeTypes.toolExecutorNode:
             return 'Tool Executor';
+        case CustomNodeTypes.externalAgentNode:
+            return 'External Agent';
         default:
             return 'End';
     }
@@ -444,6 +446,7 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
                 [CustomNodeTypes.subflowNode]: Node,
                 [CustomNodeTypes.iteratorNode]: Node,
                 [CustomNodeTypes.toolExecutorNode]: Node,
+                [CustomNodeTypes.externalAgentNode]: Node,
             }),
             []
         );
