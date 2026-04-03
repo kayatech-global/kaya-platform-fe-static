@@ -531,13 +531,13 @@ export const A2AIdentityPanel = ({
                         </div>
                         
                         {/* Actions */}
-                        <div className="flex justify-end gap-2">
-                            <Button variant="secondary" onClick={() => setIsCardModalOpen(false)}>
-                                Close
-                            </Button>
+                        <div className="flex justify-end gap-3 pr-2">
                             <Button variant="primary" onClick={copyJson}>
                                 {copiedJson ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                                 {copiedJson ? 'Copied!' : 'Copy JSON'}
+                            </Button>
+                            <Button variant="outline" onClick={() => setIsCardModalOpen(false)}>
+                                Close
                             </Button>
                         </div>
                     </div>
