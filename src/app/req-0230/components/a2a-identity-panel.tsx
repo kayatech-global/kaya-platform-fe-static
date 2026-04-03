@@ -32,7 +32,7 @@ import {
 
 interface ToolSkillRow {
     toolName: string;
-    toolType: 'REST' | 'MCP' | 'Vector RAG' | 'Graph RAG' | 'Executable';
+    toolType: 'REST' | 'MCP' | 'Vector RAG' | 'Graph RAG' | 'Executable' | 'DB Connector';
     skillName?: string;
     hasMissingMeta: boolean;
 }
@@ -45,33 +45,51 @@ interface A2AIdentityPanelProps {
 
 const SKILL_TAG_COLORS: Record<string, string> = {
     REST: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+    'REST x2': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
     MCP: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+    'MCP x2': 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
     'Vector RAG': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
     'Graph RAG': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
     Executable: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+    'Executable x2': 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+    'DB Connector': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
 };
 
 const MOCK_TOOL_SKILLS: ToolSkillRow[] = [
-    { toolName: 'search-api', toolType: 'REST', skillName: 'web_search', hasMissingMeta: false },
-    { toolName: 'rag-store-primary', toolType: 'Vector RAG', skillName: 'knowledge_retrieval', hasMissingMeta: false },
-    { toolName: 'mcp-server-tools', toolType: 'MCP', skillName: undefined, hasMissingMeta: true },
-    { toolName: 'graph-db-connector', toolType: 'Graph RAG', skillName: 'graph_query', hasMissingMeta: false },
-    { toolName: 'lambda-processor', toolType: 'Executable', skillName: undefined, hasMissingMeta: true },
+    { toolName: 'validate-roster-data', toolType: 'Executable', skillName: 'roster_data_validation', hasMissingMeta: false },
+    { toolName: 'nppes-credential-verification', toolType: 'REST', skillName: 'nppes_credential_verification', hasMissingMeta: false },
+    { toolName: 'caqh-proview-lookup', toolType: 'REST', skillName: 'caqh_proview_provider_lookup', hasMissingMeta: false },
+    { toolName: 'pdm-system-mcp', toolType: 'MCP', skillName: 'provider_data_management_system', hasMissingMeta: false },
+    { toolName: 'plm-lifecycle-mcp', toolType: 'MCP', skillName: 'provider_lifecycle_management', hasMissingMeta: false },
+    { toolName: 'compliance-vector-rag', toolType: 'Vector RAG', skillName: 'healthcare_compliance_knowledge_retrieval', hasMissingMeta: false },
+    { toolName: 'provider-network-graph-rag', toolType: 'Graph RAG', skillName: 'provider_network_graph_reasoning', hasMissingMeta: false },
+    { toolName: 'roster-db-query', toolType: 'DB Connector', skillName: 'roster_database_query', hasMissingMeta: false },
 ];
 
 const AGENT_CARD_JSON = {
-    schema_version: '0.2.1',
-    agent_id: 'agt_7f3a9c2e',
-    name: 'Research & Synthesis Agent',
-    description: 'Autonomous agent for multi-source research, synthesis, and structured reporting.',
+    schemaVersion: '0.3',
+    name: 'Provider Roster Validation Agent',
+    description: 'Ingests, validates, and transforms healthcare provider roster data across 50+ input formats. Applies unified validation rules, credential verification via NPPES/CAQH, and maintains immutable audit trail for CMS/NCQA regulatory compliance.',
+    url: 'https://kaya.techlabsglobal.com/ws/bgc-workspace/wf/bgc-prv/agents/provider-roster-validation/a2a',
+    version: '1.4.0',
+    provider: { organization: 'TechLabs Global — BGC Workspace' },
+    capabilities: { streaming: true, pushNotifications: true, stateTransitionHistory: true },
+    securitySchemes: {
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        oauth2: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://kaya.techlabsglobal.com/oauth/token' } } },
+    },
+    defaultInputModes: ['text/plain', 'application/json'],
+    defaultOutputModes: ['application/json', 'text/plain'],
     skills: [
-        { id: 'web_search', type: 'REST', streaming: true, auth_required: false },
-        { id: 'knowledge_retrieval', type: 'VectorRAG', streaming: false, auth_required: true },
-        { id: 'graph_query', type: 'GraphRAG', streaming: false, auth_required: true },
+        { id: 'validate-roster-data', name: 'Roster Data Validation', toolType: 'KAYA_EXECUTABLE_FUNCTION', tags: ['healthcare', 'validation', 'roster', 'npi', 'taxonomy'], inputModes: ['application/json', 'text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], outputModes: ['application/json'] },
+        { id: 'nppes-credential-verification', name: 'NPPES Credential Verification', toolType: 'KAYA_REST_API_CONNECTOR', tags: ['rest-api', 'nppes', 'credentialing', 'npi'] },
+        { id: 'caqh-proview-lookup', name: 'CAQH ProView Provider Lookup', toolType: 'KAYA_REST_API_CONNECTOR', tags: ['rest-api', 'caqh', 'proview', 'credentialing'] },
+        { id: 'pdm-system-mcp', name: 'Provider Data Management System', toolType: 'KAYA_MCP_CONNECTOR', tags: ['mcp', 'pdm', 'provider-management', 'reconciliation'] },
+        { id: 'plm-lifecycle-mcp', name: 'Provider Lifecycle Management', toolType: 'KAYA_MCP_CONNECTOR', tags: ['mcp', 'lifecycle', 'onboarding', 'termination'] },
+        { id: 'compliance-vector-rag', name: 'Healthcare Compliance Knowledge Retrieval', toolType: 'KAYA_VECTOR_RAG', tags: ['vector-rag', 'cms', 'ncqa', 'compliance', 'knowledge-base'] },
+        { id: 'provider-network-graph-rag', name: 'Provider Network Graph Reasoning', toolType: 'KAYA_GRAPH_RAG', tags: ['graph-rag', 'network-analysis', 'affiliations', 'coverage-gaps'] },
+        { id: 'roster-db-query', name: 'Roster Database Query', toolType: 'KAYA_DB_CONNECTOR', tags: ['database', 'postgresql', 'reconciliation', 'bulk-ops'] },
     ],
-    streaming: true,
-    auth: { scheme: 'bearer' },
-    discovery: { visibility: 'public' },
 };
 
 /* ─── Copy Button ────────────────────────────────────────────────────────────── */
@@ -129,7 +147,7 @@ function AgentCardModal() {
                                 variant="outline"
                                 className="text-[10px] px-1.5 py-0 h-4 border-blue-300 text-blue-600 dark:border-blue-600 dark:text-blue-400"
                             >
-                                v0.2.1
+                                v{AGENT_CARD_JSON.schemaVersion}
                             </Badge>
                         </div>
                         <div className="flex items-center gap-x-2 mr-6">
@@ -172,7 +190,7 @@ function AgentCardModal() {
 
                 <div className="px-5 py-3 border-t border-border flex items-center justify-between">
                     <p className="text-[11px] text-muted-foreground">
-                        Agent ID: <code className="font-mono">{AGENT_CARD_JSON.agent_id}</code>
+                        Version: <code className="font-mono">{AGENT_CARD_JSON.version}</code>
                     </p>
                     <button className="flex items-center gap-x-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline">
                         <ExternalLink size={11} />
@@ -263,11 +281,11 @@ function ToolSkillTable() {
 
 /* ─── Main Panel ─────────────────────────────────────────────────────────────── */
 
-export function A2AIdentityPanel({ agentName = 'Research & Synthesis Agent' }: A2AIdentityPanelProps) {
+export function A2AIdentityPanel({ agentName = 'Provider Roster Validation Agent' }: A2AIdentityPanelProps) {
     const [enabled, setEnabled] = useState(true);
     const [visibility, setVisibility] = useState<'Public' | 'Private'>('Public');
-    const uri = 'kaya://agents/agt_7f3a9c2e/.well-known/agent.json';
-    const skillTags = ['REST', 'Vector RAG', 'MCP', 'Graph RAG', 'Executable'];
+    const uri = 'agent://kaya/bgc-workspace/bgc-prv/provider-roster-validation-v1.4.0';
+    const skillTags = ['REST x2', 'MCP x2', 'Vector RAG', 'Graph RAG', 'Executable', 'DB Connector'];
 
     return (
         <section className="flex flex-col gap-y-4">

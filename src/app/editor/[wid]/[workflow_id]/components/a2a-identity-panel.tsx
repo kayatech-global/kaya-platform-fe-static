@@ -59,10 +59,10 @@ interface A2AIdentityPanelProps {
 }
 
 export const A2AIdentityPanel = ({
-    agentName = 'My Agent',
-    agentDescription = 'Agent description',
-    workspaceSlug = 'bgc',
-    workflowSlug = 'provider-roster-validation',
+    agentName = 'Provider Roster Validation Agent',
+    agentDescription = 'Ingests, validates, and transforms healthcare provider roster data across 50+ input formats. Applies unified validation rules, credential verification via NPPES/CAQH, and maintains immutable audit trail for CMS/NCQA regulatory compliance.',
+    workspaceSlug = 'bgc-workspace',
+    workflowSlug = 'bgc-prv',
     config,
     tools = [],
     isReadOnly = false,
@@ -94,15 +94,15 @@ export const A2AIdentityPanel = ({
 
     // Generate A2A URI based on workflow
     const a2aUri = useMemo(() => {
-        return `agent://kaya/${workspaceSlug}/${workflowSlug}-v1`;
+        return `agent://kaya/${workspaceSlug}/${workflowSlug}/provider-roster-validation-v1.4.0`;
     }, [workspaceSlug, workflowSlug]);
 
     const discoveryEndpoint = useMemo(() => {
-        return `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/.well-known/agents`;
-    }, [workspaceSlug]);
+        return `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/wf/${workflowSlug}/.well-known/agents`;
+    }, [workspaceSlug, workflowSlug]);
 
     const agentCardPath = useMemo(() => {
-        return `/ws/${workspaceSlug}/agents/${workflowSlug}/.well-known/agent-card.json`;
+        return `/ws/${workspaceSlug}/wf/${workflowSlug}/agents/provider-roster-validation/.well-known/agent-card.json`;
     }, [workspaceSlug, workflowSlug]);
 
     // Aggregate skill types from tools with counts
@@ -140,39 +140,82 @@ export const A2AIdentityPanel = ({
 
     const toolsWithWarnings = toolMappings.filter(t => !t.hasMetadata || t.warningMessage);
 
-    // Generate mock Agent Card JSON
+    // Generate mock Agent Card JSON based on A2A Protocol spec
     const agentCardJson = useMemo(() => {
         return {
-            name: agentName,
-            description: agentDescription,
-            url: `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/agents/${workflowSlug}`,
-            version: '1.0.0',
-            schemaVersion: '1.0',
+            schemaVersion: '0.3',
+            name: agentName || 'Provider Roster Validation Agent',
+            description: agentDescription || 'Ingests, validates, and transforms healthcare provider roster data across 50+ input formats. Applies unified validation rules, credential verification via NPPES/CAQH, and maintains immutable audit trail for CMS/NCQA regulatory compliance.',
+            url: `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/wf/${workflowSlug}/agents/provider-roster-validation/a2a`,
+            version: '1.4.0',
             provider: {
-                name: 'KAYA Platform',
-                url: 'https://kaya.ai',
+                organization: `TechLabs Global — ${workspaceSlug.toUpperCase()} Workspace`,
             },
-            documentationUrl: 'https://docs.kaya.ai/agents',
             capabilities: {
                 streaming: true,
-                pushNotifications: false,
+                pushNotifications: true,
                 stateTransitionHistory: true,
             },
-            authentication: {
-                schemes: ['bearer', 'oauth2'],
+            securitySchemes: {
+                bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+                oauth2: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://kaya.techlabsglobal.com/oauth/token' } } },
             },
-            defaultInputModes: ['text', 'data'],
-            defaultOutputModes: ['text', 'data'],
-            skills: tools.slice(0, 5).map((tool, idx) => ({
-                id: `skill-${idx + 1}`,
-                name: tool.name?.replace(/\s+/g, '_').toLowerCase() || `skill_${idx + 1}`,
-                description: `Skill capability for ${tool.name}`,
-                tags: [tool.type?.toLowerCase() || 'general'],
-                inputModes: ['text'],
-                outputModes: ['text'],
-            })),
+            defaultInputModes: ['text/plain', 'application/json'],
+            defaultOutputModes: ['application/json', 'text/plain'],
+            skills: [
+                {
+                    id: 'validate-roster-data',
+                    name: 'Roster Data Validation',
+                    toolType: 'KAYA_EXECUTABLE_FUNCTION',
+                    tags: ['healthcare', 'validation', 'roster', 'npi', 'taxonomy'],
+                    inputModes: ['application/json', 'text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+                    outputModes: ['application/json'],
+                },
+                {
+                    id: 'nppes-credential-verification',
+                    name: 'NPPES Credential Verification',
+                    toolType: 'KAYA_REST_API_CONNECTOR',
+                    tags: ['rest-api', 'nppes', 'credentialing', 'npi'],
+                },
+                {
+                    id: 'caqh-proview-lookup',
+                    name: 'CAQH ProView Provider Lookup',
+                    toolType: 'KAYA_REST_API_CONNECTOR',
+                    tags: ['rest-api', 'caqh', 'proview', 'credentialing'],
+                },
+                {
+                    id: 'pdm-system-mcp',
+                    name: 'Provider Data Management System',
+                    toolType: 'KAYA_MCP_CONNECTOR',
+                    tags: ['mcp', 'pdm', 'provider-management', 'reconciliation'],
+                },
+                {
+                    id: 'plm-lifecycle-mcp',
+                    name: 'Provider Lifecycle Management',
+                    toolType: 'KAYA_MCP_CONNECTOR',
+                    tags: ['mcp', 'lifecycle', 'onboarding', 'termination'],
+                },
+                {
+                    id: 'compliance-vector-rag',
+                    name: 'Healthcare Compliance Knowledge Retrieval',
+                    toolType: 'KAYA_VECTOR_RAG',
+                    tags: ['vector-rag', 'cms', 'ncqa', 'compliance', 'knowledge-base'],
+                },
+                {
+                    id: 'provider-network-graph-rag',
+                    name: 'Provider Network Graph Reasoning',
+                    toolType: 'KAYA_GRAPH_RAG',
+                    tags: ['graph-rag', 'network-analysis', 'affiliations', 'coverage-gaps'],
+                },
+                {
+                    id: 'roster-db-query',
+                    name: 'Roster Database Query',
+                    toolType: 'KAYA_DB_CONNECTOR',
+                    tags: ['database', 'postgresql', 'reconciliation', 'bulk-ops'],
+                },
+            ],
         };
-    }, [agentName, agentDescription, workspaceSlug, workflowSlug, tools]);
+    }, [agentName, agentDescription, workspaceSlug, workflowSlug]);
 
     // Handlers
     const handleSetVisibility = (newVisibility: 'public' | 'private') => {
