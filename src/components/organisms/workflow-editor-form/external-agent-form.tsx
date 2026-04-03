@@ -175,7 +175,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
     // Initialize from node data or use defaults for demo
     useEffect(() => {
         const data = selectedNode.data as ExternalAgentData;
-        if (data && data.agentCard) {
+        if (data?.agentCard) {
             setAgentCardUrl(data.agentCardUrl || '');
             setFriendlyName(data.friendlyName || '');
             setDescription(data.description || '');
@@ -201,12 +201,24 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
             // Initialize with demo data for new nodes
             setAgentCardUrl('http://localhost:8001/.well-known/agent.json');
             setFriendlyName(defaultMockAgentCard.name);
-            setDescription(defaultMockAgentCard.description);
+            setDescription(defaultMockAgentCard.description || '');
             setSchemaVersion(defaultMockAgentCard.schemaVersion);
             setAgentCard(defaultMockAgentCard);
             setFetchStatus('success');
         }
     }, [selectedNode.id]);
+
+    // Ensure agentCard is set on mount if not already set
+    useEffect(() => {
+        if (!agentCard) {
+            setAgentCardUrl('http://localhost:8001/.well-known/agent.json');
+            setFriendlyName(defaultMockAgentCard.name);
+            setDescription(defaultMockAgentCard.description || '');
+            setSchemaVersion(defaultMockAgentCard.schemaVersion);
+            setAgentCard(defaultMockAgentCard);
+            setFetchStatus('success');
+        }
+    }, []);
 
     // Validate configuration
     const validateConfig = useCallback(() => {
