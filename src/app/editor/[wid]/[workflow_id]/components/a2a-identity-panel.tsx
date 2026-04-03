@@ -33,6 +33,7 @@ interface A2AIdentityPanelProps {
     agentName?: string;
     agentDescription?: string;
     workspaceSlug?: string;
+    workflowSlug?: string;
     config?: A2AIdentityConfig;
     tools?: { id: string; name: string; type: string }[];
     isReadOnly?: boolean;
@@ -43,6 +44,7 @@ export const A2AIdentityPanel = ({
     agentName = 'My Agent',
     agentDescription = 'Agent description',
     workspaceSlug = 'bgc',
+    workflowSlug = 'provider-roster-validation',
     config,
     tools = [],
     isReadOnly = false,
@@ -72,23 +74,18 @@ export const A2AIdentityPanel = ({
     const [isCardModalOpen, setIsCardModalOpen] = useState(false);
     const [isMappingExpanded, setIsMappingExpanded] = useState(false);
 
-    // Generate A2A URI based on agent name
-    const agentSlug = useMemo(() => {
-        if (!agentName) return '';
-        return agentName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    }, [agentName]);
-
+    // Generate A2A URI based on workflow
     const a2aUri = useMemo(() => {
-        return `agent://kaya/${workspaceSlug}/${agentSlug}-v1`;
-    }, [workspaceSlug, agentSlug]);
+        return `agent://kaya/${workspaceSlug}/${workflowSlug}-v1`;
+    }, [workspaceSlug, workflowSlug]);
 
     const discoveryEndpoint = useMemo(() => {
         return `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/.well-known/agents`;
     }, [workspaceSlug]);
 
     const agentCardPath = useMemo(() => {
-        return `/ws/${workspaceSlug}/agents/${agentSlug}/.well-known/agent-card.json`;
-    }, [workspaceSlug, agentSlug]);
+        return `/ws/${workspaceSlug}/agents/${workflowSlug}/.well-known/agent-card.json`;
+    }, [workspaceSlug, workflowSlug]);
 
     // Aggregate skill types from tools with counts
     const skillTypeCounts = useMemo(() => {
@@ -130,7 +127,7 @@ export const A2AIdentityPanel = ({
         return {
             name: agentName,
             description: agentDescription,
-            url: `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/agents/${agentSlug}`,
+            url: `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/agents/${workflowSlug}`,
             version: '1.0.0',
             schemaVersion: '1.0',
             provider: {
@@ -157,7 +154,7 @@ export const A2AIdentityPanel = ({
                 outputModes: ['text'],
             })),
         };
-    }, [agentName, agentDescription, workspaceSlug, agentSlug, tools]);
+    }, [agentName, agentDescription, workspaceSlug, workflowSlug, tools]);
 
     // Handlers
     const handleSetVisibility = (newVisibility: 'public' | 'private') => {
@@ -187,18 +184,13 @@ export const A2AIdentityPanel = ({
     return (
         <div className="space-y-4">
             {/* Section Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-sky-500 rounded flex items-center justify-center">
-                        <Shield className="w-3.5 h-3.5 text-white" />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                        A2A IDENTITY
-                    </span>
+            <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
+                    <Shield className="w-3.5 h-3.5 text-white" />
                 </div>
-                <Badge variant="default" className="bg-green-500 hover:bg-green-500 text-white text-[10px] px-2 py-0.5">
-                    NEW
-                </Badge>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    A2A IDENTITY
+                </span>
             </div>
 
             {/* Status Badge */}
@@ -276,7 +268,7 @@ export const A2AIdentityPanel = ({
                     <div className="flex items-center gap-2">
                         <Globe className="w-4 h-4 text-green-600 dark:text-green-400" />
                         <span className="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wide">
-                            Externally Discoverable (US-A2A-004)
+                            Externally Discoverable
                         </span>
                     </div>
                     
@@ -312,7 +304,7 @@ export const A2AIdentityPanel = ({
                     
                     <p className="text-[11px] text-green-600 dark:text-green-400 flex items-center gap-1">
                         <Globe className="w-3 h-3" />
-                        Listed in workspace agent registry · Auth required for full card
+                        Listed in workflow agent registry · Auth required for full card
                     </p>
                 </div>
             )}
@@ -322,8 +314,8 @@ export const A2AIdentityPanel = ({
                 <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex items-start gap-2">
                     <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
-                        <strong className="font-semibold">Internal access only (US-A2A-005).</strong>{' '}
-                        This agent is not listed in the workspace discovery endpoint. It can only be invoked by agents within the <strong>{workspaceSlug.toUpperCase()}</strong> workspace using a scoped bearer token.
+                        <strong className="font-semibold">Internal access only.</strong>{' '}
+                        This agent is not listed in the workflow discovery endpoint. It can only be invoked by agents within the <strong>{workspaceSlug.toUpperCase()}</strong> workspace using a scoped bearer token.
                     </p>
                 </div>
             )}
