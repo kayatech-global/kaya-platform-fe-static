@@ -32,8 +32,6 @@ import {
     Clock,
     Zap,
     Info,
-    ChevronDown,
-    ChevronUp,
     Link2,
     Play,
     XCircle,
@@ -140,12 +138,6 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
     const [maxRetries, setMaxRetries] = useState<number>(3);
 
     // UI state
-    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-        skills: true,
-        auth: true,
-        runtime: true,
-        branches: false,
-    });
     const [copiedUrl, setCopiedUrl] = useState(false);
 
     // Validation state
@@ -391,12 +383,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
         window.setTimeout(() => setCopiedUrl(false), 2000);
     };
 
-    // Toggle section expansion
-    const toggleSection = (section: string) => {
-        setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-    };
-
-    // Get tool type badge color
+  // Get tool type badge color
     const getToolTypeBadgeColor = (toolType: string) => {
         switch (toolType) {
             case 'REST':
@@ -545,354 +532,281 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                         )}
 
                         {/* Skills Selection Section */}
-                        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                            <button
-                                type="button"
-                                onClick={() => toggleSection('skills')}
-                                className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Zap className="w-4 h-4 text-violet-500" />
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                        Remote Skills
-                                    </span>
-                                    <Badge variant="secondary" className="text-xs">
-                                        {selectedSkills.length}/{agentCard?.skills?.length || 0}
-                                    </Badge>
-                                </div>
-                                {expandedSections.skills ? (
-                                    <ChevronUp className="w-4 h-4 text-gray-400" />
-                                ) : (
-                                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                                )}
-                            </button>
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-2">
+                                <Zap className="w-4 h-4 text-violet-500" />
+                                <Label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                    Remote Skills
+                                </Label>
+                                <Badge variant="secondary" className="text-xs">
+                                    {selectedSkills.length}/{agentCard?.skills?.length || 0}
+                                </Badge>
+                            </div>
 
-                            {expandedSections.skills && (
-                                <div className="p-3 flex flex-col gap-3">
-                                    {/* Search */}
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                        <Input
-                                            value={skillSearch}
-                                            onChange={e => setSkillSearch(e.target.value)}
-                                            placeholder="Search skills..."
-                                            className="pl-10"
-                                        />
-                                    </div>
+                            {/* Search */}
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Input
+                                    value={skillSearch}
+                                    onChange={e => setSkillSearch(e.target.value)}
+                                    placeholder="Search skills..."
+                                    className="pl-10"
+                                />
+                            </div>
 
-                                    {/* Selected chips */}
-                                    {selectedSkills.length > 0 && (
-                                        <div className="flex flex-wrap gap-2">
-                                            {selectedSkills.map(skill => (
-                                                <Badge
-                                                    key={skill.id}
-                                                    variant="outline"
-                                                    className="gap-1 pr-1 bg-violet-500/10 text-violet-400 border-violet-500/30"
-                                                >
-                                                    {skill.name}
-                                                    <button
-                                                        onClick={() => toggleSkill(skill)}
-                                                        className="ml-1 hover:bg-violet-500/20 rounded p-0.5"
-                                                        disabled={isReadOnly}
-                                                    >
-                                                        <XCircle className="w-3 h-3" />
-                                                    </button>
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Skill list */}
-                                    <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto">
-                                        {filteredSkills.map(skill => (
-                                            <div
-                                                key={skill.id}
+                            {/* Selected chips */}
+                            {selectedSkills.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {selectedSkills.map(skill => (
+                                        <Badge
+                                            key={skill.id}
+                                            variant="outline"
+                                            className="gap-1 pr-1 bg-violet-500/10 text-violet-400 border-violet-500/30"
+                                        >
+                                            {skill.name}
+                                            <button
+                                                type="button"
                                                 onClick={() => toggleSkill(skill)}
-                                                className={cn(
-                                                    'p-3 rounded-lg border cursor-pointer transition-all',
-                                                    selectedSkills.find(s => s.id === skill.id)
-                                                        ? 'border-violet-500 bg-violet-500/10'
-                                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                                                )}
+                                                className="ml-1 hover:bg-violet-500/20 rounded p-0.5"
+                                                disabled={isReadOnly}
                                             >
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <Checkbox
-                                                                checked={!!selectedSkills.find(s => s.id === skill.id)}
-                                                                disabled={isReadOnly}
-                                                            />
-                                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                                                {skill.name}
-                                                            </span>
-                                                            <Badge
-                                                                variant="outline"
-                                                                className={cn('text-xs', getToolTypeBadgeColor(skill.toolType))}
-                                                            >
-                                                                {skill.toolType}
-                                                            </Badge>
-                                                        </div>
-                                                        {skill.description && (
-                                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
-                                                                {skill.description}
-                                                            </p>
-                                                        )}
-                                                        <div className="flex items-center gap-2 mt-2 ml-6">
-                                                            {skill.inputModes && (
-                                                                <span className="text-xs text-gray-400">
-                                                                    In: {skill.inputModes.join(', ')}
-                                                                </span>
-                                                            )}
-                                                            {skill.outputModes && (
-                                                                <span className="text-xs text-gray-400">
-                                                                    Out: {skill.outputModes.join(', ')}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        {skill.tags && skill.tags.length > 0 && (
-                                                            <div className="flex flex-wrap gap-1 mt-2 ml-6">
-                                                                {skill.tags.map(tag => (
-                                                                    <Badge
-                                                                        key={tag}
-                                                                        variant="secondary"
-                                                                        className="text-xs px-1.5 py-0"
-                                                                    >
-                                                                        {tag}
-                                                                    </Badge>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                                <XCircle className="w-3 h-3" />
+                                            </button>
+                                        </Badge>
+                                    ))}
                                 </div>
                             )}
+
+                            {/* Skill list */}
+                            <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto">
+                                {filteredSkills.map(skill => (
+                                    <div
+                                        key={skill.id}
+                                        onClick={() => toggleSkill(skill)}
+                                        className={cn(
+                                            'p-3 rounded-lg border cursor-pointer transition-all',
+                                            selectedSkills.find(s => s.id === skill.id)
+                                                ? 'border-violet-500 bg-violet-500/10'
+                                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                        )}
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Checkbox
+                                                        checked={!!selectedSkills.find(s => s.id === skill.id)}
+                                                        disabled={isReadOnly}
+                                                    />
+                                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                                        {skill.name}
+                                                    </span>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={cn('text-xs', getToolTypeBadgeColor(skill.toolType))}
+                                                    >
+                                                        {skill.toolType}
+                                                    </Badge>
+                                                </div>
+                                                {skill.description && (
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
+                                                        {skill.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Authentication Section */}
-                        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                            <button
-                                type="button"
-                                onClick={() => toggleSection('auth')}
-                                className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Shield className="w-4 h-4 text-emerald-500" />
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                        Authentication
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-2">
+                                <Shield className="w-4 h-4 text-emerald-500" />
+                                <Label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                    Authentication
+                                </Label>
+                            </div>
+
+                            <Select
+                                label="Auth Type"
+                                currentValue={authType}
+                                onChange={(e) => setAuthType(e.target.value as 'none' | 'bearer' | 'oauth2')}
+                                disabled={isReadOnly}
+                                options={[
+                                    { name: 'None', value: 'none' },
+                                    { name: 'Bearer Token', value: 'bearer' },
+                                    { name: 'OAuth2 Client Credentials', value: 'oauth2' },
+                                ]}
+                            />
+
+                            {authType === 'bearer' && (
+                                <div className="flex flex-col gap-1">
+                                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                                        Secret Reference
+                                    </Label>
+                                    <Input
+                                        value={secretRef}
+                                        onChange={e => setSecretRef(e.target.value)}
+                                        placeholder="vault://secrets/agent-token"
+                                        disabled={isReadOnly}
+                                    />
+                                    <span className="text-xs text-gray-400">
+                                        Reference to your secrets vault
                                     </span>
                                 </div>
-                                {expandedSections.auth ? (
-                                    <ChevronUp className="w-4 h-4 text-gray-400" />
-                                ) : (
-                                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                                )}
-                            </button>
+                            )}
 
-                            {expandedSections.auth && (
-                                <div className="p-3 flex flex-col gap-3">
+                            {authType === 'oauth2' && (
+                                <div className="flex flex-col gap-3">
                                     <div className="flex flex-col gap-1">
-                                        <Select
-                                            label="Auth Type"
-                                            currentValue={authType}
-                                            onChange={(e) => setAuthType(e.target.value as 'none' | 'bearer' | 'oauth2')}
+                                        <Label className="text-xs text-gray-500 dark:text-gray-400">Client ID</Label>
+                                        <Input
+                                            value={clientId}
+                                            onChange={e => setClientId(e.target.value)}
+                                            placeholder="client_id"
                                             disabled={isReadOnly}
-                                            options={[
-                                                { name: 'None', value: 'none' },
-                                                { name: 'Bearer Token', value: 'bearer' },
-                                                { name: 'OAuth2 Client Credentials', value: 'oauth2' },
-                                            ]}
                                         />
                                     </div>
-
-                                    {authType === 'bearer' && (
-                                        <div className="flex flex-col gap-1">
-                                            <Label className="text-xs text-gray-500 dark:text-gray-400">
-                                                Secret Reference
-                                            </Label>
-                                            <Input
-                                                value={secretRef}
-                                                onChange={e => setSecretRef(e.target.value)}
-                                                placeholder="vault://secrets/agent-token"
-                                                disabled={isReadOnly}
-                                            />
-                                            <span className="text-xs text-gray-400">
-                                                Reference to your secrets vault
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {authType === 'oauth2' && (
-                                        <div className="flex flex-col gap-3">
-                                            <div className="flex flex-col gap-1">
-                                                <Label className="text-xs text-gray-500 dark:text-gray-400">Client ID</Label>
-                                                <Input
-                                                    value={clientId}
-                                                    onChange={e => setClientId(e.target.value)}
-                                                    placeholder="client_id"
-                                                    disabled={isReadOnly}
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <Label className="text-xs text-gray-500 dark:text-gray-400">
-                                                    Client Secret Reference
-                                                </Label>
-                                                <Input
-                                                    value={clientSecret}
-                                                    onChange={e => setClientSecret(e.target.value)}
-                                                    placeholder="vault://secrets/client-secret"
-                                                    disabled={isReadOnly}
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <Label className="text-xs text-gray-500 dark:text-gray-400">Token URL</Label>
-                                                <Input
-                                                    value={tokenUrl}
-                                                    onChange={e => setTokenUrl(e.target.value)}
-                                                    placeholder="https://auth.example.com/oauth/token"
-                                                    disabled={isReadOnly}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
+                                    <div className="flex flex-col gap-1">
+                                        <Label className="text-xs text-gray-500 dark:text-gray-400">
+                                            Client Secret Reference
+                                        </Label>
+                                        <Input
+                                            value={clientSecret}
+                                            onChange={e => setClientSecret(e.target.value)}
+                                            placeholder="vault://secrets/client-secret"
+                                            disabled={isReadOnly}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <Label className="text-xs text-gray-500 dark:text-gray-400">Token URL</Label>
+                                        <Input
+                                            value={tokenUrl}
+                                            onChange={e => setTokenUrl(e.target.value)}
+                                            placeholder="https://auth.example.com/oauth/token"
+                                            disabled={isReadOnly}
+                                        />
+                                    </div>
                                 </div>
                             )}
                         </div>
 
                         {/* Runtime Options Section */}
-                        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                            <button
-                                type="button"
-                                onClick={() => toggleSection('runtime')}
-                                className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                            >
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-blue-500" />
+                                <Label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                    Runtime Options
+                                </Label>
+                            </div>
+
+                            {/* Streaming toggle */}
+                            <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Clock className="w-4 h-4 text-blue-500" />
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                        Runtime Options
-                                    </span>
+                                    <Label className="text-sm text-gray-700 dark:text-gray-200">
+                                        Enable Streaming
+                                    </Label>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <Info className="w-3 h-3 text-gray-400" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                Stream responses as they are generated
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </div>
-                                {expandedSections.runtime ? (
-                                    <ChevronUp className="w-4 h-4 text-gray-400" />
-                                ) : (
-                                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                                )}
-                            </button>
+                                <Switch
+                                    checked={streaming}
+                                    onCheckedChange={setStreaming}
+                                    disabled={isReadOnly || !agentCard?.capabilities?.streaming}
+                                />
+                            </div>
 
-                            {expandedSections.runtime && (
-                                <div className="p-3 flex flex-col gap-4">
-                                    {/* Streaming toggle */}
+                            {/* Timeout slider */}
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-sm text-gray-700 dark:text-gray-200">
+                                        Timeout
+                                    </Label>
+                                    <span className="text-sm text-gray-500">{timeout}s</span>
+                                </div>
+                                <Slider
+                                    value={[timeout]}
+                                    onValueChange={([v]) => setTimeout(v)}
+                                    min={5}
+                                    max={300}
+                                    step={5}
+                                    disabled={isReadOnly}
+                                />
+                            </div>
+
+                            {/* Retry strategy */}
+                            <Select
+                                label="Retry Strategy"
+                                currentValue={retryStrategy}
+                                onChange={(e) => setRetryStrategy(e.target.value as 'none' | 'linear' | 'exponential')}
+                                disabled={isReadOnly}
+                                options={[
+                                    { name: 'No Retry', value: 'none' },
+                                    { name: 'Linear Backoff', value: 'linear' },
+                                    { name: 'Exponential Backoff', value: 'exponential' },
+                                ]}
+                            />
+
+                            {retryStrategy !== 'none' && (
+                                <div className="flex flex-col gap-2">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Label className="text-sm text-gray-700 dark:text-gray-200">
-                                                Enable Streaming
-                                            </Label>
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger>
-                                                        <Info className="w-3 h-3 text-gray-400" />
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        Stream responses as they are generated
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        </div>
-                                        <Switch
-                                            checked={streaming}
-                                            onCheckedChange={setStreaming}
-                                            disabled={isReadOnly || !agentCard.capabilities?.streaming}
-                                        />
-                                    </div>
-
-                                    {/* Timeout slider */}
-                                    <div className="flex flex-col gap-2">
-                                        <div className="flex items-center justify-between">
-                                            <Label className="text-sm text-gray-700 dark:text-gray-200">
-                                                Timeout
-                                            </Label>
-                                            <span className="text-sm text-gray-500">{timeout}s</span>
-                                        </div>
-                                        <Slider
-                                            value={[timeout]}
-                                            onValueChange={([v]) => setTimeout(v)}
-                                            min={5}
-                                            max={300}
-                                            step={5}
-                                            disabled={isReadOnly}
-                                        />
-                                    </div>
-
-                                    {/* Retry strategy */}
-                                    <div className="flex flex-col gap-2">
-                                        <Select
-                                            label="Retry Strategy"
-                                            currentValue={retryStrategy}
-                                            onChange={(e) => setRetryStrategy(e.target.value as 'none' | 'linear' | 'exponential')}
-                                            disabled={isReadOnly}
-                                            options={[
-                                                { name: 'No Retry', value: 'none' },
-                                                { name: 'Linear Backoff', value: 'linear' },
-                                                { name: 'Exponential Backoff', value: 'exponential' },
-                                            ]}
-                                        />
-                                    </div>
-
-                                    {retryStrategy !== 'none' && (
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex items-center justify-between">
-                                                <Label className="text-sm text-gray-700 dark:text-gray-200">
-                                                    Max Retries
-                                                </Label>
-                                                <span className="text-sm text-gray-500">{maxRetries}</span>
-                                            </div>
-                                            <Slider
-                                                value={[maxRetries]}
-                                                onValueChange={([v]) => setMaxRetries(v)}
-                                                min={1}
-                                                max={10}
-                                                step={1}
-                                                disabled={isReadOnly}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {/* Branch targets */}
-                                    <div className="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                         <Label className="text-sm text-gray-700 dark:text-gray-200">
-                                            Branch Targets
+                                            Max Retries
                                         </Label>
-                                        <div className="flex flex-wrap gap-2">
-                                            <Badge
-                                                variant="outline"
-                                                className="gap-1 bg-green-500/10 text-green-400 border-green-500/30"
-                                            >
-                                                <Play className="w-3 h-3" />
-                                                onSuccess
-                                            </Badge>
-                                            <Badge
-                                                variant="outline"
-                                                className="gap-1 bg-red-500/10 text-red-400 border-red-500/30"
-                                            >
-                                                <XCircle className="w-3 h-3" />
-                                                onError
-                                            </Badge>
-                                            <Badge
-                                                variant="outline"
-                                                className="gap-1 bg-amber-500/10 text-amber-400 border-amber-500/30"
-                                            >
-                                                <Timer className="w-3 h-3" />
-                                                onTimeout
-                                            </Badge>
-                                        </div>
-                                        <span className="text-xs text-gray-400">
-                                            Connect edges from these output ports to handle different outcomes
-                                        </span>
+                                        <span className="text-sm text-gray-500">{maxRetries}</span>
                                     </div>
+                                    <Slider
+                                        value={[maxRetries]}
+                                        onValueChange={([v]) => setMaxRetries(v)}
+                                        min={1}
+                                        max={10}
+                                        step={1}
+                                        disabled={isReadOnly}
+                                    />
                                 </div>
                             )}
+
+                            {/* Branch targets */}
+                            <div className="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                <Label className="text-sm text-gray-700 dark:text-gray-200">
+                                    Branch Targets
+                                </Label>
+                                <div className="flex flex-wrap gap-2">
+                                    <Badge
+                                        variant="outline"
+                                        className="gap-1 bg-green-500/10 text-green-400 border-green-500/30"
+                                    >
+                                        <Play className="w-3 h-3" />
+                                        onSuccess
+                                    </Badge>
+                                    <Badge
+                                        variant="outline"
+                                        className="gap-1 bg-red-500/10 text-red-400 border-red-500/30"
+                                    >
+                                        <XCircle className="w-3 h-3" />
+                                        onError
+                                    </Badge>
+                                    <Badge
+                                        variant="outline"
+                                        className="gap-1 bg-amber-500/10 text-amber-400 border-amber-500/30"
+                                    >
+                                        <Timer className="w-3 h-3" />
+                                        onTimeout
+                                    </Badge>
+                                </div>
+                                <span className="text-xs text-gray-400">
+                                    Connect edges from these output ports to handle different outcomes
+                                </span>
+                            </div>
                         </div>
                     </>
                 )}
