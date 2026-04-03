@@ -11,7 +11,7 @@ import {
     CircleFadingArrowUp,
     FileCode2,
     GitBranch,
-    GitDiff,
+    GitCompareArrows,
     Info,
     Package,
     ShieldAlert,
@@ -52,7 +52,7 @@ const RELEASE_STEPS: ReleaseStep[] = [
         label: 'Diff & change review',
         description: 'Side-by-side comparison of previous vs current release artefacts.',
         status: 'active',
-        icon: <GitDiff size={13} />,
+        icon: <GitCompareArrows size={13} />,
     },
     {
         id: 'validation',
@@ -137,7 +137,7 @@ function DiffPreview() {
     return (
         <div className="rounded-md border border-border overflow-hidden">
             <div className="flex items-center gap-x-1.5 px-3 py-1.5 bg-muted border-b border-border">
-                <GitDiff size={11} className="text-muted-foreground" />
+                <GitCompareArrows size={11} className="text-muted-foreground" />
                 <span className="text-[10px] font-semibold text-muted-foreground">agent.json diff</span>
                 <span className="ml-auto text-[9px] text-muted-foreground">v1.3 → v1.4-draft</span>
             </div>
