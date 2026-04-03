@@ -702,20 +702,20 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                                     disabled={isReadOnly}
                                                 />
                                             </div>
-                                        <div className="flex flex-col gap-1">
-                                            <Label className="text-xs text-gray-500 dark:text-gray-400">Token URL</Label>
-                                            <Input
-                                                value={tokenUrl}
-                                                onChange={e => setTokenUrl(e.target.value)}
-                                                placeholder="https://auth.example.com/oauth/token"
-                                                disabled={isReadOnly}
-                                            />
+                                            <div className="flex flex-col gap-1">
+                                                <Label className="text-xs text-gray-500 dark:text-gray-400">Token URL</Label>
+                                                <Input
+                                                    value={tokenUrl}
+                                                    onChange={e => setTokenUrl(e.target.value)}
+                                                    placeholder="https://auth.example.com/oauth/token"
+                                                    disabled={isReadOnly}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
                         {/* Runtime Options Section */}
                         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
