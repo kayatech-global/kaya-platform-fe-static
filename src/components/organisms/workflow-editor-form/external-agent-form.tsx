@@ -151,16 +151,37 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
     // Validation state
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-    // Initialize from node data
+    // Default mock agent card for demonstration
+    const defaultMockAgentCard: A2AAgentCard = {
+        name: 'External Analysis Agent',
+        description: 'A powerful agent that provides data analysis and insights through A2A protocol',
+        url: 'http://localhost:8001/.well-known/agent.json',
+        version: '2.1.0',
+        schemaVersion: '1.0',
+        documentationUrl: 'https://docs.example.com/agent',
+        provider: { name: 'KAYA Partner', url: 'https://partner.example.com' },
+        capabilities: { streaming: true, pushNotifications: false, stateTransitionHistory: true },
+        authentication: { schemes: ['bearer', 'oauth2'] },
+        defaultInputModes: ['text', 'data'],
+        defaultOutputModes: ['text', 'data'],
+        skills: [
+            { id: 'skill-1', name: 'Data Analysis', description: 'Analyze structured data and generate insights', toolType: 'REST', tags: ['analytics', 'insights', 'reporting'], inputModes: ['text', 'data'], outputModes: ['text', 'data'] },
+            { id: 'skill-2', name: 'Document Processing', description: 'Extract and process information from documents', toolType: 'Vector RAG', tags: ['documents', 'extraction', 'nlp'], inputModes: ['text'], outputModes: ['text', 'data'] },
+            { id: 'skill-3', name: 'Knowledge Graph Query', description: 'Query and traverse knowledge graphs for insights', toolType: 'Graph RAG', tags: ['graph', 'knowledge', 'reasoning'], inputModes: ['text'], outputModes: ['text', 'data'] },
+            { id: 'skill-4', name: 'Custom Function Execution', description: 'Execute custom analysis functions', toolType: 'Executable', tags: ['custom', 'function', 'compute'], inputModes: ['data'], outputModes: ['data'] },
+        ],
+    };
+
+    // Initialize from node data or use defaults for demo
     useEffect(() => {
         const data = selectedNode.data as ExternalAgentData;
-        if (data) {
+        if (data && data.agentCard) {
             setAgentCardUrl(data.agentCardUrl || '');
             setFriendlyName(data.friendlyName || '');
             setDescription(data.description || '');
             setIconUrl(data.iconUrl || '');
             setSchemaVersion(data.schemaVersion || '');
-            setAgentCard(data.agentCard || null);
+            setAgentCard(data.agentCard);
             setSelectedSkills(data.selectedSkills || []);
             if (data.authentication) {
                 setAuthType(data.authentication.type || 'none');
@@ -175,9 +196,15 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                 setRetryStrategy(data.runtimeOptions.retryStrategy || 'none');
                 setMaxRetries(data.runtimeOptions.maxRetries || 3);
             }
-            if (data.agentCard) {
-                setFetchStatus('success');
-            }
+            setFetchStatus('success');
+        } else {
+            // Initialize with demo data for new nodes
+            setAgentCardUrl('http://localhost:8001/.well-known/agent.json');
+            setFriendlyName(defaultMockAgentCard.name);
+            setDescription(defaultMockAgentCard.description);
+            setSchemaVersion(defaultMockAgentCard.schemaVersion);
+            setAgentCard(defaultMockAgentCard);
+            setFetchStatus('success');
         }
     }, [selectedNode.id]);
 
