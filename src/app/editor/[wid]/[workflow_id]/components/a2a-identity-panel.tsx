@@ -195,9 +195,9 @@ export const A2AIdentityPanel = ({
 
             {/* Status Badge */}
             <div>
-                <span className="inline-flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-full px-2.5 py-1">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    <span className="text-xs font-medium text-green-700 dark:text-green-400">A2A Enabled</span>
+                <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-full px-2.5 py-1">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    <span className="text-xs font-medium text-blue-700 dark:text-blue-400">A2A Enabled</span>
                 </span>
             </div>
 
@@ -239,7 +239,7 @@ export const A2AIdentityPanel = ({
                         className={cn(
                             "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all",
                             visibility === 'public'
-                                ? "bg-green-500 text-white shadow-sm"
+                                ? "bg-blue-500 text-white shadow-sm"
                                 : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
                         )}
                     >
@@ -264,24 +264,24 @@ export const A2AIdentityPanel = ({
 
             {/* Public: Externally Discoverable */}
             {visibility === 'public' && (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 space-y-3">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 space-y-3">
                     <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-green-600 dark:text-green-400" />
-                        <span className="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wide">
+                        <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">
                             Externally Discoverable
                         </span>
                     </div>
                     
                     {/* Discovery Endpoint */}
                     <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-white dark:bg-gray-900 border border-green-200 dark:border-green-800 rounded px-2 py-1.5">
-                            <code className="text-[11px] text-green-700 dark:text-green-300 font-mono break-all">
+                        <div className="flex-1 bg-white dark:bg-gray-900 border border-blue-200 dark:border-blue-800 rounded px-2 py-1.5">
+                            <code className="text-[11px] text-blue-700 dark:text-blue-300 font-mono break-all">
                                 {discoveryEndpoint}
                             </code>
                         </div>
                         <button
                             onClick={() => copyToClipboard(discoveryEndpoint, setCopiedDiscovery)}
-                            className="w-7 h-7 flex items-center justify-center rounded border border-green-200 dark:border-green-800 bg-white dark:bg-gray-900 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/40 transition-colors"
+                            className="w-7 h-7 flex items-center justify-center rounded border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/40 transition-colors"
                         >
                             {copiedDiscovery ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                         </button>
@@ -289,20 +289,20 @@ export const A2AIdentityPanel = ({
                     
                     {/* Agent Card Path */}
                     <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-white dark:bg-gray-900 border border-green-200 dark:border-green-800 rounded px-2 py-1.5">
-                            <code className="text-[11px] text-green-700 dark:text-green-300 font-mono break-all">
+                        <div className="flex-1 bg-white dark:bg-gray-900 border border-blue-200 dark:border-blue-800 rounded px-2 py-1.5">
+                            <code className="text-[11px] text-blue-700 dark:text-blue-300 font-mono break-all">
                                 {agentCardPath}
                             </code>
                         </div>
                         <button
                             onClick={() => copyToClipboard(agentCardPath, setCopiedAgentCard)}
-                            className="w-7 h-7 flex items-center justify-center rounded border border-green-200 dark:border-green-800 bg-white dark:bg-gray-900 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/40 transition-colors"
+                            className="w-7 h-7 flex items-center justify-center rounded border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/40 transition-colors"
                         >
                             {copiedAgentCard ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                         </button>
                     </div>
                     
-                    <p className="text-[11px] text-green-600 dark:text-green-400 flex items-center gap-1">
+                    <p className="text-[11px] text-blue-600 dark:text-blue-400 flex items-center gap-1">
                         <Globe className="w-3 h-3" />
                         Listed in workflow agent registry · Auth required for full card
                     </p>
@@ -411,7 +411,7 @@ export const A2AIdentityPanel = ({
                 <DialogTrigger asChild>
                     <Button
                         variant="default"
-                        className="w-full bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white"
+                        className="w-full"
                     >
                         <FileText className="w-4 h-4 mr-2" />
                         View A2A Card
@@ -420,7 +420,7 @@ export const A2AIdentityPanel = ({
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-sky-500" />
+                            <FileText className="w-5 h-5 text-primary" />
                             Agent Card Preview
                         </DialogTitle>
                     </DialogHeader>
@@ -431,7 +431,7 @@ export const A2AIdentityPanel = ({
                             <Badge variant="outline" className="text-xs">
                                 Schema v{agentCardJson.schemaVersion}
                             </Badge>
-                            <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                            <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
                                 Streaming
                             </Badge>
                             <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
