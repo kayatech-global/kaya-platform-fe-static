@@ -1208,12 +1208,12 @@ export const AgentForm = ({
                                 agentName={agent?.isReusableAgentSelected ? agent.name : agentName}
                                 agentDescription={agent?.isReusableAgentSelected ? agent.description : description}
                                 tools={[
-                                    ...(apis?.map(api => ({ id: api.id, name: api.name, type: 'API' })) ?? []),
+                                    ...(apis?.map(api => ({ id: api.id || '', name: api.name, type: 'API' })) ?? []),
                                     ...(mcpServers?.map(mcp => ({ id: mcp.id || '', name: mcp.name || '', type: 'MCP' })) ?? []),
                                     ...(vectorRags?.map(rag => ({ id: rag.id || '', name: rag.name || '', type: 'VECTOR_RAG' })) ?? []),
                                     ...(graphRags?.map(rag => ({ id: rag.id || '', name: rag.name || '', type: 'GRAPH_RAG' })) ?? []),
-                                    ...(executableFunctions?.map(fn => ({ id: fn.id, name: fn.name, type: 'EXECUTABLE_FUNCTION' })) ?? []),
-                                    ...(selectedConnector?.map(c => ({ id: c.id, name: c.name, type: 'CONNECTOR' })) ?? []),
+                                    ...(executableFunctions?.map(fn => ({ id: fn.id || '', name: fn.name, type: 'EXECUTABLE_FUNCTION' })) ?? []),
+                                    ...(selectedConnector?.map(c => ({ id: c.id || '', name: c.name, type: 'CONNECTOR' })) ?? []),
                                 ]}
                                 isReadOnly={isReadOnly}
                             />
