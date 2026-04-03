@@ -736,7 +736,7 @@ export function ExternalAgentDrawer({ onClose }: ExternalAgentDrawerProps) {
             </div>
 
             {/* Drawer Body */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-y-5">
+            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-y-5 [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:hover:[&::-webkit-scrollbar-thumb]:bg-gray-500">
 
                 {/* Validation banners */}
                 <ValidationBanners schemaMismatch={schemaMismatch} missingCredentials={missingCreds} />

@@ -379,8 +379,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
     };
 
     return (
-        <div className="group">
-    <div className="external-agent-form pr-1 flex flex-col gap-y-4 h-[calc(100vh-270px)] overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-transparent group-hover:dark:[&::-webkit-scrollbar-thumb]:bg-gray-700">
+        <div className="external-agent-form pr-1 flex flex-col gap-y-4 h-[calc(100vh-270px)] overflow-y-auto [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:hover:[&::-webkit-scrollbar-thumb]:bg-gray-500">
             {/* Validation Banners */}
             {validationErrors.length > 0 && (
                 <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
@@ -859,7 +858,6 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                 </Button>
             </div>
         </div>
-    </div>
     );
 };
 
