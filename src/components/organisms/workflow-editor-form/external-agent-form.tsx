@@ -15,10 +15,13 @@ import {
     TooltipTrigger,
     Checkbox,
     Label,
+    VaultSelector,
 } from '@/components/atoms';
 import { useDnD } from '@/context';
 import { cn } from '@/lib/utils';
 import { Node, useReactFlow } from '@xyflow/react';
+import { useParams } from 'next/navigation';
+import { useVaultSecretsFetcher } from '@/hooks/use-vault-common';
 import { toast } from 'sonner';
 import {
     Globe,
@@ -33,9 +36,7 @@ import {
     Zap,
     Info,
     Link2,
-    Play,
     XCircle,
-    Timer,
 } from 'lucide-react';
 
 // Types for A2A Agent Card
@@ -107,6 +108,15 @@ interface ExternalAgentFormProps {
 export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFormProps) => {
     const { updateNodeData } = useReactFlow();
     const { trigger, setTrigger } = useDnD();
+    const params = useParams();
+    const workspaceId = params?.wid as string;
+
+    // Vault secrets for authentication
+    const { data: vaultSecrets, isLoading: loadingSecrets, refetch: refetchSecrets } = useVaultSecretsFetcher(workspaceId);
+    const secretOptions = vaultSecrets?.map((secret: { key: string }) => ({
+        name: secret.key,
+        value: secret.key,
+    })) || [];
 
     // Form state
     const [agentCardUrl, setAgentCardUrl] = useState<string>('');
@@ -190,27 +200,15 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
             }
             setFetchStatus('success');
         } else {
-            // Initialize with demo data for new nodes
-            setAgentCardUrl('http://localhost:8001/.well-known/agent.json');
-            setFriendlyName(defaultMockAgentCard.name);
-            setDescription(defaultMockAgentCard.description || '');
-            setSchemaVersion(defaultMockAgentCard.schemaVersion);
-            setAgentCard(defaultMockAgentCard);
-            setFetchStatus('success');
+            // Initialize empty for new nodes - user must enter URL and fetch
+            setAgentCardUrl('');
+            setFriendlyName('');
+            setDescription('');
+            setSchemaVersion('');
+            setAgentCard(null);
+            setFetchStatus('idle');
         }
     }, [selectedNode.id]);
-
-    // Ensure agentCard is set on mount if not already set
-    useEffect(() => {
-        if (!agentCard) {
-            setAgentCardUrl('http://localhost:8001/.well-known/agent.json');
-            setFriendlyName(defaultMockAgentCard.name);
-            setDescription(defaultMockAgentCard.description || '');
-            setSchemaVersion(defaultMockAgentCard.schemaVersion);
-            setAgentCard(defaultMockAgentCard);
-            setFetchStatus('success');
-        }
-    }, []);
 
     // Validate configuration
     const validateConfig = useCallback(() => {
@@ -641,44 +639,43 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                             />
 
                             {authType === 'bearer' && (
-                                <div className="flex flex-col gap-1">
-                                    <Label className="text-xs text-gray-500 dark:text-gray-400">
-                                        Secret Reference
-                                    </Label>
-                                    <Input
-                                        value={secretRef}
-                                        onChange={e => setSecretRef(e.target.value)}
-                                        placeholder="vault://secrets/agent-token"
-                                        disabled={isReadOnly}
-                                    />
-                                    <span className="text-xs text-gray-400">
-                                        Reference to your secrets vault
-                                    </span>
-                                </div>
+                                <VaultSelector
+                                    label="Bearer Token Secret"
+                                    placeholder={secretOptions.length > 0 ? 'Select vault secret' : 'No vault secrets found'}
+                                    options={secretOptions}
+                                    currentValue={secretRef}
+                                    onChange={e => setSecretRef(e.target.value)}
+                                    disabled={isReadOnly || secretOptions.length === 0}
+                                    loadingSecrets={loadingSecrets}
+                                    onRefetch={() => refetchSecrets()}
+                                    helperInfo="Select the vault secret containing the bearer token"
+                                />
                             )}
 
                             {authType === 'oauth2' && (
                                 <div className="flex flex-col gap-3">
-                                    <div className="flex flex-col gap-1">
-                                        <Label className="text-xs text-gray-500 dark:text-gray-400">Client ID</Label>
-                                        <Input
-                                            value={clientId}
-                                            onChange={e => setClientId(e.target.value)}
-                                            placeholder="client_id"
-                                            disabled={isReadOnly}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <Label className="text-xs text-gray-500 dark:text-gray-400">
-                                            Client Secret Reference
-                                        </Label>
-                                        <Input
-                                            value={clientSecret}
-                                            onChange={e => setClientSecret(e.target.value)}
-                                            placeholder="vault://secrets/client-secret"
-                                            disabled={isReadOnly}
-                                        />
-                                    </div>
+                                    <VaultSelector
+                                        label="Client ID Secret"
+                                        placeholder={secretOptions.length > 0 ? 'Select vault secret' : 'No vault secrets found'}
+                                        options={secretOptions}
+                                        currentValue={clientId}
+                                        onChange={e => setClientId(e.target.value)}
+                                        disabled={isReadOnly || secretOptions.length === 0}
+                                        loadingSecrets={loadingSecrets}
+                                        onRefetch={() => refetchSecrets()}
+                                        helperInfo="Select the vault secret containing the OAuth2 client ID"
+                                    />
+                                    <VaultSelector
+                                        label="Client Secret"
+                                        placeholder={secretOptions.length > 0 ? 'Select vault secret' : 'No vault secrets found'}
+                                        options={secretOptions}
+                                        currentValue={clientSecret}
+                                        onChange={e => setClientSecret(e.target.value)}
+                                        disabled={isReadOnly || secretOptions.length === 0}
+                                        loadingSecrets={loadingSecrets}
+                                        onRefetch={() => refetchSecrets()}
+                                        helperInfo="Select the vault secret containing the OAuth2 client secret"
+                                    />
                                     <div className="flex flex-col gap-1">
                                         <Label className="text-xs text-gray-500 dark:text-gray-400">Token URL</Label>
                                         <Input
@@ -774,39 +771,6 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                     />
                                 </div>
                             )}
-
-                            {/* Branch targets */}
-                            <div className="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                <Label className="text-sm text-gray-700 dark:text-gray-200">
-                                    Branch Targets
-                                </Label>
-                                <div className="flex flex-wrap gap-2">
-                                    <Badge
-                                        variant="outline"
-                                        className="gap-1 bg-green-500/10 text-green-400 border-green-500/30"
-                                    >
-                                        <Play className="w-3 h-3" />
-                                        onSuccess
-                                    </Badge>
-                                    <Badge
-                                        variant="outline"
-                                        className="gap-1 bg-red-500/10 text-red-400 border-red-500/30"
-                                    >
-                                        <XCircle className="w-3 h-3" />
-                                        onError
-                                    </Badge>
-                                    <Badge
-                                        variant="outline"
-                                        className="gap-1 bg-amber-500/10 text-amber-400 border-amber-500/30"
-                                    >
-                                        <Timer className="w-3 h-3" />
-                                        onTimeout
-                                    </Badge>
-                                </div>
-                                <span className="text-xs text-gray-400">
-                                    Connect edges from these output ports to handle different outcomes
-                                </span>
-                            </div>
                         </div>
                     </>
                 )}
