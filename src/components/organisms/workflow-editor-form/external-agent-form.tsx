@@ -113,9 +113,9 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
 
     // Vault secrets for authentication
     const { data: vaultSecrets, isLoading: loadingSecrets, refetch: refetchSecrets } = useVaultSecretsFetcher(workspaceId);
-    const secretOptions = vaultSecrets?.map((secret: { key: string }) => ({
-        name: secret.key,
-        value: secret.key,
+    const secretOptions = vaultSecrets?.map((secret) => ({
+        name: secret.keyName || '',
+        value: secret.keyName || '',
     })) || [];
 
     // Form state
