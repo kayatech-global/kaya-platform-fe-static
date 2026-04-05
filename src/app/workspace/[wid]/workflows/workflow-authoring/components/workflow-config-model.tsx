@@ -173,6 +173,7 @@ interface WorkFlowConfigurationModelProps {
     setOpenWorkFlowConfigModel: React.Dispatch<React.SetStateAction<boolean>>;
     availableVersions?: IWorkflowTypes[];
     isDraft: boolean | undefined;
+    workflowName?: string;
 }
 
 export const WorkflowConfigurationModel = ({
@@ -183,6 +184,7 @@ export const WorkflowConfigurationModel = ({
     setOpenWorkFlowConfigModel,
     availableVersions,
     isDraft,
+    workflowName: workflowNameProp,
 }: WorkFlowConfigurationModelProps) => {
     const params = useParams();
     const chatbotRef = useRef<ChatbotRef>(null);
@@ -280,11 +282,14 @@ export const WorkflowConfigurationModel = ({
         publishedDeployment?.region || 'us-east-1'
     );
 
-    // Get workflow name from available versions
-    const workflowName = availableVersions?.[0]?.name || 'Workflow';
+    // Use the workflowName prop if provided, otherwise fall back to generic name
+    const workflowName = workflowNameProp || 'Workflow';
+    
+    // Get version info from available versions
+    const publishedVersionInfo = availableVersions?.find(v => v.name === 'publish');
     const workflowVersion = isDraft 
         ? `Draft (v${draftVersion || '1'})` 
-        : publishedDeployment?.version || availableVersions?.find(v => v.name === 'publish')?.version || '1.0.0';
+        : publishedDeployment?.version || publishedVersionInfo?.version || '1.0.0';
 
     // Check if AgentCore is available (published with AgentCore runtime)
     const isAgentCoreAvailable = publishedDeployment?.executionRuntime === 'agentcore' && publishedDeployment?.isPublished;

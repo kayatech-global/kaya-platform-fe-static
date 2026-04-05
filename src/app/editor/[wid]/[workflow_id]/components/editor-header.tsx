@@ -37,6 +37,7 @@ interface EditorHeaderProps {
     canRedo?: boolean;
     handleUndo?: () => void;
     handleRedo?: () => void;
+    workflowName?: string;
 }
 
 export const EditorHeader = ({
@@ -58,6 +59,7 @@ export const EditorHeader = ({
     canRedo,
     handleUndo,
     handleRedo,
+    workflowName,
 }: EditorHeaderProps) => {
     const params = useParams();
     const { workflowVariables, isVoiceWorkflow } = useDnD();
@@ -236,6 +238,7 @@ export const EditorHeader = ({
                 setOpenWorkFlowConfigModel={setOpenTextPlayground}
                 availableVersions={availableVersions}
                 isDraft={isDraft}
+                workflowName={workflowName}
             />
 
             {/* Voice Workflow Playground */}

@@ -1,5 +1,12 @@
 export type RuntimeStatus = 'Deployed' | 'Queued' | 'Error' | 'Inactive';
 
+export interface DeployedWorkflow {
+    id: string;
+    name: string;
+    version: string;
+    deployedAt: string;
+}
+
 export interface Runtime {
     id: string;
     name: string;
@@ -12,6 +19,7 @@ export interface Runtime {
     roleArn?: string;
     idleTimeout?: number;
     maxLifetime?: number;
+    deployedWorkflows?: DeployedWorkflow[];
 }
 
 export interface RuntimeFormData {

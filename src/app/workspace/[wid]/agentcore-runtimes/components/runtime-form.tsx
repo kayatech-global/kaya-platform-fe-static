@@ -11,12 +11,15 @@ import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
-    TooltipTrigger 
+    TooltipTrigger,
+    VaultSelector
 } from '@/components';
 import AppDrawer from '@/components/molecules/drawer/app-drawer';
 import { BannerInfo } from '@/components/atoms/banner-info';
 import { cn, getSubmitButtonLabel } from '@/lib/utils';
 import { validateField } from '@/utils/validation';
+import { useVaultSecretsFetcher } from '@/hooks/use-vault-common';
+import { useParams } from 'next/navigation';
 import { 
     CheckCircle, 
     Clock, 
@@ -27,7 +30,7 @@ import {
     Activity
 } from 'lucide-react';
 import { RuntimeFormData, ValidationStatus } from '../types';
-import { awsRegions, secretOptions } from '../mock-data';
+import { awsRegions } from '../mock-data';
 
 interface RuntimeFormProps {
     isOpen: boolean;
@@ -98,6 +101,18 @@ export const RuntimeForm = ({
     isSaving = false,
     initialData,
 }: RuntimeFormProps) => {
+    const params = useParams();
+    const workspaceId = params?.wid as string;
+    
+    // Fetch vault secrets for the VaultSelector
+    const { data: vaultSecrets = [], isLoading: loadingSecrets, refetch: refetchSecrets } = useVaultSecretsFetcher(workspaceId);
+    
+    // Transform vault secrets to options format
+    const secretOptions = vaultSecrets?.map((secret: { key: string; description?: string }) => ({
+        name: secret.key,
+        value: secret.key,
+    })) || [];
+
     const [validationStatus, setValidationStatus] = useState<ValidationStatus>({
         iamRole: 'pending',
         vaultSecret: 'pending',
@@ -135,6 +150,35 @@ export const RuntimeForm = ({
             runtimeEnvOverride: initialData?.runtimeEnvOverride || '{}',
         },
     });
+
+    // Reset form values when initialData changes (for edit mode)
+    React.useEffect(() => {
+        if (isOpen && initialData) {
+            reset({
+                name: initialData.name || '',
+                description: initialData.description || '',
+                region: initialData.region || '',
+                awsAccessKeyId: initialData.awsAccessKeyId || '',
+                awsSecretAccessKeyId: initialData.awsSecretAccessKeyId || '',
+                roleArn: initialData.roleArn || '',
+                idleTimeout: initialData.idleTimeout || 300,
+                maxLifetime: initialData.maxLifetime || 3600,
+                runtimeEnvOverride: initialData.runtimeEnvOverride || '{}',
+            });
+        } else if (isOpen && !initialData) {
+            reset({
+                name: '',
+                description: '',
+                region: '',
+                awsAccessKeyId: '',
+                awsSecretAccessKeyId: '',
+                roleArn: '',
+                idleTimeout: 300,
+                maxLifetime: 3600,
+                runtimeEnvOverride: '{}',
+            });
+        }
+    }, [isOpen, initialData, reset]);
 
     const handleValidate = async () => {
         setIsValidating(true);
@@ -195,14 +239,20 @@ export const RuntimeForm = ({
                                     <span className="text-sm text-blue-700 dark:text-blue-300">
                                         Ensure your IAM role has the required AgentCore permissions
                                     </span>
-                                    <Button 
-                                        variant="link" 
-                                        size="sm" 
-                                        className="text-blue-600 p-0 h-auto"
-                                        trailingIcon={<ExternalLink size={12} />}
+                                    <a 
+                                        href="https://docs.aws.amazon.com/bedrock/latest/userguide/agents-permissions.html"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                     >
-                                        View Guide
-                                    </Button>
+                                        <Button 
+                                            variant="link" 
+                                            size="sm" 
+                                            className="text-blue-600 p-0 h-auto"
+                                            trailingIcon={<ExternalLink size={12} />}
+                                        >
+                                            View Guide
+                                        </Button>
+                                    </a>
                                 </div>
                             }
                         />
@@ -258,18 +308,20 @@ export const RuntimeForm = ({
                                     isDestructive={!!errors.awsAccessKeyId?.message}
                                     supportiveText={errors.awsAccessKeyId?.message}
                                 />
-                                <Select
+                                <VaultSelector
                                     {...register('awsSecretAccessKeyId', {
-                                        required: { value: true, message: 'AWS Secret Access Key is required' },
+                                        required: { value: true, message: 'Please select vault key' },
                                     })}
                                     label="AWS Secret Access Key"
-                                    placeholder="Select from HashiCorp Vault"
+                                    placeholder={secretOptions.length > 0 ? 'Select from Vault' : 'No vault key found'}
+                                    disabled={secretOptions.length === 0 || (isEdit && isReadOnly)}
                                     options={secretOptions}
                                     currentValue={watch('awsSecretAccessKeyId')}
-                                    disabled={isEdit && isReadOnly}
                                     isDestructive={!!errors.awsSecretAccessKeyId?.message}
                                     supportiveText={errors.awsSecretAccessKeyId?.message}
-                                    isVault
+                                    disableCreate={isEdit && isReadOnly}
+                                    loadingSecrets={loadingSecrets}
+                                    onRefetch={() => refetchSecrets()}
                                 />
                                 <Select
                                     {...register('region', {

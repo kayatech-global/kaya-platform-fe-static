@@ -1,7 +1,6 @@
 'use client';
 
-import { Button, Textarea, Badge, Input } from '@/components/atoms';
-import { Progress } from '@/components/atoms/progress';
+import { Button, Textarea, Badge, Input, Progress } from '@/components/atoms';
 import { BannerInfo } from '@/components/atoms/banner-info';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogBody } from '@/components/atoms/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/atoms/radio-group';
@@ -91,7 +90,9 @@ export const PublishWorkflowModalContainer = ({
     const [selectedRuntime, setSelectedRuntime] = useState('');
     const [sourceType, setSourceType] = useState<SourceType>('s3');
     const [s3BucketPath, setS3BucketPath] = useState('');
+    const [s3Prefix, setS3Prefix] = useState('');
     const [ecrImageUri, setEcrImageUri] = useState('');
+    const [ecrImageTag, setEcrImageTag] = useState('latest');
     const [isDeploying, setIsDeploying] = useState(false);
     const [deploymentComplete, setDeploymentComplete] = useState(false);
     const [deploymentSteps, setDeploymentSteps] = useState<{ name: string; status: DeploymentStep }[]>([
@@ -129,7 +130,9 @@ export const PublishWorkflowModalContainer = ({
             setSelectedRuntime('');
             setSourceType('s3');
             setS3BucketPath('');
+            setS3Prefix('');
             setEcrImageUri('');
+            setEcrImageTag('latest');
             setIsDeploying(false);
             setDeploymentComplete(false);
             setDeploymentSteps([
@@ -226,7 +229,10 @@ export const PublishWorkflowModalContainer = ({
             case 2:
                 return true; // Runtime info is already selected
             case 3:
-                return sourceType === 's3' ? s3BucketPath !== '' : ecrImageUri !== '';
+                if (sourceType === 's3') {
+                    return s3BucketPath !== '';
+                }
+                return ecrImageUri !== '' && ecrImageTag !== '';
             default:
                 return false;
         }
@@ -483,28 +489,66 @@ export const PublishWorkflowModalContainer = ({
                         </div>
 
                         {sourceType === 's3' ? (
-                            <div>
-                                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                                    S3 Bucket Path
-                                </Label>
-                                <Input
-                                    value={s3BucketPath}
-                                    onChange={(e) => setS3BucketPath(e.target.value)}
-                                    placeholder="s3://my-bucket/workflows/"
-                                    className="w-full"
-                                />
+                            <div className="space-y-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                        S3 Bucket Name
+                                    </Label>
+                                    <Input
+                                        value={s3BucketPath}
+                                        onChange={(e) => setS3BucketPath(e.target.value)}
+                                        placeholder="my-workflow-bucket"
+                                        className="w-full"
+                                    />
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        The S3 bucket where workflow artifacts will be stored
+                                    </p>
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                        S3 Prefix (Optional)
+                                    </Label>
+                                    <Input
+                                        value={s3Prefix}
+                                        onChange={(e) => setS3Prefix(e.target.value)}
+                                        placeholder="workflows/production/"
+                                        className="w-full"
+                                    />
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        Optional path prefix for organizing workflow artifacts
+                                    </p>
+                                </div>
                             </div>
                         ) : (
-                            <div>
-                                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                                    ECR Image URI
-                                </Label>
-                                <Input
-                                    value={ecrImageUri}
-                                    onChange={(e) => setEcrImageUri(e.target.value)}
-                                    placeholder="123456789.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
-                                    className="w-full"
-                                />
+                            <div className="space-y-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                        ECR Repository URI
+                                    </Label>
+                                    <Input
+                                        value={ecrImageUri}
+                                        onChange={(e) => setEcrImageUri(e.target.value)}
+                                        placeholder="123456789.dkr.ecr.us-east-1.amazonaws.com/my-workflow"
+                                        className="w-full"
+                                    />
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        The ECR repository URI without the tag
+                                    </p>
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                        Image Tag
+                                    </Label>
+                                    <Input
+                                        value={ecrImageTag}
+                                        onChange={(e) => setEcrImageTag(e.target.value)}
+                                        placeholder="latest"
+                                        className="w-full"
+                                    />
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        The image tag to deploy (e.g., latest, v1.0.0, prod)
+                                    </p>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -581,7 +625,7 @@ export const PublishWorkflowModalContainer = ({
         <div>
             {/* Publish form modal */}
             <Dialog open={open} onOpenChange={handleModalCancel}>
-                <DialogContent hideCloseButtonClass="block top-6" className="gap-0 max-w-none w-[650px]">
+                <DialogContent hideCloseButtonClass="block top-6" className="gap-0 max-w-none w-[650px] max-h-[85vh] overflow-y-auto">
                     <DialogHeader className="px-4 py-4 flex flex-row gap-x-2">
                         <div className="w-8 h-8 flex items-center justify-center bg-blue-200 rounded">
                             <CircleFadingArrowUp size={16} color="#316FED" />

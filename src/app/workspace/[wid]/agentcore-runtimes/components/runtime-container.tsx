@@ -160,12 +160,16 @@ export const RuntimeContainer = () => {
                     name: editingRuntime.name,
                     description: editingRuntime.description || '',
                     region: editingRuntime.region,
-                    awsAccessKeyId: '',
-                    awsSecretAccessKeyId: '',
+                    awsAccessKeyId: 'AKIAIOSFODNN7EXAMPLE', // Mock value for edit mode
+                    awsSecretAccessKeyId: 'aws-secret-key-prod', // Mock vault reference for edit mode
                     roleArn: editingRuntime.roleArn || '',
                     idleTimeout: editingRuntime.idleTimeout || 300,
                     maxLifetime: editingRuntime.maxLifetime || 3600,
-                    runtimeEnvOverride: '{}',
+                    runtimeEnvOverride: JSON.stringify({
+                        LOG_LEVEL: 'INFO',
+                        MAX_CONCURRENT_REQUESTS: '10',
+                        ENABLE_METRICS: 'true',
+                    }, null, 2),
                 } : undefined}
             />
         </div>

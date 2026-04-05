@@ -11,6 +11,10 @@ export const mockRuntimes: Runtime[] = [
         roleArn: 'arn:aws:iam::123456789:role/agentcore-prod',
         idleTimeout: 300,
         maxLifetime: 3600,
+        deployedWorkflows: [
+            { id: 'wf-1', name: 'Customer Support Bot', version: '1.2.0', deployedAt: '2026-03-28' },
+            { id: 'wf-2', name: 'Order Processing', version: '2.0.1', deployedAt: '2026-03-25' },
+        ],
     },
     {
         id: '2',
@@ -22,6 +26,9 @@ export const mockRuntimes: Runtime[] = [
         roleArn: 'arn:aws:iam::123456789:role/agentcore-staging',
         idleTimeout: 180,
         maxLifetime: 1800,
+        deployedWorkflows: [
+            { id: 'wf-3', name: 'Email Classifier', version: '1.0.0', deployedAt: '2026-03-20' },
+        ],
     },
     {
         id: '3',
@@ -33,6 +40,7 @@ export const mockRuntimes: Runtime[] = [
         roleArn: 'arn:aws:iam::123456789:role/agentcore-dev',
         idleTimeout: 120,
         maxLifetime: 900,
+        deployedWorkflows: [], // No workflows deployed
     },
     {
         id: '4',
@@ -44,6 +52,7 @@ export const mockRuntimes: Runtime[] = [
         roleArn: 'arn:aws:iam::123456789:role/agentcore-eu-prod',
         idleTimeout: 300,
         maxLifetime: 3600,
+        deployedWorkflows: [],
     },
     {
         id: '5',
@@ -55,6 +64,7 @@ export const mockRuntimes: Runtime[] = [
         roleArn: 'arn:aws:iam::123456789:role/agentcore-test',
         idleTimeout: 60,
         maxLifetime: 600,
+        deployedWorkflows: [],
     },
 ];
 
