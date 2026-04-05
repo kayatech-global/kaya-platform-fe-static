@@ -1,6 +1,7 @@
 'use client';
 
-import { Button, Textarea, Badge, Input, Progress } from '@/components/atoms';
+import { Button, Textarea, Badge, Input } from '@/components/atoms';
+import { Progress } from '@/components/atoms/progress';
 import { BannerInfo } from '@/components/atoms/banner-info';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogBody } from '@/components/atoms/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/atoms/radio-group';
