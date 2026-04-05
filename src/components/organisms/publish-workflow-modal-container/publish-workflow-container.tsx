@@ -10,7 +10,7 @@ import { Label } from '@/components/atoms/label';
 import { useWorkflowPublish } from '@/hooks/useWorkflowPublish';
 import { validateSpaces, cn } from '@/lib/utils';
 import { IWorkflowTypes } from '@/models';
-import { CircleFadingArrowUp, SaveOff, Server, Cloud, CheckCircle2, XCircle, Loader2, Play, ArrowLeft, ArrowRight, Upload, Box, Database } from 'lucide-react';
+import { CircleFadingArrowUp, SaveOff, Server, Cloud, CheckCircle2, XCircle, Loader2, ArrowLeft, ArrowRight, Upload, Box, Database } from 'lucide-react';
 import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
 
@@ -230,11 +230,11 @@ export const PublishWorkflowModalContainer = ({
                     </div>
                     <Button 
                         variant="primary" 
-                        onClick={() => window.location.href = `/workspace/${window.location.pathname.split('/')[2]}/agentcore-playground`}
+                        onClick={handleModalCancel}
                         className="mt-2"
                     >
-                        <Play className="w-4 h-4 mr-2" />
-                        Go to Playground
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Done
                     </Button>
                 </div>
             );
