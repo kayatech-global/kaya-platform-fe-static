@@ -793,26 +793,27 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
 
         return (
             <div className="h-full w-full rounded relative">
-                <EditorHeader
-                    isLoading={isLoading}
-                    isReadOnly={isReadOnly}
-                    handleSave={handleSave}
-                    handleReset={handleReset}
-                    refetchGuardrailBinding={refetchGuardrailBinding}
-                    version={version}
-                    refetchGraph={refetchGraph}
-                    isDraft={isDraft}
-                    availableVersions={availableVersions}
-                    initialSnapshot={initialSnapshot}
-                    nodes={nodes}
-                    edges={edges}
-                    hasChanges={hasChanges}
-                    setHasChanges={setHasChanges}
-                    canUndo={canUndo}
-                    canRedo={canRedo}
-                    handleUndo={handleUndo}
-                    handleRedo={handleRedo}
-                />
+<EditorHeader
+                            isLoading={isLoading}
+                            isReadOnly={isReadOnly}
+                            handleSave={handleSave}
+                            handleReset={handleReset}
+                            refetchGuardrailBinding={refetchGuardrailBinding}
+                            version={version}
+                            refetchGraph={refetchGraph}
+                            isDraft={isDraft}
+                            availableVersions={availableVersions}
+                            initialSnapshot={initialSnapshot}
+                            nodes={nodes}
+                            edges={edges}
+                            hasChanges={hasChanges}
+                            setHasChanges={setHasChanges}
+                            canUndo={canUndo}
+                            canRedo={canRedo}
+                            handleUndo={handleUndo}
+                            handleRedo={handleRedo}
+                            workflowName={workflowName}
+                        />
                 <ReactFlow
                     proOptions={{ hideAttribution: true }}
                     style={theme === 'light' ? BACKGROUND_STYLE : BACKGROUND_STYLE_DARK}

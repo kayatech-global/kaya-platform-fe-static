@@ -113,6 +113,7 @@ const generateColumns = (
     onDelete: (id: string) => void,
     setOpenWorkFlowConfigModel: (status: boolean) => void,
     setWokFlowId: (id: string) => void,
+    setSelectedWorkflowName: (name: string) => void,
     workspaceId: string,
     handleNavigationToWorkflowEditor: (workflowId: string) => void
 ) => {
@@ -210,10 +211,11 @@ const generateColumns = (
                                     <button
                                         type="button"
                                         className="text-gray-500 cursor-pointer dark:text-gray-200 bg-transparent border-none p-0 inline-flex"
-                                        onClick={() => {
-                                            setOpenWorkFlowConfigModel(true);
-                                            setWokFlowId(row.getValue('id'));
-                                        }}
+                                onClick={() => {
+                                    setOpenWorkFlowConfigModel(true);
+                                    setWokFlowId(row.getValue('id'));
+                                    setSelectedWorkflowName(row.getValue('workflowName') || '');
+                                }}
                                         aria-label="Workflow Execution Chatbot"
                                     >
                                         <Braces size={18} />
@@ -341,6 +343,7 @@ export const WorkflowAuthoringTableContainer = ({
     const { register, handleSubmit, reset, watch, control } = useForm<WorkflowAuthoringData>({ mode: 'onChange' });
     const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
     const [workFlowId, setWokFlowId] = useState<string>('');
+    const [selectedWorkflowName, setSelectedWorkflowName] = useState<string>('');
     const params = useParams();
     const router = useRouter();
     const { isMobile } = useBreakpoint();
@@ -371,6 +374,7 @@ export const WorkflowAuthoringTableContainer = ({
         onDelete,
         setOpenWorkFlowConfigModel,
         setWokFlowId,
+        setSelectedWorkflowName,
         params.wid as string,
         handleNavigationToWorkflowEditor
     );
@@ -438,6 +442,7 @@ export const WorkflowAuthoringTableContainer = ({
                 variables={variables}
                 setOpenWorkFlowConfigModel={setOpenWorkFlowConfigModel}
                 isDraft={false}
+                workflowName={selectedWorkflowName}
             />
         </div>
     );
