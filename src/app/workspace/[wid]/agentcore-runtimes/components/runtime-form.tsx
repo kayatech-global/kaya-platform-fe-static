@@ -2,20 +2,21 @@
 
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { Server } from 'lucide-react';
 import { 
-    Sheet, 
-    SheetContent, 
-    SheetHeader, 
-    SheetTitle,
-    SheetDescription 
-} from '@/components/atoms/sheet';
-import { Button, Input, Select } from '@/components/atoms';
-import { Textarea } from '@/components/atoms/textarea';
+    Button, 
+    Input, 
+    Select, 
+    Textarea,
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger 
+} from '@/components';
+import AppDrawer from '@/components/molecules/drawer/app-drawer';
 import { BannerInfo } from '@/components/atoms/banner-info';
-import { Badge } from '@/components/atoms/badge';
-import { ScrollArea } from '@/components/atoms/scroll-area';
+import { cn, getSubmitButtonLabel } from '@/lib/utils';
+import { validateField } from '@/utils/validation';
 import { 
     CheckCircle, 
     Clock, 
@@ -25,26 +26,16 @@ import {
     Key,
     Activity
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { RuntimeFormData, ValidationStatus } from '../types';
 import { awsRegions, secretOptions } from '../mock-data';
 
-const formSchema = z.object({
-    name: z.string().min(1, 'Runtime name is required').max(50, 'Name must be less than 50 characters'),
-    description: z.string().max(200, 'Description must be less than 200 characters').optional(),
-    accessKey: z.string().min(1, 'Access key is required'),
-    secretAccessKey: z.string().min(1, 'Secret access key is required'),
-    region: z.string().min(1, 'Region is required'),
-    roleArn: z.string().min(1, 'Role ARN is required'),
-    idleTimeout: z.coerce.number().min(60, 'Minimum 60 seconds').max(3600, 'Maximum 3600 seconds'),
-    maxLifetime: z.coerce.number().min(300, 'Minimum 300 seconds').max(86400, 'Maximum 86400 seconds'),
-});
-
 interface RuntimeFormProps {
     isOpen: boolean;
-    onOpenChange: (open: boolean) => void;
+    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
     onSubmit: (data: RuntimeFormData) => void;
     isEdit?: boolean;
+    isReadOnly?: boolean;
+    isSaving?: boolean;
     initialData?: Partial<RuntimeFormData>;
 }
 
@@ -100,9 +91,11 @@ const ValidationCard = ({
 
 export const RuntimeForm = ({
     isOpen,
-    onOpenChange,
+    setIsOpen,
     onSubmit,
     isEdit = false,
+    isReadOnly = false,
+    isSaving = false,
     initialData,
 }: RuntimeFormProps) => {
     const [validationStatus, setValidationStatus] = useState<ValidationStatus>({
@@ -111,25 +104,38 @@ export const RuntimeForm = ({
         healthCheck: 'pending',
     });
     const [isValidating, setIsValidating] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
+
+    const nameValidate = validateField('Name', {
+        required: { value: true },
+        minLength: { value: 3 },
+    });
+
+    const descriptionValidate = validateField('Description', {
+        required: { value: true },
+        minLength: { value: 5 },
+    });
 
     const {
         register,
         handleSubmit,
-        formState: { errors },
+        formState: { errors, isValid },
         watch,
         reset,
     } = useForm<RuntimeFormData>({
-        resolver: zodResolver(formSchema),
+        mode: 'all',
         defaultValues: {
             name: initialData?.name || '',
             description: initialData?.description || '',
-            accessKey: initialData?.accessKey || '',
-            secretAccessKey: initialData?.secretAccessKey || '',
             region: initialData?.region || '',
-            roleArn: initialData?.roleArn || '',
-            idleTimeout: initialData?.idleTimeout || 300,
-            maxLifetime: initialData?.maxLifetime || 3600,
+            configurations: {
+                awsAccessKeyId: initialData?.configurations?.awsAccessKeyId || '',
+                awsSecretAccessKeyId: initialData?.configurations?.awsSecretAccessKeyId || '',
+                executionTimeout: initialData?.configurations?.executionTimeout || 300,
+                maxConcurrency: initialData?.configurations?.maxConcurrency || 10,
+                memorySize: initialData?.configurations?.memorySize || 512,
+                enableLogging: initialData?.configurations?.enableLogging ?? true,
+                enableTracing: initialData?.configurations?.enableTracing ?? false,
+            },
         },
     });
 
@@ -149,17 +155,13 @@ export const RuntimeForm = ({
         setIsValidating(false);
     };
 
-    const handleFormSubmit = async (data: RuntimeFormData) => {
-        setIsSaving(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
+    const handleFormSubmit = (data: RuntimeFormData) => {
         onSubmit(data);
-        setIsSaving(false);
-        onOpenChange(false);
         reset();
     };
 
     const handleClose = () => {
-        onOpenChange(false);
+        setIsOpen(false);
         reset();
         setValidationStatus({
             iamRole: 'pending',
@@ -173,24 +175,21 @@ export const RuntimeForm = ({
         validationStatus.vaultSecret === 'success' && 
         validationStatus.healthCheck === 'success';
 
-    return (
-        <Sheet open={isOpen} onOpenChange={handleClose}>
-            <SheetContent 
-                side="right" 
-                className="w-[600px] sm:max-w-[600px] p-0 overflow-hidden"
-                hideClose
-            >
-                <SheetHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-600 to-sky-500">
-                    <SheetTitle className="text-white text-lg">
-                        {isEdit ? 'Edit Runtime' : 'New Runtime'}
-                    </SheetTitle>
-                    <SheetDescription className="text-blue-100">
-                        Configure your AWS AgentCore runtime connection
-                    </SheetDescription>
-                </SheetHeader>
+    const canSubmit = isValid && allValidated && !isSaving && !(isEdit && isReadOnly);
 
-                <ScrollArea className="h-[calc(100vh-180px)]">
-                    <div className="p-6 space-y-6">
+    return (
+        <AppDrawer
+            open={isOpen}
+            direction="right"
+            isPlainContentSheet={false}
+            setOpen={setIsOpen}
+            className="custom-drawer-content !w-[633px]"
+            dismissible={false}
+            headerIcon={<Server />}
+            header={<h3>{isEdit ? 'Edit Runtime' : 'New Runtime'}</h3>}
+            content={
+                <div className={cn('activity-feed-container p-4')}>
+                    <div className="space-y-6">
                         {/* IAM Permissions Banner */}
                         <BannerInfo
                             icon="ri-shield-keyhole-fill"
@@ -212,71 +211,84 @@ export const RuntimeForm = ({
                         />
 
                         {/* Runtime Info Section */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-x-2">
-                                <div className="w-6 h-6 rounded bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                                    <span className="text-xs font-bold text-blue-600">1</span>
-                                </div>
-                                Runtime Information
-                            </h3>
-                            <div className="grid gap-4 pl-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="col-span-1 sm:col-span-2">
                                 <Input
-                                    {...register('name')}
+                                    {...register('name', {
+                                        required: nameValidate.required,
+                                        minLength: nameValidate.minLength,
+                                    })}
+                                    className="w-full"
                                     label="Runtime Name"
                                     placeholder="e.g., prod-agentcore-runtime"
-                                    isDestructive={!!errors.name}
+                                    readOnly={isEdit && isReadOnly}
+                                    isDestructive={!!errors.name?.message}
                                     supportiveText={errors.name?.message}
                                 />
+                            </div>
+                            <div className="col-span-1 sm:col-span-2">
                                 <Textarea
-                                    {...register('description')}
+                                    {...register('description', {
+                                        required: descriptionValidate.required,
+                                        minLength: descriptionValidate.minLength,
+                                    })}
+                                    rows={3}
+                                    className="w-full"
                                     label="Description"
                                     placeholder="Optional description for this runtime..."
-                                    rows={3}
-                                    className="resize-none"
+                                    readOnly={isEdit && isReadOnly}
+                                    isDestructive={!!errors.description?.message}
+                                    supportiveText={errors.description?.message}
                                 />
                             </div>
                         </div>
 
                         {/* AWS Credentials Section */}
                         <div className="space-y-4">
-                            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-x-2">
-                                <div className="w-6 h-6 rounded bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                                    <span className="text-xs font-bold text-blue-600">2</span>
-                                </div>
+                            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                                 AWS Credentials
-                            </h3>
-                            <div className="grid gap-4 pl-8">
-                                <Input
-                                    {...register('accessKey')}
-                                    label="Access Key ID"
-                                    placeholder="AKIAIOSFODNN7EXAMPLE"
-                                    isDestructive={!!errors.accessKey}
-                                    supportiveText={errors.accessKey?.message}
-                                />
-                                <Select
-                                    {...register('secretAccessKey')}
-                                    label="Secret Access Key"
-                                    placeholder="Select from Vault"
-                                    options={secretOptions}
-                                    isDestructive={!!errors.secretAccessKey}
-                                    supportiveText={errors.secretAccessKey?.message}
-                                    isVault
-                                />
-                                <div className="grid grid-cols-2 gap-4">
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="col-span-1 sm:col-span-2">
+                                    <Input
+                                        {...register('configurations.awsAccessKeyId', {
+                                            required: { value: true, message: 'Access Key ID is required' },
+                                        })}
+                                        className="w-full"
+                                        label="Access Key ID"
+                                        placeholder="AKIAIOSFODNN7EXAMPLE"
+                                        readOnly={isEdit && isReadOnly}
+                                        isDestructive={!!errors.configurations?.awsAccessKeyId?.message}
+                                        supportiveText={errors.configurations?.awsAccessKeyId?.message}
+                                    />
+                                </div>
+                                <div className="col-span-1 sm:col-span-2">
                                     <Select
-                                        {...register('region')}
+                                        {...register('configurations.awsSecretAccessKeyId', {
+                                            required: { value: true, message: 'Secret Access Key is required' },
+                                        })}
+                                        label="Secret Access Key"
+                                        placeholder="Select from Vault"
+                                        options={secretOptions}
+                                        currentValue={watch('configurations.awsSecretAccessKeyId')}
+                                        disabled={isEdit && isReadOnly}
+                                        isDestructive={!!errors.configurations?.awsSecretAccessKeyId?.message}
+                                        supportiveText={errors.configurations?.awsSecretAccessKeyId?.message}
+                                        isVault
+                                    />
+                                </div>
+                                <div className="col-span-1">
+                                    <Select
+                                        {...register('region', {
+                                            required: { value: true, message: 'Region is required' },
+                                        })}
                                         label="AWS Region"
                                         placeholder="Select region"
                                         options={awsRegions}
-                                        isDestructive={!!errors.region}
+                                        currentValue={watch('region')}
+                                        disabled={isEdit && isReadOnly}
+                                        isDestructive={!!errors.region?.message}
                                         supportiveText={errors.region?.message}
-                                    />
-                                    <Input
-                                        {...register('roleArn')}
-                                        label="Role ARN"
-                                        placeholder="arn:aws:iam::123456789:role/..."
-                                        isDestructive={!!errors.roleArn}
-                                        supportiveText={errors.roleArn?.message}
                                     />
                                 </div>
                             </div>
@@ -284,41 +296,69 @@ export const RuntimeForm = ({
 
                         {/* Execution Settings Section */}
                         <div className="space-y-4">
-                            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-x-2">
-                                <div className="w-6 h-6 rounded bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                                    <span className="text-xs font-bold text-blue-600">3</span>
-                                </div>
+                            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                                 Execution Settings
-                            </h3>
-                            <div className="grid grid-cols-2 gap-4 pl-8">
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <Input
-                                    {...register('idleTimeout')}
+                                    {...register('configurations.executionTimeout', {
+                                        required: { value: true, message: 'Execution timeout is required' },
+                                        min: { value: 60, message: 'Minimum 60 seconds' },
+                                        max: { value: 3600, message: 'Maximum 3600 seconds' },
+                                    })}
                                     type="number"
-                                    label="Idle Timeout (seconds)"
+                                    label="Execution Timeout (seconds)"
                                     placeholder="300"
-                                    isDestructive={!!errors.idleTimeout}
-                                    supportiveText={errors.idleTimeout?.message || 'Time before idle shutdown'}
+                                    readOnly={isEdit && isReadOnly}
+                                    isDestructive={!!errors.configurations?.executionTimeout?.message}
+                                    supportiveText={errors.configurations?.executionTimeout?.message || 'Time before timeout'}
                                 />
                                 <Input
-                                    {...register('maxLifetime')}
+                                    {...register('configurations.maxConcurrency', {
+                                        required: { value: true, message: 'Max concurrency is required' },
+                                        min: { value: 1, message: 'Minimum 1' },
+                                        max: { value: 100, message: 'Maximum 100' },
+                                    })}
                                     type="number"
-                                    label="Max Lifetime (seconds)"
-                                    placeholder="3600"
-                                    isDestructive={!!errors.maxLifetime}
-                                    supportiveText={errors.maxLifetime?.message || 'Maximum runtime duration'}
+                                    label="Max Concurrency"
+                                    placeholder="10"
+                                    readOnly={isEdit && isReadOnly}
+                                    isDestructive={!!errors.configurations?.maxConcurrency?.message}
+                                    supportiveText={errors.configurations?.maxConcurrency?.message || 'Maximum concurrent executions'}
+                                />
+                                <Input
+                                    {...register('configurations.memorySize', {
+                                        required: { value: true, message: 'Memory size is required' },
+                                        min: { value: 128, message: 'Minimum 128 MB' },
+                                        max: { value: 10240, message: 'Maximum 10240 MB' },
+                                    })}
+                                    type="number"
+                                    label="Memory Size (MB)"
+                                    placeholder="512"
+                                    readOnly={isEdit && isReadOnly}
+                                    isDestructive={!!errors.configurations?.memorySize?.message}
+                                    supportiveText={errors.configurations?.memorySize?.message || 'Allocated memory'}
                                 />
                             </div>
                         </div>
 
                         {/* Validation Cards */}
                         <div className="space-y-4">
-                            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-x-2">
-                                <div className="w-6 h-6 rounded bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                                    <span className="text-xs font-bold text-blue-600">4</span>
-                                </div>
-                                Connection Validation
-                            </h3>
-                            <div className="space-y-2 pl-8">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                    Connection Validation
+                                </h4>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={handleValidate}
+                                    loading={isValidating}
+                                    disabled={isValidating}
+                                >
+                                    {isValidating ? 'Validating...' : 'Validate'}
+                                </Button>
+                            </div>
+                            <div className="space-y-2">
                                 <ValidationCard 
                                     label="IAM Role Permissions" 
                                     status={validationStatus.iamRole}
@@ -337,32 +377,47 @@ export const RuntimeForm = ({
                             </div>
                         </div>
                     </div>
-                </ScrollArea>
-
-                {/* Footer */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex justify-between">
-                    <Button
-                        variant="secondary"
-                        onClick={handleValidate}
-                        loading={isValidating}
-                        disabled={isValidating || isSaving}
-                    >
-                        {isValidating ? 'Validating...' : 'Validate Connection'}
-                    </Button>
-                    <div className="flex gap-x-2">
-                        <Button variant="secondary" onClick={handleClose}>
+                </div>
+            }
+            footer={
+                <div className="flex justify-between">
+                    <div className="flex gap-2">
+                        {/* Reserved for additional actions */}
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            variant={'secondary'}
+                            size={'sm'}
+                            onClick={handleClose}
+                        >
                             Cancel
                         </Button>
-                        <Button
-                            onClick={handleSubmit(handleFormSubmit)}
-                            loading={isSaving}
-                            disabled={!allValidated || isSaving}
-                        >
-                            {isSaving ? 'Saving...' : 'Save Runtime'}
-                        </Button>
+                        <div>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            size={'sm'}
+                                            disabled={!canSubmit}
+                                            onClick={handleSubmit(handleFormSubmit)}
+                                        >
+                                            {getSubmitButtonLabel(isSaving, isEdit)}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    {!canSubmit && (
+                                        <TooltipContent side="left" align="center">
+                                            {!allValidated 
+                                                ? 'Please validate connection before saving' 
+                                                : 'All details need to be filled before the form can be saved'
+                                            }
+                                        </TooltipContent>
+                                    )}
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                     </div>
                 </div>
-            </SheetContent>
-        </Sheet>
+            }
+        />
     );
 };

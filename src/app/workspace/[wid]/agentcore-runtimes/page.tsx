@@ -1,3 +1,5 @@
+'use client';
+
 import { RuntimeContainer } from './components/runtime-container';
 
 const AgentCoreRuntimesPage = () => {

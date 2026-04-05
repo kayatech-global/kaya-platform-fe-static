@@ -20,6 +20,7 @@ export const RuntimeContainer = () => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingRuntime, setEditingRuntime] = useState<Runtime | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
     const filteredRuntimes = useMemo(() => {
         if (!searchTerm) return runtimes;
@@ -51,12 +52,17 @@ export const RuntimeContainer = () => {
         setSearchTerm(search);
     };
 
-    const handleFormSubmit = (data: RuntimeFormData) => {
+    const handleFormSubmit = async (data: RuntimeFormData) => {
+        setIsSaving(true);
+        
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         if (editingRuntime) {
             // Update existing
             setRuntimes(prev => prev.map(r => 
                 r.id === editingRuntime.id 
-                    ? { ...r, name: data.name, region: data.region }
+                    ? { ...r, name: data.name, description: data.description, region: data.region }
                     : r
             ));
             toast.success('Runtime updated successfully');
@@ -65,6 +71,7 @@ export const RuntimeContainer = () => {
             const newRuntime: Runtime = {
                 id: String(Date.now()),
                 name: data.name,
+                description: data.description,
                 region: data.region,
                 status: 'Queued',
                 createdAt: new Date().toISOString().split('T')[0],
@@ -72,6 +79,9 @@ export const RuntimeContainer = () => {
             setRuntimes(prev => [newRuntime, ...prev]);
             toast.success('Runtime created successfully');
         }
+        
+        setIsSaving(false);
+        setIsFormOpen(false);
         setEditingRuntime(null);
     };
 
@@ -124,15 +134,27 @@ export const RuntimeContainer = () => {
                 />
             </div>
 
-            {/* Form Slide-over */}
+            {/* Form Drawer */}
             <RuntimeForm
                 isOpen={isFormOpen}
-                onOpenChange={setIsFormOpen}
+                setIsOpen={setIsFormOpen}
                 onSubmit={handleFormSubmit}
                 isEdit={!!editingRuntime}
+                isReadOnly={editingRuntime?.isReadOnly}
+                isSaving={isSaving}
                 initialData={editingRuntime ? {
                     name: editingRuntime.name,
+                    description: editingRuntime.description || '',
                     region: editingRuntime.region,
+                    configurations: {
+                        awsAccessKeyId: '',
+                        awsSecretAccessKeyId: '',
+                        executionTimeout: 300,
+                        maxConcurrency: 10,
+                        memorySize: 512,
+                        enableLogging: true,
+                        enableTracing: false,
+                    },
                 } : undefined}
             />
         </div>

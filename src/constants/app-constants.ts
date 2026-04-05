@@ -49,6 +49,19 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
                 isSingleLink: true,
             },
             {
+                id: 'runtimes',
+                title: 'Runtimes',
+                url: '#',
+                icon: 'Server',
+                items: [
+                    {
+                        id: 'aws-agentcore-runtimes',
+                        title: 'AWS AgentCore Runtimes',
+                        url: '/workspace/[wid]/agentcore-runtimes',
+                    },
+                ],
+            },
+            {
                 id: 'guardrails',
                 title: 'Guardrails',
                 url: '#',
@@ -347,29 +360,7 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
             },
         ],
     },
-    {
-        id: 'agentcore_menu_item',
-        title: 'AgentCore',
-        description: 'Configure and manage AgentCore runtimes and deployments',
-        icon: 'ri-server-fill',
-        items: [
-            {
-                id: 'agentcore-runtimes',
-                title: 'Runtime Configurations',
-                url: '/workspace/[wid]/agentcore-runtimes',
-                icon: 'Server',
-                isSingleLink: true,
-            },
-            {
-                id: 'agentcore-playground',
-                title: 'AgentCore Playground',
-                url: '/workspace/[wid]/agentcore-playground',
-                icon: 'Play',
-                isSingleLink: true,
-            },
-        ],
-    },
-];
+    ];
 
 export const SIDEBAR_MAIN_MENU_ITEMS: SidebarMainMenuItemsType[] = [
     {
