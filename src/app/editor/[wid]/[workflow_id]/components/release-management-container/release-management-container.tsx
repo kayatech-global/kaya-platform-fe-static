@@ -107,11 +107,6 @@ export const ReleaseManagementContainer = ({
     };
 
     const handleOnPublish = () => {
-        // Validate agent connections
-        if (!validateAgentConnections()) {
-            toast.error('Unable to save. Please resolve validation errors before saving');
-            return;
-        }
         if (hasChanges) {
             setOpenSaveConfirmationModal(true);
         } else {

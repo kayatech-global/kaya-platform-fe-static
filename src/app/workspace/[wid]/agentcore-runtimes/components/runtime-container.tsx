@@ -113,15 +113,7 @@ export const RuntimeContainer = () => {
                     </Breadcrumb>
                 </div>
 
-                {/* Hero Banner */}
-                <div className="rounded-[20px] p-6 bg-gradient-to-r from-blue-600 to-sky-500 mb-6">
-                    <h1 className="text-2xl font-bold text-white mb-2">AWS AgentCore Runtimes</h1>
-                    <p className="text-blue-100 text-sm max-w-2xl">
-                        Manage and deploy your AI workflows to AWS AgentCore runtime environments. 
-                        Configure connections, monitor status, and scale your agents seamlessly.
-                    </p>
                 </div>
-            </div>
 
             {/* Table Section */}
             <div className="bg-white dark:bg-gray-800 rounded-[20px] shadow-sm">
