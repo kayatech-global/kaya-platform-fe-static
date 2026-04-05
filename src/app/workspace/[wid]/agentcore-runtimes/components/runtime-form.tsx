@@ -108,9 +108,9 @@ export const RuntimeForm = ({
     const { data: vaultSecrets = [], isLoading: loadingSecrets, refetch: refetchSecrets } = useVaultSecretsFetcher(workspaceId);
     
     // Transform vault secrets to options format
-    const secretOptions = vaultSecrets?.map((secret: { key: string; description?: string }) => ({
-        name: secret.key,
-        value: secret.key,
+    const secretOptions = vaultSecrets?.map((secret) => ({
+        name: secret.keyName || '',
+        value: secret.keyName || '',
     })) || [];
 
     const [validationStatus, setValidationStatus] = useState<ValidationStatus>({
