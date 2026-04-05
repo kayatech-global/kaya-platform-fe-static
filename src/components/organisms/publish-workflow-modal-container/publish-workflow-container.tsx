@@ -707,8 +707,8 @@ export const PublishWorkflowModalContainer = ({
                                                 ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" 
                                                 : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                                         )}>
-                                            <RadioGroupItem value="kaya-default" id="kaya-default" className="sr-only" />
-                                            <Label htmlFor="kaya-default" className="flex items-center gap-3 cursor-pointer w-full">
+                                            <RadioGroupItem value="kaya-default" id="kaya-default-2" className="sr-only" />
+                                            <Label htmlFor="kaya-default-2" className="flex items-center gap-3 cursor-pointer w-full">
                                                 <Cloud className="w-5 h-5 text-blue-600" />
                                                 <div>
                                                     <p className="font-medium text-gray-900 dark:text-gray-100">KAYA Default</p>
@@ -718,12 +718,12 @@ export const PublishWorkflowModalContainer = ({
                                         </div>
                                         <div className={cn(
                                             "relative flex items-center p-4 border rounded-lg cursor-pointer transition-all",
-                                            executionRuntime === 'aws-agentcore' 
+                                            executionRuntime !== 'kaya-default'
                                                 ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" 
                                                 : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                                         )}>
-                                            <RadioGroupItem value="aws-agentcore" id="aws-agentcore" className="sr-only" />
-                                            <Label htmlFor="aws-agentcore" className="flex items-center gap-3 cursor-pointer w-full">
+                                            <RadioGroupItem value="aws-agentcore" id="aws-agentcore-2" className="sr-only" />
+                                            <Label htmlFor="aws-agentcore-2" className="flex items-center gap-3 cursor-pointer w-full">
                                                 <Server className="w-5 h-5 text-orange-500" />
                                                 <div>
                                                     <p className="font-medium text-gray-900 dark:text-gray-100">AWS AgentCore</p>
