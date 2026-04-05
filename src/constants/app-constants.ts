@@ -351,11 +351,11 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
     id: 'agentcore_menu_item',
     title: 'AgentCore',
     description: 'Configure and manage AgentCore runtimes and deployments',
-    icon: 'ri-cpu-fill',
+    icon: 'ri-server-fill',
     items: [
         {
             id: 'agentcore-runtimes',
-            title: 'AgentCore Runtimes',
+            title: 'Runtime Configurations',
             url: '/workspace/[wid]/agentcore-runtimes',
             icon: 'Server',
             isSingleLink: true,

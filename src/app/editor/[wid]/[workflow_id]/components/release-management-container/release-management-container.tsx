@@ -11,7 +11,6 @@ import {
 import EditorButton from '@/components/atoms/editor-button';
 import { CommitWorkflowModalContainer } from '@/components/organisms/commit-workflow-modal-container/commit-workflow-container';
 import { PublishWorkflowModalContainer } from '@/components/organisms/publish-workflow-modal-container/publish-workflow-container';
-import { AgentCorePublishModal } from '@/components/organisms/agentcore-publish-modal';
 import { cn } from '@/lib/utils';
 import { IWorkflowTypes } from '@/models';
 import { useTheme } from '@/theme';
@@ -49,7 +48,6 @@ export const ReleaseManagementContainer = ({
     const [openPublishModal, setOpenPublishModal] = useState(false);
     const [openCommitModal, setOpenCommitModal] = useState(false);
     const [openSaveConfirmationModal, setOpenSaveConfirmationModal] = useState(false);
-    const [openAgentCoreModal, setOpenAgentCoreModal] = useState(false);
 
     const [isPublishDisabled, setIsPublishDisabled] = useState(false);
     const [isCommitDisable, setIsCommitDisable] = useState(false);
@@ -199,33 +197,7 @@ export const ReleaseManagementContainer = ({
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
-                    <TooltipProvider>
-                        <Tooltip open={availableVersions?.some(v => v.name === 'publish') ? false : undefined}>
-                            <TooltipTrigger asChild>
-                                <div>
-                                    <EditorButton
-                                        variant="secondary"
-                                        icon="ri-cpu-line stroke-1 text-gray-700 dark:text-gray-300"
-                                        onClick={() => setOpenAgentCoreModal(true)}
-                                        disabled={isCommitDisable}
-                                    >
-                                        Deploy to AgentCore
-                                    </EditorButton>
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" align="start">
-                                <div className="flex flex-col gap-y-1 w-[270px]">
-                                    <p className="text-gray-700 text-xs font-semibold dark:text-gray-200">
-                                        Deploy to AgentCore Runtime
-                                    </p>
-                                    <p className="text-gray-700 text-xs dark:text-gray-200">
-                                        Deploy your workflow to an AgentCore runtime for production execution
-                                    </p>
-                                </div>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </div>
+                    </div>
             )}
             {/* Responsive layout */}
             {isButtonBreakpointReach && (
@@ -301,36 +273,6 @@ export const ReleaseManagementContainer = ({
                                 </Tooltip>
                             </TooltipProvider>
                         </DropdownMenuItem>
-                        <DropdownMenuItem id="agentcore">
-                            <TooltipProvider>
-                                <Tooltip open={availableVersions?.some(v => v.name === 'publish') ? false : undefined}>
-                                    <TooltipTrigger
-                                        disabled={isCommitDisable}
-                                        onClick={isCommitDisable ? undefined : () => setOpenAgentCoreModal(true)}
-                                        asChild
-                                    >
-                                        <div
-                                            className={cn('flex items-center gap-x-2', {
-                                                'cursor-not-allowed opacity-50': isCommitDisable || isLoading,
-                                            })}
-                                        >
-                                            <i className="ri-cpu-line text-lg stroke-1 text-gray-700 dark:text-gray-300" />
-                                            <div>Deploy to AgentCore</div>
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom" align="start">
-                                        <div className="flex flex-col gap-y-1 w-[270px]">
-                                            <p className="text-gray-700 text-xs font-semibold dark:text-gray-200">
-                                                Deploy to AgentCore Runtime
-                                            </p>
-                                            <p className="text-gray-700 text-xs dark:text-gray-200">
-                                                Deploy your workflow to an AgentCore runtime for production execution
-                                            </p>
-                                        </div>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </DropdownMenuItem>
                         <DropdownMenuItem>{GuardrailsButtonWrapper}</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -347,12 +289,6 @@ export const ReleaseManagementContainer = ({
                 setOpenSaveConfirmationModal={setOpenSaveConfirmationModal}
             />
             <CommitWorkflowModalContainer open={openCommitModal} setOpen={setOpenCommitModal} />
-            <AgentCorePublishModal 
-                open={openAgentCoreModal} 
-                onOpenChange={setOpenAgentCoreModal}
-                workflowName="Current Workflow"
-                workflowVersion="1.0.0"
-            />
         </>
     );
 };
