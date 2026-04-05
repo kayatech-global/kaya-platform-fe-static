@@ -347,6 +347,28 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
         },
     ],
 },
+{
+    id: 'agentcore_menu_item',
+    title: 'AgentCore',
+    description: 'Configure and manage AgentCore runtimes and deployments',
+    icon: 'ri-cpu-fill',
+    items: [
+        {
+            id: 'agentcore-runtimes',
+            title: 'AgentCore Runtimes',
+            url: '/workspace/[wid]/agentcore-runtimes',
+            icon: 'Server',
+            isSingleLink: true,
+        },
+        {
+            id: 'agentcore-playground',
+            title: 'AgentCore Playground',
+            url: '/workspace/[wid]/agentcore-playground',
+            icon: 'Play',
+            isSingleLink: true,
+        },
+    ],
+},
 ];
 
 export const SIDEBAR_MAIN_MENU_ITEMS: SidebarMainMenuItemsType[] = [
