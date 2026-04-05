@@ -105,7 +105,7 @@ export const RuntimeForm = ({
     });
     const [isValidating, setIsValidating] = useState(false);
 
-    const nameValidate = validateField('Name', {
+    const nameValidate = validateField('Runtime Name', {
         required: { value: true },
         minLength: { value: 3 },
     });
@@ -127,15 +127,12 @@ export const RuntimeForm = ({
             name: initialData?.name || '',
             description: initialData?.description || '',
             region: initialData?.region || '',
-            configurations: {
-                awsAccessKeyId: initialData?.configurations?.awsAccessKeyId || '',
-                awsSecretAccessKeyId: initialData?.configurations?.awsSecretAccessKeyId || '',
-                executionTimeout: initialData?.configurations?.executionTimeout || 300,
-                maxConcurrency: initialData?.configurations?.maxConcurrency || 10,
-                memorySize: initialData?.configurations?.memorySize || 512,
-                enableLogging: initialData?.configurations?.enableLogging ?? true,
-                enableTracing: initialData?.configurations?.enableTracing ?? false,
-            },
+            awsAccessKeyId: initialData?.awsAccessKeyId || '',
+            awsSecretAccessKeyId: initialData?.awsSecretAccessKeyId || '',
+            roleArn: initialData?.roleArn || '',
+            idleTimeout: initialData?.idleTimeout || 300,
+            maxLifetime: initialData?.maxLifetime || 3600,
+            runtimeEnvOverride: initialData?.runtimeEnvOverride || '{}',
         },
     });
 
@@ -211,8 +208,11 @@ export const RuntimeForm = ({
                         />
 
                         {/* Runtime Info Section */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="col-span-1 sm:col-span-2">
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                Runtime Information
+                            </h4>
+                            <div className="grid grid-cols-1 gap-4">
                                 <Input
                                     {...register('name', {
                                         required: nameValidate.required,
@@ -225,8 +225,6 @@ export const RuntimeForm = ({
                                     isDestructive={!!errors.name?.message}
                                     supportiveText={errors.name?.message}
                                 />
-                            </div>
-                            <div className="col-span-1 sm:col-span-2">
                                 <Textarea
                                     {...register('description', {
                                         required: descriptionValidate.required,
@@ -235,7 +233,7 @@ export const RuntimeForm = ({
                                     rows={3}
                                     className="w-full"
                                     label="Description"
-                                    placeholder="Optional description for this runtime..."
+                                    placeholder="Brief description of this runtime environment..."
                                     readOnly={isEdit && isReadOnly}
                                     isDestructive={!!errors.description?.message}
                                     supportiveText={errors.description?.message}
@@ -249,97 +247,121 @@ export const RuntimeForm = ({
                                 AWS Credentials
                             </h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="col-span-1 sm:col-span-2">
-                                    <Input
-                                        {...register('configurations.awsAccessKeyId', {
-                                            required: { value: true, message: 'Access Key ID is required' },
-                                        })}
-                                        className="w-full"
-                                        label="Access Key ID"
-                                        placeholder="AKIAIOSFODNN7EXAMPLE"
-                                        readOnly={isEdit && isReadOnly}
-                                        isDestructive={!!errors.configurations?.awsAccessKeyId?.message}
-                                        supportiveText={errors.configurations?.awsAccessKeyId?.message}
-                                    />
-                                </div>
-                                <div className="col-span-1 sm:col-span-2">
-                                    <Select
-                                        {...register('configurations.awsSecretAccessKeyId', {
-                                            required: { value: true, message: 'Secret Access Key is required' },
-                                        })}
-                                        label="Secret Access Key"
-                                        placeholder="Select from Vault"
-                                        options={secretOptions}
-                                        currentValue={watch('configurations.awsSecretAccessKeyId')}
-                                        disabled={isEdit && isReadOnly}
-                                        isDestructive={!!errors.configurations?.awsSecretAccessKeyId?.message}
-                                        supportiveText={errors.configurations?.awsSecretAccessKeyId?.message}
-                                        isVault
-                                    />
-                                </div>
-                                <div className="col-span-1">
-                                    <Select
-                                        {...register('region', {
-                                            required: { value: true, message: 'Region is required' },
-                                        })}
-                                        label="AWS Region"
-                                        placeholder="Select region"
-                                        options={awsRegions}
-                                        currentValue={watch('region')}
-                                        disabled={isEdit && isReadOnly}
-                                        isDestructive={!!errors.region?.message}
-                                        supportiveText={errors.region?.message}
-                                    />
-                                </div>
+                                <Input
+                                    {...register('awsAccessKeyId', {
+                                        required: { value: true, message: 'AWS Access Key is required' },
+                                    })}
+                                    className="w-full"
+                                    label="AWS Access Key"
+                                    placeholder="AKIAIOSFODNN7EXAMPLE"
+                                    readOnly={isEdit && isReadOnly}
+                                    isDestructive={!!errors.awsAccessKeyId?.message}
+                                    supportiveText={errors.awsAccessKeyId?.message}
+                                />
+                                <Select
+                                    {...register('awsSecretAccessKeyId', {
+                                        required: { value: true, message: 'AWS Secret Access Key is required' },
+                                    })}
+                                    label="AWS Secret Access Key"
+                                    placeholder="Select from HashiCorp Vault"
+                                    options={secretOptions}
+                                    currentValue={watch('awsSecretAccessKeyId')}
+                                    disabled={isEdit && isReadOnly}
+                                    isDestructive={!!errors.awsSecretAccessKeyId?.message}
+                                    supportiveText={errors.awsSecretAccessKeyId?.message}
+                                    isVault
+                                />
+                                <Select
+                                    {...register('region', {
+                                        required: { value: true, message: 'AWS Region is required' },
+                                    })}
+                                    label="AWS Region"
+                                    placeholder="Select region"
+                                    options={awsRegions}
+                                    currentValue={watch('region')}
+                                    disabled={isEdit && isReadOnly}
+                                    isDestructive={!!errors.region?.message}
+                                    supportiveText={errors.region?.message}
+                                />
+                                <Input
+                                    {...register('roleArn', {
+                                        required: { value: true, message: 'Role ARN is required' },
+                                        pattern: {
+                                            value: /^arn:aws:iam::\d+:role\/.+$/,
+                                            message: 'Invalid ARN format'
+                                        }
+                                    })}
+                                    className="w-full"
+                                    label="Role ARN"
+                                    placeholder="arn:aws:iam::123456789:role/agentcore-role"
+                                    readOnly={isEdit && isReadOnly}
+                                    isDestructive={!!errors.roleArn?.message}
+                                    supportiveText={errors.roleArn?.message}
+                                />
                             </div>
                         </div>
 
                         {/* Execution Settings Section */}
                         <div className="space-y-4">
                             <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                Execution Settings
+                                Runtime Settings
                             </h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <Input
-                                    {...register('configurations.executionTimeout', {
-                                        required: { value: true, message: 'Execution timeout is required' },
+                                    {...register('idleTimeout', {
+                                        required: { value: true, message: 'Idle Timeout is required' },
                                         min: { value: 60, message: 'Minimum 60 seconds' },
                                         max: { value: 3600, message: 'Maximum 3600 seconds' },
+                                        valueAsNumber: true,
                                     })}
                                     type="number"
-                                    label="Execution Timeout (seconds)"
+                                    label="Idle Timeout (seconds)"
                                     placeholder="300"
                                     readOnly={isEdit && isReadOnly}
-                                    isDestructive={!!errors.configurations?.executionTimeout?.message}
-                                    supportiveText={errors.configurations?.executionTimeout?.message || 'Time before timeout'}
+                                    isDestructive={!!errors.idleTimeout?.message}
+                                    supportiveText={errors.idleTimeout?.message || 'Time before idle shutdown'}
                                 />
                                 <Input
-                                    {...register('configurations.maxConcurrency', {
-                                        required: { value: true, message: 'Max concurrency is required' },
-                                        min: { value: 1, message: 'Minimum 1' },
-                                        max: { value: 100, message: 'Maximum 100' },
+                                    {...register('maxLifetime', {
+                                        required: { value: true, message: 'Max Lifetime is required' },
+                                        min: { value: 300, message: 'Minimum 300 seconds' },
+                                        max: { value: 86400, message: 'Maximum 86400 seconds (24 hours)' },
+                                        valueAsNumber: true,
                                     })}
                                     type="number"
-                                    label="Max Concurrency"
-                                    placeholder="10"
+                                    label="Max Lifetime (seconds)"
+                                    placeholder="3600"
                                     readOnly={isEdit && isReadOnly}
-                                    isDestructive={!!errors.configurations?.maxConcurrency?.message}
-                                    supportiveText={errors.configurations?.maxConcurrency?.message || 'Maximum concurrent executions'}
-                                />
-                                <Input
-                                    {...register('configurations.memorySize', {
-                                        required: { value: true, message: 'Memory size is required' },
-                                        min: { value: 128, message: 'Minimum 128 MB' },
-                                        max: { value: 10240, message: 'Maximum 10240 MB' },
-                                    })}
-                                    type="number"
-                                    label="Memory Size (MB)"
-                                    placeholder="512"
-                                    readOnly={isEdit && isReadOnly}
-                                    isDestructive={!!errors.configurations?.memorySize?.message}
-                                    supportiveText={errors.configurations?.memorySize?.message || 'Allocated memory'}
+                                    isDestructive={!!errors.maxLifetime?.message}
+                                    supportiveText={errors.maxLifetime?.message || 'Maximum runtime lifetime'}
                                 />
                             </div>
+                        </div>
+
+                        {/* Runtime Env Override Section */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                Environment Configuration
+                            </h4>
+                            <Textarea
+                                {...register('runtimeEnvOverride', {
+                                    validate: (value) => {
+                                        try {
+                                            JSON.parse(value);
+                                            return true;
+                                        } catch {
+                                            return 'Must be valid JSON';
+                                        }
+                                    }
+                                })}
+                                rows={6}
+                                className="w-full font-mono text-sm"
+                                label="Runtime Env Override JSON"
+                                placeholder={'{\n  "ENV_VAR": "value",\n  "DEBUG": "false"\n}'}
+                                readOnly={isEdit && isReadOnly}
+                                isDestructive={!!errors.runtimeEnvOverride?.message}
+                                supportiveText={errors.runtimeEnvOverride?.message || 'Environment variables to override in runtime'}
+                            />
                         </div>
 
                         {/* Validation Cards */}

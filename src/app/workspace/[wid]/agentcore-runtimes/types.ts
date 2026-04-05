@@ -9,21 +9,21 @@ export interface Runtime {
     createdAt: string;
     updatedAt?: string;
     isReadOnly?: boolean;
+    roleArn?: string;
+    idleTimeout?: number;
+    maxLifetime?: number;
 }
 
 export interface RuntimeFormData {
     name: string;
     description: string;
     region: string;
-    configurations: {
-        awsAccessKeyId: string;
-        awsSecretAccessKeyId: string;
-        executionTimeout: number;
-        maxConcurrency: number;
-        memorySize: number;
-        enableLogging: boolean;
-        enableTracing: boolean;
-    };
+    awsAccessKeyId: string;
+    awsSecretAccessKeyId: string; // Vault secret reference
+    roleArn: string;
+    idleTimeout: number;
+    maxLifetime: number;
+    runtimeEnvOverride: string; // JSON string
 }
 
 export interface ValidationStatus {

@@ -10,7 +10,7 @@ import { Label } from '@/components/atoms/label';
 import { useWorkflowPublish } from '@/hooks/useWorkflowPublish';
 import { validateSpaces, cn } from '@/lib/utils';
 import { IWorkflowTypes } from '@/models';
-import { CircleFadingArrowUp, SaveOff, Server, Cloud, CheckCircle2, XCircle, Loader2, ArrowLeft, ArrowRight, Upload, Box, Database } from 'lucide-react';
+import { CircleFadingArrowUp, SaveOff, Server, Cloud, CheckCircle2, XCircle, Loader2, ArrowLeft, ArrowRight, Upload, Box, Database, Info } from 'lucide-react';
 import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
 
@@ -25,12 +25,44 @@ interface PublishWorkflowModalContainerProps {
     setOpenSaveConfirmationModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-// Mock data for AgentCore runtimes
-const MOCK_RUNTIMES = [
-    { id: 'rt-001', name: 'Production Runtime', region: 'us-east-1', status: 'deployed' },
-    { id: 'rt-002', name: 'Staging Runtime', region: 'us-west-2', status: 'deployed' },
-    { id: 'rt-003', name: 'Dev Runtime', region: 'eu-west-1', status: 'queued' },
+// Mock data for AgentCore runtimes - should come from the agentcore-runtimes listing
+const MOCK_CONFIGURED_RUNTIMES = [
+    { id: '1', name: 'Production Runtime', region: 'us-east-1', status: 'Deployed' },
+    { id: '2', name: 'Staging Runtime', region: 'us-east-1', status: 'Deployed' },
+    { id: '3', name: 'Development Runtime', region: 'us-west-2', status: 'Deployed' },
+    { id: '4', name: 'EU Production Runtime', region: 'eu-west-1', status: 'Queued' },
 ];
+
+// Mock existing deployment info - replace with actual API
+interface ExistingDeployment {
+    isDeployed: boolean;
+    runtime: 'kaya-default' | 'aws-agentcore';
+    version?: string;
+    deployedAt?: string;
+    runtimeId?: string;
+    runtimeName?: string;
+    region?: string;
+    sourceType?: 's3' | 'ecr';
+    sourcePath?: string;
+}
+
+const getMockExistingDeployment = (): ExistingDeployment | null => {
+    // Simulate 50% chance of existing deployment for demo
+    if (Math.random() > 0.5) {
+        return {
+            isDeployed: true,
+            runtime: Math.random() > 0.5 ? 'aws-agentcore' : 'kaya-default',
+            version: '1.2.0',
+            deployedAt: '2026-03-28T10:30:00Z',
+            runtimeId: '1',
+            runtimeName: 'Production Runtime',
+            region: 'us-east-1',
+            sourceType: 's3',
+            sourcePath: 's3://kaya-workflows/production/',
+        };
+    }
+    return null;
+};
 
 type ExecutionRuntime = 'kaya-default' | 'aws-agentcore';
 type SourceType = 's3' | 'ecr';
@@ -71,6 +103,23 @@ export const PublishWorkflowModalContainer = ({
     ]);
     const [deploymentLogs, setDeploymentLogs] = useState<DeploymentLogEntry[]>([]);
     const [deploymentProgress, setDeploymentProgress] = useState(0);
+    
+    // Existing deployment state
+    const [existingDeployment, setExistingDeployment] = useState<ExistingDeployment | null>(null);
+    const [isLoadingDeployment, setIsLoadingDeployment] = useState(false);
+
+    // Load existing deployment info when modal opens
+    useEffect(() => {
+        if (open) {
+            setIsLoadingDeployment(true);
+            // Simulate API call
+            setTimeout(() => {
+                const deployment = getMockExistingDeployment();
+                setExistingDeployment(deployment);
+                setIsLoadingDeployment(false);
+            }, 500);
+        }
+    }, [open]);
 
     // Reset AgentCore state when modal closes
     useEffect(() => {
@@ -92,6 +141,7 @@ export const PublishWorkflowModalContainer = ({
             ]);
             setDeploymentLogs([]);
             setDeploymentProgress(0);
+            setExistingDeployment(null);
         }
     }, [open]);
 
@@ -163,15 +213,18 @@ export const PublishWorkflowModalContainer = ({
     const handleAgentCoreBack = () => {
         if (agentCoreStep > 1) {
             setAgentCoreStep(agentCoreStep - 1);
+        } else {
+            // Go back to runtime selection (main form)
+            setExecutionRuntime('kaya-default');
         }
     };
 
     const canProceedToNextStep = () => {
         switch (agentCoreStep) {
             case 1:
-                return true;
-            case 2:
                 return selectedRuntime !== '';
+            case 2:
+                return true; // Runtime info is already selected
             case 3:
                 return sourceType === 's3' ? s3BucketPath !== '' : ecrImageUri !== '';
             default:
@@ -184,7 +237,7 @@ export const PublishWorkflowModalContainer = ({
             case 1:
                 return 'Select Runtime Connection';
             case 2:
-                return 'Configure Runtime';
+                return 'Review Configuration';
             case 3:
                 return 'Configure Source';
             case 4:
@@ -194,9 +247,71 @@ export const PublishWorkflowModalContainer = ({
         }
     };
 
+    // Get available runtimes (only deployed ones)
+    const availableRuntimes = MOCK_CONFIGURED_RUNTIMES.filter(r => r.status === 'Deployed');
+
+    // Render existing deployment info panel
+    const renderExistingDeploymentInfo = () => {
+        if (isLoadingDeployment) {
+            return (
+                <div className="flex items-center gap-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Checking deployment status...</span>
+                </div>
+            );
+        }
+
+        if (existingDeployment?.isDeployed) {
+            return (
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-start gap-3">
+                        <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                                This workflow is already published
+                            </p>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                <span className="text-blue-600 dark:text-blue-400">Version:</span>
+                                <span className="text-blue-800 dark:text-blue-200 font-medium">{existingDeployment.version}</span>
+                                
+                                <span className="text-blue-600 dark:text-blue-400">Runtime:</span>
+                                <span className="text-blue-800 dark:text-blue-200 font-medium">
+                                    {existingDeployment.runtime === 'kaya-default' ? 'KAYA Default' : 'AWS AgentCore'}
+                                </span>
+                                
+                                {existingDeployment.runtime === 'aws-agentcore' && (
+                                    <>
+                                        <span className="text-blue-600 dark:text-blue-400">Runtime Connection:</span>
+                                        <span className="text-blue-800 dark:text-blue-200 font-medium">{existingDeployment.runtimeName}</span>
+                                        
+                                        <span className="text-blue-600 dark:text-blue-400">Region:</span>
+                                        <span className="text-blue-800 dark:text-blue-200 font-medium">{existingDeployment.region}</span>
+                                        
+                                        <span className="text-blue-600 dark:text-blue-400">Source Type:</span>
+                                        <span className="text-blue-800 dark:text-blue-200 font-medium">
+                                            {existingDeployment.sourceType === 's3' ? 'S3 Bucket' : 'ECR Container'}
+                                        </span>
+                                    </>
+                                )}
+                                
+                                <span className="text-blue-600 dark:text-blue-400">Published:</span>
+                                <span className="text-blue-800 dark:text-blue-200 font-medium">
+                                    {existingDeployment.deployedAt ? new Date(existingDeployment.deployedAt).toLocaleString() : '-'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        return null;
+    };
+
     // Render AgentCore wizard content
     const renderAgentCoreContent = () => {
         if (deploymentComplete) {
+            const selectedRuntimeData = MOCK_CONFIGURED_RUNTIMES.find(r => r.id === selectedRuntime);
             return (
                 <div className="flex flex-col items-center justify-center py-8 gap-y-6">
                     <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -213,15 +328,19 @@ export const PublishWorkflowModalContainer = ({
                             <div className="grid grid-cols-2 gap-2 text-sm">
                                 <span className="text-gray-500 dark:text-gray-400">Runtime:</span>
                                 <span className="text-gray-900 dark:text-gray-100 font-medium">
-                                    {MOCK_RUNTIMES.find(r => r.id === selectedRuntime)?.name}
+                                    {selectedRuntimeData?.name}
                                 </span>
                                 <span className="text-gray-500 dark:text-gray-400">Region:</span>
                                 <span className="text-gray-900 dark:text-gray-100 font-medium">
-                                    {MOCK_RUNTIMES.find(r => r.id === selectedRuntime)?.region}
+                                    {selectedRuntimeData?.region}
                                 </span>
                                 <span className="text-gray-500 dark:text-gray-400">Version:</span>
                                 <span className="text-gray-900 dark:text-gray-100 font-medium">
                                     {watch('publishedVersion')}
+                                </span>
+                                <span className="text-gray-500 dark:text-gray-400">Source Type:</span>
+                                <span className="text-gray-900 dark:text-gray-100 font-medium">
+                                    {sourceType === 's3' ? 'S3 Bucket' : 'ECR Container'}
                                 </span>
                                 <span className="text-gray-500 dark:text-gray-400">Status:</span>
                                 <Badge variant="success">Deployed</Badge>
@@ -258,18 +377,26 @@ export const PublishWorkflowModalContainer = ({
                             <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 block">
                                 Select Runtime Connection
                             </Label>
-                            <Select
-                                value={selectedRuntime}
-                                onChange={(e) => setSelectedRuntime(e.target.value)}
-                                options={[
-                                    { value: '', name: 'Select a runtime...' },
-                                    ...MOCK_RUNTIMES.map(rt => ({
-                                        value: rt.id,
-                                        name: `${rt.name} (${rt.region})`,
-                                    }))
-                                ]}
-                                className="w-full"
-                            />
+                            {availableRuntimes.length > 0 ? (
+                                <Select
+                                    value={selectedRuntime}
+                                    onChange={(e) => setSelectedRuntime(e.target.value)}
+                                    options={[
+                                        { value: '', name: 'Select a runtime...' },
+                                        ...availableRuntimes.map(rt => ({
+                                            value: rt.id,
+                                            name: `${rt.name} (${rt.region})`,
+                                        }))
+                                    ]}
+                                    className="w-full"
+                                />
+                            ) : (
+                                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                                        No deployed runtimes available. Please configure a runtime in the AgentCore Runtimes page first.
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {selectedRuntime && (
@@ -284,7 +411,7 @@ export const PublishWorkflowModalContainer = ({
                 );
 
             case 2:
-                const runtime = MOCK_RUNTIMES.find(r => r.id === selectedRuntime);
+                const runtime = MOCK_CONFIGURED_RUNTIMES.find(r => r.id === selectedRuntime);
                 return (
                     <div className="space-y-6">
                         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
@@ -297,8 +424,8 @@ export const PublishWorkflowModalContainer = ({
                                     <p className="font-medium text-gray-900 dark:text-gray-100">{runtime?.name}</p>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">{runtime?.region}</p>
                                 </div>
-                                <Badge variant={runtime?.status === 'deployed' ? 'success' : 'warning'} className="ml-auto">
-                                    {runtime?.status === 'deployed' ? 'Ready' : 'Queued'}
+                                <Badge variant={runtime?.status === 'Deployed' ? 'success' : 'warning'} className="ml-auto">
+                                    {runtime?.status === 'Deployed' ? 'Ready' : 'Queued'}
                                 </Badge>
                             </div>
                         </div>
@@ -510,6 +637,9 @@ export const PublishWorkflowModalContainer = ({
                             renderAgentCoreContent()
                         ) : (
                             <>
+                                {/* Existing Deployment Info */}
+                                {renderExistingDeploymentInfo()}
+
                                 <BannerInfo
                                     label={
                                         <p className="text-sm text-blue-600">
@@ -577,7 +707,8 @@ export const PublishWorkflowModalContainer = ({
 
                     {!isSuccessfullyPublished && !deploymentComplete && (
                         <DialogFooter>
-                            {executionRuntime === 'aws-agentcore' && agentCoreStep > 1 && !isDeploying && (
+                            {/* Back button - always show for AgentCore flow */}
+                            {executionRuntime === 'aws-agentcore' && !isDeploying && (
                                 <Button variant="secondary" onClick={handleAgentCoreBack}>
                                     <ArrowLeft className="w-4 h-4 mr-2" />
                                     Back

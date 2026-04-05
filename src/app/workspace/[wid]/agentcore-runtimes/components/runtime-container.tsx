@@ -48,6 +48,16 @@ export const RuntimeContainer = () => {
         toast.success('Runtime deleted successfully');
     };
 
+    const handleRedeploy = (id: string) => {
+        // Update runtime status to reflect re-deployment
+        setRuntimes(prev => prev.map(r => 
+            r.id === id 
+                ? { ...r, status: 'Deployed' as const, updatedAt: new Date().toISOString().split('T')[0] }
+                : r
+        ));
+        toast.success('Runtime re-deployed successfully');
+    };
+
     const handleFilter = (search: string) => {
         setSearchTerm(search);
     };
@@ -62,7 +72,16 @@ export const RuntimeContainer = () => {
             // Update existing
             setRuntimes(prev => prev.map(r => 
                 r.id === editingRuntime.id 
-                    ? { ...r, name: data.name, description: data.description, region: data.region }
+                    ? { 
+                        ...r, 
+                        name: data.name, 
+                        description: data.description, 
+                        region: data.region,
+                        roleArn: data.roleArn,
+                        idleTimeout: data.idleTimeout,
+                        maxLifetime: data.maxLifetime,
+                        updatedAt: new Date().toISOString().split('T')[0],
+                    }
                     : r
             ));
             toast.success('Runtime updated successfully');
@@ -75,6 +94,9 @@ export const RuntimeContainer = () => {
                 region: data.region,
                 status: 'Queued',
                 createdAt: new Date().toISOString().split('T')[0],
+                roleArn: data.roleArn,
+                idleTimeout: data.idleTimeout,
+                maxLifetime: data.maxLifetime,
             };
             setRuntimes(prev => [newRuntime, ...prev]);
             toast.success('Runtime created successfully');
@@ -112,8 +134,7 @@ export const RuntimeContainer = () => {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </div>
-
-                </div>
+            </div>
 
             {/* Table Section */}
             <div className="bg-white dark:bg-gray-800 rounded-[20px] shadow-sm">
@@ -122,6 +143,7 @@ export const RuntimeContainer = () => {
                     onNewClick={handleNewClick}
                     onEditClick={handleEditClick}
                     onDelete={handleDelete}
+                    onRedeploy={handleRedeploy}
                     onFilter={handleFilter}
                 />
             </div>
@@ -138,15 +160,12 @@ export const RuntimeContainer = () => {
                     name: editingRuntime.name,
                     description: editingRuntime.description || '',
                     region: editingRuntime.region,
-                    configurations: {
-                        awsAccessKeyId: '',
-                        awsSecretAccessKeyId: '',
-                        executionTimeout: 300,
-                        maxConcurrency: 10,
-                        memorySize: 512,
-                        enableLogging: true,
-                        enableTracing: false,
-                    },
+                    awsAccessKeyId: '',
+                    awsSecretAccessKeyId: '',
+                    roleArn: editingRuntime.roleArn || '',
+                    idleTimeout: editingRuntime.idleTimeout || 300,
+                    maxLifetime: editingRuntime.maxLifetime || 3600,
+                    runtimeEnvOverride: '{}',
                 } : undefined}
             />
         </div>
