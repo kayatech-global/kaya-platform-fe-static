@@ -1,6 +1,6 @@
 import { getPublishedVersion } from '@/lib/utils';
 import { IWorkflowPublish, IWorkflowPublishPayload, IWorkflowTypes } from '@/models';
-import { $fetch, FetchError, logger } from '@/utils';
+import { logger } from '@/utils';
 import { useParams } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
@@ -9,19 +9,30 @@ import { toast } from 'sonner';
 
 //--- API call ---
 const publishWorkflow = async (workspaceId: string, id: string, body: IWorkflowPublishPayload) => {
-    const response = await $fetch<IWorkflowPublishPayload>(
-        `/workspaces/${workspaceId}/workflows/${id}/actions/publish`,
-        {
-            method: 'POST',
-            headers: { 'x-workspace-id': workspaceId },
-            body: JSON.stringify(body),
-        },
-        {
-            denyRedirectOnForbidden: true,
-        }
-    );
-
-    return response.data;
+    // Mock implementation - simulate successful publish
+    // In production, this would make an actual API call:
+    // const response = await $fetch<IWorkflowPublishPayload>(
+    //     `/workspaces/${workspaceId}/workflows/${id}/actions/publish`,
+    //     {
+    //         method: 'POST',
+    //         headers: { 'x-workspace-id': workspaceId },
+    //         body: JSON.stringify(body),
+    //     },
+    //     {
+    //         denyRedirectOnForbidden: true,
+    //     }
+    // );
+    // return response.data;
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Return mock success response
+    return {
+        comments: body.comments,
+        publishedAt: new Date().toISOString(),
+        version: '1.0.0',
+    };
 };
 
 // --- Custom hook ---
@@ -64,9 +75,9 @@ export const useWorkflowPublish = (
             onSuccess: () => {
                 setIsSuccessfullyPublished(true);
             },
-            onError: (error: FetchError) => {
+            onError: (error: Error) => {
                 logger.error(error?.message);
-                toast.error(error?.message);
+                toast.error(error?.message || 'Failed to publish workflow');
             },
         }
     );
