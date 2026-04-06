@@ -6,11 +6,12 @@ import { useBreakpoint } from '@/hooks/use-breakpoints';
 import { GenerateMethod, useWorkflowExecution } from '@/hooks/use-workflow-execution';
 import { cn } from '@/lib/utils';
 import { ISharedItem, IWorkflowTypes } from '@/models';
-import { ArrowDownToLine, Copy, Eye, EyeOff, InfoIcon, MessageCircleMore, Server, Cloud, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
+import { ArrowDownToLine, Copy, Eye, EyeOff, InfoIcon, MessageCircleMore, Server, Cloud, CheckCircle2, XCircle } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 import VariableConfigModal from './variable-config-modal';
 import { Chatbot, ChatbotRef } from './chat-bot';
+import { mockRuntimes } from '../../../agentcore-runtimes/mock-data';
 
 // Published deployment info type - reflects actual published workflow configuration
 interface PublishedDeploymentInfo {
@@ -30,31 +31,25 @@ interface PublishedDeploymentInfo {
 
 // Mock function to get published deployment info - replace with actual API call
 // This should return the values selected during the publish flow
-const getPublishedDeploymentInfo = async (workflowId: string): Promise<PublishedDeploymentInfo> => {
-    // Simulate API call - in production, this would return actual published configuration
-    // For demo, randomly return different configurations
-    const isAgentCore = Math.random() > 0.5;
-    
-    if (isAgentCore) {
-        return {
-            isPublished: true,
-            executionRuntime: 'agentcore',
-            version: '1.2.0',
-            publishedAt: '2026-03-28T10:30:00Z',
-            runtimeId: '1',
-            runtimeName: 'Production Runtime',
-            region: 'us-east-1',
-            sourceType: 'S3',
-            sourcePath: 's3://kaya-workflows/production/',
-            connectionStatus: Math.random() > 0.2 ? 'ready' : 'error',
-        };
+const getPublishedDeploymentInfo = async (workflowId: string, isDraft: boolean): Promise<PublishedDeploymentInfo | null> => {
+    // For draft versions, return null - user can freely choose runtime
+    if (isDraft) {
+        return null;
     }
     
+    // For published versions, return the configuration set during publishing
+    // This example shows a workflow published with AWS AgentCore
     return {
         isPublished: true,
-        executionRuntime: 'kaya',
+        executionRuntime: 'agentcore',
         version: '1.2.0',
         publishedAt: '2026-03-28T10:30:00Z',
+        runtimeId: '1',
+        runtimeName: 'Production Runtime',
+        region: 'us-east-1',
+        sourceType: 'S3',
+        sourcePath: 's3://kaya-workflows/production/',
+        connectionStatus: 'ready',
     };
 };
 
@@ -198,6 +193,8 @@ export const WorkflowConfigurationModel = ({
     
     // Runtime selection for playground (user can switch between available runtimes)
     const [selectedRuntime, setSelectedRuntime] = useState<'kaya' | 'agentcore'>('kaya');
+    // Selected AgentCore runtime connection for draft workflows
+    const [selectedRuntimeConnection, setSelectedRuntimeConnection] = useState<string>('');
     
     // Code snippet state
     const [agentCoreCodeSnippetLang, setAgentCoreCodeSnippetLang] = useState<'Python' | 'JavaScript'>('Python');
@@ -239,17 +236,24 @@ export const WorkflowConfigurationModel = ({
     useEffect(() => {
         if (openWorkFlowConfigModel && workFlowId) {
             setIsLoadingDeployment(true);
-            getPublishedDeploymentInfo(workFlowId)
+            getPublishedDeploymentInfo(workFlowId, !!isDraft)
                 .then(deployment => {
                     setPublishedDeployment(deployment);
-                    // Auto-select the runtime based on published configuration
-                    if (deployment.isPublished) {
+                    // For published workflows, auto-select the runtime based on published configuration
+                    if (deployment?.isPublished) {
                         setSelectedRuntime(deployment.executionRuntime);
+                        if (deployment.runtimeId) {
+                            setSelectedRuntimeConnection(deployment.runtimeId);
+                        }
+                    } else {
+                        // For draft workflows, reset to default
+                        setSelectedRuntime('kaya');
+                        setSelectedRuntimeConnection('');
                     }
                 })
                 .finally(() => setIsLoadingDeployment(false));
         }
-    }, [openWorkFlowConfigModel, workFlowId]);
+    }, [openWorkFlowConfigModel, workFlowId, isDraft]);
 
     useEffect(() => {
         setApiConfigData(null);
@@ -282,17 +286,8 @@ export const WorkflowConfigurationModel = ({
         publishedDeployment?.region || 'us-east-1'
     );
 
-    // Use the workflowName prop if provided, otherwise fall back to generic name
-    const workflowName = workflowNameProp || 'Workflow';
-    
-    // Get version info from available versions
-    const publishedVersionInfo = availableVersions?.find(v => v.name === 'publish');
-    const workflowVersion = isDraft 
-        ? `Draft (v${draftVersion || '1'})` 
-        : publishedDeployment?.version || publishedVersionInfo?.version || '1.0.0';
 
-    // Check if AgentCore is available (published with AgentCore runtime)
-    const isAgentCoreAvailable = publishedDeployment?.executionRuntime === 'agentcore' && publishedDeployment?.isPublished;
+
 
     return (
         <>
@@ -311,98 +306,126 @@ export const WorkflowConfigurationModel = ({
                                     isMobile && isChatSectionVisible ? 'hidden' : ''
                                 }`}
                             >
-                                {/* Deployment Context Panel - Shows actual published values */}
+                                {/* Execution Context Panel */}
                                 <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                                     <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
                                         <Server className="w-4 h-4" />
-                                        Deployment Context
+                                        Execution Context
                                     </h4>
                                     
                                     {isLoadingDeployment ? (
                                         <div className="flex items-center gap-2">
                                             <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                                            <span className="text-sm text-gray-600 dark:text-gray-400">Loading deployment info...</span>
+                                            <span className="text-sm text-gray-600 dark:text-gray-400">Loading execution context...</span>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <div className="space-y-4">
+                                            {/* Execution Runtime Selection */}
                                             <div>
-                                                <span className="text-gray-500 dark:text-gray-400">Workflow Name</span>
-                                                <p className="font-medium text-gray-900 dark:text-gray-100">{workflowName}</p>
-                                            </div>
-                                            <div>
-                                                <span className="text-gray-500 dark:text-gray-400">Version</span>
-                                                <p className="font-medium text-gray-900 dark:text-gray-100">{workflowVersion}</p>
-                                            </div>
-                                            <div className="col-span-2">
-                                                <span className="text-gray-500 dark:text-gray-400">Execution Runtime</span>
-                                                <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-sm text-gray-500 dark:text-gray-400 block mb-2">Execution Runtime</span>
+                                                <div className="flex items-center gap-2">
                                                     <button
-                                                        onClick={() => setSelectedRuntime('kaya')}
+                                                        onClick={() => isDraft && setSelectedRuntime('kaya')}
+                                                        disabled={!isDraft}
                                                         className={cn(
                                                             'px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5',
                                                             selectedRuntime === 'kaya'
                                                                 ? 'bg-blue-600 text-white'
-                                                                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                                                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+                                                            isDraft && selectedRuntime !== 'kaya' && 'hover:bg-gray-300 dark:hover:bg-gray-600',
+                                                            !isDraft && 'cursor-not-allowed'
                                                         )}
                                                     >
                                                         <Cloud className="w-3.5 h-3.5" />
                                                         KAYA Default Engine
                                                     </button>
                                                     <button
-                                                        onClick={() => isAgentCoreAvailable && setSelectedRuntime('agentcore')}
-                                                        disabled={!isAgentCoreAvailable}
+                                                        onClick={() => isDraft && setSelectedRuntime('agentcore')}
+                                                        disabled={!isDraft}
                                                         className={cn(
                                                             'px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5',
                                                             selectedRuntime === 'agentcore'
                                                                 ? 'bg-blue-600 text-white'
-                                                                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600',
-                                                            !isAgentCoreAvailable && 'opacity-50 cursor-not-allowed'
+                                                                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+                                                            isDraft && selectedRuntime !== 'agentcore' && 'hover:bg-gray-300 dark:hover:bg-gray-600',
+                                                            !isDraft && 'cursor-not-allowed'
                                                         )}
                                                     >
                                                         <Server className="w-3.5 h-3.5" />
                                                         AWS AgentCore Runtime
                                                     </button>
                                                 </div>
+                                                {!isDraft && (
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                        Runtime is locked to the selection made during publishing
+                                                    </p>
+                                                )}
                                             </div>
                                             
-                                            {/* AgentCore-specific info - populated from published deployment values */}
-                                            {selectedRuntime === 'agentcore' && isAgentCoreAvailable && (
-                                                <>
+                                            {/* Runtime Connection Dropdown - for draft with AgentCore selected */}
+                                            {isDraft && selectedRuntime === 'agentcore' && (
+                                                <div>
+                                                    <span className="text-sm text-gray-500 dark:text-gray-400 block mb-2">Select Runtime Connection</span>
+                                                    {(() => {
+                                                        const deployedRuntimes = mockRuntimes.filter(r => r.status === 'Deployed');
+                                                        return deployedRuntimes.length > 0 ? (
+                                                            <>
+                                                                <select
+                                                                    value={selectedRuntimeConnection}
+                                                                    onChange={(e) => setSelectedRuntimeConnection(e.target.value)}
+                                                                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                                >
+                                                                    <option value="">Select a runtime...</option>
+                                                                    {deployedRuntimes.map(rt => (
+                                                                        <option key={rt.id} value={rt.id}>
+                                                                            {rt.name} ({rt.region})
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                {selectedRuntimeConnection && (
+                                                                    <div className="flex items-center gap-2 mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                                                                        <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                                                        <span className="text-sm text-green-700 dark:text-green-300">
+                                                                            Runtime connection ready
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                                                                <p className="text-sm text-amber-700 dark:text-amber-300">
+                                                                    No deployed runtimes available. Please configure a runtime in the Runtimes page first.
+                                                                </p>
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            )}
+                                            
+                                            {/* Published AgentCore info - read-only for published workflows */}
+                                            {!isDraft && selectedRuntime === 'agentcore' && publishedDeployment && (
+                                                <div className="grid grid-cols-2 gap-3 text-sm pt-2 border-t border-gray-200 dark:border-gray-600">
                                                     <div>
                                                         <span className="text-gray-500 dark:text-gray-400">Runtime Connection</span>
                                                         <p className="font-medium text-gray-900 dark:text-gray-100">
-                                                            {publishedDeployment?.runtimeName || '-'}
+                                                            {publishedDeployment.runtimeName || '-'}
                                                         </p>
                                                     </div>
                                                     <div>
                                                         <span className="text-gray-500 dark:text-gray-400">Region</span>
                                                         <p className="font-medium text-gray-900 dark:text-gray-100">
-                                                            {publishedDeployment?.region || '-'}
+                                                            {publishedDeployment.region || '-'}
                                                         </p>
                                                     </div>
-                                                    <div>
-                                                        <span className="text-gray-500 dark:text-gray-400">Source Type</span>
-                                                        <Badge variant={publishedDeployment?.sourceType === 'S3' ? 'default' : 'secondary'}>
-                                                            {publishedDeployment?.sourceType === 'S3' ? 'S3 Bucket' : 'ECR Container'}
-                                                        </Badge>
-                                                    </div>
-                                                    {publishedDeployment?.publishedAt && (
-                                                        <div>
-                                                            <span className="text-gray-500 dark:text-gray-400">Published</span>
-                                                            <p className="font-medium text-gray-900 dark:text-gray-100">
-                                                                {new Date(publishedDeployment.publishedAt).toLocaleDateString()}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                </>
+                                                </div>
                                             )}
                                         </div>
                                     )}
                                     
                                     {/* Connection Health Status - for AgentCore */}
-                                    {selectedRuntime === 'agentcore' && isAgentCoreAvailable && !isLoadingDeployment && (
+                                    {selectedRuntime === 'agentcore' && !isDraft && publishedDeployment && !isLoadingDeployment && (
                                         <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                                            {publishedDeployment?.connectionStatus === 'ready' ? (
+                                            {publishedDeployment.connectionStatus === 'ready' ? (
                                                 <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                                                     <CheckCircle2 className="w-4 h-4" />
                                                     <span className="text-sm font-medium">AgentCore Ready</span>
