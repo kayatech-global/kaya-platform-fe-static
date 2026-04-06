@@ -423,11 +423,16 @@ export const RuntimeForm = ({
                             </div>
                         </div>
 
-                        {/* Source Configuration Section */}
+                        {/* Source Configurations Section */}
                         <div className="space-y-4">
-                            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                Source Configuration
-                            </h4>
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                    Source Configurations
+                                </h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Configure the container image source for the runtime execution environment
+                                </p>
+                            </div>
                             <div className="grid grid-cols-1 gap-4">
                                 <Select
                                     {...register('sourceType', {

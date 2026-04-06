@@ -28,6 +28,7 @@ export const PAGE_TITLE_BY_PATH: Record<string, string> = {
     workspaces: 'Workspaces Management',
     usage: 'Usage',
     learnings: 'Learning Records',
+    'agentcore-runtimes': 'Runtimes',
     'api-configurations': 'API Configurations',
     'mcp-configurations': 'MCP Configurations',
     'workflow-authoring': 'Workflow Authoring',
