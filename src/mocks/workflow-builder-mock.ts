@@ -184,3 +184,65 @@ export const MOCK_WORKFLOW_VISUAL_GRAPH_API_RESPONSE = {
         ],
     },
 };
+
+// Draft workflow mock - allows free runtime selection in playground
+export const MOCK_WORKFLOW_DRAFT_API_RESPONSE = {
+    message: 'success',
+    data: {
+        id: 'draft-workflow-001',
+        name: 'Customer Support Workflow',
+        version: 1.2,
+        visualGraphData: {
+            edges: [
+                {
+                    id: 'e1-2',
+                    type: 'smoothstep',
+                    source: '1',
+                    target: '',
+                    animated: true,
+                },
+            ],
+            nodes: [
+                {
+                    id: 'agent_node-node-draft-001',
+                    data: {
+                        name: 'Support Agent',
+                        label: 'Agent',
+                        description: 'Handles customer inquiries',
+                        languageModal: {
+                            id: 'openai',
+                            isSlm: false,
+                            modelId: '216134ca-9030-4760-b1ad-a09949f09325',
+                            provider: 'OpenAI',
+                            modelName: 'GPT-4o',
+                            modelDescription: 'GPT-4o from OpenAI',
+                        },
+                        saveAsReusableAgent: false,
+                        isReusableAgentSelected: false,
+                    },
+                    type: 'agent_node',
+                    measured: {
+                        width: 88,
+                        height: 114,
+                    },
+                    position: {
+                        x: 250,
+                        y: 200,
+                    },
+                    selected: true,
+                },
+            ],
+            variables: {
+                apis: [],
+                workflows: [],
+            },
+        },
+        isDraft: true,
+        availableVersions: [
+            {
+                name: 'draft',
+                version: 1.2,
+            },
+        ],
+    },
+};
