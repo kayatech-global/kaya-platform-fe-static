@@ -167,7 +167,11 @@ export const MOCK_WORKFLOW_VISUAL_GRAPH_API_RESPONSE = {
                 workflows: [],
             },
         },
-        isDraft: true,
+        isDraft: false,
+        executionRuntime: 'agentcore',
+        runtimeId: '1',
+        runtimeName: 'Production Runtime',
+        runtimeRegion: 'us-east-1',
         availableVersions: [
             {
                 name: 'publish',
