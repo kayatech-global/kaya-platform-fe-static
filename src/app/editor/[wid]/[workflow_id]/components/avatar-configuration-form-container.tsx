@@ -49,6 +49,10 @@ export const AvatarConfigurationFormContainer = (props: AvatarConfigurationProps
         handleSubmit,
         onHandleSubmit,
         onEdit,
+        tavusReplicas,
+        isLoadingReplicas,
+        isReplicasError,
+        refetchReplicas,
     } = useAvatarConfiguration({ onClose: handleClose });
     return (
         <Dialog open={openAvatarConfigForm} onOpenChange={handleOpenChange}>
@@ -74,6 +78,10 @@ export const AvatarConfigurationFormContainer = (props: AvatarConfigurationProps
                         handleSubmit={handleSubmit}
                         onHandleSubmit={onHandleSubmit}
                         onEdit={onEdit}
+                        tavusReplicas={tavusReplicas}
+                        isLoadingReplicas={isLoadingReplicas}
+                        isReplicasError={isReplicasError}
+                        refetchReplicas={refetchReplicas}
                     />
                 </div>
             </DialogContent>

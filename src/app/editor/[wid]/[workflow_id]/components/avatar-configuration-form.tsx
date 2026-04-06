@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, FormFieldGroup, Input, Label, OptionModel, Select, Spinner, VaultSelector } from '@/components';
+import { Textarea } from '@/components/atoms/textarea';
 import { DialogBody, DialogFooter } from '@/components/atoms/dialog';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/atoms/tooltip';
 import { Switch } from '@/components/atoms/switch';
@@ -7,6 +8,8 @@ import { cn } from '@/lib/utils';
 import { Control, Controller, FieldErrors, UseFormHandleSubmit, UseFormRegister, UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import { IWorkFlowAvatarConfiguration } from '@/models';
 import { validatePositiveNumber } from '@/utils/validation';
+import { TavusReplica } from '@/hooks/use-tavus-replicas';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export interface AvatarConfigurationProps {
     isLoading: boolean;
@@ -25,6 +28,11 @@ export interface AvatarConfigurationProps {
     handleSubmit: UseFormHandleSubmit<IWorkFlowAvatarConfiguration>;
     onHandleSubmit: (data: IWorkFlowAvatarConfiguration) => void;
     onEdit: () => void;
+    // Tavus replicas props
+    tavusReplicas: TavusReplica[];
+    isLoadingReplicas: boolean;
+    isReplicasError: boolean;
+    refetchReplicas: () => void;
 }
 
 // Default models for each STT provider
@@ -53,6 +61,8 @@ const TTS_DEFAULT_VOICES: Record<string, string> = {
     openai: 'alloy',
 };
 
+
+
 export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
     const {
         isLoading,
@@ -70,11 +80,16 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
         setValue,
         handleSubmit,
         onHandleSubmit,
+        tavusReplicas,
+        isLoadingReplicas,
+        isReplicasError,
+        refetchReplicas,
     } = props;
     const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
     const sttProvider = watch('stt_configs.provider');
     const ttsProvider = watch('tts_configs.provider');
+    const videoIntegratedEnabled = watch('video_integrated.enabled');
 
     // Track previous provider values to detect actual changes (not initial load)
     const prevSttProvider = useRef(sttProvider);
@@ -135,14 +150,80 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                         />
                                     </div>
                                     <div className="col-span-1 sm:col-span-2">
-                                        <Input
-                                            {...register('avatar_configs.replica_id')}
-                                            placeholder="Enter your Replica Id"
-                                            label="Replica Id"
-                                            isDestructive={!!errors?.avatar_configs?.message}
-                                            supportiveText={errors?.avatar_configs?.message}
-                                        />
+                                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-100 mb-1.5 block">
+                                            Avatar
+                                        </Label>
+                                        {isReplicasError ? (
+                                            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
+                                                <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                                                <span className="text-sm text-red-600 dark:text-red-400">
+                                                    Failed to load avatars
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={refetchReplicas}
+                                                    className="ml-auto flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                                >
+                                                    <RefreshCw className="h-3.5 w-3.5" />
+                                                    Retry
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <Select
+                                                {...register('avatar_configs.replica_id', {
+                                                    required: { value: true, message: 'Please select an avatar' },
+                                                })}
+                                                placeholder={
+                                                    isLoadingReplicas
+                                                        ? 'Loading avatars...'
+                                                        : tavusReplicas.length > 0
+                                                          ? 'Select an avatar'
+                                                          : 'No avatars available'
+                                                }
+                                                options={tavusReplicas.map((replica) => ({
+                                                    name: replica.replica_name,
+                                                    value: replica.replica_id,
+                                                }))}
+                                                disabled={isLoadingReplicas || tavusReplicas.length === 0}
+                                                isDestructive={!!errors?.avatar_configs?.replica_id?.message}
+                                                supportiveText={errors?.avatar_configs?.replica_id?.message}
+                                            />
+                                        )}
                                     </div>
+
+                                    {/* Avatar Thumbnail */}
+                                    {watch('avatar_configs.replica_id') && !isReplicasError && (
+                                        <div className="col-span-1 sm:col-span-2">
+                                            <Label className="text-sm font-medium text-gray-700 dark:text-gray-100 mb-1.5 block">
+                                                Avatar Thumbnail
+                                            </Label>
+                                            <div className="relative w-full aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                                                {(() => {
+                                                    const selectedReplica = tavusReplicas.find(
+                                                        (r) => r.replica_id === watch('avatar_configs.replica_id')
+                                                    );
+                                                    if (selectedReplica?.thumbnail_video_url) {
+                                                        return (
+                                                            <video
+                                                                key={selectedReplica.replica_id}
+                                                                src={selectedReplica.thumbnail_video_url}
+                                                                className="w-full h-full object-cover"
+                                                                autoPlay
+                                                                loop
+                                                                muted
+                                                                playsInline
+                                                            />
+                                                        );
+                                                    }
+                                                    return (
+                                                        <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400 text-sm">
+                                                            No preview available for {selectedReplica?.replica_name || 'this avatar'}
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="col-span-1 sm:col-span-2">
                                         <VaultSelector
@@ -162,6 +243,75 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                         />
                                     </div>
                                 </FormFieldGroup>
+
+                                {/* Video Integrated Toggle */}
+                                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                    <Controller
+                                        name="video_integrated.enabled"
+                                        control={control}
+                                        defaultValue={false}
+                                        render={({ field }) => (
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <Label htmlFor="video-integrated" className="text-sm font-medium">
+                                                        Enable Video Integrated
+                                                    </Label>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                        Tavus manages the full session pipeline including STT and TTS
+                                                    </p>
+                                                </div>
+                                                <Switch
+                                                    id="video-integrated"
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </div>
+                                        )}
+                                    />
+                                </div>
+
+                                {/* Video Integrated Settings - shown when toggle is ON */}
+                                {videoIntegratedEnabled && (
+                                    <FormFieldGroup title="Video Integrated Settings" showSeparator={false}>
+                                        <div className="col-span-1 sm:col-span-2">
+                                            <Textarea
+                                                {...register('video_integrated.persona_context', {
+                                                    required: {
+                                                        value: videoIntegratedEnabled,
+                                                        message: 'Persona Context is required when Video Integrated is enabled',
+                                                    },
+                                                })}
+                                                label="Persona Context"
+                                                placeholder="Define the persona and behavior for the avatar (e.g., 'You are a helpful customer service representative for Acme Corp...')"
+                                                rows={4}
+                                                isDestructive={!!errors?.video_integrated?.persona_context?.message}
+                                                supportiveText={errors?.video_integrated?.persona_context?.message}
+                                            />
+                                        </div>
+                                        <div className="col-span-1 sm:col-span-2">
+                                            <Textarea
+                                                {...register('video_integrated.conversation_context')}
+                                                label="Conversation Context"
+                                                placeholder="Provide background context for the conversation (optional)"
+                                                rows={3}
+                                                helperInfo="Background information the avatar can reference during the conversation"
+                                            />
+                                        </div>
+                                        <div className="col-span-1 sm:col-span-2">
+                                            <Textarea
+                                                {...register('video_integrated.info_content')}
+                                                label="Info Content"
+                                                placeholder="Content to display when users click the info button during chat (optional)"
+                                                rows={3}
+                                                helperInfo="This content will be shown to end users via an info button in the chat interface"
+                                            />
+                                        </div>
+                                    </FormFieldGroup>
+                                )}
+
+                                {/* STT/TTS/Advanced Settings - hidden when Video Integrated is ON */}
+                                {!videoIntegratedEnabled && (
+                                    <>
                                 <FormFieldGroup title="Speech to Text Settings" showSeparator={false}>
                                     <div className="col-span-1 sm:col-span-2">
                                         <Select
@@ -180,7 +330,7 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                     <div className="col-span-1 sm:col-span-2">
                                         <VaultSelector
                                             {...register('stt_configs.api_key', {
-                                                required: { value: true, message: 'Please select vault key' },
+                                                required: { value: !videoIntegratedEnabled, message: 'Please select vault key' },
                                             })}
                                             label={sttProvider === 'aws_transcribe' ? 'AWS Access Key ID' : 'API Key'}
                                             placeholder={secrets.length > 0 ? 'Select vault key' : 'No vault key found'}
@@ -199,7 +349,7 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                             <div className="col-span-1 sm:col-span-2">
                                                 <VaultSelector
                                                     {...register('stt_configs.secret_access_key', {
-                                                        required: { value: sttProvider === 'aws_transcribe', message: 'AWS Secret Access Key is required' },
+                                                        required: { value: !videoIntegratedEnabled && sttProvider === 'aws_transcribe', message: 'AWS Secret Access Key is required' },
                                                     })}
                                                     label="AWS Secret Access Key"
                                                     placeholder={secrets.length > 0 ? 'Select vault key' : 'No vault key found'}
@@ -215,7 +365,7 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                             <div className="col-span-1 sm:col-span-2">
                                                 <Input
                                                     {...register('stt_configs.region', {
-                                                        required: { value: sttProvider === 'aws_transcribe', message: 'AWS Region is required' },
+                                                        required: { value: !videoIntegratedEnabled && sttProvider === 'aws_transcribe', message: 'AWS Region is required' },
                                                     })}
                                                     placeholder="e.g., us-east-1"
                                                     label="AWS Region"
@@ -231,7 +381,7 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                         <div className="col-span-1 sm:col-span-2">
                                             <Input
                                                 {...register('stt_configs.model', {
-                                                    required: { value: sttProvider !== 'aws_transcribe', message: 'Model is required' },
+                                                    required: { value: !videoIntegratedEnabled && sttProvider !== 'aws_transcribe', message: 'Model is required' },
                                                 })}
                                                 placeholder="Enter speech to text model name"
                                                 label="Model"
@@ -259,7 +409,7 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                     <div className="col-span-1 sm:col-span-2">
                                         <VaultSelector
                                             {...register('tts_configs.api_key', {
-                                                required: { value: true, message: 'Please select vault key' },
+                                                required: { value: !videoIntegratedEnabled, message: 'Please select vault key' },
                                             })}
                                             label={ttsProvider === 'aws_polly' ? 'AWS Access Key ID' : 'API Key'}
                                             placeholder={secrets.length > 0 ? 'Select vault key' : 'No vault key found'}
@@ -278,7 +428,7 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                             <div className="col-span-1 sm:col-span-2">
                                                 <VaultSelector
                                                     {...register('tts_configs.secret_access_key', {
-                                                        required: { value: ttsProvider === 'aws_polly', message: 'AWS Secret Access Key is required' },
+                                                        required: { value: !videoIntegratedEnabled && ttsProvider === 'aws_polly', message: 'AWS Secret Access Key is required' },
                                                     })}
                                                     label="AWS Secret Access Key"
                                                     placeholder={secrets.length > 0 ? 'Select vault key' : 'No vault key found'}
@@ -294,7 +444,7 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                             <div className="col-span-1 sm:col-span-2">
                                                 <Input
                                                     {...register('tts_configs.region', {
-                                                        required: { value: ttsProvider === 'aws_polly', message: 'AWS Region is required' },
+                                                        required: { value: !videoIntegratedEnabled && ttsProvider === 'aws_polly', message: 'AWS Region is required' },
                                                     })}
                                                     placeholder="e.g., us-east-1"
                                                     label="AWS Region"
@@ -308,7 +458,7 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                     <div className="col-span-1 sm:col-span-2">
                                         <Input
                                             {...register('tts_configs.voice_id', {
-                                                required: { value: true, message: 'Voice ID is required' },
+                                                required: { value: !videoIntegratedEnabled, message: 'Voice ID is required' },
                                             })}
                                             placeholder="Enter your Voice ID"
                                             label="Voice ID"
@@ -321,7 +471,7 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                         <div className="col-span-1 sm:col-span-2">
                                             <Input
                                                 {...register('tts_configs.model', {
-                                                    required: { value: !['deepgram', 'google_cloud'].includes(ttsProvider), message: 'Model is required' },
+                                                    required: { value: !videoIntegratedEnabled && !['deepgram', 'google_cloud'].includes(ttsProvider), message: 'Model is required' },
                                                 })}
                                                 placeholder="Enter text to speech model name"
                                                 label="Model"
@@ -393,6 +543,8 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                         </div>
                                     </FormFieldGroup>
                                 </div>
+                                    </>
+                                )}
                             </div>
                             {avatarCreateError && (
                                 <div className="p-3 bg-red-50 border-l-4 border-red-400 border-y border-r border-r-red-400 rounded-md dark:bg-red-900 dark:border-l-4 dark:border-red-600 dark:border-y dark:border-r dark:border-y-red-600 dark:border-r-red-600">
