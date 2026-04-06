@@ -1,4 +1,6 @@
-export type RuntimeStatus = 'Active' | 'Error';
+export type RuntimeStatus = 'Deployed' | 'Queued' | 'Error';
+export type ProviderType = 'aws-agentcore';
+export type CredentialType = 'key-access' | 'managed-access';
 
 export interface DeployedWorkflow {
     id: string;
@@ -7,31 +9,43 @@ export interface DeployedWorkflow {
     deployedAt: string;
 }
 
+export interface EnvironmentVariable {
+    key: string;
+    value: string;
+}
+
 export interface Runtime {
     id: string;
     name: string;
     description?: string;
+    provider: ProviderType;
     region: string;
     status: RuntimeStatus;
     createdAt: string;
     updatedAt?: string;
     isReadOnly?: boolean;
+    credentialType?: CredentialType;
+    accessKey?: string;
+    secretKey?: string;
     roleArn?: string;
     idleTimeout?: number;
     maxLifetime?: number;
     deployedWorkflows?: DeployedWorkflow[];
+    environmentVariables?: EnvironmentVariable[];
 }
 
 export interface RuntimeFormData {
     name: string;
     description: string;
+    provider: ProviderType;
     region: string;
-    awsAccessKeyId: string;
-    awsSecretAccessKeyId: string; // Vault secret reference
+    credentialType: CredentialType;
+    accessKey: string;
+    secretKey: string; // Vault secret reference
     roleArn: string;
     idleTimeout: number;
     maxLifetime: number;
-    runtimeEnvOverride: string; // JSON string
+    environmentVariables: EnvironmentVariable[];
 }
 
 export interface ValidationStatus {

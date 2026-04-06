@@ -51,15 +51,9 @@ export const SIDEBAR_MAIN_MENU_GROUPS: SidebarMainMenuGroupsType[] = [
             {
                 id: 'runtimes',
                 title: 'Runtimes',
-                url: '#',
+                url: '/workspace/[wid]/agentcore-runtimes',
                 icon: 'Server',
-                items: [
-                    {
-                        id: 'aws-agentcore-runtimes',
-                        title: 'AWS AgentCore Runtimes',
-                        url: '/workspace/[wid]/agentcore-runtimes',
-                    },
-                ],
+                isSingleLink: true,
             },
             {
                 id: 'guardrails',

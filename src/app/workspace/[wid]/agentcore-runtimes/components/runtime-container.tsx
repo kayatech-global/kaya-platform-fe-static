@@ -48,6 +48,30 @@ export const RuntimeContainer = () => {
         toast.success('Runtime deleted successfully');
     };
 
+    const handleDeploy = (id: string) => {
+        setRuntimes(prev => prev.map(r => 
+            r.id === id 
+                ? { ...r, status: 'Deployed' as const, updatedAt: new Date().toISOString().split('T')[0] }
+                : r
+        ));
+        toast.success('Runtime deployed successfully');
+    };
+
+    const handleRedeploy = (id: string) => {
+        setRuntimes(prev => prev.map(r => 
+            r.id === id 
+                ? { ...r, status: 'Deployed' as const, updatedAt: new Date().toISOString().split('T')[0] }
+                : r
+        ));
+        toast.success('Runtime re-deployed successfully');
+    };
+
+    const handleHealthCheck = (id: string) => {
+        // Health check is handled in the dialog component
+        // This is just a callback for logging/analytics purposes
+        console.log('Health check initiated for runtime:', id);
+    };
+
     const handleFilter = (search: string) => {
         setSearchTerm(search);
     };
@@ -66,10 +90,15 @@ export const RuntimeContainer = () => {
                         ...r, 
                         name: data.name, 
                         description: data.description, 
+                        provider: data.provider,
                         region: data.region,
+                        credentialType: data.credentialType,
+                        accessKey: data.accessKey,
+                        secretKey: data.secretKey,
                         roleArn: data.roleArn,
                         idleTimeout: data.idleTimeout,
                         maxLifetime: data.maxLifetime,
+                        environmentVariables: data.environmentVariables,
                         updatedAt: new Date().toISOString().split('T')[0],
                     }
                     : r
@@ -81,12 +110,17 @@ export const RuntimeContainer = () => {
                 id: String(Date.now()),
                 name: data.name,
                 description: data.description,
+                provider: data.provider,
                 region: data.region,
-                status: 'Active',
+                status: 'Queued',
                 createdAt: new Date().toISOString().split('T')[0],
+                credentialType: data.credentialType,
+                accessKey: data.accessKey,
+                secretKey: data.secretKey,
                 roleArn: data.roleArn,
                 idleTimeout: data.idleTimeout,
                 maxLifetime: data.maxLifetime,
+                environmentVariables: data.environmentVariables,
             };
             setRuntimes(prev => [newRuntime, ...prev]);
             toast.success('Runtime created successfully');
@@ -118,7 +152,7 @@ export const RuntimeContainer = () => {
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
                                 <BreadcrumbPage className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                    AWS AgentCore Runtimes
+                                    Runtimes
                                 </BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
@@ -133,6 +167,9 @@ export const RuntimeContainer = () => {
                     onNewClick={handleNewClick}
                     onEditClick={handleEditClick}
                     onDelete={handleDelete}
+                    onDeploy={handleDeploy}
+                    onRedeploy={handleRedeploy}
+                    onHealthCheck={handleHealthCheck}
                     onFilter={handleFilter}
                 />
             </div>
@@ -148,17 +185,17 @@ export const RuntimeContainer = () => {
                 initialData={editingRuntime ? {
                     name: editingRuntime.name,
                     description: editingRuntime.description || '',
+                    provider: editingRuntime.provider || 'aws-agentcore',
                     region: editingRuntime.region,
-                    awsAccessKeyId: 'AKIAIOSFODNN7EXAMPLE', // Mock value for edit mode
-                    awsSecretAccessKeyId: 'aws-secret-key-prod', // Mock vault reference for edit mode
+                    credentialType: editingRuntime.credentialType || 'key-access',
+                    accessKey: editingRuntime.accessKey || 'AKIAIOSFODNN7EXAMPLE',
+                    secretKey: editingRuntime.secretKey || 'aws-secret-key-prod',
                     roleArn: editingRuntime.roleArn || '',
                     idleTimeout: editingRuntime.idleTimeout || 300,
                     maxLifetime: editingRuntime.maxLifetime || 3600,
-                    runtimeEnvOverride: JSON.stringify({
-                        LOG_LEVEL: 'INFO',
-                        MAX_CONCURRENT_REQUESTS: '10',
-                        ENABLE_METRICS: 'true',
-                    }, null, 2),
+                    environmentVariables: editingRuntime.environmentVariables && editingRuntime.environmentVariables.length > 0
+                        ? editingRuntime.environmentVariables
+                        : [{ key: '', value: '' }],
                 } : undefined}
             />
         </div>
