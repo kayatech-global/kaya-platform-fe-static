@@ -440,23 +440,6 @@ export const WorkflowConfigurationModel = ({
                                     )}
                                 </div>
 
-                                {/* Not Deployed to AgentCore Message */}
-                                {selectedRuntime === 'agentcore' && !isAgentCoreAvailable && !isLoadingDeployment && (
-                                    <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                                        <div className="flex items-start gap-3">
-                                            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                                            <div>
-                                                <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                                                    Workflow Not Deployed to AgentCore
-                                                </p>
-                                                <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                                                    This workflow has not been deployed to AgentCore. Publish with AgentCore runtime selected to deploy.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
                                 {/* KAYA Default Engine - Original auth flow */}
                                 {selectedRuntime === 'kaya' && (
                                     <>
@@ -652,7 +635,7 @@ export const WorkflowConfigurationModel = ({
                                 )}
 
                                 {/* AgentCore Runtime - Code Snippets */}
-                                {selectedRuntime === 'agentcore' && isAgentCoreAvailable && (
+                                {selectedRuntime === 'agentcore' && (isDraft ? selectedRuntimeConnection : publishedDeployment) && (
                                     <div className="mt-4">
                                         <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
                                             Programmatic Invocation
