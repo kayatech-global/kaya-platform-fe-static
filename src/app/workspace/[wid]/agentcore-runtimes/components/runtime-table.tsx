@@ -20,8 +20,10 @@ import {
     MoreHorizontal,
     CheckCircle,
     AlertCircle,
-    AlertTriangle,
-    Server
+    Clock,
+    Activity,
+    RotateCw,
+    Rocket
 } from 'lucide-react';
 import { Runtime, RuntimeStatus } from '../types';
 import { renderIcon } from '@/lib/utils';
@@ -31,14 +33,21 @@ interface RuntimeTableProps {
     onNewClick: () => void;
     onEditClick: (id: string) => void;
     onDelete: (id: string) => void;
+    onDeploy: (id: string) => void;
+    onRedeploy: (id: string) => void;
+    onHealthCheck: (id: string) => void;
     onFilter: (search: string) => void;
 }
 
 const StatusBadge = ({ status }: { status: RuntimeStatus }) => {
     const config = {
-        Active: {
+        Deployed: {
             variant: 'success' as const,
             icon: <CheckCircle size={12} className="mr-1" />,
+        },
+        Queued: {
+            variant: 'warning' as const,
+            icon: <Clock size={12} className="mr-1" />,
         },
         Error: {
             variant: 'destructive' as const,
@@ -67,9 +76,6 @@ const DeleteConfirmDialog = ({
     runtime: Runtime; 
     onConfirm: () => void;
 }) => {
-    const deployedWorkflows = runtime.deployedWorkflows || [];
-    const hasDeployedWorkflows = deployedWorkflows.length > 0;
-
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="overflow-y-auto max-h-[80%] max-w-md gap-0">
@@ -89,44 +95,9 @@ const DeleteConfirmDialog = ({
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                         Are you sure you want to delete runtime <span className="font-semibold text-gray-900 dark:text-gray-100">&quot;{runtime.name}&quot;</span>?
                     </p>
-                    
-                    {hasDeployedWorkflows ? (
-                        <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                            <div className="flex items-start gap-3">
-                                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                                        Cannot delete runtime with active workflows
-                                    </p>
-                                    <p className="text-sm text-amber-700 dark:text-amber-300 mt-1 mb-3">
-                                        The following workflows are deployed to this runtime. Please undeploy them first before deleting the runtime.
-                                    </p>
-                                    <div className="space-y-2">
-                                        {deployedWorkflows.map((workflow) => (
-                                            <div 
-                                                key={workflow.id}
-                                                className="flex items-center justify-between p-2 bg-amber-100 dark:bg-amber-900/30 rounded"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <Server className="w-4 h-4 text-amber-700 dark:text-amber-300" />
-                                                    <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                                                        {workflow.name}
-                                                    </span>
-                                                </div>
-                                                <Badge variant="secondary" className="text-xs">
-                                                    v{workflow.version}
-                                                </Badge>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                            This action cannot be undone. The runtime configuration will be permanently removed.
-                        </p>
-                    )}
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        This action cannot be undone. The runtime configuration will be permanently removed.
+                    </p>
                 </div>
                 <DialogFooter className="border-t border-gray-200 dark:border-gray-700 pt-4">
                     <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
@@ -136,9 +107,141 @@ const DeleteConfirmDialog = ({
                         variant="destructive" 
                         size="sm" 
                         onClick={onConfirm}
-                        disabled={hasDeployedWorkflows}
                     >
                         Delete
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+const DeployConfirmDialog = ({ 
+    open, 
+    onOpenChange, 
+    runtime, 
+    onConfirm,
+    isDeploying,
+    isRedeploy = false
+}: { 
+    open: boolean; 
+    onOpenChange: (open: boolean) => void;
+    runtime: Runtime; 
+    onConfirm: () => void;
+    isDeploying: boolean;
+    isRedeploy?: boolean;
+}) => {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="overflow-y-auto max-h-[80%] max-w-md">
+                <DialogHeader>
+                    <DialogTitle>{isRedeploy ? 'Re-deploy Runtime' : 'Deploy Runtime'}</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Are you sure you want to {isRedeploy ? 're-deploy' : 'deploy'} runtime <span className="font-semibold text-gray-900 dark:text-gray-100">&quot;{runtime.name}&quot;</span>?
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        {isRedeploy 
+                            ? 'This will refresh the runtime connection and re-apply all configurations.'
+                            : 'This will initialize the runtime and make it available for workflow deployments.'
+                        }
+                    </p>
+                </div>
+                <DialogFooter>
+                    <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)} disabled={isDeploying}>
+                        Cancel
+                    </Button>
+                    <Button variant="primary" size="sm" onClick={onConfirm} loading={isDeploying}>
+                        {isDeploying ? (isRedeploy ? 'Re-deploying...' : 'Deploying...') : (isRedeploy ? 'Re-deploy' : 'Deploy')}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+const HealthCheckDialog = ({ 
+    open, 
+    onOpenChange, 
+    runtime,
+    isChecking
+}: { 
+    open: boolean; 
+    onOpenChange: (open: boolean) => void;
+    runtime: Runtime;
+    isChecking: boolean;
+}) => {
+    const [healthStatus, setHealthStatus] = useState<'idle' | 'checking' | 'healthy' | 'unhealthy'>('idle');
+
+    React.useEffect(() => {
+        if (open && isChecking) {
+            setHealthStatus('checking');
+            // Simulate health check
+            setTimeout(() => {
+                setHealthStatus(runtime.status === 'Error' ? 'unhealthy' : 'healthy');
+            }, 2000);
+        } else if (!open) {
+            setHealthStatus('idle');
+        }
+    }, [open, isChecking, runtime.status]);
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="overflow-y-auto max-h-[80%] max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Health Check - {runtime.name}</DialogTitle>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="flex items-center gap-3">
+                            <Activity className="w-5 h-5 text-gray-500" />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Runtime Status
+                            </span>
+                        </div>
+                        {healthStatus === 'checking' && (
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                <span className="text-sm text-blue-600">Checking...</span>
+                            </div>
+                        )}
+                        {healthStatus === 'healthy' && (
+                            <div className="flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4 text-green-600" />
+                                <span className="text-sm text-green-600">Healthy</span>
+                            </div>
+                        )}
+                        {healthStatus === 'unhealthy' && (
+                            <div className="flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 text-red-600" />
+                                <span className="text-sm text-red-600">Unhealthy</span>
+                            </div>
+                        )}
+                        {healthStatus === 'idle' && (
+                            <span className="text-sm text-gray-500">-</span>
+                        )}
+                    </div>
+
+                    {healthStatus === 'healthy' && (
+                        <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                            <p className="text-sm text-green-700 dark:text-green-300">
+                                Runtime is healthy and responding to requests. All systems operational.
+                            </p>
+                        </div>
+                    )}
+
+                    {healthStatus === 'unhealthy' && (
+                        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                            <p className="text-sm text-red-700 dark:text-red-300">
+                                Runtime is not responding. Please check your configuration and try re-deploying.
+                            </p>
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
+                        Close
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -149,30 +252,91 @@ const DeleteConfirmDialog = ({
 const ActionCell = ({ 
     row, 
     onEditClick, 
-    onDelete
+    onDelete,
+    onDeploy,
+    onRedeploy,
+    onHealthCheck
 }: { 
     row: Row<Runtime>; 
     onEditClick: (id: string) => void;
     onDelete: (id: string) => void;
+    onDeploy: (id: string) => void;
+    onRedeploy: (id: string) => void;
+    onHealthCheck: (id: string) => void;
 }) => {
     const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deployOpen, setDeployOpen] = useState(false);
+    const [healthCheckOpen, setHealthCheckOpen] = useState(false);
+    const [isDeploying, setIsDeploying] = useState(false);
+    const [isChecking, setIsChecking] = useState(false);
+
+    const runtime = row.original;
+    const isDeployed = runtime.status === 'Deployed';
+    const isQueued = runtime.status === 'Queued';
 
     const handleDelete = () => {
-        onDelete(row.original.id);
+        onDelete(runtime.id);
         setDeleteOpen(false);
+    };
+
+    const handleDeploy = async () => {
+        setIsDeploying(true);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        if (isDeployed) {
+            onRedeploy(runtime.id);
+        } else {
+            onDeploy(runtime.id);
+        }
+        setIsDeploying(false);
+        setDeployOpen(false);
+    };
+
+    const handleHealthCheck = () => {
+        setIsChecking(true);
+        onHealthCheck(runtime.id);
+        setHealthCheckOpen(true);
     };
 
     return (
         <>
             <div className="flex items-center justify-center gap-x-1">
+                {/* Deploy or Re-deploy button based on status */}
+                {isQueued && (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-8"
+                        leadingIcon={<Rocket size={14} />}
+                        onClick={() => setDeployOpen(true)}
+                    >
+                        Deploy
+                    </Button>
+                )}
+                {isDeployed && (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-8"
+                        leadingIcon={<RotateCw size={14} />}
+                        onClick={() => setDeployOpen(true)}
+                    >
+                        Re-deploy
+                    </Button>
+                )}
+                
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="w-8 h-8">
                             <MoreHorizontal size={16} className="text-gray-500" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={() => onEditClick(row.original.id)}>
+                    <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={handleHealthCheck}>
+                            <Activity size={14} className="mr-2" />
+                            Health Check
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => onEditClick(runtime.id)}>
                             <Edit2 size={14} className="mr-2" />
                             Edit
                         </DropdownMenuItem>
@@ -191,8 +355,24 @@ const ActionCell = ({
             <DeleteConfirmDialog 
                 open={deleteOpen}
                 onOpenChange={setDeleteOpen}
-                runtime={row.original}
+                runtime={runtime}
                 onConfirm={handleDelete}
+            />
+
+            <DeployConfirmDialog
+                open={deployOpen}
+                onOpenChange={setDeployOpen}
+                runtime={runtime}
+                onConfirm={handleDeploy}
+                isDeploying={isDeploying}
+                isRedeploy={isDeployed}
+            />
+
+            <HealthCheckDialog
+                open={healthCheckOpen}
+                onOpenChange={setHealthCheckOpen}
+                runtime={runtime}
+                isChecking={isChecking}
             />
         </>
     );
@@ -200,7 +380,10 @@ const ActionCell = ({
 
 const generateColumns = (
     onEditClick: (id: string) => void,
-    onDelete: (id: string) => void
+    onDelete: (id: string) => void,
+    onDeploy: (id: string) => void,
+    onRedeploy: (id: string) => void,
+    onHealthCheck: (id: string) => void
 ): ColumnDef<Runtime>[] => [
     {
         enableSorting: true,
@@ -212,16 +395,6 @@ const generateColumns = (
                 onClick={() => onEditClick(row.original.id)}
             >
                 {row.getValue('name')}
-            </div>
-        ),
-    },
-    {
-        enableSorting: false,
-        header: () => <div className="w-full text-left">Description</div>,
-        accessorKey: 'description',
-        cell: ({ row }) => (
-            <div className="text-gray-600 dark:text-gray-400 max-w-[200px] truncate">
-                {row.getValue('description') || '-'}
             </div>
         ),
     },
@@ -258,6 +431,9 @@ const generateColumns = (
                 row={row} 
                 onEditClick={onEditClick} 
                 onDelete={onDelete}
+                onDeploy={onDeploy}
+                onRedeploy={onRedeploy}
+                onHealthCheck={onHealthCheck}
             />
         ),
     },
@@ -268,6 +444,9 @@ export const RuntimeTable = ({
     onNewClick,
     onEditClick,
     onDelete,
+    onDeploy,
+    onRedeploy,
+    onHealthCheck,
     onFilter,
 }: RuntimeTableProps) => {
     const { register, handleSubmit } = useForm<{ search: string }>({ mode: 'onChange' });
@@ -284,7 +463,7 @@ export const RuntimeTable = ({
         setDebounceTimer(timer);
     };
 
-    const columns = generateColumns(onEditClick, onDelete);
+    const columns = generateColumns(onEditClick, onDelete, onDeploy, onRedeploy, onHealthCheck);
 
     return (
         <div className="grid gap-8">

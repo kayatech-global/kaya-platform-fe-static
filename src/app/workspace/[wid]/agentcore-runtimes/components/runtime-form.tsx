@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Server } from 'lucide-react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { Server, Plus, Trash2 } from 'lucide-react';
 import { 
     Button, 
     Input, 
@@ -29,8 +29,8 @@ import {
     Key,
     Activity
 } from 'lucide-react';
-import { RuntimeFormData, ValidationStatus } from '../types';
-import { awsRegions } from '../mock-data';
+import { RuntimeFormData, ValidationStatus, EnvironmentVariable, CredentialType, ProviderType, SourceType } from '../types';
+import { awsRegions, providerOptions, credentialTypeOptions, sourceTypeOptions } from '../mock-data';
 
 interface RuntimeFormProps {
     isOpen: boolean;
@@ -136,20 +136,33 @@ export const RuntimeForm = ({
         formState: { errors, isValid },
         watch,
         reset,
+        control,
     } = useForm<RuntimeFormData>({
         mode: 'all',
         defaultValues: {
             name: initialData?.name || '',
             description: initialData?.description || '',
+            provider: initialData?.provider || 'aws-agentcore',
             region: initialData?.region || '',
-            awsAccessKeyId: initialData?.awsAccessKeyId || '',
-            awsSecretAccessKeyId: initialData?.awsSecretAccessKeyId || '',
+            credentialType: initialData?.credentialType || 'key-access',
+            accessKey: initialData?.accessKey || '',
+            secretKey: initialData?.secretKey || '',
             roleArn: initialData?.roleArn || '',
             idleTimeout: initialData?.idleTimeout || 300,
             maxLifetime: initialData?.maxLifetime || 3600,
-            runtimeEnvOverride: initialData?.runtimeEnvOverride || '{}',
+            sourceType: initialData?.sourceType || 'ecr-container',
+            ecrRepositoryUri: initialData?.ecrRepositoryUri || '123456789012.dkr.ecr.us-east-1.amazonaws.com/my-workflow',
+            imageTag: initialData?.imageTag || 'latest',
+            environmentVariables: initialData?.environmentVariables || [{ key: '', value: '' }],
         },
     });
+
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: 'environmentVariables',
+    });
+
+    const credentialType = watch('credentialType');
 
     // Reset form values when initialData changes (for edit mode)
     React.useEffect(() => {
@@ -157,25 +170,35 @@ export const RuntimeForm = ({
             reset({
                 name: initialData.name || '',
                 description: initialData.description || '',
+                provider: initialData.provider || 'aws-agentcore',
                 region: initialData.region || '',
-                awsAccessKeyId: initialData.awsAccessKeyId || '',
-                awsSecretAccessKeyId: initialData.awsSecretAccessKeyId || '',
+                credentialType: initialData.credentialType || 'key-access',
+                accessKey: initialData.accessKey || '',
+                secretKey: initialData.secretKey || '',
                 roleArn: initialData.roleArn || '',
                 idleTimeout: initialData.idleTimeout || 300,
                 maxLifetime: initialData.maxLifetime || 3600,
-                runtimeEnvOverride: initialData.runtimeEnvOverride || '{}',
+                sourceType: initialData.sourceType || 'ecr-container',
+                ecrRepositoryUri: initialData.ecrRepositoryUri || '123456789012.dkr.ecr.us-east-1.amazonaws.com/my-workflow',
+                imageTag: initialData.imageTag || 'latest',
+                environmentVariables: initialData.environmentVariables || [{ key: '', value: '' }],
             });
         } else if (isOpen && !initialData) {
             reset({
                 name: '',
                 description: '',
+                provider: 'aws-agentcore',
                 region: '',
-                awsAccessKeyId: '',
-                awsSecretAccessKeyId: '',
+                credentialType: 'key-access',
+                accessKey: '',
+                secretKey: '',
                 roleArn: '',
                 idleTimeout: 300,
                 maxLifetime: 3600,
-                runtimeEnvOverride: '{}',
+                sourceType: 'ecr-container',
+                ecrRepositoryUri: '123456789012.dkr.ecr.us-east-1.amazonaws.com/my-workflow',
+                imageTag: 'latest',
+                environmentVariables: [{ key: '', value: '' }],
             });
         }
     }, [isOpen, initialData, reset]);
@@ -197,7 +220,14 @@ export const RuntimeForm = ({
     };
 
     const handleFormSubmit = (data: RuntimeFormData) => {
-        onSubmit(data);
+        // Filter out empty environment variables
+        const filteredData = {
+            ...data,
+            environmentVariables: data.environmentVariables.filter(
+                (env) => env.key.trim() !== '' && env.value.trim() !== ''
+            ),
+        };
+        onSubmit(filteredData);
         reset();
     };
 
@@ -293,46 +323,23 @@ export const RuntimeForm = ({
                                     isDestructive={!!errors.description?.message}
                                     supportiveText={errors.description?.message}
                                 />
-                            </div>
-                        </div>
-
-                        {/* AWS Credentials Section */}
-                        <div className="space-y-4">
-                            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                AWS Credentials
-                            </h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <Input
-                                    {...register('awsAccessKeyId', {
-                                        required: { value: true, message: 'AWS Access Key is required' },
+                                <Select
+                                    {...register('provider', {
+                                        required: { value: true, message: 'Provider is required' },
                                     })}
-                                    className="w-full"
-                                    label="AWS Access Key"
-                                    placeholder="AKIAIOSFODNN7EXAMPLE"
-                                    readOnly={isEdit && isReadOnly}
-                                    isDestructive={!!errors.awsAccessKeyId?.message}
-                                    supportiveText={errors.awsAccessKeyId?.message}
-                                />
-                                <VaultSelector
-                                    {...register('awsSecretAccessKeyId', {
-                                        required: { value: true, message: 'Please select vault key' },
-                                    })}
-                                    label="AWS Secret Access Key"
-                                    placeholder={secretOptions.length > 0 ? 'Select from Vault' : 'No vault key found'}
-                                    disabled={secretOptions.length === 0 || (isEdit && isReadOnly)}
-                                    options={secretOptions}
-                                    currentValue={watch('awsSecretAccessKeyId')}
-                                    isDestructive={!!errors.awsSecretAccessKeyId?.message}
-                                    supportiveText={errors.awsSecretAccessKeyId?.message}
-                                    disableCreate={isEdit && isReadOnly}
-                                    loadingSecrets={loadingSecrets}
-                                    onRefetch={() => refetchSecrets()}
+                                    label="Provider"
+                                    placeholder="Select provider"
+                                    options={providerOptions}
+                                    currentValue={watch('provider')}
+                                    disabled={isEdit && isReadOnly}
+                                    isDestructive={!!errors.provider?.message}
+                                    supportiveText={errors.provider?.message}
                                 />
                                 <Select
                                     {...register('region', {
-                                        required: { value: true, message: 'AWS Region is required' },
+                                        required: { value: true, message: 'Region is required' },
                                     })}
-                                    label="AWS Region"
+                                    label="Region"
                                     placeholder="Select region"
                                     options={awsRegions}
                                     currentValue={watch('region')}
@@ -340,6 +347,64 @@ export const RuntimeForm = ({
                                     isDestructive={!!errors.region?.message}
                                     supportiveText={errors.region?.message}
                                 />
+                            </div>
+                        </div>
+
+                        {/* Authentication Details Section */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                Authentication Details
+                            </h4>
+                            <div className="grid grid-cols-1 gap-4">
+                                <Select
+                                    {...register('credentialType', {
+                                        required: { value: true, message: 'Credential Type is required' },
+                                    })}
+                                    label="Credential Type"
+                                    placeholder="Select credential type"
+                                    options={credentialTypeOptions}
+                                    currentValue={watch('credentialType')}
+                                    disabled={isEdit && isReadOnly}
+                                    isDestructive={!!errors.credentialType?.message}
+                                    supportiveText={errors.credentialType?.message}
+                                />
+                                
+                                {/* Key Access fields - only visible when Key Access is selected */}
+                                {credentialType === 'key-access' && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <Input
+                                            {...register('accessKey', {
+                                                required: credentialType === 'key-access' 
+                                                    ? { value: true, message: 'Access Key is required' }
+                                                    : false,
+                                            })}
+                                            className="w-full"
+                                            label="Access Key"
+                                            placeholder="AKIAIOSFODNN7EXAMPLE"
+                                            readOnly={isEdit && isReadOnly}
+                                            isDestructive={!!errors.accessKey?.message}
+                                            supportiveText={errors.accessKey?.message}
+                                        />
+                                        <VaultSelector
+                                            {...register('secretKey', {
+                                                required: credentialType === 'key-access'
+                                                    ? { value: true, message: 'Please select vault key' }
+                                                    : false,
+                                            })}
+                                            label="Secret Key"
+                                            placeholder={secretOptions.length > 0 ? 'Select from Vault' : 'No vault key found'}
+                                            disabled={secretOptions.length === 0 || (isEdit && isReadOnly)}
+                                            options={secretOptions}
+                                            currentValue={watch('secretKey')}
+                                            isDestructive={!!errors.secretKey?.message}
+                                            supportiveText={errors.secretKey?.message}
+                                            disableCreate={isEdit && isReadOnly}
+                                            loadingSecrets={loadingSecrets}
+                                            onRefetch={() => refetchSecrets()}
+                                        />
+                                    </div>
+                                )}
+
                                 <Input
                                     {...register('roleArn', {
                                         required: { value: true, message: 'Role ARN is required' },
@@ -354,6 +419,54 @@ export const RuntimeForm = ({
                                     readOnly={isEdit && isReadOnly}
                                     isDestructive={!!errors.roleArn?.message}
                                     supportiveText={errors.roleArn?.message}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Source Configurations Section */}
+                        <div className="space-y-4">
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                    Source Configurations
+                                </h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Configure the container image source for the runtime execution environment
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-1 gap-4">
+                                <Select
+                                    {...register('sourceType', {
+                                        required: { value: true, message: 'Source Type is required' },
+                                    })}
+                                    label="Source Type"
+                                    placeholder="Select source type"
+                                    options={sourceTypeOptions}
+                                    currentValue={watch('sourceType')}
+                                    disabled={isEdit && isReadOnly}
+                                    isDestructive={!!errors.sourceType?.message}
+                                    supportiveText={errors.sourceType?.message}
+                                />
+                                <Input
+                                    {...register('ecrRepositoryUri', {
+                                        required: { value: true, message: 'ECR Repository URI is required' },
+                                    })}
+                                    className="w-full"
+                                    label="ECR Repository URI"
+                                    placeholder="123456789012.dkr.ecr.us-east-1.amazonaws.com/my-workflow"
+                                    readOnly={isEdit && isReadOnly}
+                                    isDestructive={!!errors.ecrRepositoryUri?.message}
+                                    supportiveText={errors.ecrRepositoryUri?.message}
+                                />
+                                <Input
+                                    {...register('imageTag', {
+                                        required: { value: true, message: 'Image Tag is required' },
+                                    })}
+                                    className="w-full"
+                                    label="Image Tag"
+                                    placeholder="latest"
+                                    readOnly={isEdit && isReadOnly}
+                                    isDestructive={!!errors.imageTag?.message}
+                                    supportiveText={errors.imageTag?.message}
                                 />
                             </div>
                         </div>
@@ -395,30 +508,58 @@ export const RuntimeForm = ({
                             </div>
                         </div>
 
-                        {/* Runtime Env Override Section */}
+                        {/* Runtime Environment Override Section */}
                         <div className="space-y-4">
-                            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                Environment Configuration
-                            </h4>
-                            <Textarea
-                                {...register('runtimeEnvOverride', {
-                                    validate: (value) => {
-                                        try {
-                                            JSON.parse(value);
-                                            return true;
-                                        } catch {
-                                            return 'Must be valid JSON';
-                                        }
-                                    }
-                                })}
-                                rows={6}
-                                className="w-full font-mono text-sm"
-                                label="Runtime Env Override JSON"
-                                placeholder={'{\n  "ENV_VAR": "value",\n  "DEBUG": "false"\n}'}
-                                readOnly={isEdit && isReadOnly}
-                                isDestructive={!!errors.runtimeEnvOverride?.message}
-                                supportiveText={errors.runtimeEnvOverride?.message || 'Environment variables to override in runtime'}
-                            />
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                    Runtime Environment Override
+                                </h4>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => append({ key: '', value: '' })}
+                                    disabled={isEdit && isReadOnly}
+                                    leadingIcon={<Plus size={14} />}
+                                >
+                                    Add Variable
+                                </Button>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Configure environment variables as key-value pairs for your runtime
+                            </p>
+                            <div className="space-y-3">
+                                {fields.map((field, index) => (
+                                    <div key={field.id} className="flex items-start gap-3">
+                                        <div className="flex-1">
+                                            <Input
+                                                {...register(`environmentVariables.${index}.key`)}
+                                                className="w-full"
+                                                placeholder="e.g., LOG_LEVEL"
+                                                readOnly={isEdit && isReadOnly}
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <Input
+                                                {...register(`environmentVariables.${index}.value`)}
+                                                className="w-full"
+                                                placeholder="e.g., INFO"
+                                                readOnly={isEdit && isReadOnly}
+                                            />
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="w-9 h-9 text-gray-400 hover:text-red-500"
+                                            onClick={() => remove(index)}
+                                            disabled={(isEdit && isReadOnly) || fields.length === 1}
+                                        >
+                                            <Trash2 size={16} />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Validation Cards */}
@@ -432,12 +573,12 @@ export const RuntimeForm = ({
                                     size="sm"
                                     onClick={handleValidate}
                                     loading={isValidating}
-                                    disabled={isValidating}
+                                    disabled={!isValid || (isEdit && isReadOnly)}
                                 >
-                                    {isValidating ? 'Validating...' : 'Validate'}
+                                    {isValidating ? 'Validating...' : 'Validate Connection'}
                                 </Button>
                             </div>
-                            <div className="space-y-2">
+                            <div className="grid grid-cols-1 gap-3">
                                 <ValidationCard 
                                     label="IAM Role Permissions" 
                                     status={validationStatus.iamRole}
@@ -449,7 +590,7 @@ export const RuntimeForm = ({
                                     icon={Key}
                                 />
                                 <ValidationCard 
-                                    label="Health Check" 
+                                    label="Runtime Health Check" 
                                     status={validationStatus.healthCheck}
                                     icon={Activity}
                                 />
@@ -459,42 +600,31 @@ export const RuntimeForm = ({
                 </div>
             }
             footer={
-                <div className="flex justify-between">
-                    <div className="flex gap-2">
-                        {/* Reserved for additional actions */}
-                    </div>
-                    <div className="flex justify-end gap-2">
-                        <Button
-                            variant={'secondary'}
-                            size={'sm'}
-                            onClick={handleClose}
-                        >
-                            Cancel
-                        </Button>
-                        <div>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            size={'sm'}
-                                            disabled={!canSubmit}
-                                            onClick={handleSubmit(handleFormSubmit)}
-                                        >
-                                            {getSubmitButtonLabel(isSaving, isEdit)}
-                                        </Button>
-                                    </TooltipTrigger>
-                                    {!canSubmit && (
-                                        <TooltipContent side="left" align="center">
-                                            {!allValidated 
-                                                ? 'Please validate connection before saving' 
-                                                : 'All details need to be filled before the form can be saved'
-                                            }
-                                        </TooltipContent>
-                                    )}
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                    </div>
+                <div className="flex justify-end gap-x-2 w-full">
+                    <Button variant="secondary" onClick={handleClose}>
+                        Cancel
+                    </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span>
+                                    <Button
+                                        variant="primary"
+                                        onClick={handleSubmit(handleFormSubmit)}
+                                        disabled={!canSubmit}
+                                        loading={isSaving}
+                                    >
+                                        {getSubmitButtonLabel(isEdit, isSaving)}
+                                    </Button>
+                                </span>
+                            </TooltipTrigger>
+                            {!allValidated && (
+                                <TooltipContent>
+                                    Please validate the connection before saving
+                                </TooltipContent>
+                            )}
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
             }
         />
