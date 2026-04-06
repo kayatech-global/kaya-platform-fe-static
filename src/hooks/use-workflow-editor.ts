@@ -7,7 +7,7 @@ import {
 import { useAuth, useDnD } from '@/context';
 import { CustomNodeTypes } from '@/enums';
 import { IWorkflowGraphResponse } from '@/models';
-import { MOCK_WORKFLOW_VISUAL_GRAPH_API_RESPONSE } from '@/mocks/workflow-builder-mock';
+import { MOCK_WORKFLOW_VISUAL_GRAPH_API_RESPONSE, MOCK_WORKFLOW_DRAFT_API_RESPONSE } from '@/mocks/workflow-builder-mock';
 import { $fetch } from '@/utils';
 import { Edge, Node } from '@xyflow/react';
 import { redirect, useParams } from 'next/navigation';
@@ -61,6 +61,12 @@ const getWorkflowById = async (workspaceId: string, workflowId: string, versionT
     //     },
     // });
     // return response.data;
+    
+    // Mock implementation: switch between draft and published versions
+    // Draft version is returned when versionType is 'draft', otherwise return published (AgentCore) version
+    if (versionType === 'draft') {
+        return MOCK_WORKFLOW_DRAFT_API_RESPONSE.data as any;
+    }
     return MOCK_WORKFLOW_VISUAL_GRAPH_API_RESPONSE.data as any;
 };
 

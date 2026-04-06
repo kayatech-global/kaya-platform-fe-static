@@ -240,6 +240,10 @@ export const MOCK_WORKFLOW_DRAFT_API_RESPONSE = {
         isDraft: true,
         availableVersions: [
             {
+                name: 'publish',
+                version: 1,
+            },
+            {
                 name: 'draft',
                 version: 1.2,
             },
