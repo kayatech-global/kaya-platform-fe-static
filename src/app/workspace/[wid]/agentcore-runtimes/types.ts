@@ -1,4 +1,4 @@
-export type RuntimeStatus = 'Deployed' | 'Queued' | 'Error' | 'Inactive';
+export type RuntimeStatus = 'Active' | 'Error';
 
 export interface DeployedWorkflow {
     id: string;

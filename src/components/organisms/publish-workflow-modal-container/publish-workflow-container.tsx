@@ -9,7 +9,7 @@ import { Label } from '@/components/atoms/label';
 import { useWorkflowPublish } from '@/hooks/useWorkflowPublish';
 import { validateSpaces, cn } from '@/lib/utils';
 import { IWorkflowTypes } from '@/models';
-import { CircleFadingArrowUp, SaveOff, Server, Cloud, CheckCircle2, XCircle, Loader2, ArrowLeft, ArrowRight, Upload, Box, Database, Info } from 'lucide-react';
+import { CircleFadingArrowUp, SaveOff, Server, Cloud, CheckCircle2, XCircle, Loader2, ArrowLeft, ArrowRight, Upload, Box, Database, Info, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
 
@@ -490,6 +490,18 @@ export const PublishWorkflowModalContainer = ({
 
                         {sourceType === 's3' ? (
                             <div className="space-y-4">
+                                {/* S3 Region Warning */}
+                                {(() => {
+                                    const runtime = MOCK_CONFIGURED_RUNTIMES.find(r => r.id === selectedRuntime);
+                                    return runtime ? (
+                                        <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                                            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                                            <p className="text-sm text-amber-700 dark:text-amber-300">
+                                                Select an S3 bucket in <span className="font-semibold">{runtime.region}</span> to ensure successful agent hosting. Cross-region buckets are not supported.
+                                            </p>
+                                        </div>
+                                    ) : null;
+                                })()}
                                 <div>
                                     <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                                         S3 Bucket Name

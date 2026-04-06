@@ -48,16 +48,6 @@ export const RuntimeContainer = () => {
         toast.success('Runtime deleted successfully');
     };
 
-    const handleRedeploy = (id: string) => {
-        // Update runtime status to reflect re-deployment
-        setRuntimes(prev => prev.map(r => 
-            r.id === id 
-                ? { ...r, status: 'Deployed' as const, updatedAt: new Date().toISOString().split('T')[0] }
-                : r
-        ));
-        toast.success('Runtime re-deployed successfully');
-    };
-
     const handleFilter = (search: string) => {
         setSearchTerm(search);
     };
@@ -92,7 +82,7 @@ export const RuntimeContainer = () => {
                 name: data.name,
                 description: data.description,
                 region: data.region,
-                status: 'Queued',
+                status: 'Active',
                 createdAt: new Date().toISOString().split('T')[0],
                 roleArn: data.roleArn,
                 idleTimeout: data.idleTimeout,
@@ -143,7 +133,6 @@ export const RuntimeContainer = () => {
                     onNewClick={handleNewClick}
                     onEditClick={handleEditClick}
                     onDelete={handleDelete}
-                    onRedeploy={handleRedeploy}
                     onFilter={handleFilter}
                 />
             </div>

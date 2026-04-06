@@ -235,24 +235,29 @@ export const RuntimeForm = ({
                         <BannerInfo
                             icon="ri-shield-keyhole-fill"
                             label={
-                                <div className="flex items-center justify-between w-full">
-                                    <span className="text-sm text-blue-700 dark:text-blue-300">
-                                        Ensure your IAM role has the required AgentCore permissions
-                                    </span>
-                                    <a 
-                                        href="https://docs.aws.amazon.com/bedrock/latest/userguide/agents-permissions.html"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        <Button 
-                                            variant="link" 
-                                            size="sm" 
-                                            className="text-blue-600 p-0 h-auto"
-                                            trailingIcon={<ExternalLink size={12} />}
+                                <div className="flex flex-col gap-2 w-full">
+                                    <div className="flex items-center justify-between w-full">
+                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                                            Required AWS IAM Permissions
+                                        </span>
+                                        <a 
+                                            href="https://docs.aws.amazon.com/bedrock/latest/userguide/agents-permissions.html"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                         >
-                                            View Guide
-                                        </Button>
-                                    </a>
+                                            <Button 
+                                                variant="link" 
+                                                size="sm" 
+                                                className="text-blue-600 p-0 h-auto"
+                                                trailingIcon={<ExternalLink size={12} />}
+                                            >
+                                                View Guide
+                                            </Button>
+                                        </a>
+                                    </div>
+                                    <span className="text-sm text-blue-600 dark:text-blue-400">
+                                        The IAM role must have permissions for AgentCore, STS, and the artifact storage service you plan to use (S3 or ECR)
+                                    </span>
                                 </div>
                             }
                         />

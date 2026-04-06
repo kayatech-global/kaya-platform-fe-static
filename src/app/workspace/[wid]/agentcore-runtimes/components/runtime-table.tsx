@@ -16,13 +16,10 @@ import { cn, convert_YYYY_MM_DD_HH_MM } from '@/lib/utils';
 import { ColumnDef, Row } from '@tanstack/react-table';
 import { 
     Trash2, 
-    RotateCw, 
     Edit2,
     MoreHorizontal,
     CheckCircle,
-    Clock,
     AlertCircle,
-    Loader2,
     AlertTriangle,
     Server
 } from 'lucide-react';
@@ -34,27 +31,18 @@ interface RuntimeTableProps {
     onNewClick: () => void;
     onEditClick: (id: string) => void;
     onDelete: (id: string) => void;
-    onRedeploy: (id: string) => void;
     onFilter: (search: string) => void;
 }
 
 const StatusBadge = ({ status }: { status: RuntimeStatus }) => {
     const config = {
-        Deployed: {
+        Active: {
             variant: 'success' as const,
             icon: <CheckCircle size={12} className="mr-1" />,
-        },
-        Queued: {
-            variant: 'warning' as const,
-            icon: <Clock size={12} className="mr-1" />,
         },
         Error: {
             variant: 'destructive' as const,
             icon: <AlertCircle size={12} className="mr-1" />,
-        },
-        Inactive: {
-            variant: 'secondary' as const,
-            icon: <Clock size={12} className="mr-1" />,
         },
     };
 
@@ -158,88 +146,25 @@ const DeleteConfirmDialog = ({
     );
 };
 
-const RedeployConfirmDialog = ({ 
-    open, 
-    onOpenChange, 
-    runtime, 
-    onConfirm,
-    isRedeploying
-}: { 
-    open: boolean; 
-    onOpenChange: (open: boolean) => void;
-    runtime: Runtime; 
-    onConfirm: () => void;
-    isRedeploying: boolean;
-}) => {
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="overflow-y-auto max-h-[80%] max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Re-deploy Runtime</DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Are you sure you want to re-deploy runtime <span className="font-semibold text-gray-900 dark:text-gray-100">&quot;{runtime.name}&quot;</span>?
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                        This will refresh the runtime connection and re-apply all configurations.
-                    </p>
-                </div>
-                <DialogFooter>
-                    <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)} disabled={isRedeploying}>
-                        Cancel
-                    </Button>
-                    <Button variant="primary" size="sm" onClick={onConfirm} loading={isRedeploying}>
-                        {isRedeploying ? 'Re-deploying...' : 'Re-deploy'}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-};
-
 const ActionCell = ({ 
     row, 
     onEditClick, 
-    onDelete,
-    onRedeploy
+    onDelete
 }: { 
     row: Row<Runtime>; 
     onEditClick: (id: string) => void;
     onDelete: (id: string) => void;
-    onRedeploy: (id: string) => void;
 }) => {
     const [deleteOpen, setDeleteOpen] = useState(false);
-    const [redeployOpen, setRedeployOpen] = useState(false);
-    const [isRedeploying, setIsRedeploying] = useState(false);
 
     const handleDelete = () => {
         onDelete(row.original.id);
         setDeleteOpen(false);
     };
 
-    const handleRedeploy = async () => {
-        setIsRedeploying(true);
-        // Simulate redeploy
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        onRedeploy(row.original.id);
-        setIsRedeploying(false);
-        setRedeployOpen(false);
-    };
-
     return (
         <>
             <div className="flex items-center justify-center gap-x-1">
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    className="h-8"
-                    leadingIcon={<RotateCw size={14} />}
-                    onClick={() => setRedeployOpen(true)}
-                >
-                    Re-deploy
-                </Button>
-                
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="w-8 h-8">
@@ -269,22 +194,13 @@ const ActionCell = ({
                 runtime={row.original}
                 onConfirm={handleDelete}
             />
-
-            <RedeployConfirmDialog
-                open={redeployOpen}
-                onOpenChange={setRedeployOpen}
-                runtime={row.original}
-                onConfirm={handleRedeploy}
-                isRedeploying={isRedeploying}
-            />
         </>
     );
 };
 
 const generateColumns = (
     onEditClick: (id: string) => void,
-    onDelete: (id: string) => void,
-    onRedeploy: (id: string) => void
+    onDelete: (id: string) => void
 ): ColumnDef<Runtime>[] => [
     {
         enableSorting: true,
@@ -342,7 +258,6 @@ const generateColumns = (
                 row={row} 
                 onEditClick={onEditClick} 
                 onDelete={onDelete}
-                onRedeploy={onRedeploy}
             />
         ),
     },
@@ -353,7 +268,6 @@ export const RuntimeTable = ({
     onNewClick,
     onEditClick,
     onDelete,
-    onRedeploy,
     onFilter,
 }: RuntimeTableProps) => {
     const { register, handleSubmit } = useForm<{ search: string }>({ mode: 'onChange' });
@@ -370,7 +284,7 @@ export const RuntimeTable = ({
         setDebounceTimer(timer);
     };
 
-    const columns = generateColumns(onEditClick, onDelete, onRedeploy);
+    const columns = generateColumns(onEditClick, onDelete);
 
     return (
         <div className="grid gap-8">
