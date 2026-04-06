@@ -29,8 +29,8 @@ import {
     Key,
     Activity
 } from 'lucide-react';
-import { RuntimeFormData, ValidationStatus, EnvironmentVariable, CredentialType, ProviderType } from '../types';
-import { awsRegions, providerOptions, credentialTypeOptions } from '../mock-data';
+import { RuntimeFormData, ValidationStatus, EnvironmentVariable, CredentialType, ProviderType, SourceType } from '../types';
+import { awsRegions, providerOptions, credentialTypeOptions, sourceTypeOptions } from '../mock-data';
 
 interface RuntimeFormProps {
     isOpen: boolean;
@@ -150,6 +150,9 @@ export const RuntimeForm = ({
             roleArn: initialData?.roleArn || '',
             idleTimeout: initialData?.idleTimeout || 300,
             maxLifetime: initialData?.maxLifetime || 3600,
+            sourceType: initialData?.sourceType || 'ecr-container',
+            ecrRepositoryUri: initialData?.ecrRepositoryUri || '123456789012.dkr.ecr.us-east-1.amazonaws.com/my-workflow',
+            imageTag: initialData?.imageTag || 'latest',
             environmentVariables: initialData?.environmentVariables || [{ key: '', value: '' }],
         },
     });
@@ -175,6 +178,9 @@ export const RuntimeForm = ({
                 roleArn: initialData.roleArn || '',
                 idleTimeout: initialData.idleTimeout || 300,
                 maxLifetime: initialData.maxLifetime || 3600,
+                sourceType: initialData.sourceType || 'ecr-container',
+                ecrRepositoryUri: initialData.ecrRepositoryUri || '123456789012.dkr.ecr.us-east-1.amazonaws.com/my-workflow',
+                imageTag: initialData.imageTag || 'latest',
                 environmentVariables: initialData.environmentVariables || [{ key: '', value: '' }],
             });
         } else if (isOpen && !initialData) {
@@ -189,6 +195,9 @@ export const RuntimeForm = ({
                 roleArn: '',
                 idleTimeout: 300,
                 maxLifetime: 3600,
+                sourceType: 'ecr-container',
+                ecrRepositoryUri: '123456789012.dkr.ecr.us-east-1.amazonaws.com/my-workflow',
+                imageTag: 'latest',
                 environmentVariables: [{ key: '', value: '' }],
             });
         }
@@ -414,6 +423,49 @@ export const RuntimeForm = ({
                             </div>
                         </div>
 
+                        {/* Source Configuration Section */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                Source Configuration
+                            </h4>
+                            <div className="grid grid-cols-1 gap-4">
+                                <Select
+                                    {...register('sourceType', {
+                                        required: { value: true, message: 'Source Type is required' },
+                                    })}
+                                    label="Source Type"
+                                    placeholder="Select source type"
+                                    options={sourceTypeOptions}
+                                    currentValue={watch('sourceType')}
+                                    disabled={isEdit && isReadOnly}
+                                    isDestructive={!!errors.sourceType?.message}
+                                    supportiveText={errors.sourceType?.message}
+                                />
+                                <Input
+                                    {...register('ecrRepositoryUri', {
+                                        required: { value: true, message: 'ECR Repository URI is required' },
+                                    })}
+                                    className="w-full"
+                                    label="ECR Repository URI"
+                                    placeholder="123456789012.dkr.ecr.us-east-1.amazonaws.com/my-workflow"
+                                    readOnly={isEdit && isReadOnly}
+                                    isDestructive={!!errors.ecrRepositoryUri?.message}
+                                    supportiveText={errors.ecrRepositoryUri?.message}
+                                />
+                                <Input
+                                    {...register('imageTag', {
+                                        required: { value: true, message: 'Image Tag is required' },
+                                    })}
+                                    className="w-full"
+                                    label="Image Tag"
+                                    placeholder="latest"
+                                    readOnly={isEdit && isReadOnly}
+                                    isDestructive={!!errors.imageTag?.message}
+                                    supportiveText={errors.imageTag?.message}
+                                />
+                            </div>
+                        </div>
+
                         {/* Execution Settings Section */}
                         <div className="space-y-4">
                             <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
@@ -543,7 +595,7 @@ export const RuntimeForm = ({
                 </div>
             }
             footer={
-                <div className="flex gap-x-2">
+                <div className="flex justify-end gap-x-2 w-full">
                     <Button variant="secondary" onClick={handleClose}>
                         Cancel
                     </Button>

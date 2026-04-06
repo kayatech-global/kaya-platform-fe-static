@@ -98,6 +98,9 @@ export const RuntimeContainer = () => {
                         roleArn: data.roleArn,
                         idleTimeout: data.idleTimeout,
                         maxLifetime: data.maxLifetime,
+                        sourceType: data.sourceType,
+                        ecrRepositoryUri: data.ecrRepositoryUri,
+                        imageTag: data.imageTag,
                         environmentVariables: data.environmentVariables,
                         updatedAt: new Date().toISOString().split('T')[0],
                     }
@@ -120,6 +123,9 @@ export const RuntimeContainer = () => {
                 roleArn: data.roleArn,
                 idleTimeout: data.idleTimeout,
                 maxLifetime: data.maxLifetime,
+                sourceType: data.sourceType,
+                ecrRepositoryUri: data.ecrRepositoryUri,
+                imageTag: data.imageTag,
                 environmentVariables: data.environmentVariables,
             };
             setRuntimes(prev => [newRuntime, ...prev]);
@@ -193,6 +199,9 @@ export const RuntimeContainer = () => {
                     roleArn: editingRuntime.roleArn || '',
                     idleTimeout: editingRuntime.idleTimeout || 300,
                     maxLifetime: editingRuntime.maxLifetime || 3600,
+                    sourceType: editingRuntime.sourceType || 'ecr-container',
+                    ecrRepositoryUri: editingRuntime.ecrRepositoryUri || '123456789012.dkr.ecr.us-east-1.amazonaws.com/my-workflow',
+                    imageTag: editingRuntime.imageTag || 'latest',
                     environmentVariables: editingRuntime.environmentVariables && editingRuntime.environmentVariables.length > 0
                         ? editingRuntime.environmentVariables
                         : [{ key: '', value: '' }],

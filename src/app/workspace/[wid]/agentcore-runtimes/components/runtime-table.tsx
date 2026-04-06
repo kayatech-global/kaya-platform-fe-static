@@ -20,8 +20,6 @@ import {
     MoreHorizontal,
     CheckCircle,
     AlertCircle,
-    AlertTriangle,
-    Server,
     Clock,
     Activity,
     RotateCw,
@@ -78,9 +76,6 @@ const DeleteConfirmDialog = ({
     runtime: Runtime; 
     onConfirm: () => void;
 }) => {
-    const deployedWorkflows = runtime.deployedWorkflows || [];
-    const hasDeployedWorkflows = deployedWorkflows.length > 0;
-
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="overflow-y-auto max-h-[80%] max-w-md gap-0">
@@ -100,44 +95,9 @@ const DeleteConfirmDialog = ({
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                         Are you sure you want to delete runtime <span className="font-semibold text-gray-900 dark:text-gray-100">&quot;{runtime.name}&quot;</span>?
                     </p>
-                    
-                    {hasDeployedWorkflows ? (
-                        <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                            <div className="flex items-start gap-3">
-                                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                                        Cannot delete runtime with active workflows
-                                    </p>
-                                    <p className="text-sm text-amber-700 dark:text-amber-300 mt-1 mb-3">
-                                        The following workflows are deployed to this runtime. Please undeploy them first before deleting the runtime.
-                                    </p>
-                                    <div className="space-y-2">
-                                        {deployedWorkflows.map((workflow) => (
-                                            <div 
-                                                key={workflow.id}
-                                                className="flex items-center justify-between p-2 bg-amber-100 dark:bg-amber-900/30 rounded"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <Server className="w-4 h-4 text-amber-700 dark:text-amber-300" />
-                                                    <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                                                        {workflow.name}
-                                                    </span>
-                                                </div>
-                                                <Badge variant="secondary" className="text-xs">
-                                                    v{workflow.version}
-                                                </Badge>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                            This action cannot be undone. The runtime configuration will be permanently removed.
-                        </p>
-                    )}
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        This action cannot be undone. The runtime configuration will be permanently removed.
+                    </p>
                 </div>
                 <DialogFooter className="border-t border-gray-200 dark:border-gray-700 pt-4">
                     <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
@@ -147,7 +107,6 @@ const DeleteConfirmDialog = ({
                         variant="destructive" 
                         size="sm" 
                         onClick={onConfirm}
-                        disabled={hasDeployedWorkflows}
                     >
                         Delete
                     </Button>

@@ -1,6 +1,7 @@
 export type RuntimeStatus = 'Deployed' | 'Queued' | 'Error';
 export type ProviderType = 'aws-agentcore';
 export type CredentialType = 'key-access' | 'managed-access';
+export type SourceType = 'ecr-container';
 
 export interface DeployedWorkflow {
     id: string;
@@ -30,6 +31,9 @@ export interface Runtime {
     roleArn?: string;
     idleTimeout?: number;
     maxLifetime?: number;
+    sourceType?: SourceType;
+    ecrRepositoryUri?: string;
+    imageTag?: string;
     deployedWorkflows?: DeployedWorkflow[];
     environmentVariables?: EnvironmentVariable[];
 }
@@ -45,6 +49,9 @@ export interface RuntimeFormData {
     roleArn: string;
     idleTimeout: number;
     maxLifetime: number;
+    sourceType: SourceType;
+    ecrRepositoryUri: string;
+    imageTag: string;
     environmentVariables: EnvironmentVariable[];
 }
 

@@ -111,3 +111,7 @@ export const credentialTypeOptions = [
     { name: 'Key Access', value: 'key-access' },
     { name: 'Managed Access', value: 'managed-access' },
 ];
+
+export const sourceTypeOptions = [
+    { name: 'ECR Container', value: 'ecr-container' },
+];
