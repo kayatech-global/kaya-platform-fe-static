@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { Control, Controller, FieldErrors, UseFormHandleSubmit, UseFormRegister, UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import { IWorkFlowAvatarConfiguration } from '@/models';
 import { validatePositiveNumber } from '@/utils/validation';
+import { TavusReplica } from '@/hooks/use-tavus-replicas';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export interface AvatarConfigurationProps {
     isLoading: boolean;
@@ -25,6 +27,11 @@ export interface AvatarConfigurationProps {
     handleSubmit: UseFormHandleSubmit<IWorkFlowAvatarConfiguration>;
     onHandleSubmit: (data: IWorkFlowAvatarConfiguration) => void;
     onEdit: () => void;
+    // Tavus replicas props
+    tavusReplicas: TavusReplica[];
+    isLoadingReplicas: boolean;
+    isReplicasError: boolean;
+    refetchReplicas: () => void;
 }
 
 // Default models for each STT provider
@@ -70,6 +77,10 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
         setValue,
         handleSubmit,
         onHandleSubmit,
+        tavusReplicas,
+        isLoadingReplicas,
+        isReplicasError,
+        refetchReplicas,
     } = props;
     const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
@@ -135,14 +146,80 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                         />
                                     </div>
                                     <div className="col-span-1 sm:col-span-2">
-                                        <Input
-                                            {...register('avatar_configs.replica_id')}
-                                            placeholder="Enter your Replica Id"
-                                            label="Replica Id"
-                                            isDestructive={!!errors?.avatar_configs?.message}
-                                            supportiveText={errors?.avatar_configs?.message}
-                                        />
+                                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-100 mb-1.5 block">
+                                            Avatar
+                                        </Label>
+                                        {isReplicasError ? (
+                                            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
+                                                <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                                                <span className="text-sm text-red-600 dark:text-red-400">
+                                                    Failed to load avatars
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={refetchReplicas}
+                                                    className="ml-auto flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                                >
+                                                    <RefreshCw className="h-3.5 w-3.5" />
+                                                    Retry
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <Select
+                                                {...register('avatar_configs.replica_id', {
+                                                    required: { value: true, message: 'Please select an avatar' },
+                                                })}
+                                                placeholder={
+                                                    isLoadingReplicas
+                                                        ? 'Loading avatars...'
+                                                        : tavusReplicas.length > 0
+                                                          ? 'Select an avatar'
+                                                          : 'No avatars available'
+                                                }
+                                                options={tavusReplicas.map((replica) => ({
+                                                    name: replica.replica_name,
+                                                    value: replica.replica_id,
+                                                }))}
+                                                disabled={isLoadingReplicas || tavusReplicas.length === 0}
+                                                isDestructive={!!errors?.avatar_configs?.replica_id?.message}
+                                                supportiveText={errors?.avatar_configs?.replica_id?.message}
+                                            />
+                                        )}
                                     </div>
+
+                                    {/* Avatar Preview */}
+                                    {watch('avatar_configs.replica_id') && !isReplicasError && (
+                                        <div className="col-span-1 sm:col-span-2">
+                                            <Label className="text-sm font-medium text-gray-700 dark:text-gray-100 mb-1.5 block">
+                                                Avatar Preview
+                                            </Label>
+                                            <div className="relative w-full aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                                                {(() => {
+                                                    const selectedReplica = tavusReplicas.find(
+                                                        (r) => r.replica_id === watch('avatar_configs.replica_id')
+                                                    );
+                                                    if (selectedReplica?.thumbnail_video_url) {
+                                                        return (
+                                                            <video
+                                                                key={selectedReplica.replica_id}
+                                                                src={selectedReplica.thumbnail_video_url}
+                                                                className="w-full h-full object-cover"
+                                                                autoPlay
+                                                                loop
+                                                                muted
+                                                                playsInline
+                                                            />
+                                                        );
+                                                    }
+                                                    return (
+                                                        <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400 text-sm">
+                                                            No preview available for {selectedReplica?.replica_name || 'this avatar'}
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="col-span-1 sm:col-span-2">
                                         <VaultSelector

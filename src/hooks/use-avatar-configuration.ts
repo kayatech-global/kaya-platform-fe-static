@@ -12,6 +12,7 @@ import { useDaily, useParticipantIds } from '@daily-co/daily-react';
 import { GenerateMethod } from '@/hooks/use-workflow-execution';
 import { AVATAR_PROFILE_ID } from '@/constants';
 import { useVaultQuery } from './use-common';
+import { useTavusReplicas } from './use-tavus-replicas';
 
 type avatarCreateRequest = {
     profile_ids: string[];
@@ -48,6 +49,20 @@ export const useAvatarConfiguration = (props?: UseAvatarProps) => {
     const [isMuted, setIsMuted] = useState(false);
     const usePartIds = useParticipantIds({
         filter: participant => participant.user_id === AVATAR_PROFILE_ID,
+    });
+
+    // Watch the avatar API key to fetch replicas when it changes
+    const avatarApiKey = watch('avatar_configs.api_key');
+
+    // Fetch Tavus replicas based on selected API key
+    const {
+        replicas: tavusReplicas,
+        isLoading: isLoadingReplicas,
+        isError: isReplicasError,
+        refetch: refetchReplicas,
+    } = useTavusReplicas({
+        apiKeyName: avatarApiKey,
+        enabled: !!avatarApiKey,
     });
 
     const createAvatar = async (
@@ -355,5 +370,10 @@ export const useAvatarConfiguration = (props?: UseAvatarProps) => {
         handleSubmit,
         onHandleSubmit,
         onEdit,
+        // Tavus replicas
+        tavusReplicas,
+        isLoadingReplicas,
+        isReplicasError,
+        refetchReplicas,
     };
 };
