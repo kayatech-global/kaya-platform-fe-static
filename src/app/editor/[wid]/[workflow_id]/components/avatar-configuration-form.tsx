@@ -61,17 +61,7 @@ const TTS_DEFAULT_VOICES: Record<string, string> = {
     openai: 'alloy',
 };
 
-// LLM Models for Video Integrated
-const LLM_MODELS = [
-    { value: 'gpt-4o', name: 'GPT-4o' },
-    { value: 'gpt-4o-mini', name: 'GPT-4o Mini' },
-    { value: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
-    { value: 'claude-3-opus', name: 'Claude 3 Opus' },
-    { value: 'claude-3-sonnet', name: 'Claude 3 Sonnet' },
-    { value: 'claude-3-haiku', name: 'Claude 3 Haiku' },
-    { value: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
-    { value: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
-];
+
 
 export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
     const {
@@ -201,11 +191,11 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                         )}
                                     </div>
 
-                                    {/* Avatar Preview */}
+                                    {/* Avatar Thumbnail */}
                                     {watch('avatar_configs.replica_id') && !isReplicasError && (
                                         <div className="col-span-1 sm:col-span-2">
                                             <Label className="text-sm font-medium text-gray-700 dark:text-gray-100 mb-1.5 block">
-                                                Avatar Preview
+                                                Avatar Thumbnail
                                             </Label>
                                             <div className="relative w-full aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                                                 {(() => {
@@ -283,14 +273,6 @@ export const AvatarConfigurationForm = (props: AvatarConfigurationProps) => {
                                 {/* Video Integrated Settings - shown when toggle is ON */}
                                 {videoIntegratedEnabled && (
                                     <FormFieldGroup title="Video Integrated Settings" showSeparator={false}>
-                                        <div className="col-span-1 sm:col-span-2">
-                                            <Select
-                                                {...register('video_integrated.llm_model')}
-                                                label="LLM Model"
-                                                placeholder="Select an LLM model (optional)"
-                                                options={LLM_MODELS}
-                                            />
-                                        </div>
                                         <div className="col-span-1 sm:col-span-2">
                                             <Textarea
                                                 {...register('video_integrated.persona_context', {

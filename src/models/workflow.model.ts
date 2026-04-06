@@ -87,7 +87,6 @@ export interface IWorkFlowAvatarConfiguration {
     // Video Integrated settings
     video_integrated?: {
         enabled: boolean;
-        llm_model?: string;
         persona_context: string;
         conversation_context?: string;
         info_content?: string;
