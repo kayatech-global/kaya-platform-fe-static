@@ -55,6 +55,7 @@ export const useAvatarConfiguration = (props?: UseAvatarProps) => {
     const avatarApiKey = watch('avatar_configs.api_key');
 
     // Fetch Tavus replicas based on selected API key
+    // TODO: Remove useMockData: true when ready to use real API
     const {
         replicas: tavusReplicas,
         isLoading: isLoadingReplicas,
@@ -62,7 +63,8 @@ export const useAvatarConfiguration = (props?: UseAvatarProps) => {
         refetch: refetchReplicas,
     } = useTavusReplicas({
         apiKeyName: avatarApiKey,
-        enabled: !!avatarApiKey,
+        enabled: true,
+        useMockData: true, // Enable mock data for testing/demo
     });
 
     const createAvatar = async (
