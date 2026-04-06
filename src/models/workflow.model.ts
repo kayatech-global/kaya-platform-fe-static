@@ -84,6 +84,14 @@ export interface IWorkFlowAvatarConfiguration {
     idle_timeout_secs?: number;
     vad_stop_secs?: number;
     enable_fillers?: boolean;
+    // Video Integrated settings
+    video_integrated?: {
+        enabled: boolean;
+        llm_model?: string;
+        persona_context: string;
+        conversation_context?: string;
+        info_content?: string;
+    };
 }
 export interface IWorkFlowAvatarConfigurationResponse {
     id: string;
