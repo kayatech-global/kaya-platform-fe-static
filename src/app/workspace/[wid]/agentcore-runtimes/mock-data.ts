@@ -104,7 +104,10 @@ export const secretOptions = [
 ];
 
 export const providerOptions = [
+    { name: 'Select a provider...', value: '' },
     { name: 'AWS AgentCore', value: 'aws-agentcore' },
+    { name: 'Vertex AI Agent Builder (Coming Soon)', value: 'vertex-ai', disabled: true },
+    { name: 'Azure AI Foundry (Coming Soon)', value: 'azure-ai', disabled: true },
 ];
 
 export const credentialTypeOptions = [
