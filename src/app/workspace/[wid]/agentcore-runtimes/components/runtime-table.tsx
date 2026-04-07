@@ -231,10 +231,6 @@ const DeployConfirmDialog = ({
                         return newSteps;
                     });
                     setDeploymentComplete(true);
-                    // Call onConfirm after completion
-                    setTimeout(() => {
-                        onConfirm();
-                    }, 500);
                 }
             }, 800);
 
@@ -247,9 +243,15 @@ const DeployConfirmDialog = ({
     };
 
     const handleClose = () => {
-        if (!showProgress || deploymentComplete) {
+        // Only allow closing via cancel button (before deployment starts)
+        if (!showProgress) {
             onOpenChange(false);
         }
+    };
+
+    const handleDone = () => {
+        onConfirm();
+        onOpenChange(false);
     };
 
     return (
@@ -302,7 +304,7 @@ const DeployConfirmDialog = ({
                             <Button 
                                 variant={deploymentComplete ? "primary" : "secondary"} 
                                 size="sm" 
-                                onClick={handleClose}
+                                onClick={handleDone}
                                 disabled={!deploymentComplete}
                             >
                                 {deploymentComplete ? 'Done' : 'Deploying...'}
