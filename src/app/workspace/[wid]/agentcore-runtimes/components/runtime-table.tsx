@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button, Input, Badge } from '@/components/atoms';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/atoms/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogBody } from '@/components/atoms/dialog';
 import { 
     DropdownMenu, 
     DropdownMenuContent, 
@@ -26,7 +26,6 @@ import {
     Rocket
 } from 'lucide-react';
 import { Runtime, RuntimeStatus } from '../types';
-import { renderIcon } from '@/lib/utils';
 
 interface RuntimeTableProps {
     data: Runtime[];
@@ -78,28 +77,24 @@ const DeleteConfirmDialog = ({
 }) => {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="overflow-y-auto max-h-[80%] max-w-md gap-0">
-                <DialogHeader className="px-0 pb-4">
-                    <DialogTitle asChild>
-                        <div className="px-4 flex items-center gap-x-2">
-                            <div className="bg-red-100 flex items-center justify-center w-8 h-8 rounded dark:bg-red-900/30">
-                                {renderIcon(<Trash2 />, 16, 'text-red-600 dark:text-red-400')}
-                            </div>
-                            <div className="text-md font-semibold text-gray-900 dark:text-gray-50">
-                                Delete Runtime
-                            </div>
-                        </div>
-                    </DialogTitle>
+            <DialogContent hideCloseButtonClass="hidden" className="gap-0 max-w-none w-[450px]">
+                <DialogHeader className="px-4 py-4 flex flex-row gap-x-3 items-center">
+                    <div className="w-8 h-8 flex items-center justify-center bg-red-100 dark:bg-red-900/30 rounded">
+                        <Trash2 size={16} className="text-red-600 dark:text-red-400" />
+                    </div>
+                    <p className="text-md font-semibold text-gray-900 dark:text-gray-100">
+                        Delete Runtime
+                    </p>
                 </DialogHeader>
-                <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+                <DialogBody className="px-4 py-6">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                         Are you sure you want to delete runtime <span className="font-semibold text-gray-900 dark:text-gray-100">&quot;{runtime.name}&quot;</span>?
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
                         This action cannot be undone. The runtime configuration will be permanently removed.
                     </p>
-                </div>
-                <DialogFooter className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                </DialogBody>
+                <DialogFooter>
                     <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
                         Cancel
                     </Button>
@@ -116,46 +111,229 @@ const DeleteConfirmDialog = ({
     );
 };
 
+type DeploymentStep = {
+    id: string;
+    label: string;
+    status: 'pending' | 'in-progress' | 'completed' | 'error';
+};
+
+const deploymentSteps: Omit<DeploymentStep, 'status'>[] = [
+    { id: 'validate', label: 'Validating IAM permissions' },
+    { id: 'ecr', label: 'Pulling container image from ECR' },
+    { id: 'provision', label: 'Provisioning AgentCore runtime' },
+    { id: 'configure', label: 'Applying runtime configuration' },
+    { id: 'health', label: 'Running health checks' },
+    { id: 'register', label: 'Registering runtime endpoint' },
+];
+
+const DeploymentProgressStep = ({ step, index }: { step: DeploymentStep; index: number }) => {
+    return (
+        <div className="flex items-start gap-3">
+            <div className="flex flex-col items-center">
+                <div className={cn(
+                    "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all",
+                    step.status === 'completed' && "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+                    step.status === 'in-progress' && "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+                    step.status === 'pending' && "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500",
+                    step.status === 'error' && "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                )}>
+                    {step.status === 'completed' ? (
+                        <CheckCircle size={14} />
+                    ) : step.status === 'in-progress' ? (
+                        <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    ) : step.status === 'error' ? (
+                        <AlertCircle size={14} />
+                    ) : (
+                        index + 1
+                    )}
+                </div>
+                {index < deploymentSteps.length - 1 && (
+                    <div className={cn(
+                        "w-0.5 h-6 mt-1 transition-all",
+                        step.status === 'completed' ? "bg-green-300 dark:bg-green-700" : "bg-gray-200 dark:bg-gray-700"
+                    )} />
+                )}
+            </div>
+            <div className="flex-1 pt-0.5">
+                <p className={cn(
+                    "text-sm font-medium transition-colors",
+                    step.status === 'completed' && "text-green-600 dark:text-green-400",
+                    step.status === 'in-progress' && "text-blue-600 dark:text-blue-400",
+                    step.status === 'pending' && "text-gray-400 dark:text-gray-500",
+                    step.status === 'error' && "text-red-600 dark:text-red-400"
+                )}>
+                    {step.label}
+                </p>
+            </div>
+        </div>
+    );
+};
+
 const DeployConfirmDialog = ({ 
     open, 
     onOpenChange, 
     runtime, 
     onConfirm,
-    isDeploying,
     isRedeploy = false
 }: { 
     open: boolean; 
     onOpenChange: (open: boolean) => void;
     runtime: Runtime; 
     onConfirm: () => void;
-    isDeploying: boolean;
     isRedeploy?: boolean;
 }) => {
+    const [showProgress, setShowProgress] = useState(false);
+    const [steps, setSteps] = useState<DeploymentStep[]>(
+        deploymentSteps.map(s => ({ ...s, status: 'pending' as const }))
+    );
+    const [deploymentComplete, setDeploymentComplete] = useState(false);
+
+    // Reset state when dialog closes
+    React.useEffect(() => {
+        if (!open) {
+            setShowProgress(false);
+            setDeploymentComplete(false);
+            setSteps(deploymentSteps.map(s => ({ ...s, status: 'pending' as const })));
+        }
+    }, [open]);
+
+    // Simulate deployment progress
+    React.useEffect(() => {
+        if (showProgress && !deploymentComplete) {
+            let currentStep = 0;
+            const interval = setInterval(() => {
+                setSteps(prevSteps => {
+                    const newSteps = [...prevSteps];
+                    // Complete current step
+                    if (currentStep > 0 && currentStep <= newSteps.length) {
+                        newSteps[currentStep - 1].status = 'completed';
+                    }
+                    // Start next step
+                    if (currentStep < newSteps.length) {
+                        newSteps[currentStep].status = 'in-progress';
+                    }
+                    return newSteps;
+                });
+                
+                currentStep++;
+                
+                if (currentStep > deploymentSteps.length) {
+                    clearInterval(interval);
+                    // Mark last step as completed
+                    setSteps(prevSteps => {
+                        const newSteps = [...prevSteps];
+                        newSteps[newSteps.length - 1].status = 'completed';
+                        return newSteps;
+                    });
+                    setDeploymentComplete(true);
+                }
+            }, 800);
+
+            return () => clearInterval(interval);
+        }
+    }, [showProgress, deploymentComplete, onConfirm]);
+
+    const handleStartDeploy = () => {
+        setShowProgress(true);
+    };
+
+    const handleClose = () => {
+        // Only allow closing via cancel button (before deployment starts)
+        if (!showProgress) {
+            onOpenChange(false);
+        }
+    };
+
+    const handleDone = () => {
+        onConfirm();
+        onOpenChange(false);
+    };
+
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="overflow-y-auto max-h-[80%] max-w-md">
-                <DialogHeader>
-                    <DialogTitle>{isRedeploy ? 'Re-deploy Runtime' : 'Deploy Runtime'}</DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Are you sure you want to {isRedeploy ? 're-deploy' : 'deploy'} runtime <span className="font-semibold text-gray-900 dark:text-gray-100">&quot;{runtime.name}&quot;</span>?
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                        {isRedeploy 
-                            ? 'This will refresh the runtime connection and re-apply all configurations.'
-                            : 'This will initialize the runtime and make it available for workflow deployments.'
+        <Dialog open={open} onOpenChange={handleClose}>
+            <DialogContent hideCloseButtonClass={showProgress ? "hidden" : "block"} className="gap-0 max-w-none w-[500px]">
+                <DialogHeader className="px-4 py-4 flex flex-row gap-x-3 items-center">
+                    <div className={cn(
+                        "w-8 h-8 flex items-center justify-center rounded",
+                        deploymentComplete 
+                            ? "bg-green-100 dark:bg-green-900/30" 
+                            : "bg-blue-100 dark:bg-blue-900/30"
+                    )}>
+                        {deploymentComplete ? (
+                            <CheckCircle size={16} className="text-green-600 dark:text-green-400" />
+                        ) : (
+                            <Rocket size={16} className="text-blue-600 dark:text-blue-400" />
+                        )}
+                    </div>
+                    <p className="text-md font-semibold text-gray-900 dark:text-gray-100">
+                        {deploymentComplete 
+                            ? 'Deployment Complete' 
+                            : (isRedeploy ? 'Re-deploy Runtime' : 'Deploy Runtime')
                         }
                     </p>
-                </div>
-                <DialogFooter>
-                    <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)} disabled={isDeploying}>
-                        Cancel
-                    </Button>
-                    <Button variant="primary" size="sm" onClick={onConfirm} loading={isDeploying}>
-                        {isDeploying ? (isRedeploy ? 'Re-deploying...' : 'Deploying...') : (isRedeploy ? 'Re-deploy' : 'Deploy')}
-                    </Button>
-                </DialogFooter>
+                </DialogHeader>
+                
+                {!showProgress ? (
+                    <>
+                        <DialogBody className="px-4 py-6">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Are you sure you want to {isRedeploy ? 're-deploy' : 'deploy'} runtime <span className="font-semibold text-gray-900 dark:text-gray-100">&quot;{runtime.name}&quot;</span>?
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                                {isRedeploy 
+                                    ? 'This will refresh the runtime connection and re-apply all configurations.'
+                                    : 'This will initialize the runtime and make it available for workflow deployments.'
+                                }
+                            </p>
+                        </DialogBody>
+                        <DialogFooter>
+                            <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
+                                Cancel
+                            </Button>
+                            <Button variant="primary" size="sm" onClick={handleStartDeploy}>
+                                {isRedeploy ? 'Re-deploy' : 'Deploy'}
+                            </Button>
+                        </DialogFooter>
+                    </>
+                ) : (
+                    <>
+                        <DialogBody className="px-4 py-6">
+                            <div className={cn(
+                                "mb-5 p-3 rounded-lg border",
+                                deploymentComplete 
+                                    ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                                    : "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                            )}>
+                                <p className={cn(
+                                    "text-sm font-medium",
+                                    deploymentComplete 
+                                        ? "text-green-700 dark:text-green-300"
+                                        : "text-blue-700 dark:text-blue-300"
+                                )}>
+                                    {deploymentComplete 
+                                        ? `Runtime "${runtime.name}" has been ${isRedeploy ? 're-deployed' : 'deployed'} successfully!`
+                                        : `${isRedeploy ? 'Re-deploying' : 'Deploying'} runtime "${runtime.name}"...`
+                                    }
+                                </p>
+                            </div>
+                            <div className="space-y-1">
+                                {steps.map((step, index) => (
+                                    <DeploymentProgressStep key={step.id} step={step} index={index} />
+                                ))}
+                            </div>
+                        </DialogBody>
+                        <DialogFooter>
+                            <Button 
+                                variant={deploymentComplete ? "primary" : "secondary"} 
+                                size="sm" 
+                                onClick={handleDone}
+                                disabled={!deploymentComplete}
+                            >
+                                {deploymentComplete ? 'Done' : 'Deploying...'}
+                            </Button>
+                        </DialogFooter>
+                    </>
+                )}
             </DialogContent>
         </Dialog>
     );
@@ -188,39 +366,61 @@ const HealthCheckDialog = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="overflow-y-auto max-h-[80%] max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Health Check - {runtime.name}</DialogTitle>
+            <DialogContent hideCloseButtonClass="block" className="gap-0 max-w-none w-[450px]">
+                <DialogHeader className="px-4 py-4 flex flex-row gap-x-3 items-center">
+                    <div className={cn(
+                        "w-8 h-8 flex items-center justify-center rounded",
+                        healthStatus === 'healthy' 
+                            ? "bg-green-100 dark:bg-green-900/30"
+                            : healthStatus === 'unhealthy'
+                                ? "bg-red-100 dark:bg-red-900/30"
+                                : "bg-blue-100 dark:bg-blue-900/30"
+                    )}>
+                        {healthStatus === 'healthy' ? (
+                            <CheckCircle size={16} className="text-green-600 dark:text-green-400" />
+                        ) : healthStatus === 'unhealthy' ? (
+                            <AlertCircle size={16} className="text-red-600 dark:text-red-400" />
+                        ) : (
+                            <Activity size={16} className="text-blue-600 dark:text-blue-400" />
+                        )}
+                    </div>
+                    <p className="text-md font-semibold text-gray-900 dark:text-gray-100">
+                        Health Check
+                    </p>
                 </DialogHeader>
-                <div className="py-4 space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <div className="flex items-center gap-3">
-                            <Activity className="w-5 h-5 text-gray-500" />
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Runtime Status
+                <DialogBody className="px-4 py-6 space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div className="flex flex-col gap-1">
+                            <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                                Runtime
+                            </span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {runtime.name}
                             </span>
                         </div>
-                        {healthStatus === 'checking' && (
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                <span className="text-sm text-blue-600">Checking...</span>
-                            </div>
-                        )}
-                        {healthStatus === 'healthy' && (
-                            <div className="flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4 text-green-600" />
-                                <span className="text-sm text-green-600">Healthy</span>
-                            </div>
-                        )}
-                        {healthStatus === 'unhealthy' && (
-                            <div className="flex items-center gap-2">
-                                <AlertCircle className="w-4 h-4 text-red-600" />
-                                <span className="text-sm text-red-600">Unhealthy</span>
-                            </div>
-                        )}
-                        {healthStatus === 'idle' && (
-                            <span className="text-sm text-gray-500">-</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {healthStatus === 'checking' && (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                    <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Checking...</span>
+                                </>
+                            )}
+                            {healthStatus === 'healthy' && (
+                                <>
+                                    <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                    <span className="text-sm font-medium text-green-600 dark:text-green-400">Healthy</span>
+                                </>
+                            )}
+                            {healthStatus === 'unhealthy' && (
+                                <>
+                                    <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                    <span className="text-sm font-medium text-red-600 dark:text-red-400">Unhealthy</span>
+                                </>
+                            )}
+                            {healthStatus === 'idle' && (
+                                <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
+                            )}
+                        </div>
                     </div>
 
                     {healthStatus === 'healthy' && (
@@ -238,7 +438,7 @@ const HealthCheckDialog = ({
                             </p>
                         </div>
                     )}
-                </div>
+                </DialogBody>
                 <DialogFooter>
                     <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
                         Close
@@ -267,7 +467,6 @@ const ActionCell = ({
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [deployOpen, setDeployOpen] = useState(false);
     const [healthCheckOpen, setHealthCheckOpen] = useState(false);
-    const [isDeploying, setIsDeploying] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
 
     const runtime = row.original;
@@ -279,15 +478,14 @@ const ActionCell = ({
         setDeleteOpen(false);
     };
 
-    const handleDeploy = async () => {
-        setIsDeploying(true);
-        await new Promise(resolve => setTimeout(resolve, 2000));
+    const handleDeploy = () => {
+        // The DeployConfirmDialog now handles the deployment progress
+        // and calls this callback when complete
         if (isDeployed) {
             onRedeploy(runtime.id);
         } else {
             onDeploy(runtime.id);
         }
-        setIsDeploying(false);
         setDeployOpen(false);
     };
 
@@ -364,7 +562,6 @@ const ActionCell = ({
                 onOpenChange={setDeployOpen}
                 runtime={runtime}
                 onConfirm={handleDeploy}
-                isDeploying={isDeploying}
                 isRedeploy={isDeployed}
             />
 

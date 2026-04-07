@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { Server, Plus, Trash2 } from 'lucide-react';
+import { Server, Plus, Trash2, Pencil } from 'lucide-react';
 import { 
     Button, 
     Input, 
@@ -119,6 +119,8 @@ export const RuntimeForm = ({
         healthCheck: 'pending',
     });
     const [isValidating, setIsValidating] = useState(false);
+    const [isEditingEcrUri, setIsEditingEcrUri] = useState(false);
+    const [isEditingImageTag, setIsEditingImageTag] = useState(false);
 
     const nameValidate = validateField('Runtime Name', {
         required: { value: true },
@@ -142,7 +144,7 @@ export const RuntimeForm = ({
         defaultValues: {
             name: initialData?.name || '',
             description: initialData?.description || '',
-            provider: initialData?.provider || 'aws-agentcore',
+            provider: initialData?.provider || '',
             region: initialData?.region || '',
             credentialType: initialData?.credentialType || 'key-access',
             accessKey: initialData?.accessKey || '',
@@ -163,6 +165,7 @@ export const RuntimeForm = ({
     });
 
     const credentialType = watch('credentialType');
+    const selectedProvider = watch('provider');
 
     // Reset form values when initialData changes (for edit mode)
     React.useEffect(() => {
@@ -170,7 +173,7 @@ export const RuntimeForm = ({
             reset({
                 name: initialData.name || '',
                 description: initialData.description || '',
-                provider: initialData.provider || 'aws-agentcore',
+                provider: initialData.provider || '',
                 region: initialData.region || '',
                 credentialType: initialData.credentialType || 'key-access',
                 accessKey: initialData.accessKey || '',
@@ -187,7 +190,7 @@ export const RuntimeForm = ({
             reset({
                 name: '',
                 description: '',
-                provider: 'aws-agentcore',
+                provider: '',
                 region: '',
                 credentialType: 'key-access',
                 accessKey: '',
@@ -261,37 +264,6 @@ export const RuntimeForm = ({
             content={
                 <div className={cn('activity-feed-container p-4')}>
                     <div className="space-y-6">
-                        {/* IAM Permissions Banner */}
-                        <BannerInfo
-                            icon="ri-shield-keyhole-fill"
-                            label={
-                                <div className="flex flex-col gap-2 w-full">
-                                    <div className="flex items-center justify-between w-full">
-                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                                            Required AWS IAM Permissions
-                                        </span>
-                                        <a 
-                                            href="https://docs.aws.amazon.com/bedrock/latest/userguide/agents-permissions.html"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            <Button 
-                                                variant="link" 
-                                                size="sm" 
-                                                className="text-blue-600 p-0 h-auto"
-                                                trailingIcon={<ExternalLink size={12} />}
-                                            >
-                                                View Guide
-                                            </Button>
-                                        </a>
-                                    </div>
-                                    <span className="text-sm text-blue-600 dark:text-blue-400">
-                                        The IAM role must have permissions for AgentCore, STS, and the artifact storage service you plan to use (S3 or ECR)
-                                    </span>
-                                </div>
-                            }
-                        />
-
                         {/* Runtime Info Section */}
                         <div className="space-y-4">
                             <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
@@ -326,6 +298,7 @@ export const RuntimeForm = ({
                                 <Select
                                     {...register('provider', {
                                         required: { value: true, message: 'Provider is required' },
+                                        validate: (value) => value !== '' || 'Provider is required',
                                     })}
                                     label="Provider"
                                     placeholder="Select provider"
@@ -335,22 +308,64 @@ export const RuntimeForm = ({
                                     isDestructive={!!errors.provider?.message}
                                     supportiveText={errors.provider?.message}
                                 />
-                                <Select
-                                    {...register('region', {
-                                        required: { value: true, message: 'Region is required' },
-                                    })}
-                                    label="Region"
-                                    placeholder="Select region"
-                                    options={awsRegions}
-                                    currentValue={watch('region')}
-                                    disabled={isEdit && isReadOnly}
-                                    isDestructive={!!errors.region?.message}
-                                    supportiveText={errors.region?.message}
-                                />
                             </div>
                         </div>
 
-                        {/* Authentication Details Section */}
+                        {/* AWS AgentCore specific fields - only show after provider is selected */}
+                        {selectedProvider === 'aws-agentcore' && (
+                            <>
+                                {/* IAM Permissions Banner */}
+                                <BannerInfo
+                                    icon="ri-shield-keyhole-fill"
+                                    label={
+                                        <div className="flex flex-col gap-2 w-full">
+                                            <div className="flex items-center justify-between w-full">
+                                                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                                                    Required AWS IAM Permissions
+                                                </span>
+                                                <a 
+                                                    href="https://docs.aws.amazon.com/bedrock/latest/userguide/agents-permissions.html"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    <Button 
+                                                        variant="link" 
+                                                        size="sm" 
+                                                        className="text-blue-600 p-0 h-auto"
+                                                        trailingIcon={<ExternalLink size={12} />}
+                                                    >
+                                                        View Guide
+                                                    </Button>
+                                                </a>
+                                            </div>
+                                            <span className="text-sm text-blue-600 dark:text-blue-400">
+                                                The IAM role must have permissions for AgentCore, STS, and ECR
+                                            </span>
+                                        </div>
+                                    }
+                                />
+
+                                {/* Region Selection */}
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <Select
+                                            {...register('region', {
+                                                required: selectedProvider === 'aws-agentcore' 
+                                                    ? { value: true, message: 'Region is required' }
+                                                    : false,
+                                            })}
+                                            label="Region"
+                                            placeholder="Select region"
+                                            options={awsRegions}
+                                            currentValue={watch('region')}
+                                            disabled={isEdit && isReadOnly}
+                                            isDestructive={!!errors.region?.message}
+                                            supportiveText={errors.region?.message}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Authentication Details Section */}
                         <div className="space-y-4">
                             <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                                 Authentication Details
@@ -358,7 +373,9 @@ export const RuntimeForm = ({
                             <div className="grid grid-cols-1 gap-4">
                                 <Select
                                     {...register('credentialType', {
-                                        required: { value: true, message: 'Credential Type is required' },
+                                        required: selectedProvider === 'aws-agentcore' 
+                                            ? { value: true, message: 'Credential Type is required' }
+                                            : false,
                                     })}
                                     label="Credential Type"
                                     placeholder="Select credential type"
@@ -407,11 +424,15 @@ export const RuntimeForm = ({
 
                                 <Input
                                     {...register('roleArn', {
-                                        required: { value: true, message: 'Role ARN is required' },
-                                        pattern: {
-                                            value: /^arn:aws:iam::\d+:role\/.+$/,
-                                            message: 'Invalid ARN format'
-                                        }
+                                        required: selectedProvider === 'aws-agentcore' 
+                                            ? { value: true, message: 'Role ARN is required' }
+                                            : false,
+                                        pattern: selectedProvider === 'aws-agentcore' 
+                                            ? {
+                                                value: /^arn:aws:iam::\d+:role\/.+$/,
+                                                message: 'Invalid ARN format'
+                                              }
+                                            : undefined,
                                     })}
                                     className="w-full"
                                     label="Role ARN"
@@ -436,7 +457,9 @@ export const RuntimeForm = ({
                             <div className="grid grid-cols-1 gap-4">
                                 <Select
                                     {...register('sourceType', {
-                                        required: { value: true, message: 'Source Type is required' },
+                                        required: selectedProvider === 'aws-agentcore' 
+                                            ? { value: true, message: 'Source Type is required' }
+                                            : false,
                                     })}
                                     label="Source Type"
                                     placeholder="Select source type"
@@ -446,28 +469,62 @@ export const RuntimeForm = ({
                                     isDestructive={!!errors.sourceType?.message}
                                     supportiveText={errors.sourceType?.message}
                                 />
-                                <Input
-                                    {...register('ecrRepositoryUri', {
-                                        required: { value: true, message: 'ECR Repository URI is required' },
-                                    })}
-                                    className="w-full"
-                                    label="ECR Repository URI"
-                                    placeholder="123456789012.dkr.ecr.us-east-1.amazonaws.com/my-workflow"
-                                    readOnly={isEdit && isReadOnly}
-                                    isDestructive={!!errors.ecrRepositoryUri?.message}
-                                    supportiveText={errors.ecrRepositoryUri?.message}
-                                />
-                                <Input
-                                    {...register('imageTag', {
-                                        required: { value: true, message: 'Image Tag is required' },
-                                    })}
-                                    className="w-full"
-                                    label="Image Tag"
-                                    placeholder="latest"
-                                    readOnly={isEdit && isReadOnly}
-                                    isDestructive={!!errors.imageTag?.message}
-                                    supportiveText={errors.imageTag?.message}
-                                />
+                                <div className="relative">
+                                    <Input
+                                        {...register('ecrRepositoryUri', {
+                                            required: selectedProvider === 'aws-agentcore' 
+                                                ? { value: true, message: 'ECR Repository URI is required' }
+                                                : false,
+                                        })}
+                                        className={cn(
+                                            "w-full pr-10",
+                                            !isEditingEcrUri && !isEdit && "text-gray-400 dark:text-gray-500"
+                                        )}
+                                        label="ECR Repository URI"
+                                        placeholder="123456789012.dkr.ecr.us-east-1.amazonaws.com/my-workflow"
+                                        readOnly={(!isEditingEcrUri && !isEdit) || (isEdit && isReadOnly)}
+                                        isDestructive={!!errors.ecrRepositoryUri?.message}
+                                        supportiveText={errors.ecrRepositoryUri?.message || (!isEditingEcrUri && !isEdit ? 'Default value - click edit to modify' : undefined)}
+                                    />
+                                    {!isEdit && !isReadOnly && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditingEcrUri(!isEditingEcrUri)}
+                                            className="absolute right-3 top-8 p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                            title={isEditingEcrUri ? "Lock value" : "Edit value"}
+                                        >
+                                            <Pencil size={14} className={isEditingEcrUri ? "text-blue-600" : ""} />
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="relative">
+                                    <Input
+                                        {...register('imageTag', {
+                                            required: selectedProvider === 'aws-agentcore' 
+                                                ? { value: true, message: 'Image Tag is required' }
+                                                : false,
+                                        })}
+                                        className={cn(
+                                            "w-full pr-10",
+                                            !isEditingImageTag && !isEdit && "text-gray-400 dark:text-gray-500"
+                                        )}
+                                        label="Image Tag"
+                                        placeholder="latest"
+                                        readOnly={(!isEditingImageTag && !isEdit) || (isEdit && isReadOnly)}
+                                        isDestructive={!!errors.imageTag?.message}
+                                        supportiveText={errors.imageTag?.message || (!isEditingImageTag && !isEdit ? 'Default value - click edit to modify' : undefined)}
+                                    />
+                                    {!isEdit && !isReadOnly && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditingImageTag(!isEditingImageTag)}
+                                            className="absolute right-3 top-8 p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                            title={isEditingImageTag ? "Lock value" : "Edit value"}
+                                        >
+                                            <Pencil size={14} className={isEditingImageTag ? "text-blue-600" : ""} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -479,9 +536,15 @@ export const RuntimeForm = ({
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <Input
                                     {...register('idleTimeout', {
-                                        required: { value: true, message: 'Idle Timeout is required' },
-                                        min: { value: 60, message: 'Minimum 60 seconds' },
-                                        max: { value: 3600, message: 'Maximum 3600 seconds' },
+                                        required: selectedProvider === 'aws-agentcore' 
+                                            ? { value: true, message: 'Idle Timeout is required' }
+                                            : false,
+                                        min: selectedProvider === 'aws-agentcore' 
+                                            ? { value: 60, message: 'Minimum 60 seconds' }
+                                            : undefined,
+                                        max: selectedProvider === 'aws-agentcore' 
+                                            ? { value: 3600, message: 'Maximum 3600 seconds' }
+                                            : undefined,
                                         valueAsNumber: true,
                                     })}
                                     type="number"
@@ -493,9 +556,15 @@ export const RuntimeForm = ({
                                 />
                                 <Input
                                     {...register('maxLifetime', {
-                                        required: { value: true, message: 'Max Lifetime is required' },
-                                        min: { value: 300, message: 'Minimum 300 seconds' },
-                                        max: { value: 86400, message: 'Maximum 86400 seconds (24 hours)' },
+                                        required: selectedProvider === 'aws-agentcore' 
+                                            ? { value: true, message: 'Max Lifetime is required' }
+                                            : false,
+                                        min: selectedProvider === 'aws-agentcore' 
+                                            ? { value: 300, message: 'Minimum 300 seconds' }
+                                            : undefined,
+                                        max: selectedProvider === 'aws-agentcore' 
+                                            ? { value: 86400, message: 'Maximum 86400 seconds (24 hours)' }
+                                            : undefined,
                                         valueAsNumber: true,
                                     })}
                                     type="number"
@@ -578,24 +647,26 @@ export const RuntimeForm = ({
                                     {isValidating ? 'Validating...' : 'Validate Connection'}
                                 </Button>
                             </div>
-                            <div className="grid grid-cols-1 gap-3">
-                                <ValidationCard 
-                                    label="IAM Role Permissions" 
-                                    status={validationStatus.iamRole}
-                                    icon={Shield}
-                                />
-                                <ValidationCard 
-                                    label="Vault Secret Access" 
-                                    status={validationStatus.vaultSecret}
-                                    icon={Key}
-                                />
-                                <ValidationCard 
-                                    label="Runtime Health Check" 
-                                    status={validationStatus.healthCheck}
-                                    icon={Activity}
-                                />
+                                <div className="grid grid-cols-1 gap-3">
+                                    <ValidationCard 
+                                        label="IAM Role Permissions" 
+                                        status={validationStatus.iamRole}
+                                        icon={Shield}
+                                    />
+                                    <ValidationCard 
+                                        label="Vault Secret Access" 
+                                        status={validationStatus.vaultSecret}
+                                        icon={Key}
+                                    />
+                                    <ValidationCard 
+                                        label="Runtime Health Check" 
+                                        status={validationStatus.healthCheck}
+                                        icon={Activity}
+                                    />
+                                </div>
                             </div>
-                        </div>
+                            </>
+                        )}
                     </div>
                 </div>
             }

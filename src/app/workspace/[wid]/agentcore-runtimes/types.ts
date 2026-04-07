@@ -1,5 +1,5 @@
 export type RuntimeStatus = 'Deployed' | 'Queued' | 'Error';
-export type ProviderType = 'aws-agentcore';
+export type ProviderType = '' | 'aws-agentcore' | 'vertex-ai' | 'azure-ai';
 export type CredentialType = 'key-access' | 'managed-access';
 export type SourceType = 'ecr-container';
 
