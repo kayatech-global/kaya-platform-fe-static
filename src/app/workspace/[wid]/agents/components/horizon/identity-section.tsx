@@ -719,25 +719,14 @@ export const IdentitySection = ({
 
                             {/* Attached Skills Summary */}
                             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-x-2">
-                                        <Zap size={14} className="text-gray-500" />
-                                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
-                                            Attached Skills
-                                        </p>
-                                        <Badge variant="secondary" className="text-xs">
-                                            {totalSkills} total
-                                        </Badge>
-                                    </div>
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        size="sm"
-                                        onClick={() => setShowA2ACardModal(true)}
-                                    >
-                                        <Eye size={14} className="mr-1" />
-                                        View A2A Card
-                                    </Button>
+                                <div className="flex items-center gap-x-2 mb-4">
+                                    <Zap size={14} className="text-gray-500" />
+                                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
+                                        Attached Skills
+                                    </p>
+                                    <Badge variant="secondary" className="text-xs">
+                                        {totalSkills} total
+                                    </Badge>
                                 </div>
 
                                 {totalSkills > 0 ? (
@@ -764,6 +753,20 @@ export const IdentitySection = ({
                                         No tools attached. Add tools to this agent to auto-generate A2A skills.
                                     </p>
                                 )}
+                            </div>
+
+                            {/* View A2A Card Button */}
+                            <div className="pt-2">
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => setShowA2ACardModal(true)}
+                                    className="w-full justify-center"
+                                >
+                                    <Eye size={14} className="mr-2" />
+                                    View A2A Card
+                                </Button>
                             </div>
                         </div>
                     )}

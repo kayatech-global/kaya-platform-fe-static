@@ -868,28 +868,6 @@ export const FormBody = (props: AgentProps) => {
                             </div>
                         </div>
                         
-                        <DeployConfigSection
-                            control={control}
-                            watch={watch}
-                            setValue={setValue}
-                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                        />
-                        
-                        <IdentitySection
-                            control={control}
-                            watch={watch}
-                            setValue={setValue}
-                            getValues={getValues}
-                            errors={errors}
-                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                            isEdit={isEdit}
-                            tools={getValues('tools')}
-                            mcpServers={mcpServers}
-                            graphRags={graphRags}
-                            vectorRags={vectorRags}
-                            connectors={connectors}
-                        />
-                        
                         <SkillsSection
                             control={control}
                             watch={watch}
@@ -916,6 +894,28 @@ export const FormBody = (props: AgentProps) => {
                             watch={watch}
                             setValue={setValue}
                             errors={errors}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                        
+                        <IdentitySection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
+                            getValues={getValues}
+                            errors={errors}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                            isEdit={isEdit}
+                            tools={getValues('tools')}
+                            mcpServers={mcpServers}
+                            graphRags={graphRags}
+                            vectorRags={vectorRags}
+                            connectors={connectors}
+                        />
+                        
+                        <DeployConfigSection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
                             isReadOnly={isEdit && !!watch('isReadOnly')}
                         />
                     </>
