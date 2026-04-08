@@ -131,7 +131,6 @@ const DeploymentProgressDialog = ({
     agentName: string;
     isRedeployment: boolean;
 }) => {
-    console.log('[v0] DeploymentProgressDialog render - open:', open);
     const [steps, setSteps] = useState<DeploymentStep[]>(initialDeploymentSteps);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
@@ -317,20 +316,12 @@ const ActionCell = ({
     const isHorizon = row.original.agentCategory === AgentCategory.HORIZON;
     const isDeployed = row.original.publishStatus?.isPublished;
 
-    console.log('[v0] ActionCell render - confirmOpen:', confirmOpen, 'progressOpen:', progressOpen, 'agentId:', row.original.id);
-
     const handleConfirmDeploy = () => {
-        console.log('[v0] handleConfirmDeploy called');
         setConfirmOpen(false);
-        // Use requestAnimationFrame to ensure confirmation dialog closes before progress opens
-        requestAnimationFrame(() => {
-            console.log('[v0] Setting progressOpen to true');
-            setProgressOpen(true);
-            if (onDeploy) {
-                console.log('[v0] Calling onDeploy');
-                onDeploy(row.original.id);
-            }
-        });
+        setProgressOpen(true);
+        if (onDeploy) {
+            onDeploy(row.original.id);
+        }
     };
 
     return (
@@ -346,28 +337,24 @@ const ActionCell = ({
                         {/* Deploy/Re-Deploy - Only for Horizon Agents */}
                         {isHorizon && onDeploy && (
                             <>
-                                <DropdownMenuItem
-                                    onSelect={() => {
-                                        console.log('[v0] Deploy menu item selected');
-                                        // Use requestAnimationFrame to ensure the dropdown closes first
-                                        requestAnimationFrame(() => {
-                                            console.log('[v0] Setting confirmOpen to true');
-                                            setConfirmOpen(true);
-                                        });
-                                    }}
+                                <DropdownMenuItem 
+                                    asChild 
+                                    onClick={() => setConfirmOpen(true)}
                                     disabled={row.original.isReadOnly || isDeploying}
                                 >
-                                    {isDeployed ? (
-                                        <>
-                                            <RefreshCw size={16} className="mr-2" />
-                                            Re-Deploy
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Rocket size={16} className="mr-2" />
-                                            Deploy
-                                        </>
-                                    )}
+                                    <div className="flex items-center cursor-pointer">
+                                        {isDeployed ? (
+                                            <>
+                                                <RefreshCw size={16} className="mr-2" />
+                                                Re-Deploy
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Rocket size={16} className="mr-2" />
+                                                Deploy
+                                            </>
+                                        )}
+                                    </div>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                             </>
