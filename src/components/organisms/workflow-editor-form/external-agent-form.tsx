@@ -587,6 +587,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
     };
 
     return (
+        <>
         <div className="group">
             <div
                 className={cn(
@@ -1543,6 +1544,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                 </DialogBody>
             </DialogContent>
         </Dialog>
+        </>
     );
 };
 
