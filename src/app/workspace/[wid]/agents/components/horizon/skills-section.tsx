@@ -275,7 +275,7 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
                                                     value={skill.id}
                                                     disabled={isReadOnly}
                                                     onChange={(e) => updateSkill(skill.id, { id: e.target.value })}
-                                                    leftIcon={<Hash size={14} className="text-gray-400" />}
+                                                    leadingIcon={<Hash size={14} className="text-gray-400" />}
                                                     className="font-mono"
                                                 />
                                                 <p className="text-xs text-gray-400 mt-1">
