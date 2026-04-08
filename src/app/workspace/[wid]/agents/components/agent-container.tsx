@@ -6,7 +6,7 @@ import { useBreakpoint } from '@/hooks/use-breakpoints';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components';
 import AppDrawer from '@/components/molecules/drawer/app-drawer';
-import { AgentWizardForm } from './agent-wizard';
+import AgentForm from './agent-form';
 import { useAgent } from '@/hooks/use-agent';
 import { PlatformConfigurationSuiteSkeleton } from '@/components/organisms';
 
@@ -137,7 +137,7 @@ export const AgentContainer = () => {
                     </div>
                 }
             />
-            <AgentWizardForm
+            <AgentForm
                 allPrompts={allPrompts}
                 allModels={allModels}
                 allApiTools={allApiTools}
