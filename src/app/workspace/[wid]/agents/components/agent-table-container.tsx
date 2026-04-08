@@ -296,8 +296,8 @@ const DeploymentProgressDialog = ({
     );
 };
 
-// Deploy Confirmation Dialog
-const DeployDialog = ({ 
+// Deploy Action Component - Handles both menu item and dialogs with proper portal rendering
+const DeployAction = ({ 
     row, 
     onDeploy, 
     isDeploying 
@@ -310,18 +310,28 @@ const DeployDialog = ({
     const [progressOpen, setProgressOpen] = useState<boolean>(false);
     const isDeployed = row.original.publishStatus?.isPublished;
 
+    const handleOpenConfirm = () => {
+        // Use setTimeout to ensure dropdown closes first before opening dialog
+        setTimeout(() => {
+            setConfirmOpen(true);
+        }, 0);
+    };
+
     const handleDeploy = () => {
         setConfirmOpen(false);
-        setProgressOpen(true);
-        onDeploy(row.original.id);
+        // Small delay to ensure confirmation dialog fully closes before opening progress
+        setTimeout(() => {
+            setProgressOpen(true);
+            onDeploy(row.original.id);
+        }, 150);
     };
 
     return (
         <>
             <DropdownMenuItem
-                onClick={(e) => {
+                onSelect={(e) => {
                     e.preventDefault();
-                    setConfirmOpen(true);
+                    handleOpenConfirm();
                 }}
                 disabled={row.original.isReadOnly || isDeploying}
             >
@@ -338,7 +348,7 @@ const DeployDialog = ({
                 )}
             </DropdownMenuItem>
 
-            {/* Confirmation Dialog */}
+            {/* Confirmation Dialog - Rendered via portal */}
             <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
@@ -387,7 +397,7 @@ const DeployDialog = ({
                 </DialogContent>
             </Dialog>
 
-            {/* Progress Dialog */}
+            {/* Progress Dialog - Rendered via portal */}
             <DeploymentProgressDialog
                 open={progressOpen}
                 onOpenChange={setProgressOpen}
@@ -479,18 +489,18 @@ const generateColumns = (
                                     <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-200" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44">
-                                {/* Deploy/Re-Deploy - Only for Horizon Agents */}
-                                {isHorizon && onDeploy && (
-                                    <>
-                                        <DeployDialog 
-                                            row={row} 
-                                            onDeploy={onDeploy} 
-                                            isDeploying={isDeploying}
-                                        />
-                                        <DropdownMenuSeparator />
-                                    </>
-                                )}
+<DropdownMenuContent align="end" className="w-44">
+                                                {/* Deploy/Re-Deploy - Only for Horizon Agents */}
+                                                {isHorizon && onDeploy && (
+                                                    <>
+                                                        <DeployAction 
+                                                            row={row} 
+                                                            onDeploy={onDeploy} 
+                                                            isDeploying={isDeploying}
+                                                        />
+                                                        <DropdownMenuSeparator />
+                                                    </>
+                                                )}
                                 
                                 {/* Edit */}
                                 <DropdownMenuItem

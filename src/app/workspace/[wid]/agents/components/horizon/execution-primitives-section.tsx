@@ -452,29 +452,31 @@ export const ExecutionPrimitivesSection = ({
 
             {/* Configuration Modal */}
             <Dialog open={configModalOpen} onOpenChange={setConfigModalOpen}>
-                <DialogContent className="max-w-xl max-h-[85vh]">
+                <DialogContent className="max-w-lg max-h-[85vh]">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-x-3">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                                {selectedPrimitive?.icon}
+                        <DialogTitle className="flex items-center gap-x-2">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                                <span className="text-blue-600 dark:text-blue-400">
+                                    {selectedPrimitive?.icon}
+                                </span>
                             </div>
                             <div>
-                                <span className="block text-base">Configure {selectedPrimitive?.name}</span>
+                                <span className="block">Configure {selectedPrimitive?.name}</span>
                                 <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                                    {selectedPrimitive?.description}
+                                    Integration Settings
                                 </span>
                             </div>
                         </DialogTitle>
                     </DialogHeader>
                     <DialogBody className="overflow-y-auto">
-                        <div className="space-y-4 py-2">
+                        <div className="space-y-5">
                             {/* Documentation Link */}
                             {selectedPrimitive?.docsUrl && (
                                 <a 
                                     href={selectedPrimitive.docsUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-x-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                    className="inline-flex items-center gap-x-2 text-xs text-blue-600 dark:text-blue-400 hover:underline px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
                                 >
                                     <ExternalLink size={12} />
                                     View {selectedPrimitive.name} Documentation
@@ -482,55 +484,60 @@ export const ExecutionPrimitivesSection = ({
                             )}
 
                             {/* Configuration Fields */}
-                            {selectedPrimitive?.fields.map((field) => (
-                                <div key={field.key} className="space-y-1.5">
-                                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {field.label}
-                                        {field.required && <span className="text-red-500 ml-1">*</span>}
-                                    </Label>
-                                    
-                                    {field.type === 'select' ? (
-                                        <Select
-                                            options={field.options || []}
-                                            currentValue={localConfig[field.key] || ''}
-                                            onChange={(e) => handleConfigChange(field.key, e.target.value)}
-                                            placeholder={field.placeholder}
-                                            className="w-full"
-                                        />
-                                    ) : field.type === 'textarea' ? (
-                                        <Textarea
-                                            placeholder={field.placeholder}
-                                            value={localConfig[field.key] || ''}
-                                            onChange={(e) => handleConfigChange(field.key, e.target.value)}
-                                            rows={4}
-                                            className="font-mono text-xs"
-                                        />
-                                    ) : (
-                                        <Input
-                                            type={field.type === 'password' ? 'password' : 'text'}
-                                            placeholder={field.placeholder}
-                                            value={localConfig[field.key] || ''}
-                                            onChange={(e) => handleConfigChange(field.key, e.target.value)}
-                                        />
-                                    )}
-                                    
-                                    {field.helpText && (
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-start gap-x-1">
-                                            <Info size={12} className="shrink-0 mt-0.5" />
-                                            {field.helpText}
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
+                            <div className="space-y-4">
+                                {selectedPrimitive?.fields.map((field) => (
+                                    <div key={field.key} className="space-y-2">
+                                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                                            {field.label}
+                                            {field.required && <span className="text-red-500 ml-1">*</span>}
+                                        </Label>
+                                        
+                                        {field.type === 'select' ? (
+                                            <Select
+                                                options={field.options || []}
+                                                currentValue={localConfig[field.key] || ''}
+                                                onChange={(e) => handleConfigChange(field.key, e.target.value)}
+                                                placeholder={field.placeholder}
+                                                className="w-full"
+                                            />
+                                        ) : field.type === 'textarea' ? (
+                                            <Textarea
+                                                placeholder={field.placeholder}
+                                                value={localConfig[field.key] || ''}
+                                                onChange={(e) => handleConfigChange(field.key, e.target.value)}
+                                                rows={4}
+                                                className="font-mono text-xs w-full"
+                                            />
+                                        ) : (
+                                            <Input
+                                                type={field.type === 'password' ? 'password' : 'text'}
+                                                placeholder={field.placeholder}
+                                                value={localConfig[field.key] || ''}
+                                                onChange={(e) => handleConfigChange(field.key, e.target.value)}
+                                                className="w-full"
+                                            />
+                                        )}
+                                        
+                                        {field.helpText && (
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-start gap-x-1.5 mt-1">
+                                                <Info size={12} className="shrink-0 mt-0.5" />
+                                                <span>{field.helpText}</span>
+                                            </p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                             
                             {/* Security Notice */}
-                            <div className="flex items-start gap-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                <Shield size={16} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                            <div className="flex items-start gap-x-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 shrink-0">
+                                    <Shield size={14} className="text-blue-600 dark:text-blue-400" />
+                                </div>
                                 <div>
-                                    <p className="text-xs font-medium text-blue-700 dark:text-blue-400">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                         Secure Storage
                                     </p>
-                                    <p className="text-xs text-blue-600 dark:text-blue-500 mt-0.5">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         All credentials are encrypted at rest and in transit. They are only accessible during agent execution.
                                     </p>
                                 </div>
