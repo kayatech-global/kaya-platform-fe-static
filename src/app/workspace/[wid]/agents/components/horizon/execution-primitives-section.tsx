@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Input, Switch, Label, Badge, Select, TextArea } from '@/components';
+import { Button, Input, Switch, Label, Badge, Select, Textarea } from '@/components';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/atoms/dialog';
 import { IAgentForm } from '@/models';
 import { 
@@ -498,7 +498,7 @@ export const ExecutionPrimitivesSection = ({
                                             className="w-full"
                                         />
                                     ) : field.type === 'textarea' ? (
-                                        <TextArea
+                                        <Textarea
                                             placeholder={field.placeholder}
                                             value={localConfig[field.key] || ''}
                                             onChange={(e) => handleConfigChange(field.key, e.target.value)}
