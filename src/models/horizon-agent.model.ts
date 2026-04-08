@@ -31,6 +31,18 @@ export type IOMode = 'text' | 'structured' | 'streaming';
 // Authentication Type
 export type AuthType = 'api_key' | 'oauth2' | 'bearer' | 'basic' | 'none';
 
+// A2A Visibility Type
+export type A2AVisibility = 'public' | 'private';
+
+// A2A Tool Types for Skills
+export type A2AToolType = 
+  | 'KAYA_REST_API_CONNECTOR' 
+  | 'KAYA_MCP_CONNECTOR' 
+  | 'KAYA_VECTOR_RAG' 
+  | 'KAYA_GRAPH_RAG' 
+  | 'KAYA_DB_CONNECTOR' 
+  | 'KAYA_EXECUTABLE_FUNCTION';
+
 // Scaling Policy Configuration
 export interface IScalingPolicy {
   minInstances: number;
@@ -62,6 +74,44 @@ export interface IHorizonIdentity {
   endpointUrl?: string;
   discoveryLocation?: string;
   authSchemes: IAuthScheme[];
+  // A2A Identity fields
+  a2aEnabled?: boolean;
+  a2aVisibility?: A2AVisibility;
+  a2aUri?: string; // Format: agent://kaya/{workspace-slug}/{agent-slug}-{version}
+  defaultInputModes?: string[];
+  defaultOutputModes?: string[];
+}
+
+// A2A Skill (auto-generated from tool attachments)
+export interface IA2ASkill {
+  id: string;
+  name: string;
+  description: string;
+  toolType: A2AToolType;
+  tags: string[];
+  inputModes?: string[];
+  outputModes?: string[];
+}
+
+// A2A Agent Card (generated automatically)
+export interface IA2AAgentCard {
+  schemaVersion: string;
+  name: string;
+  description: string;
+  url: string;
+  version: string;
+  provider: {
+    organization: string;
+  };
+  capabilities: {
+    streaming: boolean;
+    pushNotifications: boolean;
+    stateTransitionHistory: boolean;
+  };
+  securitySchemes: Record<string, unknown>;
+  defaultInputModes: string[];
+  defaultOutputModes: string[];
+  skills: IA2ASkill[];
 }
 
 // Skills Metadata
@@ -148,6 +198,10 @@ export const DEFAULT_HORIZON_CONFIG: IHorizonConfig = {
     endpointUrl: '',
     discoveryLocation: '',
     authSchemes: [],
+    a2aEnabled: true,
+    a2aVisibility: 'private',
+    defaultInputModes: ['text/plain', 'application/json'],
+    defaultOutputModes: ['application/json', 'text/plain'],
   },
   skills: [],
   executionPolicy: {

@@ -879,8 +879,15 @@ export const FormBody = (props: AgentProps) => {
                             control={control}
                             watch={watch}
                             setValue={setValue}
+                            getValues={getValues}
                             errors={errors}
                             isReadOnly={isEdit && !!watch('isReadOnly')}
+                            isEdit={isEdit}
+                            tools={getValues('tools')}
+                            mcpServers={mcpServers}
+                            graphRags={graphRags}
+                            vectorRags={vectorRags}
+                            connectors={connectors}
                         />
                         
                         <SkillsSection
