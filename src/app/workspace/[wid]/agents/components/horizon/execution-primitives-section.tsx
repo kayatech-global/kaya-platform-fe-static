@@ -9,6 +9,7 @@ import {
     Badge, 
     Select, 
     Textarea,
+    SecretInput,
     Dialog, 
     DialogContent, 
     DialogHeader, 
@@ -516,9 +517,16 @@ export const ExecutionPrimitivesSection = ({
                                             rows={3}
                                             className="font-mono text-xs w-full"
                                         />
+                                    ) : field.type === 'password' ? (
+                                        <SecretInput
+                                            placeholder={field.placeholder}
+                                            value={localConfig[field.key] || ''}
+                                            onChange={(e) => handleConfigChange(field.key, e.target.value)}
+                                            className="w-full text-sm"
+                                        />
                                     ) : (
                                         <Input
-                                            type={field.type === 'password' ? 'password' : 'text'}
+                                            type="text"
                                             placeholder={field.placeholder}
                                             value={localConfig[field.key] || ''}
                                             onChange={(e) => handleConfigChange(field.key, e.target.value)}

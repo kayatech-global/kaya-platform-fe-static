@@ -316,28 +316,21 @@ const ActionCell = ({
     const isHorizon = row.original.agentCategory === AgentCategory.HORIZON;
     const isDeployed = row.original.publishStatus?.isPublished;
 
-    const handleOpenDeploy = () => {
-        // Delay opening to let dropdown close first
-        setTimeout(() => {
-            setConfirmOpen(true);
-        }, 100);
-    };
-
     const handleConfirmDeploy = () => {
+        console.log('[v0] handleConfirmDeploy called');
         setConfirmOpen(false);
-        // Delay to ensure confirmation dialog closes before progress opens
-        setTimeout(() => {
-            setProgressOpen(true);
-            if (onDeploy) {
-                onDeploy(row.original.id);
-            }
-        }, 150);
+        setProgressOpen(true);
+        console.log('[v0] progressOpen set to true');
+        if (onDeploy) {
+            console.log('[v0] Calling onDeploy with id:', row.original.id);
+            onDeploy(row.original.id);
+        }
     };
 
     return (
         <>
             <div className="flex items-center justify-end gap-x-2">
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                             <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-200" />
@@ -348,9 +341,9 @@ const ActionCell = ({
                         {isHorizon && onDeploy && (
                             <>
                                 <DropdownMenuItem
-                                    onSelect={(e) => {
-                                        e.preventDefault();
-                                        handleOpenDeploy();
+                                    onClick={() => {
+                                        console.log('[v0] Deploy menu item clicked');
+                                        setConfirmOpen(true);
                                     }}
                                     disabled={row.original.isReadOnly || isDeploying}
                                 >
@@ -434,9 +427,13 @@ const ActionCell = ({
             </Dialog>
 
             {/* Progress Dialog - Rendered outside dropdown */}
+            {console.log('[v0] Rendering DeploymentProgressDialog, progressOpen:', progressOpen)}
             <DeploymentProgressDialog
                 open={progressOpen}
-                onOpenChange={setProgressOpen}
+                onOpenChange={(open) => {
+                    console.log('[v0] DeploymentProgressDialog onOpenChange:', open);
+                    setProgressOpen(open);
+                }}
                 agentName={row.original.agentName}
                 isRedeployment={!!isDeployed}
             />
