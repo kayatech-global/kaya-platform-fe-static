@@ -63,6 +63,8 @@ export const AgentContainer = () => {
         onRefetchVectorRag,
         onRefetchMessageBroker,
         refetchGuardrails,
+        isPublishing,
+        onPublish,
     } = useAgent();
     const { isLg, isMobile } = useBreakpoint();
 
@@ -181,6 +183,8 @@ export const AgentContainer = () => {
                 refetchMessageBroker={onRefetchMessageBroker}
                 refetchGuardrails={refetchGuardrails}
                 onRefetchExecutableFunctions={refetchExecutableFunctions}
+                isPublishing={isPublishing}
+                onPublish={onPublish}
             />
         </React.Fragment>
     );

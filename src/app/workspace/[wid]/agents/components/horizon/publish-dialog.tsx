@@ -7,6 +7,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
+    DialogBody,
     Button,
     Badge,
 } from '@/components';
@@ -93,7 +94,7 @@ export const PublishDialog = ({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-4 space-y-4">
+                <DialogBody className="py-4 space-y-4">
                     {/* Validation Status */}
                     <div
                         className={cn(
@@ -187,7 +188,7 @@ export const PublishDialog = ({
                             correct before proceeding.
                         </p>
                     </div>
-                </div>
+                </DialogBody>
 
                 <DialogFooter>
                     <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={isPublishing}>
