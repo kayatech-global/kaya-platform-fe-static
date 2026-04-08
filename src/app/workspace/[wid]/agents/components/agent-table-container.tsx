@@ -131,6 +131,7 @@ const DeploymentProgressDialog = ({
     agentName: string;
     isRedeployment: boolean;
 }) => {
+    console.log('[v0] DeploymentProgressDialog render - open:', open);
     const [steps, setSteps] = useState<DeploymentStep[]>(initialDeploymentSteps);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
@@ -316,12 +317,17 @@ const ActionCell = ({
     const isHorizon = row.original.agentCategory === AgentCategory.HORIZON;
     const isDeployed = row.original.publishStatus?.isPublished;
 
+    console.log('[v0] ActionCell render - confirmOpen:', confirmOpen, 'progressOpen:', progressOpen, 'agentId:', row.original.id);
+
     const handleConfirmDeploy = () => {
+        console.log('[v0] handleConfirmDeploy called');
         setConfirmOpen(false);
         // Use requestAnimationFrame to ensure confirmation dialog closes before progress opens
         requestAnimationFrame(() => {
+            console.log('[v0] Setting progressOpen to true');
             setProgressOpen(true);
             if (onDeploy) {
+                console.log('[v0] Calling onDeploy');
                 onDeploy(row.original.id);
             }
         });
@@ -342,8 +348,10 @@ const ActionCell = ({
                             <>
                                 <DropdownMenuItem
                                     onSelect={() => {
+                                        console.log('[v0] Deploy menu item selected');
                                         // Use requestAnimationFrame to ensure the dropdown closes first
                                         requestAnimationFrame(() => {
+                                            console.log('[v0] Setting confirmOpen to true');
                                             setConfirmOpen(true);
                                         });
                                     }}
