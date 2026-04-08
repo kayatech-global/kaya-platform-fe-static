@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ColumnDef, Row } from '@tanstack/react-table';
-import { Trash2, Pencil, Rocket, RefreshCw, MoreHorizontal } from 'lucide-react';
+import { Trash2, Pencil, Rocket, RefreshCw, MoreHorizontal, Check, Loader2, AlertCircle, Package, Server, Shield, Zap } from 'lucide-react';
 import { Button, Input, Badge } from '@/components';
 import DataTable from '@/components/molecules/table/data-table';
 import { useForm } from 'react-hook-form';
@@ -42,6 +42,23 @@ interface AgentTableContainerProps {
     isDeploying?: boolean;
 }
 
+// Deployment steps
+interface DeploymentStep {
+    id: string;
+    label: string;
+    description: string;
+    icon: typeof Package;
+    status: 'pending' | 'in-progress' | 'completed' | 'error';
+}
+
+const initialDeploymentSteps: DeploymentStep[] = [
+    { id: 'validate', label: 'Validating Configuration', description: 'Checking agent configuration and dependencies', icon: Shield, status: 'pending' },
+    { id: 'build', label: 'Building Agent Package', description: 'Packaging agent with runtime and dependencies', icon: Package, status: 'pending' },
+    { id: 'provision', label: 'Provisioning Resources', description: 'Setting up compute and networking resources', icon: Server, status: 'pending' },
+    { id: 'deploy', label: 'Deploying Agent', description: 'Deploying agent to A2A endpoint', icon: Rocket, status: 'pending' },
+    { id: 'verify', label: 'Verifying Deployment', description: 'Running health checks and verification', icon: Zap, status: 'pending' },
+];
+
 const DeleteRecord = ({ row, onDelete }: { row: Row<AgentData>; onDelete: (id: string) => void }) => {
     const [open, setOpen] = useState<boolean>(false);
 
@@ -52,21 +69,17 @@ const DeleteRecord = ({ row, onDelete }: { row: Row<AgentData>; onDelete: (id: s
 
     return (
         <>
-            <Button
-                className={`w-full sm:w-max ${row.original.isReadOnly ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                variant="link"
-                size="icon"
-                onClick={() => setOpen(true)}
+            <DropdownMenuItem
+                onClick={(e) => {
+                    e.preventDefault();
+                    setOpen(true);
+                }}
                 disabled={row.original.isReadOnly}
+                className="text-red-600 dark:text-red-400"
             >
-                <Trash2
-                    size={18}
-                    className={cn('', {
-                        'text-gray-300 dark:text-gray-600': row.original.isReadOnly,
-                        'text-gray-500 dark:text-gray-200': !row.original.isReadOnly,
-                    })}
-                />
-            </Button>
+                <Trash2 size={16} className="mr-2" />
+                Delete
+            </DropdownMenuItem>
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="overflow-y-auto max-h-[80%]">
                     <DialogHeader>
@@ -90,6 +103,161 @@ const DeleteRecord = ({ row, onDelete }: { row: Row<AgentData>; onDelete: (id: s
     );
 };
 
+// Deployment Progress Dialog
+const DeploymentProgressDialog = ({
+    open,
+    onOpenChange,
+    agentName,
+    isRedeployment,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    agentName: string;
+    isRedeployment: boolean;
+}) => {
+    const [steps, setSteps] = useState<DeploymentStep[]>(initialDeploymentSteps);
+    const [currentStepIndex, setCurrentStepIndex] = useState(0);
+    const [isComplete, setIsComplete] = useState(false);
+    const [hasError, setHasError] = useState(false);
+
+    // Simulate deployment progress
+    useEffect(() => {
+        if (!open) {
+            // Reset when dialog closes
+            setSteps(initialDeploymentSteps);
+            setCurrentStepIndex(0);
+            setIsComplete(false);
+            setHasError(false);
+            return;
+        }
+
+        const progressStep = () => {
+            setSteps(prev => prev.map((step, idx) => {
+                if (idx < currentStepIndex) return { ...step, status: 'completed' as const };
+                if (idx === currentStepIndex) return { ...step, status: 'in-progress' as const };
+                return { ...step, status: 'pending' as const };
+            }));
+        };
+
+        progressStep();
+
+        const timer = setTimeout(() => {
+            if (currentStepIndex < steps.length - 1) {
+                setSteps(prev => prev.map((step, idx) => 
+                    idx === currentStepIndex ? { ...step, status: 'completed' as const } : step
+                ));
+                setCurrentStepIndex(prev => prev + 1);
+            } else if (currentStepIndex === steps.length - 1) {
+                setSteps(prev => prev.map(step => ({ ...step, status: 'completed' as const })));
+                setIsComplete(true);
+            }
+        }, 1500 + Math.random() * 1000);
+
+        return () => clearTimeout(timer);
+    }, [open, currentStepIndex, steps.length]);
+
+    const getStepIcon = (step: DeploymentStep) => {
+        const Icon = step.icon;
+        switch (step.status) {
+            case 'completed':
+                return <Check size={16} className="text-green-500" />;
+            case 'in-progress':
+                return <Loader2 size={16} className="text-blue-500 animate-spin" />;
+            case 'error':
+                return <AlertCircle size={16} className="text-red-500" />;
+            default:
+                return <Icon size={16} className="text-gray-400" />;
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-md">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-x-2">
+                        {isComplete ? (
+                            <Check size={20} className="text-green-500" />
+                        ) : (
+                            <Loader2 size={20} className="text-blue-500 animate-spin" />
+                        )}
+                        <span>{isRedeployment ? 'Re-deploying' : 'Deploying'} {agentName}</span>
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                    <div className="space-y-3">
+                        {steps.map((step, idx) => (
+                            <div
+                                key={step.id}
+                                className={cn(
+                                    "flex items-start gap-x-3 p-3 rounded-lg transition-colors",
+                                    step.status === 'in-progress' && "bg-blue-50 dark:bg-blue-900/20",
+                                    step.status === 'completed' && "bg-green-50 dark:bg-green-900/10",
+                                    step.status === 'pending' && "opacity-50"
+                                )}
+                            >
+                                <div className="mt-0.5">
+                                    {getStepIcon(step)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className={cn(
+                                        "text-sm font-medium",
+                                        step.status === 'completed' && "text-green-700 dark:text-green-400",
+                                        step.status === 'in-progress' && "text-blue-700 dark:text-blue-400",
+                                        step.status === 'pending' && "text-gray-500 dark:text-gray-400"
+                                    )}>
+                                        {step.label}
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        {step.description}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                            <span>Deployment Progress</span>
+                            <span>{Math.round((steps.filter(s => s.status === 'completed').length / steps.length) * 100)}%</span>
+                        </div>
+                        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                                className={cn(
+                                    "h-full transition-all duration-500 rounded-full",
+                                    hasError ? "bg-red-500" : "bg-green-500"
+                                )}
+                                style={{ width: `${(steps.filter(s => s.status === 'completed').length / steps.length) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Completion Message */}
+                    {isComplete && (
+                        <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                            <p className="text-sm text-green-700 dark:text-green-400 font-medium">
+                                Deployment Successful
+                            </p>
+                            <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                                Your agent is now live and accessible via the A2A endpoint.
+                            </p>
+                        </div>
+                    )}
+                </div>
+                <div className="flex justify-end">
+                    <Button
+                        variant={isComplete ? "primary" : "secondary"}
+                        size="sm"
+                        onClick={() => onOpenChange(false)}
+                    >
+                        {isComplete ? 'Done' : 'Cancel'}
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 // Deploy Confirmation Dialog
 const DeployDialog = ({ 
     row, 
@@ -100,20 +268,22 @@ const DeployDialog = ({
     onDeploy: (id: string) => void;
     isDeploying?: boolean;
 }) => {
-    const [open, setOpen] = useState<boolean>(false);
+    const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
+    const [progressOpen, setProgressOpen] = useState<boolean>(false);
     const isDeployed = row.original.publishStatus?.isPublished;
 
     const handleDeploy = () => {
+        setConfirmOpen(false);
+        setProgressOpen(true);
         onDeploy(row.original.id);
-        setOpen(false);
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <>
             <DropdownMenuItem
                 onClick={(e) => {
                     e.preventDefault();
-                    setOpen(true);
+                    setConfirmOpen(true);
                 }}
                 disabled={row.original.isReadOnly || isDeploying}
             >
@@ -129,40 +299,52 @@ const DeployDialog = ({
                     </>
                 )}
             </DropdownMenuItem>
-            <DialogContent className="overflow-y-auto max-h-[80%]">
-                <DialogHeader>
-                    <DialogTitle>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
+
+            {/* Confirmation Dialog */}
+            <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                <DialogContent className="overflow-y-auto max-h-[80%]">
+                    <DialogHeader>
+                        <DialogTitle>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                                {isDeployed 
+                                    ? 'Re-deploy this Horizon Agent?' 
+                                    : 'Deploy this Horizon Agent?'
+                                }
+                            </p>
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="p-3">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                             {isDeployed 
-                                ? 'Re-deploy this Horizon Agent?' 
-                                : 'Deploy this Horizon Agent?'
+                                ? `This will re-deploy "${row.original.agentName}" to the workspace-scoped agents endpoint with the latest configuration changes.`
+                                : `This will deploy "${row.original.agentName}" to the workspace-scoped agents endpoint, making it callable via the workspace identity.`
                             }
                         </p>
-                    </DialogTitle>
-                </DialogHeader>
-                <div className="p-3">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        {isDeployed 
-                            ? `This will re-deploy "${row.original.agentName}" to the workspace-scoped agents endpoint with the latest configuration changes.`
-                            : `This will deploy "${row.original.agentName}" to the workspace-scoped agents endpoint, making it callable via the workspace identity.`
-                        }
-                    </p>
-                    <div className="flex justify-end gap-2">
-                        <Button variant={'secondary'} size="sm" onClick={() => setOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button 
-                            variant={'primary'} 
-                            size="sm" 
-                            onClick={handleDeploy}
-                            disabled={isDeploying}
-                        >
-                            {isDeploying ? 'Deploying...' : (isDeployed ? 'Re-Deploy' : 'Deploy')}
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                            <Button variant={'secondary'} size="sm" onClick={() => setConfirmOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button 
+                                variant={'primary'} 
+                                size="sm" 
+                                onClick={handleDeploy}
+                                disabled={isDeploying}
+                            >
+                                {isDeployed ? 'Re-Deploy' : 'Deploy'}
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </DialogContent>
-        </Dialog>
+                </DialogContent>
+            </Dialog>
+
+            {/* Progress Dialog */}
+            <DeploymentProgressDialog
+                open={progressOpen}
+                onOpenChange={setProgressOpen}
+                agentName={row.original.agentName}
+                isRedeployment={!!isDeployed}
+            />
+        </>
     );
 };
 
@@ -239,37 +421,41 @@ const generateColumns = (
                 const isHorizon = row.original.agentCategory === AgentCategory.HORIZON;
                 
                 return (
-                    <div className="flex items-center gap-x-2">
-                        <DeleteRecord row={row} onDelete={onDelete} />
-                        <Pencil
-                            size={18}
-                            className="text-gray-500 cursor-pointer dark:text-gray-200"
-                            onClick={() => onEditButtonClick(row.getValue('id'))}
-                        />
-                        {/* Deploy/Re-Deploy action menu for Horizon Agents only */}
-                        {isHorizon && onDeploy && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="link" size="icon" className="h-8 w-8">
-                                        <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-200" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40">
-                                    <DeployDialog 
-                                        row={row} 
-                                        onDeploy={onDeploy} 
-                                        isDeploying={isDeploying}
-                                    />
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                        onClick={() => onEditButtonClick(row.getValue('id'))}
-                                    >
-                                        <Pencil size={16} className="mr-2" />
-                                        Edit
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
+                    <div className="flex items-center justify-end gap-x-2">
+                        {/* Action Dropdown - Order: Deploy/Re-Deploy, Edit, Delete */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-200" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                                {/* Deploy/Re-Deploy - Only for Horizon Agents */}
+                                {isHorizon && onDeploy && (
+                                    <>
+                                        <DeployDialog 
+                                            row={row} 
+                                            onDeploy={onDeploy} 
+                                            isDeploying={isDeploying}
+                                        />
+                                        <DropdownMenuSeparator />
+                                    </>
+                                )}
+                                
+                                {/* Edit */}
+                                <DropdownMenuItem
+                                    onClick={() => onEditButtonClick(row.getValue('id'))}
+                                >
+                                    <Pencil size={16} className="mr-2" />
+                                    Edit
+                                </DropdownMenuItem>
+                                
+                                <DropdownMenuSeparator />
+                                
+                                {/* Delete */}
+                                <DeleteRecord row={row} onDelete={onDelete} />
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 );
             },

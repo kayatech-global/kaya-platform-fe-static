@@ -103,6 +103,8 @@ export const IdentitySection = ({
     connectors = [],
 }: IdentitySectionProps) => {
     const [newAuthType, setNewAuthType] = useState<AuthType>('api_key');
+    const [newInputMode, setNewInputMode] = useState<string>('');
+    const [newOutputMode, setNewOutputMode] = useState<string>('');
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [copiedJson, setCopiedJson] = useState(false);
     const [showA2ACardModal, setShowA2ACardModal] = useState(false);
@@ -333,7 +335,10 @@ export const IdentitySection = ({
     const toggleInputMode = (mode: string) => {
         const current = defaultInputModes || [];
         if (current.includes(mode)) {
-            setValue('horizonConfig.identity.defaultInputModes', current.filter(m => m !== mode));
+            // Only remove if there's more than one mode
+            if (current.length > 1) {
+                setValue('horizonConfig.identity.defaultInputModes', current.filter(m => m !== mode));
+            }
         } else {
             setValue('horizonConfig.identity.defaultInputModes', [...current, mode]);
         }
@@ -342,9 +347,26 @@ export const IdentitySection = ({
     const toggleOutputMode = (mode: string) => {
         const current = defaultOutputModes || [];
         if (current.includes(mode)) {
-            setValue('horizonConfig.identity.defaultOutputModes', current.filter(m => m !== mode));
+            // Only remove if there's more than one mode
+            if (current.length > 1) {
+                setValue('horizonConfig.identity.defaultOutputModes', current.filter(m => m !== mode));
+            }
         } else {
             setValue('horizonConfig.identity.defaultOutputModes', [...current, mode]);
+        }
+    };
+
+    const addInputMode = () => {
+        if (newInputMode && !defaultInputModes.includes(newInputMode)) {
+            setValue('horizonConfig.identity.defaultInputModes', [...defaultInputModes, newInputMode]);
+            setNewInputMode('');
+        }
+    };
+
+    const addOutputMode = () => {
+        if (newOutputMode && !defaultOutputModes.includes(newOutputMode)) {
+            setValue('horizonConfig.identity.defaultOutputModes', [...defaultOutputModes, newOutputMode]);
+            setNewOutputMode('');
         }
     };
 
@@ -605,25 +627,56 @@ export const IdentitySection = ({
                                         <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                                             Default Input Modes
                                         </Label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {inputModeOptions.map((mode) => (
-                                                <button
-                                                    key={mode.value}
+                                        
+                                        {/* Existing Input Modes */}
+                                        {defaultInputModes.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mb-3">
+                                                {defaultInputModes.map((mode) => {
+                                                    const option = inputModeOptions.find(o => o.value === mode);
+                                                    return (
+                                                        <Badge
+                                                            key={mode}
+                                                            variant="secondary"
+                                                            className="flex items-center gap-x-1 px-3 py-1.5"
+                                                        >
+                                                            {option?.name || mode}
+                                                            {!isReadOnly && defaultInputModes.length > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => toggleInputMode(mode)}
+                                                                    className="ml-1 hover:text-red-500"
+                                                                >
+                                                                    <X size={12} />
+                                                                </button>
+                                                            )}
+                                                        </Badge>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                        
+                                        {/* Add Input Mode */}
+                                        {!isReadOnly && (
+                                            <div className="flex gap-x-2">
+                                                <Select
+                                                    options={inputModeOptions.filter(opt => !defaultInputModes.includes(opt.value))}
+                                                    currentValue={newInputMode}
+                                                    onChange={(e) => setNewInputMode(e.target.value)}
+                                                    className="flex-1"
+                                                    placeholder="Select input mode..."
+                                                />
+                                                <Button
                                                     type="button"
-                                                    onClick={() => !isReadOnly && toggleInputMode(mode.value)}
-                                                    disabled={isReadOnly}
-                                                    className={cn(
-                                                        "px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
-                                                        defaultInputModes.includes(mode.value)
-                                                            ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100"
-                                                            : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-gray-400",
-                                                        isReadOnly && "opacity-50 cursor-not-allowed"
-                                                    )}
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    onClick={addInputMode}
+                                                    disabled={!newInputMode || defaultInputModes.includes(newInputMode)}
                                                 >
-                                                    {mode.name}
-                                                </button>
-                                            ))}
-                                        </div>
+                                                    <Plus size={14} className="mr-1" />
+                                                    Add
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Output Modes */}
@@ -631,25 +684,56 @@ export const IdentitySection = ({
                                         <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                                             Default Output Modes
                                         </Label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {outputModeOptions.map((mode) => (
-                                                <button
-                                                    key={mode.value}
+                                        
+                                        {/* Existing Output Modes */}
+                                        {defaultOutputModes.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mb-3">
+                                                {defaultOutputModes.map((mode) => {
+                                                    const option = outputModeOptions.find(o => o.value === mode);
+                                                    return (
+                                                        <Badge
+                                                            key={mode}
+                                                            variant="secondary"
+                                                            className="flex items-center gap-x-1 px-3 py-1.5"
+                                                        >
+                                                            {option?.name || mode}
+                                                            {!isReadOnly && defaultOutputModes.length > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => toggleOutputMode(mode)}
+                                                                    className="ml-1 hover:text-red-500"
+                                                                >
+                                                                    <X size={12} />
+                                                                </button>
+                                                            )}
+                                                        </Badge>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                        
+                                        {/* Add Output Mode */}
+                                        {!isReadOnly && (
+                                            <div className="flex gap-x-2">
+                                                <Select
+                                                    options={outputModeOptions.filter(opt => !defaultOutputModes.includes(opt.value))}
+                                                    currentValue={newOutputMode}
+                                                    onChange={(e) => setNewOutputMode(e.target.value)}
+                                                    className="flex-1"
+                                                    placeholder="Select output mode..."
+                                                />
+                                                <Button
                                                     type="button"
-                                                    onClick={() => !isReadOnly && toggleOutputMode(mode.value)}
-                                                    disabled={isReadOnly}
-                                                    className={cn(
-                                                        "px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
-                                                        defaultOutputModes.includes(mode.value)
-                                                            ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100"
-                                                            : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-gray-400",
-                                                        isReadOnly && "opacity-50 cursor-not-allowed"
-                                                    )}
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    onClick={addOutputMode}
+                                                    disabled={!newOutputMode || defaultOutputModes.includes(newOutputMode)}
                                                 >
-                                                    {mode.name}
-                                                </button>
-                                            ))}
-                                        </div>
+                                                    <Plus size={14} className="mr-1" />
+                                                    Add
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
