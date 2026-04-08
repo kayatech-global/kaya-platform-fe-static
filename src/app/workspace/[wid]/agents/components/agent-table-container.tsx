@@ -296,59 +296,95 @@ const DeploymentProgressDialog = ({
     );
 };
 
-// Deploy Action Component - Handles both menu item and dialogs with proper portal rendering
-const DeployAction = ({ 
-    row, 
-    onDeploy, 
-    isDeploying 
+// Action Cell - Contains dropdown and dialogs with proper state management
+const ActionCell = ({ 
+    row,
+    onEditButtonClick,
+    onDelete,
+    onDeploy,
+    isDeploying,
 }: { 
-    row: Row<AgentData>; 
-    onDeploy: (id: string) => void;
+    row: Row<AgentData>;
+    onEditButtonClick: (id: string) => void;
+    onDelete: (id: string) => void;
+    onDeploy?: (id: string) => void;
     isDeploying?: boolean;
 }) => {
     const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
     const [progressOpen, setProgressOpen] = useState<boolean>(false);
+    
+    const isHorizon = row.original.agentCategory === AgentCategory.HORIZON;
     const isDeployed = row.original.publishStatus?.isPublished;
 
-    const handleOpenConfirm = () => {
-        // Use setTimeout to ensure dropdown closes first before opening dialog
+    const handleOpenDeploy = () => {
+        // Delay opening to let dropdown close first
         setTimeout(() => {
             setConfirmOpen(true);
-        }, 0);
+        }, 100);
     };
 
-    const handleDeploy = () => {
+    const handleConfirmDeploy = () => {
         setConfirmOpen(false);
-        // Small delay to ensure confirmation dialog fully closes before opening progress
+        // Delay to ensure confirmation dialog closes before progress opens
         setTimeout(() => {
             setProgressOpen(true);
-            onDeploy(row.original.id);
+            if (onDeploy) {
+                onDeploy(row.original.id);
+            }
         }, 150);
     };
 
     return (
         <>
-            <DropdownMenuItem
-                onSelect={(e) => {
-                    e.preventDefault();
-                    handleOpenConfirm();
-                }}
-                disabled={row.original.isReadOnly || isDeploying}
-            >
-                {isDeployed ? (
-                    <>
-                        <RefreshCw size={16} className="mr-2" />
-                        Re-Deploy
-                    </>
-                ) : (
-                    <>
-                        <Rocket size={16} className="mr-2" />
-                        Deploy
-                    </>
-                )}
-            </DropdownMenuItem>
+            <div className="flex items-center justify-end gap-x-2">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-200" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                        {/* Deploy/Re-Deploy - Only for Horizon Agents */}
+                        {isHorizon && onDeploy && (
+                            <>
+                                <DropdownMenuItem
+                                    onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleOpenDeploy();
+                                    }}
+                                    disabled={row.original.isReadOnly || isDeploying}
+                                >
+                                    {isDeployed ? (
+                                        <>
+                                            <RefreshCw size={16} className="mr-2" />
+                                            Re-Deploy
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Rocket size={16} className="mr-2" />
+                                            Deploy
+                                        </>
+                                    )}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                            </>
+                        )}
+                        
+                        {/* Edit */}
+                        <DropdownMenuItem onClick={() => onEditButtonClick(row.getValue('id'))}>
+                            <Pencil size={16} className="mr-2" />
+                            Edit
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuSeparator />
+                        
+                        {/* Delete */}
+                        <DeleteRecord row={row} onDelete={onDelete} />
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
 
-            {/* Confirmation Dialog - Rendered via portal */}
+            {/* Confirmation Dialog - Rendered outside dropdown */}
             <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
@@ -388,7 +424,7 @@ const DeployAction = ({
                         <Button 
                             variant="primary" 
                             size="sm" 
-                            onClick={handleDeploy}
+                            onClick={handleConfirmDeploy}
                             disabled={isDeploying}
                         >
                             {isDeployed ? 'Re-Deploy Agent' : 'Deploy Agent'}
@@ -397,7 +433,7 @@ const DeployAction = ({
                 </DialogContent>
             </Dialog>
 
-            {/* Progress Dialog - Rendered via portal */}
+            {/* Progress Dialog - Rendered outside dropdown */}
             <DeploymentProgressDialog
                 open={progressOpen}
                 onOpenChange={setProgressOpen}
@@ -478,45 +514,14 @@ const generateColumns = (
                 return <div className="w-full text-left"></div>;
             },
             cell({ row }) {
-                const isHorizon = row.original.agentCategory === AgentCategory.HORIZON;
-                
                 return (
-                    <div className="flex items-center justify-end gap-x-2">
-                        {/* Action Dropdown - Order: Deploy/Re-Deploy, Edit, Delete */}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-200" />
-                                </Button>
-                            </DropdownMenuTrigger>
-<DropdownMenuContent align="end" className="w-44">
-                                                {/* Deploy/Re-Deploy - Only for Horizon Agents */}
-                                                {isHorizon && onDeploy && (
-                                                    <>
-                                                        <DeployAction 
-                                                            row={row} 
-                                                            onDeploy={onDeploy} 
-                                                            isDeploying={isDeploying}
-                                                        />
-                                                        <DropdownMenuSeparator />
-                                                    </>
-                                                )}
-                                
-                                {/* Edit */}
-                                <DropdownMenuItem
-                                    onClick={() => onEditButtonClick(row.getValue('id'))}
-                                >
-                                    <Pencil size={16} className="mr-2" />
-                                    Edit
-                                </DropdownMenuItem>
-                                
-                                <DropdownMenuSeparator />
-                                
-                                {/* Delete */}
-                                <DeleteRecord row={row} onDelete={onDelete} />
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+                    <ActionCell
+                        row={row}
+                        onEditButtonClick={onEditButtonClick}
+                        onDelete={onDelete}
+                        onDeploy={onDeploy}
+                        isDeploying={isDeploying}
+                    />
                 );
             },
         },

@@ -1,8 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Input, Switch, Label, Badge, Select, Textarea } from '@/components';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/atoms/dialog';
+import { 
+    Button, 
+    Input, 
+    Switch, 
+    Label, 
+    Badge, 
+    Select, 
+    Textarea,
+    Dialog, 
+    DialogContent, 
+    DialogHeader, 
+    DialogTitle, 
+    DialogBody, 
+    DialogFooter 
+} from '@/components';
 import { IAgentForm } from '@/models';
 import { 
     Plug2, 
@@ -452,99 +465,88 @@ export const ExecutionPrimitivesSection = ({
 
             {/* Configuration Modal */}
             <Dialog open={configModalOpen} onOpenChange={setConfigModalOpen}>
-                <DialogContent className="max-w-lg max-h-[85vh]">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-x-2">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30">
-                                <span className="text-blue-600 dark:text-blue-400">
-                                    {selectedPrimitive?.icon}
-                                </span>
-                            </div>
-                            <div>
-                                <span className="block">Configure {selectedPrimitive?.name}</span>
-                                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                                    Integration Settings
-                                </span>
-                            </div>
+                <DialogContent className="max-w-[unset] w-[520px] !grid-rows-[auto_1fr_auto] max-h-[85vh]">
+                    <DialogHeader className="pb-2 !p-4">
+                        <DialogTitle className="flex items-center gap-2 text-base">
+                            <span className="text-blue-600 dark:text-blue-400">
+                                {selectedPrimitive?.icon}
+                            </span>
+                            Configure {selectedPrimitive?.name}
                         </DialogTitle>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {selectedPrimitive?.description}
+                        </p>
                     </DialogHeader>
-                    <DialogBody className="overflow-y-auto">
-                        <div className="space-y-5">
-                            {/* Documentation Link */}
-                            {selectedPrimitive?.docsUrl && (
-                                <a 
-                                    href={selectedPrimitive.docsUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-x-2 text-xs text-blue-600 dark:text-blue-400 hover:underline px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
-                                >
-                                    <ExternalLink size={12} />
-                                    View {selectedPrimitive.name} Documentation
-                                </a>
-                            )}
+                    <DialogBody className="space-y-4 py-3 overflow-y-auto">
+                        {/* Documentation Link */}
+                        {selectedPrimitive?.docsUrl && (
+                            <a 
+                                href={selectedPrimitive.docsUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-x-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                                <ExternalLink size={12} />
+                                View Documentation
+                            </a>
+                        )}
 
-                            {/* Configuration Fields */}
-                            <div className="space-y-4">
-                                {selectedPrimitive?.fields.map((field) => (
-                                    <div key={field.key} className="space-y-2">
-                                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
-                                            {field.label}
-                                            {field.required && <span className="text-red-500 ml-1">*</span>}
-                                        </Label>
-                                        
-                                        {field.type === 'select' ? (
-                                            <Select
-                                                options={field.options || []}
-                                                currentValue={localConfig[field.key] || ''}
-                                                onChange={(e) => handleConfigChange(field.key, e.target.value)}
-                                                placeholder={field.placeholder}
-                                                className="w-full"
-                                            />
-                                        ) : field.type === 'textarea' ? (
-                                            <Textarea
-                                                placeholder={field.placeholder}
-                                                value={localConfig[field.key] || ''}
-                                                onChange={(e) => handleConfigChange(field.key, e.target.value)}
-                                                rows={4}
-                                                className="font-mono text-xs w-full"
-                                            />
-                                        ) : (
-                                            <Input
-                                                type={field.type === 'password' ? 'password' : 'text'}
-                                                placeholder={field.placeholder}
-                                                value={localConfig[field.key] || ''}
-                                                onChange={(e) => handleConfigChange(field.key, e.target.value)}
-                                                className="w-full"
-                                            />
-                                        )}
-                                        
-                                        {field.helpText && (
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-start gap-x-1.5 mt-1">
-                                                <Info size={12} className="shrink-0 mt-0.5" />
-                                                <span>{field.helpText}</span>
-                                            </p>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                            
-                            {/* Security Notice */}
-                            <div className="flex items-start gap-x-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 shrink-0">
-                                    <Shield size={14} className="text-blue-600 dark:text-blue-400" />
+                        {/* Configuration Fields */}
+                        <div className="space-y-3">
+                            {selectedPrimitive?.fields.map((field) => (
+                                <div key={field.key} className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-700 dark:text-gray-100 block">
+                                        {field.label}
+                                        {field.required && <span className="text-red-500 ml-1">*</span>}
+                                    </label>
+                                    
+                                    {field.type === 'select' ? (
+                                        <Select
+                                            options={field.options || []}
+                                            currentValue={localConfig[field.key] || ''}
+                                            onChange={(e) => handleConfigChange(field.key, e.target.value)}
+                                            placeholder={field.placeholder}
+                                            className="w-full text-sm h-8"
+                                        />
+                                    ) : field.type === 'textarea' ? (
+                                        <Textarea
+                                            placeholder={field.placeholder}
+                                            value={localConfig[field.key] || ''}
+                                            onChange={(e) => handleConfigChange(field.key, e.target.value)}
+                                            rows={3}
+                                            className="font-mono text-xs w-full"
+                                        />
+                                    ) : (
+                                        <Input
+                                            type={field.type === 'password' ? 'password' : 'text'}
+                                            placeholder={field.placeholder}
+                                            value={localConfig[field.key] || ''}
+                                            onChange={(e) => handleConfigChange(field.key, e.target.value)}
+                                            className="w-full text-sm h-8"
+                                        />
+                                    )}
+                                    
+                                    {field.helpText && (
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                                            {field.helpText}
+                                        </p>
+                                    )}
                                 </div>
-                                <div>
-                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        Secure Storage
-                                    </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        All credentials are encrypted at rest and in transit. They are only accessible during agent execution.
-                                    </p>
-                                </div>
-                            </div>
+                            ))}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="border-t border-gray-200 dark:border-gray-700" />
+                        
+                        {/* Security Notice */}
+                        <div className="flex items-center gap-x-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <Shield size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                            <p className="text-[10px] text-blue-700 dark:text-blue-400">
+                                All credentials are encrypted at rest and in transit.
+                            </p>
                         </div>
                     </DialogBody>
-                    <DialogFooter>
+                    <DialogFooter className="!p-4">
                         <Button variant="secondary" size="sm" onClick={handleConfigCancel}>
                             Cancel
                         </Button>
@@ -554,14 +556,7 @@ export const ExecutionPrimitivesSection = ({
                             onClick={handleConfigSave}
                             disabled={isSaving || !isFormValid()}
                         >
-                            {isSaving ? (
-                                'Saving...'
-                            ) : (
-                                <>
-                                    <Check size={14} className="mr-1.5" />
-                                    Save Configuration
-                                </>
-                            )}
+                            {isSaving ? 'Saving...' : 'Save Configuration'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
