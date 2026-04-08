@@ -18,9 +18,9 @@ interface SkillsSectionProps {
 }
 
 const ioModeOptions: { name: string; value: IOMode }[] = [
-    { name: 'JSON', value: 'application/json' as IOMode },
-    { name: 'Text', value: 'text/plain' as IOMode },
-    { name: 'XML', value: 'application/xml' as IOMode },
+    { name: 'JSON', value: 'application/json' },
+    { name: 'Text', value: 'text/plain' },
+    { name: 'XML', value: 'application/xml' },
 ];
 
 const defaultSkill: Omit<IHorizonSkill, 'id'> = {
@@ -28,7 +28,9 @@ const defaultSkill: Omit<IHorizonSkill, 'id'> = {
     description: '',
     tags: [],
     examples: [],
-    ioModes: ['application/json' as IOMode],
+    ioModes: ['application/json'],
+    inputModes: ['application/json'],
+    outputModes: ['application/json'],
     version: '1.0.0',
 };
 
@@ -49,9 +51,9 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
             description: connector.description || `Data connector skill for ${connector.name}. Provides access to ${connector.type || 'external'} data source.`,
             tags: ['data-connector', connector.type || 'connector', 'auto-generated'],
             examples: [],
-            ioModes: ['application/json'] as IOMode[],
-            inputModes: ['application/json'] as IOMode[],
-            outputModes: ['application/json'] as IOMode[],
+            ioModes: ['application/json'],
+            inputModes: ['application/json'],
+            outputModes: ['application/json'],
             version: '1.0.0',
             inputConnectorMapping: { connectorId: connector.id || '' },
         };

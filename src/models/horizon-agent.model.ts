@@ -25,8 +25,8 @@ export type PriorityStrategy = 'fifo' | 'priority' | 'fair';
 // Notification Mode
 export type NotificationMode = 'streaming' | 'webhook' | 'both';
 
-// IO Mode for Skills
-export type IOMode = 'text' | 'structured' | 'streaming';
+// IO Mode for Skills - MIME types for A2A protocol
+export type IOMode = 'application/json' | 'text/plain' | 'application/xml';
 
 // Authentication Type
 export type AuthType = 'api_key' | 'oauth2' | 'bearer' | 'basic' | 'none';
