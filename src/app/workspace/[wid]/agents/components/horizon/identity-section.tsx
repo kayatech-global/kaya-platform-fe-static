@@ -860,59 +860,93 @@ export const IdentitySection = ({
 
         {/* A2A Card Modal */}
         <Dialog open={showA2ACardModal} onOpenChange={setShowA2ACardModal}>
-            <DialogContent className="max-w-3xl max-h-[80vh]">
+            <DialogContent className="max-w-3xl max-h-[85vh]">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-x-2">
-                        <FileJson size={20} />
+                    <DialogTitle className="flex items-center gap-x-2 text-base font-semibold">
+                        <div className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                            <FileJson size={18} className="text-gray-600 dark:text-gray-400" />
+                        </div>
                         A2A Agent Card
                     </DialogTitle>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 ml-9">
+                        Agent-to-Agent protocol specification for {displayName || agentName || 'this agent'}
+                    </p>
                 </DialogHeader>
                 <DialogBody className="overflow-auto">
-                    {/* Metadata Chips */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                        <Badge variant="secondary" className="text-xs">
-                            Schema v{a2aCard.schemaVersion}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                            {a2aCard.skills.length} Skills
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                            {a2aCard.capabilities.streaming ? 'Streaming' : 'No Streaming'}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                            {Object.keys(a2aCard.securitySchemes).length > 0 
-                                ? Object.keys(a2aCard.securitySchemes).join(', ')
-                                : 'No Auth'}
-                        </Badge>
+                    {/* Metadata Summary */}
+                    <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div className="flex flex-wrap gap-2">
+                            <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                Schema v{a2aCard.schemaVersion}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                                {a2aCard.skills.length} Skill{a2aCard.skills.length !== 1 ? 's' : ''}
+                            </Badge>
+                            <Badge variant="secondary" className={cn(
+                                "text-xs",
+                                a2aCard.capabilities.streaming 
+                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                    : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                            )}>
+                                {a2aCard.capabilities.streaming ? 'Streaming Enabled' : 'No Streaming'}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                {Object.keys(a2aCard.securitySchemes).length > 0 
+                                    ? Object.keys(a2aCard.securitySchemes).join(', ')
+                                    : 'No Auth'}
+                            </Badge>
+                            <Badge variant="secondary" className={cn(
+                                "text-xs",
+                                a2aVisibility === 'public'
+                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                    : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                            )}>
+                                {a2aVisibility === 'public' ? 'Public' : 'Private'}
+                            </Badge>
+                        </div>
                     </div>
 
                     {/* JSON Display */}
-                    <div className="bg-gray-900 dark:bg-gray-950 rounded-lg p-4 overflow-auto max-h-[400px]">
-                        <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap">
-                            {JSON.stringify(a2aCard, null, 2)}
-                        </pre>
+                    <div className="relative">
+                        <div className="absolute top-2 right-2 z-10">
+                            <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                onClick={copyJsonToClipboard}
+                                className="bg-gray-800 hover:bg-gray-700 text-white border-gray-700"
+                            >
+                                {copiedJson ? <Check size={14} className="mr-1.5 text-green-400" /> : <Copy size={14} className="mr-1.5" />}
+                                {copiedJson ? 'Copied!' : 'Copy'}
+                            </Button>
+                        </div>
+                        <div className="bg-gray-900 dark:bg-gray-950 rounded-lg p-4 overflow-auto max-h-[350px] border border-gray-800">
+                            <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap leading-relaxed">
+                                {JSON.stringify(a2aCard, null, 2)}
+                            </pre>
+                        </div>
                     </div>
 
                     {/* Well-known URL */}
-                    <div className="mt-4 flex items-center gap-x-2 text-xs text-gray-500">
-                        <ExternalLink size={12} />
-                        <a 
-                            href={wellKnownUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="hover:text-blue-500 underline truncate"
-                        >
-                            {wellKnownUrl}
-                        </a>
+                    <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center gap-x-2">
+                            <ExternalLink size={14} className="text-gray-400 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Discovery Endpoint</p>
+                                <a 
+                                    href={wellKnownUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-mono truncate block"
+                                >
+                                    {wellKnownUrl}
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </DialogBody>
-                <DialogFooter>
+                <DialogFooter className="border-t border-gray-200 dark:border-gray-700 pt-4">
                     <Button variant="secondary" size="sm" onClick={() => setShowA2ACardModal(false)}>
                         Close
-                    </Button>
-                    <Button variant="primary" size="sm" onClick={copyJsonToClipboard}>
-                        {copiedJson ? <Check size={14} className="mr-1" /> : <Copy size={14} className="mr-1" />}
-                        {copiedJson ? 'Copied!' : 'Copy JSON'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

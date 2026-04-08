@@ -3,7 +3,7 @@
 import { Input, Textarea, Button, Label, Badge, Select } from '@/components';
 import { cn } from '@/lib/utils';
 import { IAgentForm, IHorizonSkill, IOMode, IConnectorForm } from '@/models';
-import { Zap, Trash2, ChevronDown, ChevronUp, Tag, X, Link2, Plus, Hash, Copy, Check } from 'lucide-react';
+import { Zap, Trash2, ChevronDown, ChevronUp, Tag, X, Link2, Plus, Hash } from 'lucide-react';
 import { Control, Controller, UseFormWatch, UseFormSetValue, FieldErrors } from 'react-hook-form';
 import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,9 +18,9 @@ interface SkillsSectionProps {
 }
 
 const ioModeOptions: { name: string; value: IOMode }[] = [
-    { name: 'Text', value: 'text' },
-    { name: 'Structured', value: 'structured' },
-    { name: 'Streaming', value: 'streaming' },
+    { name: 'JSON', value: 'application/json' as IOMode },
+    { name: 'Text', value: 'text/plain' as IOMode },
+    { name: 'XML', value: 'application/xml' as IOMode },
 ];
 
 const defaultSkill: Omit<IHorizonSkill, 'id'> = {
@@ -28,7 +28,7 @@ const defaultSkill: Omit<IHorizonSkill, 'id'> = {
     description: '',
     tags: [],
     examples: [],
-    ioModes: ['text'],
+    ioModes: ['application/json' as IOMode],
     version: '1.0.0',
 };
 
@@ -36,7 +36,6 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
     const [expandedSkills, setExpandedSkills] = useState<Set<string>>(new Set());
     const [newTag, setNewTag] = useState<Record<string, string>>({});
     const [newIoMode, setNewIoMode] = useState<Record<string, IOMode>>({});
-    const [copiedId, setCopiedId] = useState<string | null>(null);
 
     const skills = watch('horizonConfig.skills') || [];
 
@@ -49,7 +48,7 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
             description: connector.description || `Data connector skill for ${connector.name}. Provides access to ${connector.type || 'external'} data source.`,
             tags: ['data-connector', connector.type || 'connector', 'auto-generated'],
             examples: [],
-            ioModes: ['structured'] as IOMode[],
+            ioModes: ['application/json'] as IOMode[],
             version: '1.0.0',
             inputConnectorMapping: { connectorId: connector.id || '' },
         };
@@ -153,12 +152,6 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
         }
     };
 
-    const copyToClipboard = async (text: string, skillId: string) => {
-        await navigator.clipboard.writeText(text);
-        setCopiedId(skillId);
-        setTimeout(() => setCopiedId(null), 2000);
-    };
-
     const getIoModeLabel = (mode: IOMode): string => {
         const option = ioModeOptions.find((o) => o.value === mode);
         return option?.name || mode;
@@ -247,30 +240,20 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
                                 {expandedSkills.has(skill.id) && (
                                     <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-900">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            {/* Skill ID - Read-only with copy */}
+                                            {/* Skill ID - Editable but auto-populated */}
                                             <div className="col-span-1 sm:col-span-2">
-                                                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                                                    Skill ID
-                                                </Label>
-                                                <div className="flex items-center gap-x-2 bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                                                    <Hash size={14} className="text-gray-400 shrink-0" />
-                                                    <p className="text-sm font-mono text-gray-700 dark:text-gray-300 flex-1 truncate">
-                                                        {skill.id}
-                                                    </p>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => copyToClipboard(skill.id, skill.id)}
-                                                        className="shrink-0"
-                                                    >
-                                                        {copiedId === skill.id ? (
-                                                            <Check size={14} className="text-green-500" />
-                                                        ) : (
-                                                            <Copy size={14} />
-                                                        )}
-                                                    </Button>
-                                                </div>
+                                                <Input
+                                                    label="Skill ID"
+                                                    placeholder="skill-unique-id"
+                                                    value={skill.id}
+                                                    disabled={isReadOnly}
+                                                    onChange={(e) => updateSkill(skill.id, { id: e.target.value })}
+                                                    leftIcon={<Hash size={14} className="text-gray-400" />}
+                                                    className="font-mono"
+                                                />
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    Auto-generated but can be customized. Must be unique within this agent.
+                                                </p>
                                             </div>
 
                                             {/* Skill Name */}

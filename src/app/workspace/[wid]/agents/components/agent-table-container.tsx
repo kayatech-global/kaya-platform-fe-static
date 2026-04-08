@@ -81,20 +81,32 @@ const DeleteRecord = ({ row, onDelete }: { row: Row<AgentData>; onDelete: (id: s
                 Delete
             </DropdownMenuItem>
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="overflow-y-auto max-h-[80%]">
+                <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Are you sure, do you want to delete this?
-                            </p>
+                        <DialogTitle className="flex items-center gap-x-2 text-base font-semibold">
+                            <Trash2 size={18} className="text-red-500" />
+                            Delete Agent
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="flex justify-end gap-2 p-3">
-                        <Button variant={'secondary'} size="sm" onClick={() => setOpen(false)}>
-                            No
+                    <div className="py-4">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Are you sure you want to delete <span className="font-medium text-gray-900 dark:text-gray-100">&quot;{row.original.agentName}&quot;</span>?
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                            This action cannot be undone. All configurations and deployment history will be permanently removed.
+                        </p>
+                    </div>
+                    <div className="flex justify-end gap-x-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
+                            Cancel
                         </Button>
-                        <Button variant={'primary'} size="sm" onClick={handleDelete}>
-                            Yes
+                        <Button 
+                            variant="primary" 
+                            size="sm" 
+                            onClick={handleDelete}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Delete Agent
                         </Button>
                     </div>
                 </DialogContent>
@@ -172,30 +184,39 @@ const DeploymentProgressDialog = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-lg">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-x-2">
+                    <DialogTitle className="flex items-center gap-x-2 text-base font-semibold">
                         {isComplete ? (
-                            <Check size={20} className="text-green-500" />
+                            <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-full">
+                                <Check size={16} className="text-green-600 dark:text-green-400" />
+                            </div>
                         ) : (
-                            <Loader2 size={20} className="text-blue-500 animate-spin" />
+                            <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                                <Loader2 size={16} className="text-blue-600 dark:text-blue-400 animate-spin" />
+                            </div>
                         )}
-                        <span>{isRedeployment ? 'Re-deploying' : 'Deploying'} {agentName}</span>
+                        <span>{isRedeployment ? 'Re-deploying' : 'Deploying'} Agent</span>
                     </DialogTitle>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 ml-9">
+                        {agentName}
+                    </p>
                 </DialogHeader>
                 <div className="py-4">
-                    <div className="space-y-3">
+                    {/* Progress Steps */}
+                    <div className="space-y-2">
                         {steps.map((step, idx) => (
                             <div
                                 key={step.id}
                                 className={cn(
-                                    "flex items-start gap-x-3 p-3 rounded-lg transition-colors",
-                                    step.status === 'in-progress' && "bg-blue-50 dark:bg-blue-900/20",
-                                    step.status === 'completed' && "bg-green-50 dark:bg-green-900/10",
-                                    step.status === 'pending' && "opacity-50"
+                                    "flex items-start gap-x-3 p-3 rounded-lg border transition-all",
+                                    step.status === 'in-progress' && "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800",
+                                    step.status === 'completed' && "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800",
+                                    step.status === 'pending' && "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-60",
+                                    step.status === 'error' && "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800"
                                 )}
                             >
-                                <div className="mt-0.5">
+                                <div className="mt-0.5 shrink-0">
                                     {getStepIcon(step)}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -203,7 +224,8 @@ const DeploymentProgressDialog = ({
                                         "text-sm font-medium",
                                         step.status === 'completed' && "text-green-700 dark:text-green-400",
                                         step.status === 'in-progress' && "text-blue-700 dark:text-blue-400",
-                                        step.status === 'pending' && "text-gray-500 dark:text-gray-400"
+                                        step.status === 'pending' && "text-gray-500 dark:text-gray-400",
+                                        step.status === 'error' && "text-red-700 dark:text-red-400"
                                     )}>
                                         {step.label}
                                     </p>
@@ -216,16 +238,21 @@ const DeploymentProgressDialog = ({
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                            <span>Deployment Progress</span>
-                            <span>{Math.round((steps.filter(s => s.status === 'completed').length / steps.length) * 100)}%</span>
+                    <div className="mt-5 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between text-xs mb-2">
+                            <span className="text-gray-600 dark:text-gray-400 font-medium">Deployment Progress</span>
+                            <span className={cn(
+                                "font-semibold",
+                                isComplete ? "text-green-600 dark:text-green-400" : "text-blue-600 dark:text-blue-400"
+                            )}>
+                                {Math.round((steps.filter(s => s.status === 'completed').length / steps.length) * 100)}%
+                            </span>
                         </div>
-                        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div 
                                 className={cn(
                                     "h-full transition-all duration-500 rounded-full",
-                                    hasError ? "bg-red-500" : "bg-green-500"
+                                    hasError ? "bg-red-500" : isComplete ? "bg-green-500" : "bg-blue-500"
                                 )}
                                 style={{ width: `${(steps.filter(s => s.status === 'completed').length / steps.length) * 100}%` }}
                             />
@@ -234,17 +261,22 @@ const DeploymentProgressDialog = ({
 
                     {/* Completion Message */}
                     {isComplete && (
-                        <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                            <p className="text-sm text-green-700 dark:text-green-400 font-medium">
-                                Deployment Successful
-                            </p>
-                            <p className="text-xs text-green-600 dark:text-green-500 mt-1">
-                                Your agent is now live and accessible via the A2A endpoint.
-                            </p>
+                        <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                            <div className="flex items-start gap-x-3">
+                                <Check size={18} className="text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+                                <div>
+                                    <p className="text-sm text-green-700 dark:text-green-400 font-semibold">
+                                        Deployment Successful
+                                    </p>
+                                    <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                                        Your agent is now live and accessible via the A2A endpoint. Other agents can discover and interact with it using the workspace identity.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-2 border-t border-gray-200 dark:border-gray-700">
                     <Button
                         variant={isComplete ? "primary" : "secondary"}
                         size="sm"
@@ -302,37 +334,45 @@ const DeployDialog = ({
 
             {/* Confirmation Dialog */}
             <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-                <DialogContent className="overflow-y-auto max-h-[80%]">
+                <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
-                                {isDeployed 
-                                    ? 'Re-deploy this Horizon Agent?' 
-                                    : 'Deploy this Horizon Agent?'
-                                }
-                            </p>
+                        <DialogTitle className="flex items-center gap-x-2 text-base font-semibold">
+                            {isDeployed ? (
+                                <RefreshCw size={18} className="text-blue-500" />
+                            ) : (
+                                <Rocket size={18} className="text-blue-500" />
+                            )}
+                            {isDeployed ? 'Re-deploy Agent' : 'Deploy Agent'}
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="p-3">
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    <div className="py-4">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
                             {isDeployed 
-                                ? `This will re-deploy "${row.original.agentName}" to the workspace-scoped agents endpoint with the latest configuration changes.`
-                                : `This will deploy "${row.original.agentName}" to the workspace-scoped agents endpoint, making it callable via the workspace identity.`
+                                ? <>You are about to re-deploy <span className="font-medium text-gray-900 dark:text-gray-100">&quot;{row.original.agentName}&quot;</span> with the latest configuration changes.</>
+                                : <>You are about to deploy <span className="font-medium text-gray-900 dark:text-gray-100">&quot;{row.original.agentName}&quot;</span> to the workspace-scoped agents endpoint.</>
                             }
                         </p>
-                        <div className="flex justify-end gap-2">
-                            <Button variant={'secondary'} size="sm" onClick={() => setConfirmOpen(false)}>
-                                Cancel
-                            </Button>
-                            <Button 
-                                variant={'primary'} 
-                                size="sm" 
-                                onClick={handleDeploy}
-                                disabled={isDeploying}
-                            >
-                                {isDeployed ? 'Re-Deploy' : 'Deploy'}
-                            </Button>
+                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <p className="text-xs text-blue-700 dark:text-blue-400">
+                                {isDeployed 
+                                    ? 'The agent will be updated in-place. Existing integrations will continue to work with the new configuration.'
+                                    : 'Once deployed, the agent will be accessible via A2A protocol and can be called by other agents in the workspace.'
+                                }
+                            </p>
                         </div>
+                    </div>
+                    <div className="flex justify-end gap-x-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <Button variant="secondary" size="sm" onClick={() => setConfirmOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button 
+                            variant="primary" 
+                            size="sm" 
+                            onClick={handleDeploy}
+                            disabled={isDeploying}
+                        >
+                            {isDeployed ? 'Re-Deploy Agent' : 'Deploy Agent'}
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>
