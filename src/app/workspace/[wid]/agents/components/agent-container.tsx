@@ -110,6 +110,8 @@ export const AgentContainer = () => {
                             onEditButtonClick={handleEdit}
                             onDelete={onDelete}
                             onRecentActivity={handleClick}
+                            onDeploy={onPublish}
+                            isDeploying={isPublishing}
                         />
                     </div>
                 </div>
@@ -183,8 +185,6 @@ export const AgentContainer = () => {
                 refetchMessageBroker={onRefetchMessageBroker}
                 refetchGuardrails={refetchGuardrails}
                 onRefetchExecutableFunctions={refetchExecutableFunctions}
-                isPublishing={isPublishing}
-                onPublish={onPublish}
             />
         </React.Fragment>
     );

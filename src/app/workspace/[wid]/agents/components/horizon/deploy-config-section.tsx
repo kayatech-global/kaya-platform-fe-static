@@ -25,12 +25,12 @@ const environmentOptions = [
 ];
 
 const runtimeOptions = [
-    { name: 'Python 3.11', value: 'python311' },
-    { name: 'Python 3.12', value: 'python312' },
-    { name: 'Node.js 20', value: 'nodejs20' },
-    { name: 'Node.js 22', value: 'nodejs22' },
-    { name: 'Java 21', value: 'java21' },
-    { name: '.NET 8', value: 'dotnet8' },
+    { name: 'Python 3.11 (LangChain, CrewAI)', value: 'python311' },
+    { name: 'Python 3.12 (AutoGen, OpenAI Agents SDK)', value: 'python312' },
+    { name: 'Node.js 20 LTS (LangChain.js)', value: 'nodejs20' },
+    { name: 'Node.js 22 (Vercel AI SDK)', value: 'nodejs22' },
+    { name: 'Java 21 LTS (Spring AI, LangChain4j)', value: 'java21' },
+    { name: '.NET 8 (Semantic Kernel, AutoGen.NET)', value: 'dotnet8' },
 ];
 
 export const DeployConfigSection = ({ control, watch, setValue, isReadOnly }: DeployConfigSectionProps) => {

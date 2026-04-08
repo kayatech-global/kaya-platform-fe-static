@@ -2,12 +2,19 @@
 
 import React, { useState } from 'react';
 import { ColumnDef, Row } from '@tanstack/react-table';
-import { Trash2, Pencil } from 'lucide-react';
+import { Trash2, Pencil, Rocket, RefreshCw, MoreHorizontal } from 'lucide-react';
 import { Button, Input, Badge } from '@/components';
 import DataTable from '@/components/molecules/table/data-table';
 import { useForm } from 'react-hook-form';
 import { cn, handleNoValue } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/atoms/dropdown-menu';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
 import { ISelfLearning, AgentCategory, IPublishStatus } from '@/models';
 
@@ -31,6 +38,8 @@ interface AgentTableContainerProps {
     onEditButtonClick: (id: string) => void;
     onDelete: (id: string) => void;
     onRecentActivity: () => void;
+    onDeploy?: (id: string) => void;
+    isDeploying?: boolean;
 }
 
 const DeleteRecord = ({ row, onDelete }: { row: Row<AgentData>; onDelete: (id: string) => void }) => {
@@ -81,7 +90,88 @@ const DeleteRecord = ({ row, onDelete }: { row: Row<AgentData>; onDelete: (id: s
     );
 };
 
-const generateColumns = (onEditButtonClick: (id: string) => void, onDelete: (id: string) => void) => {
+// Deploy Confirmation Dialog
+const DeployDialog = ({ 
+    row, 
+    onDeploy, 
+    isDeploying 
+}: { 
+    row: Row<AgentData>; 
+    onDeploy: (id: string) => void;
+    isDeploying?: boolean;
+}) => {
+    const [open, setOpen] = useState<boolean>(false);
+    const isDeployed = row.original.publishStatus?.isPublished;
+
+    const handleDeploy = () => {
+        onDeploy(row.original.id);
+        setOpen(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DropdownMenuItem
+                onClick={(e) => {
+                    e.preventDefault();
+                    setOpen(true);
+                }}
+                disabled={row.original.isReadOnly || isDeploying}
+            >
+                {isDeployed ? (
+                    <>
+                        <RefreshCw size={16} className="mr-2" />
+                        Re-Deploy
+                    </>
+                ) : (
+                    <>
+                        <Rocket size={16} className="mr-2" />
+                        Deploy
+                    </>
+                )}
+            </DropdownMenuItem>
+            <DialogContent className="overflow-y-auto max-h-[80%]">
+                <DialogHeader>
+                    <DialogTitle>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {isDeployed 
+                                ? 'Re-deploy this Horizon Agent?' 
+                                : 'Deploy this Horizon Agent?'
+                            }
+                        </p>
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="p-3">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        {isDeployed 
+                            ? `This will re-deploy "${row.original.agentName}" to the workspace-scoped agents endpoint with the latest configuration changes.`
+                            : `This will deploy "${row.original.agentName}" to the workspace-scoped agents endpoint, making it callable via the workspace identity.`
+                        }
+                    </p>
+                    <div className="flex justify-end gap-2">
+                        <Button variant={'secondary'} size="sm" onClick={() => setOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button 
+                            variant={'primary'} 
+                            size="sm" 
+                            onClick={handleDeploy}
+                            disabled={isDeploying}
+                        >
+                            {isDeploying ? 'Deploying...' : (isDeployed ? 'Re-Deploy' : 'Deploy')}
+                        </Button>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+const generateColumns = (
+    onEditButtonClick: (id: string) => void, 
+    onDelete: (id: string) => void,
+    onDeploy?: (id: string) => void,
+    isDeploying?: boolean
+) => {
     const columns: ColumnDef<AgentData>[] = [
         {
             accessorKey: 'agentName',
@@ -122,7 +212,7 @@ const generateColumns = (onEditButtonClick: (id: string) => void, onDelete: (id:
                                 variant="secondary"
                                 className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                             >
-                                Published
+                                Deployed
                             </Badge>
                         )}
                     </div>
@@ -146,14 +236,40 @@ const generateColumns = (onEditButtonClick: (id: string) => void, onDelete: (id:
                 return <div className="w-full text-left"></div>;
             },
             cell({ row }) {
+                const isHorizon = row.original.agentCategory === AgentCategory.HORIZON;
+                
                 return (
-                    <div className="flex items-center gap-x-4">
+                    <div className="flex items-center gap-x-2">
                         <DeleteRecord row={row} onDelete={onDelete} />
                         <Pencil
                             size={18}
                             className="text-gray-500 cursor-pointer dark:text-gray-200"
                             onClick={() => onEditButtonClick(row.getValue('id'))}
                         />
+                        {/* Deploy/Re-Deploy action menu for Horizon Agents only */}
+                        {isHorizon && onDeploy && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="link" size="icon" className="h-8 w-8">
+                                        <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-200" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40">
+                                    <DeployDialog 
+                                        row={row} 
+                                        onDeploy={onDeploy} 
+                                        isDeploying={isDeploying}
+                                    />
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        onClick={() => onEditButtonClick(row.getValue('id'))}
+                                    >
+                                        <Pencil size={16} className="mr-2" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
                 );
             },
@@ -170,6 +286,8 @@ export const AgentTableContainer = ({
     onEditButtonClick,
     onDelete,
     onRecentActivity,
+    onDeploy,
+    isDeploying,
 }: AgentTableContainerProps) => {
     const { register, handleSubmit } = useForm<AgentData>({ mode: 'onChange' });
     const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
@@ -186,7 +304,7 @@ export const AgentTableContainer = ({
         setDebounceTimer(timer);
     };
 
-    const columns = generateColumns(onEditButtonClick, onDelete);
+    const columns = generateColumns(onEditButtonClick, onDelete, onDeploy, isDeploying);
 
     return (
         <div className="grid gap-8">

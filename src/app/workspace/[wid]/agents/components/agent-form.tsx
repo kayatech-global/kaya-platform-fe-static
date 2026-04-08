@@ -40,7 +40,7 @@ import {
     IGuardrailSetup,
     IExecutableFunctionCredential,
 } from '@/models';
-import { Boxes, Bot, Rocket } from 'lucide-react';
+import { Boxes, Bot } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AgentCategory, DEFAULT_HORIZON_CONFIG } from '@/models';
 import {
@@ -51,7 +51,6 @@ import {
     ExecutionPolicySection,
     PersistenceSection,
     NotificationSection,
-    PublishDialog,
     validateHorizonConfig,
 } from './horizon';
 import {
@@ -78,7 +77,6 @@ interface AgentProps {
     isValid: boolean;
     isSaving: boolean;
     isEdit: boolean;
-    isPublishing?: boolean;
     errors: FieldErrors<IAgentForm>;
     isLoadingResources: boolean;
     allPrompts: PromptResponse[] | undefined;
@@ -125,8 +123,6 @@ interface AgentProps {
     refetchVectorRag: () => Promise<void>;
     refetchMessageBroker: () => Promise<void>;
     refetchGuardrails: () => void;
-    onPublish?: () => void;
-    workspaceName?: string;
 }
 
 export type PromptResponse = {
@@ -926,18 +922,7 @@ export const FormBody = (props: AgentProps) => {
 };
 
 export const AgentForm = (props: AgentProps) => {
-    const { isOpen, setOpen, handleSubmit, onHandleSubmit, watch, reset, isValid, isEdit, isSaving, isPublishing, onPublish, workspaceName } = props;
-    const [publishDialogOpen, setPublishDialogOpen] = useState(false);
-    
-    const agentCategory = watch('agentCategory') || AgentCategory.REUSABLE;
-    const isHorizonAgent = agentCategory === AgentCategory.HORIZON;
-    
-    const handlePublish = () => {
-        if (onPublish) {
-            onPublish();
-        }
-        setPublishDialogOpen(false);
-    };
+    const { isOpen, setOpen, handleSubmit, onHandleSubmit, watch, reset, isValid, isEdit, isSaving } = props;
     
     return (
         <>
@@ -982,18 +967,7 @@ export const AgentForm = (props: AgentProps) => {
                             </Tooltip>
                         </TooltipProvider>
                     </div>
-                    {/* Publish Button for Horizon Agents */}
-                    {isHorizonAgent && isEdit && onPublish && (
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => setPublishDialogOpen(true)}
-                            disabled={isSaving || isPublishing || !!watch('isReadOnly')}
-                        >
-                            <Rocket size={16} className="mr-1" />
-                            Publish
-                        </Button>
-                    )}
+                    
                 </div>
             }
             content={
@@ -1002,18 +976,6 @@ export const AgentForm = (props: AgentProps) => {
                 </div>
             }
         />
-        
-        {/* Publish Dialog */}
-        {isHorizonAgent && (
-            <PublishDialog
-                open={publishDialogOpen}
-                onOpenChange={setPublishDialogOpen}
-                watch={watch}
-                onPublish={handlePublish}
-                isPublishing={isPublishing}
-                workspaceName={workspaceName}
-            />
-        )}
         </>
     );
 };
