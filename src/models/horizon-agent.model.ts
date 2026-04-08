@@ -121,7 +121,9 @@ export interface IHorizonSkill {
   description: string;
   tags: string[];
   examples: string[];
-  ioModes: IOMode[];
+  ioModes: IOMode[]; // Legacy - kept for backwards compatibility
+  inputModes?: IOMode[]; // Separate input modes
+  outputModes?: IOMode[]; // Separate output modes
   version: string;
   inputConnectorMapping?: Record<string, string>;
 }

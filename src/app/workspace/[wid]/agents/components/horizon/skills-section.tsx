@@ -35,7 +35,8 @@ const defaultSkill: Omit<IHorizonSkill, 'id'> = {
 export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, connectors = [] }: SkillsSectionProps) => {
     const [expandedSkills, setExpandedSkills] = useState<Set<string>>(new Set());
     const [newTag, setNewTag] = useState<Record<string, string>>({});
-    const [newIoMode, setNewIoMode] = useState<Record<string, IOMode>>({});
+    const [newInputMode, setNewInputMode] = useState<Record<string, IOMode>>({});
+    const [newOutputMode, setNewOutputMode] = useState<Record<string, IOMode>>({});
 
     const skills = watch('horizonConfig.skills') || [];
 
@@ -49,6 +50,8 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
             tags: ['data-connector', connector.type || 'connector', 'auto-generated'],
             examples: [],
             ioModes: ['application/json'] as IOMode[],
+            inputModes: ['application/json'] as IOMode[],
+            outputModes: ['application/json'] as IOMode[],
             version: '1.0.0',
             inputConnectorMapping: { connectorId: connector.id || '' },
         };
@@ -134,21 +137,43 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
         }
     };
 
-    const addIoMode = (skillId: string) => {
-        const mode = newIoMode[skillId];
+    const addInputMode = (skillId: string) => {
+        const mode = newInputMode[skillId];
         if (mode) {
             const skill = skills.find((s) => s.id === skillId);
-            if (skill && !skill.ioModes.includes(mode)) {
-                updateSkill(skillId, { ioModes: [...skill.ioModes, mode] });
+            const currentModes = skill?.inputModes || skill?.ioModes || [];
+            if (skill && !currentModes.includes(mode)) {
+                updateSkill(skillId, { inputModes: [...currentModes, mode] });
             }
-            setNewIoMode({ ...newIoMode, [skillId]: 'text' });
+            setNewInputMode({ ...newInputMode, [skillId]: '' as IOMode });
         }
     };
 
-    const removeIoMode = (skillId: string, mode: IOMode) => {
+    const removeInputMode = (skillId: string, mode: IOMode) => {
         const skill = skills.find((s) => s.id === skillId);
-        if (skill && skill.ioModes.length > 1) {
-            updateSkill(skillId, { ioModes: skill.ioModes.filter((m) => m !== mode) });
+        const currentModes = skill?.inputModes || skill?.ioModes || [];
+        if (skill && currentModes.length > 1) {
+            updateSkill(skillId, { inputModes: currentModes.filter((m) => m !== mode) });
+        }
+    };
+
+    const addOutputMode = (skillId: string) => {
+        const mode = newOutputMode[skillId];
+        if (mode) {
+            const skill = skills.find((s) => s.id === skillId);
+            const currentModes = skill?.outputModes || skill?.ioModes || [];
+            if (skill && !currentModes.includes(mode)) {
+                updateSkill(skillId, { outputModes: [...currentModes, mode] });
+            }
+            setNewOutputMode({ ...newOutputMode, [skillId]: '' as IOMode });
+        }
+    };
+
+    const removeOutputMode = (skillId: string, mode: IOMode) => {
+        const skill = skills.find((s) => s.id === skillId);
+        const currentModes = skill?.outputModes || skill?.ioModes || [];
+        if (skill && currentModes.length > 1) {
+            updateSkill(skillId, { outputModes: currentModes.filter((m) => m !== mode) });
         }
     };
 
@@ -215,9 +240,9 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
                                                     </Badge>
                                                 )}
                                             </div>
-                                            <p className="text-xs text-gray-400">
-                                                v{skill.version} | {skill.ioModes.map(m => getIoModeLabel(m)).join(', ')}
-                                            </p>
+<p className="text-xs text-gray-400">
+                                                                v{skill.version} | In: {(skill.inputModes || skill.ioModes || []).map(m => getIoModeLabel(m)).join(', ')} | Out: {(skill.outputModes || skill.ioModes || []).map(m => getIoModeLabel(m)).join(', ')}
+                                                            </p>
                                         </div>
                                     </div>
                                     {!isReadOnly && !isConnectorSkill(skill) && (
@@ -289,26 +314,26 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
                                                 />
                                             </div>
 
-                                            {/* IO Modes - Dropdown based like Auth Schemes */}
-                                            <div className="col-span-1 sm:col-span-2">
+                                            {/* Input Modes */}
+                                            <div className="col-span-1">
                                                 <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                                                    IO Modes
+                                                    Input Modes
                                                 </Label>
                                                 
-                                                {/* Existing IO Modes */}
-                                                {skill.ioModes.length > 0 && (
+                                                {/* Existing Input Modes */}
+                                                {(skill.inputModes || skill.ioModes || []).length > 0 && (
                                                     <div className="flex flex-wrap gap-2 mb-3">
-                                                        {skill.ioModes.map((mode) => (
+                                                        {(skill.inputModes || skill.ioModes || []).map((mode) => (
                                                             <Badge
                                                                 key={mode}
                                                                 variant="secondary"
                                                                 className="flex items-center gap-x-1 px-3 py-1.5"
                                                             >
                                                                 {getIoModeLabel(mode)}
-                                                                {!isReadOnly && skill.ioModes.length > 1 && (
+                                                                {!isReadOnly && (skill.inputModes || skill.ioModes || []).length > 1 && (
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => removeIoMode(skill.id, mode)}
+                                                                        onClick={() => removeInputMode(skill.id, mode)}
                                                                         className="ml-1 hover:text-red-500"
                                                                     >
                                                                         <X size={12} />
@@ -319,28 +344,89 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
                                                     </div>
                                                 )}
                                                 
-                                                {/* Add IO Mode */}
+                                                {/* Add Input Mode */}
                                                 {!isReadOnly && (
                                                     <div className="flex gap-x-2">
                                                         <Select
                                                             options={ioModeOptions.filter(
-                                                                (opt) => !skill.ioModes.includes(opt.value)
+                                                                (opt) => !(skill.inputModes || skill.ioModes || []).includes(opt.value)
                                                             )}
-                                                            currentValue={newIoMode[skill.id] || ''}
+                                                            currentValue={newInputMode[skill.id] || ''}
                                                             onChange={(e) =>
-                                                                setNewIoMode({ ...newIoMode, [skill.id]: e.target.value as IOMode })
+                                                                setNewInputMode({ ...newInputMode, [skill.id]: e.target.value as IOMode })
                                                             }
                                                             className="flex-1"
-                                                            placeholder="Select IO mode..."
+                                                            placeholder="Select mode..."
                                                         />
                                                         <Button
                                                             type="button"
                                                             variant="secondary"
                                                             size="sm"
-                                                            onClick={() => addIoMode(skill.id)}
+                                                            onClick={() => addInputMode(skill.id)}
                                                             disabled={
-                                                                !newIoMode[skill.id] ||
-                                                                skill.ioModes.includes(newIoMode[skill.id])
+                                                                !newInputMode[skill.id] ||
+                                                                (skill.inputModes || skill.ioModes || []).includes(newInputMode[skill.id])
+                                                            }
+                                                        >
+                                                            <Plus size={14} className="mr-1" />
+                                                            Add
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Output Modes */}
+                                            <div className="col-span-1">
+                                                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                                    Output Modes
+                                                </Label>
+                                                
+                                                {/* Existing Output Modes */}
+                                                {(skill.outputModes || skill.ioModes || []).length > 0 && (
+                                                    <div className="flex flex-wrap gap-2 mb-3">
+                                                        {(skill.outputModes || skill.ioModes || []).map((mode) => (
+                                                            <Badge
+                                                                key={mode}
+                                                                variant="secondary"
+                                                                className="flex items-center gap-x-1 px-3 py-1.5"
+                                                            >
+                                                                {getIoModeLabel(mode)}
+                                                                {!isReadOnly && (skill.outputModes || skill.ioModes || []).length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => removeOutputMode(skill.id, mode)}
+                                                                        className="ml-1 hover:text-red-500"
+                                                                    >
+                                                                        <X size={12} />
+                                                                    </button>
+                                                                )}
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Add Output Mode */}
+                                                {!isReadOnly && (
+                                                    <div className="flex gap-x-2">
+                                                        <Select
+                                                            options={ioModeOptions.filter(
+                                                                (opt) => !(skill.outputModes || skill.ioModes || []).includes(opt.value)
+                                                            )}
+                                                            currentValue={newOutputMode[skill.id] || ''}
+                                                            onChange={(e) =>
+                                                                setNewOutputMode({ ...newOutputMode, [skill.id]: e.target.value as IOMode })
+                                                            }
+                                                            className="flex-1"
+                                                            placeholder="Select mode..."
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            onClick={() => addOutputMode(skill.id)}
+                                                            disabled={
+                                                                !newOutputMode[skill.id] ||
+                                                                (skill.outputModes || skill.ioModes || []).includes(newOutputMode[skill.id])
                                                             }
                                                         >
                                                             <Plus size={14} className="mr-1" />

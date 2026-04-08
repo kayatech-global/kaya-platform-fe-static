@@ -862,15 +862,17 @@ export const IdentitySection = ({
         <Dialog open={showA2ACardModal} onOpenChange={setShowA2ACardModal}>
             <DialogContent className="max-w-3xl max-h-[85vh]">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-x-2 text-base font-semibold">
-                        <div className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                            <FileJson size={18} className="text-gray-600 dark:text-gray-400" />
+                    <DialogTitle className="flex items-center gap-x-2">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800">
+                            <FileJson size={16} className="text-gray-600 dark:text-gray-400" />
                         </div>
-                        A2A Agent Card
+                        <div>
+                            <span className="block">A2A Agent Card</span>
+                            <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                                {displayName || agentName || 'Agent'} - Protocol Specification
+                            </span>
+                        </div>
                     </DialogTitle>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 ml-9">
-                        Agent-to-Agent protocol specification for {displayName || agentName || 'this agent'}
-                    </p>
                 </DialogHeader>
                 <DialogBody className="overflow-auto">
                     {/* Metadata Summary */}
@@ -944,7 +946,7 @@ export const IdentitySection = ({
                         </div>
                     </div>
                 </DialogBody>
-                <DialogFooter className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <DialogFooter>
                     <Button variant="secondary" size="sm" onClick={() => setShowA2ACardModal(false)}>
                         Close
                     </Button>
