@@ -1046,7 +1046,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                             className="w-full gap-2 text-xs"
                                         >
                                             <Plus className="w-3.5 h-3.5" />
-                                            Add Method Mapping
+                                            Add Task Mapping
                                         </Button>
                                     )}
                                 </div>
