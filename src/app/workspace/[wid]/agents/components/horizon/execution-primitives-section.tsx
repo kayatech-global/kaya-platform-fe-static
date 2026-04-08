@@ -313,10 +313,11 @@ export const ExecutionPrimitivesSection = ({
         
         setIsSaving(true);
         
-        setValue(`horizonConfig.executionPrimitives.${selectedPrimitive.key}`, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setValue(`horizonConfig.executionPrimitives.${selectedPrimitive.key}` as any, {
             enabled: true,
             config: localConfig,
-        });
+        } as any);
         
         setTimeout(() => {
             setIsSaving(false);
