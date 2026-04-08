@@ -63,6 +63,8 @@ export const AgentContainer = () => {
         onRefetchVectorRag,
         onRefetchMessageBroker,
         refetchGuardrails,
+        isPublishing,
+        onPublish,
     } = useAgent();
     const { isLg, isMobile } = useBreakpoint();
 
@@ -108,6 +110,8 @@ export const AgentContainer = () => {
                             onEditButtonClick={handleEdit}
                             onDelete={onDelete}
                             onRecentActivity={handleClick}
+                            onDeploy={onPublish}
+                            isDeploying={isPublishing}
                         />
                     </div>
                 </div>

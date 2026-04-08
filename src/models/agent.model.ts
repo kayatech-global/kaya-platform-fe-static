@@ -4,6 +4,7 @@ import { IGraphRag } from './graph-rag.model';
 import { IVectorRag } from './vector-rag.model';
 import { IMessagePublisher, INodeHumanInput } from './node.model';
 import { IConnectorForm } from './configuration.model';
+import { AgentCategory, IHorizonConfig, IPublishStatus } from './horizon-agent.model';
 
 export interface Tool {
     id: string;
@@ -30,6 +31,10 @@ export interface IAgentForm {
     connectors?: IConnectorForm[];
     // This property is using for intelligence source validation purpose
     sourceValue?: string;
+    // Horizon Agent specific fields
+    agentCategory?: AgentCategory;
+    horizonConfig?: IHorizonConfig;
+    publishStatus?: IPublishStatus;
 }
 export interface IAgent {
     id?: string;
@@ -51,6 +56,10 @@ export interface IAgent {
     promptTemplateId: string;
     tools: Tool[];
     isReadOnly?: boolean;
+    // Horizon Agent specific fields
+    agentCategory?: AgentCategory;
+    horizonConfig?: IHorizonConfig;
+    publishStatus?: IPublishStatus;
 }
 
 export interface Agent extends Omit<IAgent, 'id'> {

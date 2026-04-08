@@ -42,6 +42,18 @@ import {
 } from '@/models';
 import { Boxes, Bot } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AgentCategory, DEFAULT_HORIZON_CONFIG } from '@/models';
+import {
+    AgentCategorySelector,
+    DeployConfigSection,
+    IdentitySection,
+    SkillsSection,
+    ExecutionPolicySection,
+    PersistenceSection,
+    NotificationSection,
+    ExecutionPrimitivesSection,
+    validateHorizonConfig,
+} from './horizon';
 import {
     Control,
     Controller,
@@ -216,6 +228,17 @@ export const FormBody = (props: AgentProps) => {
     const [outputBroadcasting, setOutputBroadcasting] = useState<IMessagePublisher | undefined>();
     const [guardrails, setGuardrails] = useState<string[] | undefined>();
     const [mounted, setMounted] = useState<boolean>(false);
+    
+    // Horizon Agent state
+    const agentCategory = watch('agentCategory') || AgentCategory.REUSABLE;
+    const isHorizonAgent = agentCategory === AgentCategory.HORIZON;
+
+    // Handle agent category change
+    const handleCategoryChange = useCallback((category: AgentCategory) => {
+        if (category === AgentCategory.HORIZON && !getValues('horizonConfig')) {
+            setValue('horizonConfig', DEFAULT_HORIZON_CONFIG);
+        }
+    }, [setValue, getValues]);
 
     useEffect(() => {
         if (!isEdit) {
@@ -591,6 +614,15 @@ export const FormBody = (props: AgentProps) => {
                         />
                     </div>
                 </div>
+                
+                {/* Agent Category Selector */}
+                <AgentCategorySelector
+                    control={control}
+                    isReadOnly={isEdit && !!watch('isReadOnly')}
+                    isEdit={isEdit}
+                    onCategoryChange={handleCategoryChange}
+                />
+                
                 <div className="col-span-1 sm:col-span-2">
                     <Controller
                         name="promptTemplateId"
@@ -688,10 +720,10 @@ export const FormBody = (props: AgentProps) => {
                         <div className="flex flex-col gap-y-1">
                             <div className="flex items-center gap-x-[10px]">
                                 <Boxes size={20} absoluteStrokeWidth={false} className="stroke-[1px]" />
-                                <p>Add Helper Tools</p>
+                                <p>Add Input Data Connects</p>
                             </div>
                             <p className="text-xs font-normal text-gray-400">
-                                Select helper tools that required for this agent to run efficiently.
+                                Configure data sources and tools required for this agent to operate.
                             </p>
                         </div>
                         <div>
@@ -819,6 +851,79 @@ export const FormBody = (props: AgentProps) => {
                         onMessagePublisherChange={onOutputBroadcasting}
                     />
                 </div>
+                
+                {/* Horizon Agent Configuration Sections */}
+                {isHorizonAgent && (
+                    <>
+                        <div className="col-span-1 sm:col-span-2 md:col-span-2">
+                            <div className="flex items-center gap-x-2 py-2">
+                                <div className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
+                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 px-2">
+                                    Horizon Agent Configuration
+                                </p>
+                                <div className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
+                            </div>
+                        </div>
+                        
+                        <SkillsSection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
+                            errors={errors}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                            connectors={connectors}
+                        />
+
+                        <ExecutionPrimitivesSection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                        
+                        <ExecutionPolicySection
+                            control={control}
+                            watch={watch}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                        
+                        <PersistenceSection
+                            control={control}
+                            watch={watch}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                        
+                        <NotificationSection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
+                            errors={errors}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                        
+                        <IdentitySection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
+                            getValues={getValues}
+                            errors={errors}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                            isEdit={isEdit}
+                            tools={getValues('tools')}
+                            mcpServers={mcpServers}
+                            graphRags={graphRags}
+                            vectorRags={vectorRags}
+                            connectors={connectors}
+                        />
+                        
+                        <DeployConfigSection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                    </>
+                )}
             </div>
         </>
     );
@@ -826,7 +931,9 @@ export const FormBody = (props: AgentProps) => {
 
 export const AgentForm = (props: AgentProps) => {
     const { isOpen, setOpen, handleSubmit, onHandleSubmit, watch, reset, isValid, isEdit, isSaving } = props;
+    
     return (
+        <>
         <AppDrawer
             open={isOpen}
             direction="right"
@@ -868,6 +975,7 @@ export const AgentForm = (props: AgentProps) => {
                             </Tooltip>
                         </TooltipProvider>
                     </div>
+                    
                 </div>
             }
             content={
@@ -876,6 +984,7 @@ export const AgentForm = (props: AgentProps) => {
                 </div>
             }
         />
+        </>
     );
 };
 
