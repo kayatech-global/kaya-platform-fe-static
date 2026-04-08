@@ -6,7 +6,7 @@ import { IAgentForm, AuthType, IAuthScheme, A2AVisibility, IA2AAgentCard, IA2ASk
 import { IMCPBody } from '@/hooks/use-mcp-configuration';
 import { User, Plus, X, Key, Copy, Check, ExternalLink, Eye, Shield, Globe, Lock, FileJson, Sparkles, Zap, Database, Network, Code, Server, Tag, Info } from 'lucide-react';
 import { Control, Controller, UseFormWatch, UseFormSetValue, FieldErrors, UseFormGetValues } from 'react-hook-form';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Tool } from '@/models';
 
 interface IdentitySectionProps {
@@ -116,8 +116,24 @@ export const IdentitySection = ({
     const version = watch('horizonConfig.identity.version') || '1.0.0';
     const description = watch('horizonConfig.identity.description') || '';
     const agentName = watch('agentName') || '';
+    const agentDescription = watch('agentDescription') || '';
     const defaultInputModes = watch('horizonConfig.identity.defaultInputModes') || ['text/plain', 'application/json'];
     const defaultOutputModes = watch('horizonConfig.identity.defaultOutputModes') || ['application/json', 'text/plain'];
+
+    // Auto-populate Display Name and Description from Agent Name and Agent Description
+    useEffect(() => {
+        // Only auto-populate if displayName is empty and agentName has a value
+        if (!displayName && agentName) {
+            setValue('horizonConfig.identity.displayName', agentName);
+        }
+    }, [agentName, displayName, setValue]);
+
+    useEffect(() => {
+        // Only auto-populate if description is empty and agentDescription has a value
+        if (!description && agentDescription) {
+            setValue('horizonConfig.identity.description', agentDescription);
+        }
+    }, [agentDescription, description, setValue]);
 
     // Generate A2A URI
     const agentSlug = useMemo(() => {
