@@ -131,6 +131,7 @@ const DeploymentProgressDialog = ({
     agentName: string;
     isRedeployment: boolean;
 }) => {
+    console.log('[v0] DeploymentProgressDialog rendered, open:', open);
     const [steps, setSteps] = useState<DeploymentStep[]>(initialDeploymentSteps);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
@@ -138,6 +139,7 @@ const DeploymentProgressDialog = ({
 
     // Simulate deployment progress
     useEffect(() => {
+        console.log('[v0] DeploymentProgressDialog useEffect, open:', open);
         if (!open) {
             // Reset when dialog closes
             setSteps(initialDeploymentSteps);
@@ -317,9 +319,12 @@ const ActionCell = ({
     const isDeployed = row.original.publishStatus?.isPublished;
 
     const handleConfirmDeploy = () => {
+        console.log('[v0] handleConfirmDeploy called, setting progressOpen to true');
         setConfirmOpen(false);
         setProgressOpen(true);
+        console.log('[v0] progressOpen should now be true');
         if (onDeploy) {
+            console.log('[v0] calling onDeploy');
             onDeploy(row.original.id);
         }
     };
@@ -338,23 +343,23 @@ const ActionCell = ({
                         {isHorizon && onDeploy && (
                             <>
                                 <DropdownMenuItem 
-                                    asChild 
-                                    onClick={() => setConfirmOpen(true)}
+                                    onClick={() => {
+                                        console.log('[v0] Deploy menu item clicked');
+                                        setConfirmOpen(true);
+                                    }}
                                     disabled={row.original.isReadOnly || isDeploying}
                                 >
-                                    <div className="flex items-center cursor-pointer">
-                                        {isDeployed ? (
-                                            <>
-                                                <RefreshCw size={16} className="mr-2" />
-                                                Re-Deploy
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Rocket size={16} className="mr-2" />
-                                                Deploy
-                                            </>
-                                        )}
-                                    </div>
+                                    {isDeployed ? (
+                                        <>
+                                            <RefreshCw size={16} className="mr-2" />
+                                            Re-Deploy
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Rocket size={16} className="mr-2" />
+                                            Deploy
+                                        </>
+                                    )}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                             </>
