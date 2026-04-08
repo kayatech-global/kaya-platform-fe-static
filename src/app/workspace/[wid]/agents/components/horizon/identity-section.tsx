@@ -4,7 +4,7 @@ import { Input, Textarea, Select, Button, Label, Badge, Switch, Dialog, DialogCo
 import { cn } from '@/lib/utils';
 import { IAgentForm, AuthType, IAuthScheme, A2AVisibility, IA2AAgentCard, IA2ASkill, A2AToolType, IConnectorForm, IGraphRag, IVectorRag } from '@/models';
 import { IMCPBody } from '@/hooks/use-mcp-configuration';
-import { User, Plus, X, Key, Copy, Check, ExternalLink, Eye, Shield, Globe, Lock, FileJson, Sparkles, Zap, Database, Network, Code, Server } from 'lucide-react';
+import { User, Plus, X, Key, Copy, Check, ExternalLink, Eye, Shield, Globe, Lock, FileJson, Sparkles, Zap, Database, Network, Code, Server, Tag, Info } from 'lucide-react';
 import { Control, Controller, UseFormWatch, UseFormSetValue, FieldErrors, UseFormGetValues } from 'react-hook-form';
 import { useState, useMemo, useCallback } from 'react';
 import { Tool } from '@/models';
@@ -37,6 +37,20 @@ const authTypeOptions = [
 const visibilityOptions = [
     { name: 'Private (Internal Only)', value: 'private' },
     { name: 'Public (Discoverable)', value: 'public' },
+];
+
+const inputModeOptions = [
+    { name: 'Plain Text', value: 'text/plain' },
+    { name: 'JSON', value: 'application/json' },
+    { name: 'Form Data', value: 'multipart/form-data' },
+    { name: 'XML', value: 'application/xml' },
+];
+
+const outputModeOptions = [
+    { name: 'JSON', value: 'application/json' },
+    { name: 'Plain Text', value: 'text/plain' },
+    { name: 'Streaming Text', value: 'text/event-stream' },
+    { name: 'XML', value: 'application/xml' },
 ];
 
 // Tool type to A2A tool type mapping
@@ -105,6 +119,8 @@ export const IdentitySection = ({
     const version = watch('horizonConfig.identity.version') || '1.0.0';
     const description = watch('horizonConfig.identity.description') || '';
     const agentName = watch('agentName') || '';
+    const defaultInputModes = watch('horizonConfig.identity.defaultInputModes') || ['text/plain', 'application/json'];
+    const defaultOutputModes = watch('horizonConfig.identity.defaultOutputModes') || ['application/json', 'text/plain'];
 
     // Generate A2A URI
     const agentSlug = useMemo(() => {
@@ -303,25 +319,45 @@ export const IdentitySection = ({
         }
     };
 
+    const toggleInputMode = (mode: string) => {
+        const current = defaultInputModes || [];
+        if (current.includes(mode)) {
+            setValue('horizonConfig.identity.defaultInputModes', current.filter(m => m !== mode));
+        } else {
+            setValue('horizonConfig.identity.defaultInputModes', [...current, mode]);
+        }
+    };
+
+    const toggleOutputMode = (mode: string) => {
+        const current = defaultOutputModes || [];
+        if (current.includes(mode)) {
+            setValue('horizonConfig.identity.defaultOutputModes', current.filter(m => m !== mode));
+        } else {
+            setValue('horizonConfig.identity.defaultOutputModes', [...current, mode]);
+        }
+    };
+
     const wellKnownUrl = `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/agents/${agentSlug}/.well-known/agent-card.json`;
 
     return (
         <>
         <div className="col-span-1 sm:col-span-2 border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-2 sm:p-4">
             <div className="flex flex-col gap-y-4">
+                {/* Section Header */}
                 <div className="flex flex-col gap-y-1">
                     <div className="flex items-center gap-x-[10px]">
                         <User size={20} absoluteStrokeWidth={false} className="stroke-[1px]" />
                         <p className="text-sm font-medium">Identity Configuration</p>
                     </div>
                     <p className="text-xs font-normal text-gray-400">
-                        Define the agent&apos;s identity, versioning, and authentication mechanisms.
+                        Define the agent&apos;s A2A identity, versioning, and authentication for external discovery.
                     </p>
                 </div>
 
-                {/* A2A Identity Section - Visible for Horizon Agents */}
+                {/* A2A Identity Section - Contains ALL Identity Configurations */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
+                    {/* A2A Header with Toggle */}
+                    <div className="flex items-center justify-between mb-5">
                         <div className="flex items-center gap-x-3">
                             <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
                                 <Sparkles size={20} className="text-blue-600 dark:text-blue-400" />
@@ -355,8 +391,8 @@ export const IdentitySection = ({
                     </div>
 
                     {a2aEnabled && (
-                        <div className="space-y-4">
-                            {/* A2A URI */}
+                        <div className="space-y-5">
+                            {/* A2A URI Display */}
                             <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
@@ -377,55 +413,297 @@ export const IdentitySection = ({
                                 </div>
                             </div>
 
-                            {/* Visibility & Skills Summary Row */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {/* Visibility */}
-                                <Controller
-                                    name="horizonConfig.identity.a2aVisibility"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Visibility</p>
-                                            <div className="flex items-center gap-x-2">
-                                                {field.value === 'public' ? (
-                                                    <Globe size={16} className="text-green-500" />
-                                                ) : (
-                                                    <Lock size={16} className="text-orange-500" />
-                                                )}
-                                                <Select
-                                                    options={visibilityOptions}
-                                                    currentValue={field.value || 'private'}
-                                                    disabled={isReadOnly}
-                                                    onChange={(e) => field.onChange(e.target.value as A2AVisibility)}
-                                                    className="flex-1"
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                />
-
-                                {/* Skills Summary */}
-                                <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Attached Skills</p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {Object.entries(toolTypeCounts).map(([type, count]) => {
-                                            if (count === 0) return null;
-                                            const Icon = getToolTypeIcon(type as A2AToolType);
-                                            return (
-                                                <Badge 
-                                                    key={type} 
-                                                    variant="secondary" 
-                                                    className="text-xs flex items-center gap-x-1 bg-gray-100 dark:bg-gray-800"
-                                                >
-                                                    <Icon size={10} />
-                                                    {getToolTypeLabel(type as A2AToolType)} x{count}
-                                                </Badge>
-                                            );
-                                        })}
-                                        {totalSkills === 0 && (
-                                            <span className="text-xs text-gray-400">No tools attached</span>
+                            {/* Basic Identity Fields */}
+                            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center gap-x-2 mb-4">
+                                    <Tag size={14} className="text-gray-500" />
+                                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Basic Identity</p>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {/* Display Name */}
+                                    <Controller
+                                        name="horizonConfig.identity.displayName"
+                                        control={control}
+                                        rules={{ required: 'Display name is required' }}
+                                        render={({ field }) => (
+                                            <Input
+                                                label="Display Name"
+                                                placeholder="Enter display name"
+                                                value={field.value || ''}
+                                                disabled={isReadOnly}
+                                                onChange={field.onChange}
+                                                isDestructive={!!errors?.horizonConfig?.identity?.displayName}
+                                                supportiveText={errors?.horizonConfig?.identity?.displayName?.message}
+                                            />
                                         )}
+                                    />
+
+                                    {/* Version */}
+                                    <Controller
+                                        name="horizonConfig.identity.version"
+                                        control={control}
+                                        rules={{
+                                            required: 'Version is required',
+                                            pattern: {
+                                                value: /^\d+\.\d+\.\d+$/,
+                                                message: 'Use semantic versioning (e.g., 1.0.0)',
+                                            },
+                                        }}
+                                        render={({ field }) => (
+                                            <Input
+                                                label="Version"
+                                                placeholder="1.0.0"
+                                                value={field.value || ''}
+                                                disabled={isReadOnly}
+                                                onChange={field.onChange}
+                                                helperInfo="Semantic versioning (e.g., 1.0.0)"
+                                                isDestructive={!!errors?.horizonConfig?.identity?.version}
+                                                supportiveText={errors?.horizonConfig?.identity?.version?.message}
+                                            />
+                                        )}
+                                    />
+
+                                    {/* Description */}
+                                    <div className="col-span-1 sm:col-span-2">
+                                        <Controller
+                                            name="horizonConfig.identity.description"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Textarea
+                                                    label="Description"
+                                                    placeholder="Describe the agent's purpose and capabilities"
+                                                    value={field.value || ''}
+                                                    disabled={isReadOnly}
+                                                    onChange={field.onChange}
+                                                    rows={3}
+                                                    className="w-full resize-none"
+                                                />
+                                            )}
+                                        />
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Visibility & Endpoint */}
+                            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center gap-x-2 mb-4">
+                                    <Globe size={14} className="text-gray-500" />
+                                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Discovery & Endpoint</p>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {/* Visibility */}
+                                    <Controller
+                                        name="horizonConfig.identity.a2aVisibility"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <div>
+                                                <Label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Visibility</Label>
+                                                <div className="flex items-center gap-x-2">
+                                                    {field.value === 'public' ? (
+                                                        <Globe size={16} className="text-green-500 shrink-0" />
+                                                    ) : (
+                                                        <Lock size={16} className="text-orange-500 shrink-0" />
+                                                    )}
+                                                    <Select
+                                                        options={visibilityOptions}
+                                                        currentValue={field.value || 'private'}
+                                                        disabled={isReadOnly}
+                                                        onChange={(e) => field.onChange(e.target.value as A2AVisibility)}
+                                                        className="flex-1"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    />
+
+                                    {/* Discovery Location */}
+                                    <Controller
+                                        name="horizonConfig.identity.discoveryLocation"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Input
+                                                label="Discovery Path"
+                                                placeholder="/.well-known/agent.json"
+                                                value={field.value || ''}
+                                                disabled={isReadOnly}
+                                                onChange={field.onChange}
+                                                helperInfo="Agent discovery endpoint path"
+                                            />
+                                        )}
+                                    />
+
+                                    {/* Endpoint URL */}
+                                    <div className="col-span-1 sm:col-span-2">
+                                        <Controller
+                                            name="horizonConfig.identity.endpointUrl"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Input
+                                                    label="Endpoint URL"
+                                                    placeholder="https://api.example.com/agent"
+                                                    value={field.value || ''}
+                                                    disabled={isReadOnly}
+                                                    onChange={field.onChange}
+                                                    helperInfo="Optional: Override default A2A endpoint"
+                                                />
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Input/Output Modes */}
+                            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center gap-x-2 mb-4">
+                                    <Info size={14} className="text-gray-500" />
+                                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Input/Output Modes</p>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {/* Default Input Modes */}
+                                    <div>
+                                        <Label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 block">Default Input Modes</Label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {inputModeOptions.map((option) => (
+                                                <Badge
+                                                    key={option.value}
+                                                    variant="secondary"
+                                                    className={cn(
+                                                        "cursor-pointer transition-colors text-xs",
+                                                        defaultInputModes.includes(option.value)
+                                                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-300 dark:border-blue-700"
+                                                            : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                                    )}
+                                                    onClick={() => !isReadOnly && toggleInputMode(option.value)}
+                                                >
+                                                    {defaultInputModes.includes(option.value) && <Check size={10} className="mr-1" />}
+                                                    {option.name}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Default Output Modes */}
+                                    <div>
+                                        <Label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 block">Default Output Modes</Label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {outputModeOptions.map((option) => (
+                                                <Badge
+                                                    key={option.value}
+                                                    variant="secondary"
+                                                    className={cn(
+                                                        "cursor-pointer transition-colors text-xs",
+                                                        defaultOutputModes.includes(option.value)
+                                                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-300 dark:border-green-700"
+                                                            : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                                    )}
+                                                    onClick={() => !isReadOnly && toggleOutputMode(option.value)}
+                                                >
+                                                    {defaultOutputModes.includes(option.value) && <Check size={10} className="mr-1" />}
+                                                    {option.name}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Authentication Schemes */}
+                            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-x-2">
+                                        <Key size={14} className="text-gray-500" />
+                                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
+                                            Authentication Schemes
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Current Auth Schemes */}
+                                {authSchemes.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mb-4">
+                                        {authSchemes.map((scheme) => (
+                                            <Badge
+                                                key={scheme.type}
+                                                variant="secondary"
+                                                className="flex items-center gap-x-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
+                                            >
+                                                <Shield size={12} />
+                                                {getAuthLabel(scheme.type)}
+                                                {!isReadOnly && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeAuthScheme(scheme.type)}
+                                                        className="ml-1 hover:text-red-500 transition-colors"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                )}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Add Auth Scheme */}
+                                {!isReadOnly && (
+                                    <div className="flex items-end gap-x-2">
+                                        <div className="flex-1">
+                                            <Select
+                                                label="Add Authentication"
+                                                placeholder="Select auth type"
+                                                options={authTypeOptions.filter(
+                                                    (opt) => !authSchemes.find((s) => s.type === opt.value)
+                                                )}
+                                                currentValue={newAuthType}
+                                                onChange={(e) => setNewAuthType(e.target.value as AuthType)}
+                                            />
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={addAuthScheme}
+                                            disabled={authSchemes.some((s) => s.type === newAuthType)}
+                                        >
+                                            <Plus size={16} className="mr-1" />
+                                            Add
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {authSchemes.length === 0 && (
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        No authentication schemes configured. The agent will be accessible without authentication.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Skills Summary */}
+                            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center gap-x-2 mb-3">
+                                    <Zap size={14} className="text-gray-500" />
+                                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Attached Skills</p>
+                                    <Badge variant="secondary" className="ml-auto text-xs bg-gray-100 dark:bg-gray-800">
+                                        {totalSkills} Total
+                                    </Badge>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {Object.entries(toolTypeCounts).map(([type, count]) => {
+                                        if (count === 0) return null;
+                                        const Icon = getToolTypeIcon(type as A2AToolType);
+                                        return (
+                                            <Badge 
+                                                key={type} 
+                                                variant="secondary" 
+                                                className="text-xs flex items-center gap-x-1.5 bg-gray-100 dark:bg-gray-800 px-2.5 py-1"
+                                            >
+                                                <Icon size={12} />
+                                                {getToolTypeLabel(type as A2AToolType)} x{count}
+                                            </Badge>
+                                        );
+                                    })}
+                                    {totalSkills === 0 && (
+                                        <span className="text-xs text-gray-400">No tools attached — skills will be auto-generated from Input Data Connects</span>
+                                    )}
                                 </div>
                             </div>
 
@@ -452,172 +730,6 @@ export const IdentitySection = ({
                                 </Button>
                             </div>
                         </div>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Display Name */}
-                    <Controller
-                        name="horizonConfig.identity.displayName"
-                        control={control}
-                        rules={{ required: 'Display name is required' }}
-                        render={({ field }) => (
-                            <Input
-                                label="Display Name"
-                                placeholder="Enter display name"
-                                value={field.value || ''}
-                                disabled={isReadOnly}
-                                onChange={field.onChange}
-                                isDestructive={!!errors?.horizonConfig?.identity?.displayName}
-                                supportiveText={errors?.horizonConfig?.identity?.displayName?.message}
-                            />
-                        )}
-                    />
-
-                    {/* Version */}
-                    <Controller
-                        name="horizonConfig.identity.version"
-                        control={control}
-                        rules={{
-                            required: 'Version is required',
-                            pattern: {
-                                value: /^\d+\.\d+\.\d+$/,
-                                message: 'Use semantic versioning (e.g., 1.0.0)',
-                            },
-                        }}
-                        render={({ field }) => (
-                            <Input
-                                label="Version"
-                                placeholder="1.0.0"
-                                value={field.value || ''}
-                                disabled={isReadOnly}
-                                onChange={field.onChange}
-                                helperInfo="Semantic versioning (e.g., 1.0.0)"
-                                isDestructive={!!errors?.horizonConfig?.identity?.version}
-                                supportiveText={errors?.horizonConfig?.identity?.version?.message}
-                            />
-                        )}
-                    />
-
-                    {/* Description */}
-                    <div className="col-span-1 sm:col-span-2">
-                        <Controller
-                            name="horizonConfig.identity.description"
-                            control={control}
-                            render={({ field }) => (
-                                <Textarea
-                                    label="Description"
-                                    placeholder="Describe the agent's purpose and capabilities"
-                                    value={field.value || ''}
-                                    disabled={isReadOnly}
-                                    onChange={field.onChange}
-                                    rows={3}
-                                    className="w-full resize-none"
-                                />
-                            )}
-                        />
-                    </div>
-
-                    {/* Endpoint URL */}
-                    <Controller
-                        name="horizonConfig.identity.endpointUrl"
-                        control={control}
-                        render={({ field }) => (
-                            <Input
-                                label="Endpoint URL"
-                                placeholder="https://api.example.com/agent"
-                                value={field.value || ''}
-                                disabled={isReadOnly}
-                                onChange={field.onChange}
-                                helperInfo="Optional: Override default endpoint"
-                            />
-                        )}
-                    />
-
-                    {/* Discovery Location */}
-                    <Controller
-                        name="horizonConfig.identity.discoveryLocation"
-                        control={control}
-                        render={({ field }) => (
-                            <Input
-                                label="Discovery Location"
-                                placeholder="/.well-known/agent.json"
-                                value={field.value || ''}
-                                disabled={isReadOnly}
-                                onChange={field.onChange}
-                                helperInfo="Agent discovery endpoint path"
-                            />
-                        )}
-                    />
-                </div>
-
-                {/* Authentication Schemes */}
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-x-2">
-                            <Key size={16} className="text-gray-500" />
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Authentication Schemes
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Current Auth Schemes */}
-                    {authSchemes.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                            {authSchemes.map((scheme) => (
-                                <Badge
-                                    key={scheme.type}
-                                    variant="secondary"
-                                    className="flex items-center gap-x-1.5 px-3 py-1"
-                                >
-                                    <Shield size={12} />
-                                    {getAuthLabel(scheme.type)}
-                                    {!isReadOnly && (
-                                        <button
-                                            type="button"
-                                            onClick={() => removeAuthScheme(scheme.type)}
-                                            className="ml-1 hover:text-red-500 transition-colors"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    )}
-                                </Badge>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Add Auth Scheme */}
-                    {!isReadOnly && (
-                        <div className="flex items-end gap-x-2">
-                            <div className="flex-1">
-                                <Select
-                                    label="Add Authentication"
-                                    placeholder="Select auth type"
-                                    options={authTypeOptions.filter(
-                                        (opt) => !authSchemes.find((s) => s.type === opt.value)
-                                    )}
-                                    currentValue={newAuthType}
-                                    onChange={(e) => setNewAuthType(e.target.value as AuthType)}
-                                />
-                            </div>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                onClick={addAuthScheme}
-                                disabled={authSchemes.some((s) => s.type === newAuthType)}
-                            >
-                                <Plus size={16} className="mr-1" />
-                                Add
-                            </Button>
-                        </div>
-                    )}
-
-                    {authSchemes.length === 0 && (
-                        <p className="text-xs text-gray-400 mt-2">
-                            No authentication schemes configured. The agent will be accessible without authentication.
-                        </p>
                     )}
                 </div>
             </div>
