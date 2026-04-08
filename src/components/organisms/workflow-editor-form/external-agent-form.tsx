@@ -19,9 +19,14 @@ import {
     Collapsible,
     CollapsibleTrigger,
     CollapsibleContent,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogBody,
 } from '@/components/atoms';
 import { useDnD } from '@/context';
-import { cn } from '@/lib/utils';
+import { cn, sanitizeNumericInput } from '@/lib/utils';
 import { Node, useReactFlow } from '@xyflow/react';
 import { useParams } from 'next/navigation';
 import { useVaultSecretsFetcher } from '@/hooks/use-vault-common';
@@ -54,6 +59,9 @@ import {
     Eye,
     Code2,
     Wifi,
+    Plus,
+    Trash2,
+    X,
 } from 'lucide-react';
 
 // Types for A2A Agent Card
@@ -89,10 +97,20 @@ export interface A2AAgentCard {
     };
 }
 
-export interface TaskMapping {
-    methodName?: string;
-    inputSchema?: string;
-    outputMapping?: string;
+export interface MethodMapping {
+    id: string;
+    methodName: string;
+    inputSchema: string;
+    outputMapping: string;
+}
+
+export interface RetryConfig {
+    retryEnabled?: boolean;
+    retryAttempts?: number | null;
+    retryWaitType?: 'fixed' | 'exponential';
+    retryMultiplier?: number | null;
+    retryMinWait?: number | null;
+    retryMaxWait?: number | null;
 }
 
 export interface ExternalAgentData {
@@ -113,8 +131,6 @@ export interface ExternalAgentData {
     runtimeOptions?: {
         streaming?: boolean;
         timeout?: number;
-        retryStrategy?: 'none' | 'linear' | 'exponential';
-        maxRetries?: number;
     };
     branchTargets?: {
         onSuccess?: string;
@@ -124,13 +140,15 @@ export interface ExternalAgentData {
     // Discovery Configuration
     autoDiscovery?: boolean;
     discoveryInterval?: number; // in minutes
-    // Task Mapping Configuration
-    taskMapping?: TaskMapping;
+    // Task Mapping Configuration - now supports multiple methods
+    methodMappings?: MethodMapping[];
     // Execution Mode
     executionMode?: 'synchronous' | 'asynchronous';
     pollingInterval?: number; // in seconds, for async mode
     // Service Endpoint (auto-filled from Agent Card)
     serviceEndpoint?: string;
+    // Retry Configuration (like sub-workflow)
+    retryConfig?: RetryConfig;
 }
 
 interface ExternalAgentFormProps {
@@ -176,18 +194,24 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
 
     // Runtime options
     const [streaming, setStreaming] = useState<boolean>(false);
-    const [timeout, setTimeout] = useState<number>(30);
-    const [retryStrategy, setRetryStrategy] = useState<'none' | 'linear' | 'exponential'>('none');
-    const [maxRetries, setMaxRetries] = useState<number>(3);
+    const [timeout, setTimeout] = useState<number | null>(30);
+
+    // Retry Configuration (like sub-workflow)
+    const [retryEnabled, setRetryEnabled] = useState<boolean>(false);
+    const [retryAttempts, setRetryAttempts] = useState<number | null>(3);
+    const [retryWaitType, setRetryWaitType] = useState<'fixed' | 'exponential'>('fixed');
+    const [retryMultiplier, setRetryMultiplier] = useState<number | null>(2);
+    const [retryMinWait, setRetryMinWait] = useState<number | null>(1);
+    const [retryMaxWait, setRetryMaxWait] = useState<number | null>(60);
 
     // Discovery Configuration
     const [autoDiscovery, setAutoDiscovery] = useState<boolean>(false);
     const [discoveryInterval, setDiscoveryInterval] = useState<number>(60); // minutes
 
-    // Task Mapping
-    const [methodName, setMethodName] = useState<string>('execute_task');
-    const [inputSchema, setInputSchema] = useState<string>('{\n  "prompt": "{{workflow.user_query}}"\n}');
-    const [outputMapping, setOutputMapping] = useState<string>('result.data');
+    // Task Mapping - now supports multiple methods
+    const [methodMappings, setMethodMappings] = useState<MethodMapping[]>([
+        { id: '1', methodName: 'execute_task', inputSchema: '{\n  "prompt": "{{workflow.user_query}}"\n}', outputMapping: 'result.data' }
+    ]);
 
     // Execution Mode
     const [executionMode, setExecutionMode] = useState<'synchronous' | 'asynchronous'>('synchronous');
@@ -195,10 +219,14 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
 
     // Service Endpoint
     const [serviceEndpoint, setServiceEndpoint] = useState<string>('');
+    const [copiedEndpoint, setCopiedEndpoint] = useState(false);
 
     // Connection Test state
     const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
     const [testMessage, setTestMessage] = useState<string>('');
+
+    // Agent Card dialog state
+    const [showAgentCardDialog, setShowAgentCardDialog] = useState(false);
 
     // UI state
     const [copiedUrl, setCopiedUrl] = useState(false);
@@ -262,17 +290,22 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
             }
             if (data.runtimeOptions) {
                 setStreaming(data.runtimeOptions.streaming || false);
-                setTimeout(data.runtimeOptions.timeout || 30);
-                setRetryStrategy(data.runtimeOptions.retryStrategy || 'none');
-                setMaxRetries(data.runtimeOptions.maxRetries || 3);
+                setTimeout(data.runtimeOptions.timeout ?? 30);
+            }
+            // Load retry configuration
+            if (data.retryConfig) {
+                setRetryEnabled(data.retryConfig.retryEnabled || false);
+                setRetryAttempts(data.retryConfig.retryAttempts ?? 3);
+                setRetryWaitType(data.retryConfig.retryWaitType || 'fixed');
+                setRetryMultiplier(data.retryConfig.retryMultiplier ?? 2);
+                setRetryMinWait(data.retryConfig.retryMinWait ?? 1);
+                setRetryMaxWait(data.retryConfig.retryMaxWait ?? 60);
             }
             // Load new fields
             setAutoDiscovery(data.autoDiscovery || false);
             setDiscoveryInterval(data.discoveryInterval || 60);
-            if (data.taskMapping) {
-                setMethodName(data.taskMapping.methodName || 'execute_task');
-                setInputSchema(data.taskMapping.inputSchema || '{\n  "prompt": "{{workflow.user_query}}"\n}');
-                setOutputMapping(data.taskMapping.outputMapping || 'result.data');
+            if (data.methodMappings && data.methodMappings.length > 0) {
+                setMethodMappings(data.methodMappings);
             }
             setExecutionMode(data.executionMode || 'synchronous');
             setPollingInterval(data.pollingInterval || 5);
@@ -475,18 +508,20 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
             },
             runtimeOptions: {
                 streaming,
-                timeout,
-                retryStrategy,
-                maxRetries: retryStrategy !== 'none' ? maxRetries : undefined,
+                timeout: timeout ?? undefined,
+            },
+            retryConfig: {
+                retryEnabled,
+                retryAttempts: retryEnabled ? retryAttempts : undefined,
+                retryWaitType: retryEnabled ? retryWaitType : undefined,
+                retryMultiplier: retryEnabled && retryWaitType === 'exponential' ? retryMultiplier : undefined,
+                retryMinWait: retryEnabled ? retryMinWait : undefined,
+                retryMaxWait: retryEnabled ? retryMaxWait : undefined,
             },
             // New fields
             autoDiscovery,
             discoveryInterval: autoDiscovery ? discoveryInterval : undefined,
-            taskMapping: {
-                methodName,
-                inputSchema,
-                outputMapping,
-            },
+            methodMappings,
             executionMode,
             pollingInterval: executionMode === 'asynchronous' ? pollingInterval : undefined,
             serviceEndpoint,
@@ -500,6 +535,35 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
         navigator.clipboard.writeText(agentCardUrl);
         setCopiedUrl(true);
         window.setTimeout(() => setCopiedUrl(false), 2000);
+    };
+
+    // Copy service endpoint to clipboard
+    const copyServiceEndpoint = () => {
+        navigator.clipboard.writeText(serviceEndpoint);
+        setCopiedEndpoint(true);
+        window.setTimeout(() => setCopiedEndpoint(false), 2000);
+        toast.success('Service endpoint copied to clipboard');
+    };
+
+    // Method mappings helpers
+    const addMethodMapping = () => {
+        const newMapping: MethodMapping = {
+            id: String(Date.now()),
+            methodName: '',
+            inputSchema: '{\n  \n}',
+            outputMapping: '',
+        };
+        setMethodMappings(prev => [...prev, newMapping]);
+    };
+
+    const updateMethodMapping = (id: string, field: keyof MethodMapping, value: string) => {
+        setMethodMappings(prev =>
+            prev.map(mapping => (mapping.id === id ? { ...mapping, [field]: value } : mapping))
+        );
+    };
+
+    const removeMethodMapping = (id: string) => {
+        setMethodMappings(prev => prev.filter(mapping => mapping.id !== id));
     };
 
   // Get tool type badge color
@@ -601,50 +665,64 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                 {/* Agent Info (after fetch) */}
                 {agentCard && (
                     <>
-                        {/* Basic Agent Info */}
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                        {/* Basic Agent Info - Title section with aligned badges */}
+                        <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
                             <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
                                 <Link2 className="w-5 h-5 text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
-                                        {friendlyName || agentCard.name}
-                                    </span>
-                                    <Badge variant="outline" className="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600">
-                                        v{agentCard.version}
-                                    </Badge>
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 block truncate" title={friendlyName || agentCard.name}>
+                                            {friendlyName || agentCard.name}
+                                        </span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">Schema {schemaVersion}</span>
+                                    </div>
+                                    <div className="flex gap-1.5 flex-shrink-0 items-center">
+                                        <Badge variant="outline" className="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 whitespace-nowrap">
+                                            v{agentCard.version}
+                                        </Badge>
+                                        {agentCard.capabilities?.streaming && (
+                                            <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 whitespace-nowrap">
+                                                <Wifi className="w-3 h-3 mr-1" />
+                                                Stream
+                                            </Badge>
+                                        )}
+                                    </div>
                                 </div>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">Schema {schemaVersion}</span>
-                            </div>
-                            <div className="flex gap-1 flex-shrink-0">
-                                {agentCard.capabilities?.streaming && (
-                                    <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30">
-                                        <Wifi className="w-3 h-3 mr-1" />
-                                        Stream
-                                    </Badge>
-                                )}
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="flex flex-col gap-1">
-                                <Label className="text-xs text-gray-500 dark:text-gray-400">Friendly Name</Label>
-                                <Input
-                                    value={friendlyName}
-                                    onChange={e => setFriendlyName(e.target.value)}
-                                    placeholder="Agent name"
-                                    disabled={isReadOnly}
-                                />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <Label className="text-xs text-gray-500 dark:text-gray-400">Service Endpoint</Label>
+                        {/* Friendly Name field */}
+                        <div className="flex flex-col gap-1">
+                            <Label className="text-xs text-gray-500 dark:text-gray-400">Friendly Name</Label>
+                            <Input
+                                value={friendlyName}
+                                onChange={e => setFriendlyName(e.target.value)}
+                                placeholder="Agent name"
+                                disabled={isReadOnly}
+                            />
+                        </div>
+
+                        {/* Service Endpoint - placed right below Friendly Name with copy option */}
+                        <div className="flex flex-col gap-1">
+                            <Label className="text-xs text-gray-500 dark:text-gray-400">Service Endpoint</Label>
+                            <div className="relative">
                                 <Input 
                                     value={serviceEndpoint} 
                                     disabled 
-                                    className="bg-gray-100 dark:bg-gray-800 text-xs font-mono" 
+                                    className="bg-gray-100 dark:bg-gray-800 text-xs font-mono pr-10" 
                                     title={serviceEndpoint}
                                 />
+                                {serviceEndpoint && (
+                                    <button
+                                        onClick={copyServiceEndpoint}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                        title="Copy service endpoint"
+                                    >
+                                        {copiedEndpoint ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -832,7 +910,7 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                         {/* Section Divider */}
                         <div className="h-px bg-gray-200 dark:bg-gray-700" />
 
-                        {/* 3. Task Mapping Section (NEW) */}
+                        {/* 3. Task Mapping Section - supports multiple JSON-RPC methods */}
                         <Collapsible open={sectionsOpen.taskMapping} onOpenChange={() => toggleSection('taskMapping')}>
                             <CollapsibleTrigger className="w-full flex items-center justify-between py-2 group">
                                 <div className="flex items-center gap-2">
@@ -840,6 +918,9 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
                                         Task Mapping
                                     </span>
+                                    <Badge variant="secondary" className="text-[10px] h-5">
+                                        {methodMappings.length} {methodMappings.length === 1 ? 'method' : 'methods'}
+                                    </Badge>
                                 </div>
                                 {sectionsOpen.taskMapping ? (
                                     <ChevronDown className="w-4 h-4 text-gray-400" />
@@ -848,82 +929,125 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                 )}
                             </CollapsibleTrigger>
                             <CollapsibleContent className="pt-2">
-                                <div className="flex flex-col gap-3 pl-1">
-                                    {/* Method Name */}
-                                    <div className="flex flex-col gap-1">
-                                        <div className="flex items-center gap-1.5">
-                                            <Label className="text-xs text-gray-500 dark:text-gray-400">Method Name</Label>
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger>
-                                                        <Info className="w-3 h-3 text-gray-400" />
-                                                    </TooltipTrigger>
-                                                    <TooltipContent className="max-w-[200px]">
-                                                        <p className="text-xs">The JSON-RPC method the agent supports (e.g., execute_task, generate_report)</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        </div>
-                                        <Input
-                                            value={methodName}
-                                            onChange={e => setMethodName(e.target.value)}
-                                            placeholder="execute_task"
-                                            className="font-mono text-xs"
-                                            disabled={isReadOnly}
-                                        />
-                                    </div>
+                                <div className="flex flex-col gap-4">
+                                    {/* Description */}
+                                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                        Configure task mappings for each JSON-RPC method the agent supports.
+                                    </p>
 
-                                    {/* Input Schema */}
-                                    <div className="flex flex-col gap-1">
-                                        <div className="flex items-center gap-1.5">
-                                            <Label className="text-xs text-gray-500 dark:text-gray-400">Input Schema (JSON)</Label>
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger>
-                                                        <Info className="w-3 h-3 text-gray-400" />
-                                                    </TooltipTrigger>
-                                                    <TooltipContent className="max-w-[220px]">
-                                                        <p className="text-xs">Map workflow variables to agent params using {'{{workflow.variable}}'} syntax</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        </div>
-                                        <div className="relative">
-                                            <Code2 className="absolute left-2 top-2 w-3.5 h-3.5 text-gray-400" />
-                                            <Textarea
-                                                value={inputSchema}
-                                                onChange={e => setInputSchema(e.target.value)}
-                                                placeholder={'{\n  "prompt": "{{workflow.user_query}}"\n}'}
-                                                rows={4}
-                                                className="font-mono text-xs pl-7 resize-none"
-                                                disabled={isReadOnly}
-                                            />
-                                        </div>
-                                    </div>
+                                    {/* Method Mappings List */}
+                                    {methodMappings.map((mapping, index) => (
+                                        <div 
+                                            key={mapping.id} 
+                                            className="flex flex-col gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700"
+                                        >
+                                            {/* Method Header */}
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                                                    Method {index + 1}
+                                                </span>
+                                                {methodMappings.length > 1 && !isReadOnly && (
+                                                    <button
+                                                        onClick={() => removeMethodMapping(mapping.id)}
+                                                        className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors"
+                                                        title="Remove method"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
 
-                                    {/* Output Mapping */}
-                                    <div className="flex flex-col gap-1">
-                                        <div className="flex items-center gap-1.5">
-                                            <Label className="text-xs text-gray-500 dark:text-gray-400">Output Mapping</Label>
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger>
-                                                        <Info className="w-3 h-3 text-gray-400" />
-                                                    </TooltipTrigger>
-                                                    <TooltipContent className="max-w-[200px]">
-                                                        <p className="text-xs">JSONPath to extract from agent result (e.g., result.data, response.output)</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
+                                            {/* Method Name */}
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Label className="text-xs text-gray-500 dark:text-gray-400">Method Name</Label>
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger>
+                                                                <Info className="w-3 h-3 text-gray-400" />
+                                                            </TooltipTrigger>
+                                                            <TooltipContent className="max-w-[200px]">
+                                                                <p className="text-xs">The JSON-RPC method the agent supports (e.g., execute_task, generate_report)</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </div>
+                                                <Input
+                                                    value={mapping.methodName}
+                                                    onChange={e => updateMethodMapping(mapping.id, 'methodName', e.target.value)}
+                                                    placeholder="execute_task"
+                                                    className="font-mono text-xs"
+                                                    disabled={isReadOnly}
+                                                />
+                                            </div>
+
+                                            {/* Input Schema */}
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Label className="text-xs text-gray-500 dark:text-gray-400">Input Schema (JSON)</Label>
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger>
+                                                                <Info className="w-3 h-3 text-gray-400" />
+                                                            </TooltipTrigger>
+                                                            <TooltipContent className="max-w-[220px]">
+                                                                <p className="text-xs">Map workflow variables to agent params using {'{{workflow.variable}}'} syntax</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </div>
+                                                <div className="relative">
+                                                    <Code2 className="absolute left-2 top-2 w-3.5 h-3.5 text-gray-400" />
+                                                    <Textarea
+                                                        value={mapping.inputSchema}
+                                                        onChange={e => updateMethodMapping(mapping.id, 'inputSchema', e.target.value)}
+                                                        placeholder={'{\n  "prompt": "{{workflow.user_query}}"\n}'}
+                                                        rows={4}
+                                                        className="font-mono text-xs pl-7 resize-none"
+                                                        disabled={isReadOnly}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Output Mapping */}
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Label className="text-xs text-gray-500 dark:text-gray-400">Output Mapping</Label>
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger>
+                                                                <Info className="w-3 h-3 text-gray-400" />
+                                                            </TooltipTrigger>
+                                                            <TooltipContent className="max-w-[200px]">
+                                                                <p className="text-xs">JSONPath to extract from agent result (e.g., result.data, response.output)</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </div>
+                                                <Input
+                                                    value={mapping.outputMapping}
+                                                    onChange={e => updateMethodMapping(mapping.id, 'outputMapping', e.target.value)}
+                                                    placeholder="result.data"
+                                                    className="font-mono text-xs"
+                                                    disabled={isReadOnly}
+                                                />
+                                            </div>
                                         </div>
-                                        <Input
-                                            value={outputMapping}
-                                            onChange={e => setOutputMapping(e.target.value)}
-                                            placeholder="result.data"
-                                            className="font-mono text-xs"
-                                            disabled={isReadOnly}
-                                        />
-                                    </div>
+                                    ))}
+
+                                    {/* Add Method Button */}
+                                    {!isReadOnly && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={addMethodMapping}
+                                            className="w-full gap-2 text-xs"
+                                        >
+                                            <Plus className="w-3.5 h-3.5" />
+                                            Add Method Mapping
+                                        </Button>
+                                    )}
                                 </div>
                             </CollapsibleContent>
                         </Collapsible>
@@ -1142,68 +1266,97 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                         />
                                     </div>
 
-                                    {/* Timeout slider */}
-                                    <div className="flex flex-col gap-2">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <Clock className="w-3.5 h-3.5 text-gray-400" />
-                                                <Label className="text-xs text-gray-700 dark:text-gray-200">
-                                                    Timeout Limit
-                                                </Label>
-                                            </div>
-                                            <span className="text-xs font-mono text-gray-500">{timeout}s</span>
-                                        </div>
-                                        <Slider
-                                            value={[timeout]}
-                                            onValueChange={([v]) => setTimeout(v)}
-                                            min={5}
-                                            max={300}
-                                            step={5}
-                                            disabled={isReadOnly}
-                                        />
-                                        <div className="flex justify-between text-[10px] text-gray-400">
-                                            <span>5s</span>
-                                            <span>300s</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Retry strategy */}
-                                    <div className="flex flex-col gap-2">
+                                    {/* Timeout - textbox based number control */}
+                                    <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-2">
-                                            <RotateCcw className="w-3.5 h-3.5 text-gray-400" />
-                                            <Label className="text-xs text-gray-700 dark:text-gray-200">Retry Logic</Label>
+                                            <Clock className="w-3.5 h-3.5 text-gray-400" />
+                                            <Label className="text-xs text-gray-700 dark:text-gray-200">
+                                                Timeout Limit (seconds)
+                                            </Label>
                                         </div>
-                                        <Select
-                                            label=""
-                                            currentValue={retryStrategy}
-                                            onChange={(e) => setRetryStrategy(e.target.value as 'none' | 'linear' | 'exponential')}
+                                        <Input
+                                            type="number"
+                                            value={timeout ?? ''}
+                                            onChange={e => setTimeout(e.target.value ? Number(e.target.value) : null)}
+                                            placeholder="Enter timeout in seconds (leave empty for default)"
                                             disabled={isReadOnly}
-                                            options={[
-                                                { name: 'No Retry', value: 'none' },
-                                                { name: 'Linear Backoff', value: 'linear' },
-                                                { name: 'Exponential Backoff', value: 'exponential' },
-                                            ]}
+                                            onInput={sanitizeNumericInput}
+                                            min={0}
                                         />
                                     </div>
 
-                                    {retryStrategy !== 'none' && (
-                                        <div className="flex flex-col gap-2 pl-2 border-l-2 border-blue-500/30">
-                                            <div className="flex items-center justify-between">
-                                                <Label className="text-xs text-gray-500 dark:text-gray-400">
-                                                    Max Retries
-                                                </Label>
-                                                <span className="text-xs font-mono text-gray-500">{maxRetries}</span>
-                                            </div>
-                                            <Slider
-                                                value={[maxRetries]}
-                                                onValueChange={([v]) => setMaxRetries(v)}
-                                                min={1}
-                                                max={10}
-                                                step={1}
+                                    {/* Retry Configuration - same as sub-workflow node */}
+                                    <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Retry Configuration</p>
+                                        <div className="flex items-center gap-x-2">
+                                            <Checkbox
+                                                id="retryEnabled"
+                                                checked={retryEnabled}
+                                                onCheckedChange={(checked: boolean) => setRetryEnabled(checked)}
                                                 disabled={isReadOnly}
                                             />
+                                            <label htmlFor="retryEnabled" className="text-sm text-gray-600 dark:text-gray-300">
+                                                Enable Retry
+                                            </label>
                                         </div>
-                                    )}
+                                        {retryEnabled && (
+                                            <div className="space-y-3 pl-4 border-l-2 border-gray-200 dark:border-gray-600">
+                                                <Input
+                                                    type="number"
+                                                    value={retryAttempts ?? ''}
+                                                    onChange={e => setRetryAttempts(e.target.value ? Number(e.target.value) : null)}
+                                                    label="Retry Attempts"
+                                                    placeholder="Number of retry attempts"
+                                                    disabled={isReadOnly}
+                                                    onInput={sanitizeNumericInput}
+                                                    min={0}
+                                                />
+                                                <Select
+                                                    label="Wait Type"
+                                                    options={[
+                                                        { name: 'Fixed', value: 'fixed' },
+                                                        { name: 'Exponential', value: 'exponential' },
+                                                    ]}
+                                                    currentValue={retryWaitType}
+                                                    onChange={e => setRetryWaitType(e.target.value as 'fixed' | 'exponential')}
+                                                    placeholder="Select wait type"
+                                                    disabled={isReadOnly}
+                                                />
+                                                <Input
+                                                    type="number"
+                                                    value={retryMinWait ?? ''}
+                                                    onChange={e => setRetryMinWait(e.target.value ? Number(e.target.value) : null)}
+                                                    label="Min Wait (seconds)"
+                                                    placeholder="Minimum wait between retries"
+                                                    disabled={isReadOnly}
+                                                    onInput={sanitizeNumericInput}
+                                                    min={0}
+                                                />
+                                                <Input
+                                                    type="number"
+                                                    value={retryMaxWait ?? ''}
+                                                    onChange={e => setRetryMaxWait(e.target.value ? Number(e.target.value) : null)}
+                                                    label="Max Wait (seconds)"
+                                                    placeholder="Maximum wait between retries"
+                                                    disabled={isReadOnly}
+                                                    onInput={sanitizeNumericInput}
+                                                    min={0}
+                                                />
+                                                {retryWaitType === 'exponential' && (
+                                                    <Input
+                                                        type="number"
+                                                        value={retryMultiplier ?? ''}
+                                                        onChange={e => setRetryMultiplier(e.target.value ? Number(e.target.value) : null)}
+                                                        label="Backoff Multiplier"
+                                                        placeholder="Exponential backoff multiplier"
+                                                        disabled={isReadOnly}
+                                                        onInput={sanitizeNumericInput}
+                                                        min={0}
+                                                    />
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
 
                                     {/* Branch Targets Info */}
                                     <div className="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
@@ -1245,9 +1398,9 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                             </CollapsibleTrigger>
                             <CollapsibleContent className="pt-2">
                                 <div className="flex flex-col gap-3">
-                                    {/* Test Connection */}
+                                    {/* Connection Check (renamed from Capability Check) */}
                                     <div className="flex flex-col gap-2">
-                                        <Label className="text-xs text-gray-500 dark:text-gray-400">Capability Check</Label>
+                                        <Label className="text-xs text-gray-500 dark:text-gray-400">Connection Check</Label>
                                         <Button
                                             size="sm"
                                             variant="outline"
@@ -1283,21 +1436,19 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                                         )}
                                     </div>
 
-                                    {/* A2A Inspector Link */}
+                                    {/* View Agent Card - KAYA standard button with popup dialog */}
                                     <div className="flex flex-col gap-2">
-                                        <Label className="text-xs text-gray-500 dark:text-gray-400">A2A Inspector</Label>
+                                        <Label className="text-xs text-gray-500 dark:text-gray-400">Agent Card</Label>
                                         <Button
                                             size="sm"
-                                            variant="outline"
-                                            onClick={openInspector}
-                                            disabled={!agentCardUrl}
-                                            className="w-full gap-2 text-xs"
+                                            onClick={() => setShowAgentCardDialog(true)}
+                                            disabled={!agentCard}
+                                            className="w-full gap-2"
                                         >
-                                            <Eye className="w-3.5 h-3.5" />
-                                            View Raw Agent Card
-                                            <ExternalLink className="w-3 h-3 ml-auto" />
+                                            <Eye className="w-4 h-4" />
+                                            View Agent Card
                                         </Button>
-                                        <p className="text-[10px] text-gray-400">Opens the agent&apos;s JSON card for debugging and inspection.</p>
+                                        <p className="text-[10px] text-gray-400">View the agent&apos;s JSON card for debugging and inspection.</p>
                                     </div>
 
                                     {/* Provider Info */}
@@ -1363,6 +1514,35 @@ export const ExternalAgentForm = ({ selectedNode, isReadOnly }: ExternalAgentFor
                 </div>
             </div>
         </div>
+
+        {/* Agent Card JSON Dialog */}
+        <Dialog open={showAgentCardDialog} onOpenChange={setShowAgentCardDialog}>
+            <DialogContent className="max-w-2xl max-h-[80vh]">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <FileJson className="w-5 h-5 text-blue-500" />
+                        Agent Card
+                    </DialogTitle>
+                </DialogHeader>
+                <DialogBody className="overflow-auto max-h-[60vh]">
+                    <div className="relative">
+                        <button
+                            onClick={() => {
+                                navigator.clipboard.writeText(JSON.stringify(agentCard, null, 2));
+                                toast.success('Agent Card JSON copied to clipboard');
+                            }}
+                            className="absolute top-2 right-2 p-2 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            title="Copy JSON"
+                        >
+                            <Copy className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                        </button>
+                        <pre className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg text-xs font-mono overflow-auto text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                            {JSON.stringify(agentCard, null, 2)}
+                        </pre>
+                    </div>
+                </DialogBody>
+            </DialogContent>
+        </Dialog>
     );
 };
 
