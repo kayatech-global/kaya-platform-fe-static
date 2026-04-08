@@ -162,6 +162,118 @@ export interface INotificationConfig {
   streamingEnabled: boolean;
 }
 
+// Execution Primitive Types
+export type ExecutionPrimitiveType = 
+  | 'amazon_ses'
+  | 'microsoft_outlook'
+  | 'slack'
+  | 'microsoft_teams'
+  | 'twilio'
+  | 'amazon_s3'
+  | 'azure_blob_storage'
+  | 'google_cloud_storage'
+  | 'sharepoint'
+  | 'cron';
+
+// Execution Primitive Configuration
+export interface IExecutionPrimitive {
+  type: ExecutionPrimitiveType;
+  enabled: boolean;
+  config: Record<string, string>;
+}
+
+// Amazon SES Configuration
+export interface IAmazonSESConfig {
+  accessKeyId: string;
+  secretAccessKey: string;
+  region: string;
+  fromEmail: string;
+}
+
+// Microsoft Outlook Configuration
+export interface IMicrosoftOutlookConfig {
+  clientId: string;
+  clientSecret: string;
+  tenantId: string;
+  redirectUri?: string;
+}
+
+// Slack Configuration
+export interface ISlackConfig {
+  botToken: string;
+  signingSecret: string;
+  appId?: string;
+  defaultChannel?: string;
+}
+
+// Microsoft Teams Configuration
+export interface IMicrosoftTeamsConfig {
+  clientId: string;
+  clientSecret: string;
+  tenantId: string;
+  webhookUrl?: string;
+}
+
+// Twilio Configuration
+export interface ITwilioConfig {
+  accountSid: string;
+  authToken: string;
+  fromNumber: string;
+}
+
+// Amazon S3 Configuration
+export interface IAmazonS3Config {
+  accessKeyId: string;
+  secretAccessKey: string;
+  region: string;
+  bucketName: string;
+}
+
+// Azure Blob Storage Configuration
+export interface IAzureBlobStorageConfig {
+  connectionString: string;
+  containerName: string;
+  accountName?: string;
+  accountKey?: string;
+}
+
+// Google Cloud Storage Configuration
+export interface IGoogleCloudStorageConfig {
+  projectId: string;
+  bucketName: string;
+  credentials: string; // JSON string of service account credentials
+}
+
+// SharePoint Configuration
+export interface ISharePointConfig {
+  clientId: string;
+  clientSecret: string;
+  tenantId: string;
+  siteUrl: string;
+  driveId?: string;
+}
+
+// Cron Configuration
+export interface ICronConfig {
+  expression: string;
+  timezone: string;
+  description?: string;
+}
+
+// Execution Primitives Configuration
+export interface IExecutionPrimitivesConfig {
+  amazonSES?: { enabled: boolean; config?: IAmazonSESConfig };
+  microsoftOutlook?: { enabled: boolean; config?: IMicrosoftOutlookConfig };
+  slack?: { enabled: boolean; config?: ISlackConfig };
+  microsoftTeams?: { enabled: boolean; config?: IMicrosoftTeamsConfig };
+  twilio?: { enabled: boolean; config?: ITwilioConfig };
+  amazonS3?: { enabled: boolean; config?: IAmazonS3Config };
+  azureBlobStorage?: { enabled: boolean; config?: IAzureBlobStorageConfig };
+  googleCloudStorage?: { enabled: boolean; config?: IGoogleCloudStorageConfig };
+  sharePoint?: { enabled: boolean; config?: ISharePointConfig };
+  cron?: { enabled: boolean; config?: ICronConfig };
+}
+
 // Complete Horizon Configuration
 export interface IHorizonConfig {
   deploy: IHorizonDeployConfig;
@@ -170,6 +282,7 @@ export interface IHorizonConfig {
   executionPolicy: IExecutionPolicy;
   persistence: IPersistenceConfig;
   notifications: INotificationConfig;
+  executionPrimitives?: IExecutionPrimitivesConfig;
 }
 
 // Publish Status
@@ -223,6 +336,18 @@ export const DEFAULT_HORIZON_CONFIG: IHorizonConfig = {
   notifications: {
     mode: 'streaming',
     streamingEnabled: true,
+  },
+  executionPrimitives: {
+    amazonSES: { enabled: false },
+    microsoftOutlook: { enabled: false },
+    slack: { enabled: false },
+    microsoftTeams: { enabled: false },
+    twilio: { enabled: false },
+    amazonS3: { enabled: false },
+    azureBlobStorage: { enabled: false },
+    googleCloudStorage: { enabled: false },
+    sharePoint: { enabled: false },
+    cron: { enabled: false },
   },
 };
 

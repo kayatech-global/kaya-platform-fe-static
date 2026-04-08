@@ -51,6 +51,7 @@ import {
     ExecutionPolicySection,
     PersistenceSection,
     NotificationSection,
+    ExecutionPrimitivesSection,
     validateHorizonConfig,
 } from './horizon';
 import {
@@ -876,6 +877,13 @@ export const FormBody = (props: AgentProps) => {
                         <ExecutionPolicySection
                             control={control}
                             watch={watch}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+
+                        <ExecutionPrimitivesSection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
                             isReadOnly={isEdit && !!watch('isReadOnly')}
                         />
                         
