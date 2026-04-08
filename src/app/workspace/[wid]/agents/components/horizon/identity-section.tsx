@@ -34,11 +34,6 @@ const authTypeOptions = [
     { name: 'Basic Auth', value: 'basic' },
 ];
 
-const visibilityOptions = [
-    { name: 'Private (Internal Only)', value: 'private' },
-    { name: 'Public (Discoverable)', value: 'public' },
-];
-
 const inputModeOptions = [
     { name: 'Plain Text', value: 'text/plain' },
     { name: 'JSON', value: 'application/json' },
@@ -108,7 +103,7 @@ export const IdentitySection = ({
     connectors = [],
 }: IdentitySectionProps) => {
     const [newAuthType, setNewAuthType] = useState<AuthType>('api_key');
-    const [copiedUri, setCopiedUri] = useState(false);
+    const [copiedField, setCopiedField] = useState<string | null>(null);
     const [copiedJson, setCopiedJson] = useState(false);
     const [showA2ACardModal, setShowA2ACardModal] = useState(false);
 
@@ -125,12 +120,27 @@ export const IdentitySection = ({
     // Generate A2A URI
     const agentSlug = useMemo(() => {
         const name = displayName || agentName;
-        return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'unnamed-agent';
     }, [displayName, agentName]);
 
     const a2aUri = useMemo(() => {
         return `agent://kaya/${workspaceSlug}/${agentSlug}-${version}`;
     }, [workspaceSlug, agentSlug, version]);
+
+    // Auto-generated Endpoint URL (mock data format)
+    const endpointUrl = useMemo(() => {
+        return `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/agents/${agentSlug}/a2a`;
+    }, [workspaceSlug, agentSlug]);
+
+    // Auto-generated Discovery Path (mock data format)  
+    const discoveryPath = useMemo(() => {
+        return `/ws/${workspaceSlug}/agents/${agentSlug}/.well-known/agent-card.json`;
+    }, [workspaceSlug, agentSlug]);
+
+    // Full well-known URL
+    const wellKnownUrl = useMemo(() => {
+        return `https://kaya.techlabsglobal.com${discoveryPath}`;
+    }, [discoveryPath]);
 
     // Count tool types for skill summary
     const toolTypeCounts = useMemo(() => {
@@ -270,7 +280,7 @@ export const IdentitySection = ({
             schemaVersion: '0.3',
             name: identity?.displayName || agentName || 'Unnamed Agent',
             description: identity?.description || description || '',
-            url: `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/agents/${agentSlug}/a2a`,
+            url: endpointUrl,
             version: identity?.version || '1.0.0',
             provider: {
                 organization: `KAYA Platform — ${workspaceSlug}`,
@@ -285,7 +295,7 @@ export const IdentitySection = ({
             defaultOutputModes: identity?.defaultOutputModes || ['application/json', 'text/plain'],
             skills: generateA2ASkills(),
         };
-    }, [getValues, authSchemes, agentName, description, workspaceSlug, agentSlug, generateA2ASkills]);
+    }, [getValues, authSchemes, agentName, description, workspaceSlug, endpointUrl, generateA2ASkills]);
 
     const a2aCard = useMemo(() => generateA2ACard(), [generateA2ACard]);
 
@@ -308,15 +318,16 @@ export const IdentitySection = ({
         return option?.name || type;
     };
 
-    const copyToClipboard = async (text: string, type: 'uri' | 'json') => {
+    const copyToClipboard = async (text: string, fieldName: string) => {
         await navigator.clipboard.writeText(text);
-        if (type === 'uri') {
-            setCopiedUri(true);
-            setTimeout(() => setCopiedUri(false), 2000);
-        } else {
-            setCopiedJson(true);
-            setTimeout(() => setCopiedJson(false), 2000);
-        }
+        setCopiedField(fieldName);
+        setTimeout(() => setCopiedField(null), 2000);
+    };
+
+    const copyJsonToClipboard = async () => {
+        await navigator.clipboard.writeText(JSON.stringify(a2aCard, null, 2));
+        setCopiedJson(true);
+        setTimeout(() => setCopiedJson(false), 2000);
     };
 
     const toggleInputMode = (mode: string) => {
@@ -337,7 +348,10 @@ export const IdentitySection = ({
         }
     };
 
-    const wellKnownUrl = `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/agents/${agentSlug}/.well-known/agent-card.json`;
+    const toggleVisibility = () => {
+        const newVisibility = a2aVisibility === 'public' ? 'private' : 'public';
+        setValue('horizonConfig.identity.a2aVisibility', newVisibility);
+    };
 
     return (
         <>
@@ -347,20 +361,20 @@ export const IdentitySection = ({
                 <div className="flex flex-col gap-y-1">
                     <div className="flex items-center gap-x-[10px]">
                         <User size={20} absoluteStrokeWidth={false} className="stroke-[1px]" />
-                        <p className="text-sm font-medium">Identity Configuration</p>
+                        <p className="text-sm font-medium">A2A Identity Configuration</p>
                     </div>
                     <p className="text-xs font-normal text-gray-400">
                         Define the agent&apos;s A2A identity, versioning, and authentication for external discovery.
                     </p>
                 </div>
 
-                {/* A2A Identity Section - Contains ALL Identity Configurations */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                {/* A2A Identity Section */}
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
                     {/* A2A Header with Toggle */}
                     <div className="flex items-center justify-between mb-5">
                         <div className="flex items-center gap-x-3">
-                            <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                                <Sparkles size={20} className="text-blue-600 dark:text-blue-400" />
+                            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                                <Sparkles size={20} className="text-gray-600 dark:text-gray-400" />
                             </div>
                             <div>
                                 <div className="flex items-center gap-x-2">
@@ -392,8 +406,8 @@ export const IdentitySection = ({
 
                     {a2aEnabled && (
                         <div className="space-y-5">
-                            {/* A2A URI Display */}
-                            <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                            {/* Agent URI Display */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
                                         <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Agent URI</p>
@@ -408,13 +422,13 @@ export const IdentitySection = ({
                                         onClick={() => copyToClipboard(a2aUri, 'uri')}
                                         className="ml-2 shrink-0"
                                     >
-                                        {copiedUri ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                        {copiedField === 'uri' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                                     </Button>
                                 </div>
                             </div>
 
                             {/* Basic Identity Fields */}
-                            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                                 <div className="flex items-center gap-x-2 mb-4">
                                     <Tag size={14} className="text-gray-500" />
                                     <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Basic Identity</p>
@@ -456,7 +470,6 @@ export const IdentitySection = ({
                                                 value={field.value || ''}
                                                 disabled={isReadOnly}
                                                 onChange={field.onChange}
-                                                helperInfo="Semantic versioning (e.g., 1.0.0)"
                                                 isDestructive={!!errors?.horizonConfig?.identity?.version}
                                                 supportiveText={errors?.horizonConfig?.identity?.version?.message}
                                             />
@@ -471,11 +484,11 @@ export const IdentitySection = ({
                                             render={({ field }) => (
                                                 <Textarea
                                                     label="Description"
-                                                    placeholder="Describe the agent's purpose and capabilities"
+                                                    placeholder="Describe what this agent does for A2A discovery"
                                                     value={field.value || ''}
                                                     disabled={isReadOnly}
                                                     onChange={field.onChange}
-                                                    rows={3}
+                                                    rows={2}
                                                     className="w-full resize-none"
                                                 />
                                             )}
@@ -484,123 +497,157 @@ export const IdentitySection = ({
                                 </div>
                             </div>
 
-                            {/* Visibility & Endpoint */}
-                            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                            {/* Discovery & Endpoint - Visibility first, then Discovery Path */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                                 <div className="flex items-center gap-x-2 mb-4">
                                     <Globe size={14} className="text-gray-500" />
                                     <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Discovery & Endpoint</p>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {/* Visibility */}
-                                    <Controller
-                                        name="horizonConfig.identity.a2aVisibility"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <div>
-                                                <Label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Visibility</Label>
-                                                <div className="flex items-center gap-x-2">
-                                                    {field.value === 'public' ? (
-                                                        <Globe size={16} className="text-green-500 shrink-0" />
-                                                    ) : (
-                                                        <Lock size={16} className="text-orange-500 shrink-0" />
-                                                    )}
-                                                    <Select
-                                                        options={visibilityOptions}
-                                                        currentValue={field.value || 'private'}
-                                                        disabled={isReadOnly}
-                                                        onChange={(e) => field.onChange(e.target.value as A2AVisibility)}
-                                                        className="flex-1"
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-                                    />
-
-                                    {/* Discovery Location */}
-                                    <Controller
-                                        name="horizonConfig.identity.discoveryLocation"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Input
-                                                label="Discovery Path"
-                                                placeholder="/.well-known/agent.json"
-                                                value={field.value || ''}
-                                                disabled={isReadOnly}
-                                                onChange={field.onChange}
-                                                helperInfo="Agent discovery endpoint path"
-                                            />
-                                        )}
-                                    />
-
-                                    {/* Endpoint URL */}
-                                    <div className="col-span-1 sm:col-span-2">
-                                        <Controller
-                                            name="horizonConfig.identity.endpointUrl"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Input
-                                                    label="Endpoint URL"
-                                                    placeholder="https://api.example.com/agent"
-                                                    value={field.value || ''}
-                                                    disabled={isReadOnly}
-                                                    onChange={field.onChange}
-                                                    helperInfo="Optional: Override default A2A endpoint"
-                                                />
+                                <div className="space-y-4">
+                                    {/* Visibility Toggle */}
+                                    <div>
+                                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                            Visibility
+                                        </Label>
+                                        <div 
+                                            className={cn(
+                                                "inline-flex rounded-lg p-1 bg-gray-100 dark:bg-gray-700",
+                                                isReadOnly && "opacity-50 pointer-events-none"
                                             )}
-                                        />
+                                        >
+                                            <button
+                                                type="button"
+                                                onClick={() => !isReadOnly && setValue('horizonConfig.identity.a2aVisibility', 'private')}
+                                                className={cn(
+                                                    "flex items-center gap-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
+                                                    a2aVisibility === 'private'
+                                                        ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm"
+                                                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                                                )}
+                                            >
+                                                <Lock size={14} />
+                                                Private
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => !isReadOnly && setValue('horizonConfig.identity.a2aVisibility', 'public')}
+                                                className={cn(
+                                                    "flex items-center gap-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
+                                                    a2aVisibility === 'public'
+                                                        ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm"
+                                                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                                                )}
+                                            >
+                                                <Globe size={14} />
+                                                Public
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            {a2aVisibility === 'public' 
+                                                ? 'Agent is discoverable by external A2A systems' 
+                                                : 'Agent is only accessible within this workspace'}
+                                        </p>
+                                    </div>
+
+                                    {/* Discovery Path - Auto-populated with copy */}
+                                    <div>
+                                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                            Discovery Path
+                                        </Label>
+                                        <div className="flex items-center gap-x-2 bg-gray-50 dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                            <p className="text-sm font-mono text-gray-700 dark:text-gray-300 flex-1 truncate">
+                                                {discoveryPath}
+                                            </p>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => copyToClipboard(wellKnownUrl, 'discovery')}
+                                                className="shrink-0"
+                                            >
+                                                {copiedField === 'discovery' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    {/* Endpoint URL - Auto-populated with copy */}
+                                    <div>
+                                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                            Endpoint URL
+                                        </Label>
+                                        <div className="flex items-center gap-x-2 bg-gray-50 dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                            <p className="text-sm font-mono text-gray-700 dark:text-gray-300 flex-1 truncate">
+                                                {endpointUrl}
+                                            </p>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => copyToClipboard(endpointUrl, 'endpoint')}
+                                                className="shrink-0"
+                                            >
+                                                {copiedField === 'endpoint' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Input/Output Modes */}
-                            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                                 <div className="flex items-center gap-x-2 mb-4">
-                                    <Info size={14} className="text-gray-500" />
+                                    <FileJson size={14} className="text-gray-500" />
                                     <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Input/Output Modes</p>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {/* Default Input Modes */}
+                                    {/* Input Modes */}
                                     <div>
-                                        <Label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 block">Default Input Modes</Label>
+                                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                            Default Input Modes
+                                        </Label>
                                         <div className="flex flex-wrap gap-2">
-                                            {inputModeOptions.map((option) => (
-                                                <Badge
-                                                    key={option.value}
-                                                    variant="secondary"
+                                            {inputModeOptions.map((mode) => (
+                                                <button
+                                                    key={mode.value}
+                                                    type="button"
+                                                    onClick={() => !isReadOnly && toggleInputMode(mode.value)}
+                                                    disabled={isReadOnly}
                                                     className={cn(
-                                                        "cursor-pointer transition-colors text-xs",
-                                                        defaultInputModes.includes(option.value)
-                                                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-300 dark:border-blue-700"
-                                                            : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                                        "px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
+                                                        defaultInputModes.includes(mode.value)
+                                                            ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100"
+                                                            : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-gray-400",
+                                                        isReadOnly && "opacity-50 cursor-not-allowed"
                                                     )}
-                                                    onClick={() => !isReadOnly && toggleInputMode(option.value)}
                                                 >
-                                                    {defaultInputModes.includes(option.value) && <Check size={10} className="mr-1" />}
-                                                    {option.name}
-                                                </Badge>
+                                                    {mode.name}
+                                                </button>
                                             ))}
                                         </div>
                                     </div>
 
-                                    {/* Default Output Modes */}
+                                    {/* Output Modes */}
                                     <div>
-                                        <Label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 block">Default Output Modes</Label>
+                                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                            Default Output Modes
+                                        </Label>
                                         <div className="flex flex-wrap gap-2">
-                                            {outputModeOptions.map((option) => (
-                                                <Badge
-                                                    key={option.value}
-                                                    variant="secondary"
+                                            {outputModeOptions.map((mode) => (
+                                                <button
+                                                    key={mode.value}
+                                                    type="button"
+                                                    onClick={() => !isReadOnly && toggleOutputMode(mode.value)}
+                                                    disabled={isReadOnly}
                                                     className={cn(
-                                                        "cursor-pointer transition-colors text-xs",
-                                                        defaultOutputModes.includes(option.value)
-                                                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-300 dark:border-green-700"
-                                                            : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                                        "px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
+                                                        defaultOutputModes.includes(mode.value)
+                                                            ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100"
+                                                            : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-gray-400",
+                                                        isReadOnly && "opacity-50 cursor-not-allowed"
                                                     )}
-                                                    onClick={() => !isReadOnly && toggleOutputMode(option.value)}
                                                 >
-                                                    {defaultOutputModes.includes(option.value) && <Check size={10} className="mr-1" />}
-                                                    {option.name}
-                                                </Badge>
+                                                    {mode.name}
+                                                </button>
                                             ))}
                                         </div>
                                     </div>
@@ -608,34 +655,32 @@ export const IdentitySection = ({
                             </div>
 
                             {/* Authentication Schemes */}
-                            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-x-2">
-                                        <Key size={14} className="text-gray-500" />
-                                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
-                                            Authentication Schemes
-                                        </p>
+                                        <Shield size={14} className="text-gray-500" />
+                                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Authentication Schemes</p>
                                     </div>
                                 </div>
 
-                                {/* Current Auth Schemes */}
+                                {/* Existing Auth Schemes */}
                                 {authSchemes.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mb-4">
                                         {authSchemes.map((scheme) => (
                                             <Badge
                                                 key={scheme.type}
                                                 variant="secondary"
-                                                className="flex items-center gap-x-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
+                                                className="flex items-center gap-x-1 px-3 py-1.5"
                                             >
-                                                <Shield size={12} />
+                                                <Key size={12} />
                                                 {getAuthLabel(scheme.type)}
                                                 {!isReadOnly && (
                                                     <button
                                                         type="button"
                                                         onClick={() => removeAuthScheme(scheme.type)}
-                                                        className="ml-1 hover:text-red-500 transition-colors"
+                                                        className="ml-1 hover:text-red-500"
                                                     >
-                                                        <X size={14} />
+                                                        <X size={12} />
                                                     </button>
                                                 )}
                                             </Badge>
@@ -645,18 +690,13 @@ export const IdentitySection = ({
 
                                 {/* Add Auth Scheme */}
                                 {!isReadOnly && (
-                                    <div className="flex items-end gap-x-2">
-                                        <div className="flex-1">
-                                            <Select
-                                                label="Add Authentication"
-                                                placeholder="Select auth type"
-                                                options={authTypeOptions.filter(
-                                                    (opt) => !authSchemes.find((s) => s.type === opt.value)
-                                                )}
-                                                currentValue={newAuthType}
-                                                onChange={(e) => setNewAuthType(e.target.value as AuthType)}
-                                            />
-                                        </div>
+                                    <div className="flex gap-x-2">
+                                        <Select
+                                            options={authTypeOptions}
+                                            currentValue={newAuthType}
+                                            onChange={(e) => setNewAuthType(e.target.value as AuthType)}
+                                            className="flex-1"
+                                        />
                                         <Button
                                             type="button"
                                             variant="secondary"
@@ -664,7 +704,7 @@ export const IdentitySection = ({
                                             onClick={addAuthScheme}
                                             disabled={authSchemes.some((s) => s.type === newAuthType)}
                                         >
-                                            <Plus size={16} className="mr-1" />
+                                            <Plus size={14} className="mr-1" />
                                             Add
                                         </Button>
                                     </div>
@@ -672,62 +712,58 @@ export const IdentitySection = ({
 
                                 {authSchemes.length === 0 && (
                                     <p className="text-xs text-gray-400 mt-2">
-                                        No authentication schemes configured. The agent will be accessible without authentication.
+                                        No authentication schemes configured. Agent will be accessible without authentication.
                                     </p>
                                 )}
                             </div>
 
-                            {/* Skills Summary */}
-                            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                                <div className="flex items-center gap-x-2 mb-3">
-                                    <Zap size={14} className="text-gray-500" />
-                                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Attached Skills</p>
-                                    <Badge variant="secondary" className="ml-auto text-xs bg-gray-100 dark:bg-gray-800">
-                                        {totalSkills} Total
-                                    </Badge>
+                            {/* Attached Skills Summary */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-x-2">
+                                        <Zap size={14} className="text-gray-500" />
+                                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
+                                            Attached Skills
+                                        </p>
+                                        <Badge variant="secondary" className="text-xs">
+                                            {totalSkills} total
+                                        </Badge>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => setShowA2ACardModal(true)}
+                                    >
+                                        <Eye size={14} className="mr-1" />
+                                        View A2A Card
+                                    </Button>
                                 </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {Object.entries(toolTypeCounts).map(([type, count]) => {
-                                        if (count === 0) return null;
-                                        const Icon = getToolTypeIcon(type as A2AToolType);
-                                        return (
-                                            <Badge 
-                                                key={type} 
-                                                variant="secondary" 
-                                                className="text-xs flex items-center gap-x-1.5 bg-gray-100 dark:bg-gray-800 px-2.5 py-1"
-                                            >
-                                                <Icon size={12} />
-                                                {getToolTypeLabel(type as A2AToolType)} x{count}
-                                            </Badge>
-                                        );
-                                    })}
-                                    {totalSkills === 0 && (
-                                        <span className="text-xs text-gray-400">No tools attached — skills will be auto-generated from Input Data Connects</span>
-                                    )}
-                                </div>
-                            </div>
 
-                            {/* View A2A Card Button */}
-                            <div className="flex items-center gap-x-2">
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => setShowA2ACardModal(true)}
-                                    className="flex-1"
-                                >
-                                    <Eye size={14} className="mr-2" />
-                                    View A2A Card
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => window.open(wellKnownUrl, '_blank')}
-                                    title="Open live endpoint"
-                                >
-                                    <ExternalLink size={14} />
-                                </Button>
+                                {totalSkills > 0 ? (
+                                    <div className="flex flex-wrap gap-2">
+                                        {Object.entries(toolTypeCounts)
+                                            .filter(([, count]) => count > 0)
+                                            .map(([type, count]) => {
+                                                const Icon = getToolTypeIcon(type as A2AToolType);
+                                                return (
+                                                    <Badge 
+                                                        key={type} 
+                                                        variant="secondary"
+                                                        className="flex items-center gap-x-1.5 px-2 py-1"
+                                                    >
+                                                        <Icon size={12} />
+                                                        <span>{getToolTypeLabel(type as A2AToolType)}</span>
+                                                        <span className="text-gray-400">x{count}</span>
+                                                    </Badge>
+                                                );
+                                            })}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-gray-400">
+                                        No tools attached. Add tools to this agent to auto-generate A2A skills.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     )}
@@ -737,71 +773,57 @@ export const IdentitySection = ({
 
         {/* A2A Card Modal */}
         <Dialog open={showA2ACardModal} onOpenChange={setShowA2ACardModal}>
-            <DialogContent className="max-w-3xl max-h-[90vh]">
+            <DialogContent className="max-w-3xl max-h-[80vh]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-x-2">
-                        <FileJson size={20} className="text-blue-500" />
+                        <FileJson size={20} />
                         A2A Agent Card
                     </DialogTitle>
                 </DialogHeader>
-                <DialogBody className="overflow-y-auto">
+                <DialogBody className="overflow-auto">
                     {/* Metadata Chips */}
                     <div className="flex flex-wrap gap-2 mb-4">
-                        <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                        <Badge variant="secondary" className="text-xs">
                             Schema v{a2aCard.schemaVersion}
                         </Badge>
-                        <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
-                            {totalSkills} Skills
+                        <Badge variant="secondary" className="text-xs">
+                            {a2aCard.skills.length} Skills
                         </Badge>
-                        <Badge variant="secondary" className={cn(
-                            a2aCard.capabilities.streaming 
-                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                        )}>
-                            {a2aCard.capabilities.streaming ? 'Streaming Enabled' : 'Streaming Disabled'}
+                        <Badge variant="secondary" className="text-xs">
+                            {a2aCard.capabilities.streaming ? 'Streaming' : 'No Streaming'}
                         </Badge>
-                        <Badge variant="secondary" className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
+                        <Badge variant="secondary" className="text-xs">
                             {Object.keys(a2aCard.securitySchemes).length > 0 
                                 ? Object.keys(a2aCard.securitySchemes).join(', ')
                                 : 'No Auth'}
                         </Badge>
                     </div>
 
-                    {/* Live Endpoint Link */}
-                    <div className="flex items-center gap-x-2 mb-4 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                        <ExternalLink size={14} className="text-gray-500 shrink-0" />
+                    {/* JSON Display */}
+                    <div className="bg-gray-900 dark:bg-gray-950 rounded-lg p-4 overflow-auto max-h-[400px]">
+                        <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap">
+                            {JSON.stringify(a2aCard, null, 2)}
+                        </pre>
+                    </div>
+
+                    {/* Well-known URL */}
+                    <div className="mt-4 flex items-center gap-x-2 text-xs text-gray-500">
+                        <ExternalLink size={12} />
                         <a 
                             href={wellKnownUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline truncate"
+                            className="hover:text-blue-500 underline truncate"
                         >
                             {wellKnownUrl}
                         </a>
                     </div>
-
-                    {/* JSON Preview */}
-                    <div className="relative">
-                        <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg text-xs overflow-x-auto max-h-[400px]">
-                            <code>{JSON.stringify(a2aCard, null, 2)}</code>
-                        </pre>
-                    </div>
                 </DialogBody>
                 <DialogFooter>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setShowA2ACardModal(false)}
-                    >
+                    <Button variant="secondary" size="sm" onClick={() => setShowA2ACardModal(false)}>
                         Close
                     </Button>
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        onClick={() => copyToClipboard(JSON.stringify(a2aCard, null, 2), 'json')}
-                    >
+                    <Button variant="primary" size="sm" onClick={copyJsonToClipboard}>
                         {copiedJson ? <Check size={14} className="mr-1" /> : <Copy size={14} className="mr-1" />}
                         {copiedJson ? 'Copied!' : 'Copy JSON'}
                     </Button>

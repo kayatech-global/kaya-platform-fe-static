@@ -174,22 +174,14 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
     return (
         <div className="col-span-1 sm:col-span-2 border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-2 sm:p-4">
             <div className="flex flex-col gap-y-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-y-1">
-                        <div className="flex items-center gap-x-[10px]">
-                            <Zap size={20} absoluteStrokeWidth={false} className="stroke-[1px]" />
-                            <p className="text-sm font-medium">Skills Metadata</p>
-                        </div>
-                        <p className="text-xs font-normal text-gray-400">
-                            Skills are automatically generated from Input Data Connects. You can also add custom skills.
-                        </p>
+                <div className="flex flex-col gap-y-1">
+                    <div className="flex items-center gap-x-[10px]">
+                        <Zap size={20} absoluteStrokeWidth={false} className="stroke-[1px]" />
+                        <p className="text-sm font-medium">Skills Metadata</p>
                     </div>
-                    {!isReadOnly && (
-                        <Button type="button" variant="secondary" size="sm" onClick={addSkill}>
-                            <Plus size={16} className="mr-1" />
-                            Add Skill
-                        </Button>
-                    )}
+                    <p className="text-xs font-normal text-gray-400">
+                        Skills are automatically generated from Input Data Connects.
+                    </p>
                 </div>
 
                 {/* Skills List */}
@@ -198,7 +190,7 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
                         <Zap size={32} className="mx-auto text-gray-400 mb-2" />
                         <p className="text-sm text-gray-500 dark:text-gray-400">No skills configured yet.</p>
                         <p className="text-xs text-gray-400 mt-1">
-                            Skills are auto-populated from Input Data Connects, or add custom skills manually.
+                            Skills are automatically generated from Input Data Connects.
                         </p>
                     </div>
                 ) : (
