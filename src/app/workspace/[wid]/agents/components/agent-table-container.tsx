@@ -317,14 +317,14 @@ const ActionCell = ({
     const isDeployed = row.original.publishStatus?.isPublished;
 
     const handleConfirmDeploy = () => {
-        console.log('[v0] handleConfirmDeploy called');
         setConfirmOpen(false);
-        setProgressOpen(true);
-        console.log('[v0] progressOpen set to true');
-        if (onDeploy) {
-            console.log('[v0] Calling onDeploy with id:', row.original.id);
-            onDeploy(row.original.id);
-        }
+        // Use requestAnimationFrame to ensure confirmation dialog closes before progress opens
+        requestAnimationFrame(() => {
+            setProgressOpen(true);
+            if (onDeploy) {
+                onDeploy(row.original.id);
+            }
+        });
     };
 
     return (
@@ -341,9 +341,11 @@ const ActionCell = ({
                         {isHorizon && onDeploy && (
                             <>
                                 <DropdownMenuItem
-                                    onClick={() => {
-                                        console.log('[v0] Deploy menu item clicked');
-                                        setConfirmOpen(true);
+                                    onSelect={() => {
+                                        // Use requestAnimationFrame to ensure the dropdown closes first
+                                        requestAnimationFrame(() => {
+                                            setConfirmOpen(true);
+                                        });
                                     }}
                                     disabled={row.original.isReadOnly || isDeploying}
                                 >
@@ -427,13 +429,9 @@ const ActionCell = ({
             </Dialog>
 
             {/* Progress Dialog - Rendered outside dropdown */}
-            {console.log('[v0] Rendering DeploymentProgressDialog, progressOpen:', progressOpen)}
             <DeploymentProgressDialog
                 open={progressOpen}
-                onOpenChange={(open) => {
-                    console.log('[v0] DeploymentProgressDialog onOpenChange:', open);
-                    setProgressOpen(open);
-                }}
+                onOpenChange={setProgressOpen}
                 agentName={row.original.agentName}
                 isRedeployment={!!isDeployed}
             />
