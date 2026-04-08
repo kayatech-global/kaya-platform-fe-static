@@ -40,8 +40,20 @@ import {
     IGuardrailSetup,
     IExecutableFunctionCredential,
 } from '@/models';
-import { Boxes, Bot } from 'lucide-react';
+import { Boxes, Bot, Rocket } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AgentCategory, DEFAULT_HORIZON_CONFIG } from '@/models';
+import {
+    AgentCategorySelector,
+    DeployConfigSection,
+    IdentitySection,
+    SkillsSection,
+    ExecutionPolicySection,
+    PersistenceSection,
+    NotificationSection,
+    PublishDialog,
+    validateHorizonConfig,
+} from './horizon';
 import {
     Control,
     Controller,
@@ -66,6 +78,7 @@ interface AgentProps {
     isValid: boolean;
     isSaving: boolean;
     isEdit: boolean;
+    isPublishing?: boolean;
     errors: FieldErrors<IAgentForm>;
     isLoadingResources: boolean;
     allPrompts: PromptResponse[] | undefined;
@@ -112,6 +125,8 @@ interface AgentProps {
     refetchVectorRag: () => Promise<void>;
     refetchMessageBroker: () => Promise<void>;
     refetchGuardrails: () => void;
+    onPublish?: () => void;
+    workspaceName?: string;
 }
 
 export type PromptResponse = {
@@ -216,6 +231,17 @@ export const FormBody = (props: AgentProps) => {
     const [outputBroadcasting, setOutputBroadcasting] = useState<IMessagePublisher | undefined>();
     const [guardrails, setGuardrails] = useState<string[] | undefined>();
     const [mounted, setMounted] = useState<boolean>(false);
+    
+    // Horizon Agent state
+    const agentCategory = watch('agentCategory') || AgentCategory.REUSABLE;
+    const isHorizonAgent = agentCategory === AgentCategory.HORIZON;
+
+    // Handle agent category change
+    const handleCategoryChange = useCallback((category: AgentCategory) => {
+        if (category === AgentCategory.HORIZON && !getValues('horizonConfig')) {
+            setValue('horizonConfig', DEFAULT_HORIZON_CONFIG);
+        }
+    }, [setValue, getValues]);
 
     useEffect(() => {
         if (!isEdit) {
@@ -591,6 +617,15 @@ export const FormBody = (props: AgentProps) => {
                         />
                     </div>
                 </div>
+                
+                {/* Agent Category Selector */}
+                <AgentCategorySelector
+                    control={control}
+                    isReadOnly={isEdit && !!watch('isReadOnly')}
+                    isEdit={isEdit}
+                    onCategoryChange={handleCategoryChange}
+                />
+                
                 <div className="col-span-1 sm:col-span-2">
                     <Controller
                         name="promptTemplateId"
@@ -819,14 +854,85 @@ export const FormBody = (props: AgentProps) => {
                         onMessagePublisherChange={onOutputBroadcasting}
                     />
                 </div>
+                
+                {/* Horizon Agent Configuration Sections */}
+                {isHorizonAgent && (
+                    <>
+                        <div className="col-span-1 sm:col-span-2 md:col-span-2">
+                            <div className="flex items-center gap-x-2 py-2">
+                                <div className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
+                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 px-2">
+                                    Horizon Agent Configuration
+                                </p>
+                                <div className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
+                            </div>
+                        </div>
+                        
+                        <DeployConfigSection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                        
+                        <IdentitySection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
+                            errors={errors}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                        
+                        <SkillsSection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
+                            errors={errors}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                        
+                        <ExecutionPolicySection
+                            control={control}
+                            watch={watch}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                        
+                        <PersistenceSection
+                            control={control}
+                            watch={watch}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                        
+                        <NotificationSection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
+                            errors={errors}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                    </>
+                )}
             </div>
         </>
     );
 };
 
 export const AgentForm = (props: AgentProps) => {
-    const { isOpen, setOpen, handleSubmit, onHandleSubmit, watch, reset, isValid, isEdit, isSaving } = props;
+    const { isOpen, setOpen, handleSubmit, onHandleSubmit, watch, reset, isValid, isEdit, isSaving, isPublishing, onPublish, workspaceName } = props;
+    const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+    
+    const agentCategory = watch('agentCategory') || AgentCategory.REUSABLE;
+    const isHorizonAgent = agentCategory === AgentCategory.HORIZON;
+    
+    const handlePublish = () => {
+        if (onPublish) {
+            onPublish();
+        }
+        setPublishDialogOpen(false);
+    };
+    
     return (
+        <>
         <AppDrawer
             open={isOpen}
             direction="right"
@@ -868,6 +974,18 @@ export const AgentForm = (props: AgentProps) => {
                             </Tooltip>
                         </TooltipProvider>
                     </div>
+                    {/* Publish Button for Horizon Agents */}
+                    {isHorizonAgent && isEdit && onPublish && (
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setPublishDialogOpen(true)}
+                            disabled={isSaving || isPublishing || !!watch('isReadOnly')}
+                        >
+                            <Rocket size={16} className="mr-1" />
+                            Publish
+                        </Button>
+                    )}
                 </div>
             }
             content={
@@ -876,6 +994,19 @@ export const AgentForm = (props: AgentProps) => {
                 </div>
             }
         />
+        
+        {/* Publish Dialog */}
+        {isHorizonAgent && (
+            <PublishDialog
+                open={publishDialogOpen}
+                onOpenChange={setPublishDialogOpen}
+                watch={watch}
+                onPublish={handlePublish}
+                isPublishing={isPublishing}
+                workspaceName={workspaceName}
+            />
+        )}
+        </>
     );
 };
 

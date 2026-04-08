@@ -8,7 +8,7 @@ import { IntellisenseTools } from '@/app/workspace/[wid]/prompt-templates/compon
 import { ActivityProps, DashboardDataCardProps } from '@/components';
 import { ActivityColorCode } from '@/enums/activity-color-code-type';
 import { areObjectsEqual, isNullOrEmpty } from '@/lib/utils';
-import { Agent, IAgent, IAgentForm, IAllModel, IHookProps, IOption, IVariable, INodeHumanInput } from '@/models';
+import { Agent, IAgent, IAgentForm, IAllModel, IHookProps, IOption, IVariable, INodeHumanInput, AgentCategory, DEFAULT_HORIZON_CONFIG } from '@/models';
 import { logger } from '@/utils';
 import { Unplug, Database, Link, TrendingUpIcon, TrendingDownIcon } from 'lucide-react';
 // import { useParams } from 'next/navigation';
@@ -153,6 +153,10 @@ export const useAgent = (props?: IHookProps) => {
                 guardrails: undefined,
                 sourceValue: undefined,
                 connectors: undefined,
+                // Horizon Agent fields
+                agentCategory: AgentCategory.REUSABLE,
+                horizonConfig: undefined,
+                publishStatus: undefined,
             });
         }
     }, [isOpen, reset]);
@@ -310,6 +314,9 @@ export const useAgent = (props?: IHookProps) => {
             guardrails: x?.configurations?.guardrails,
             sourceValue: isNullOrEmpty(x.llmId) ? x.slmId : x.llmId,
             connectors: x?.configurations?.connectors,
+            // Horizon Agent fields
+            agentCategory: x?.agentCategory || AgentCategory.REUSABLE,
+            publishStatus: x?.publishStatus,
         }));
         setAgentDetails(arr);
         setAgentConfigurationTableData(data);
@@ -405,6 +412,48 @@ export const useAgent = (props?: IHookProps) => {
         }
     );
 
+    // Publish mutation for Horizon Agents
+    const { isLoading: isPublishing, mutate: mutatePublishAgent } = useMutation(
+        async ({ id }: { id: string }) => {
+            const stored = localStorage.getItem('mock_agent_data');
+            const configs = stored ? JSON.parse(stored) : [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const index = configs.findIndex((x: any) => x.id === id);
+            if (index > -1) {
+                const currentVersion = configs[index].horizonConfig?.identity?.version || '1.0.0';
+                configs[index] = {
+                    ...configs[index],
+                    publishStatus: {
+                        isPublished: true,
+                        publishedVersion: currentVersion,
+                        publishedAt: new Date().toISOString(),
+                        publishedBy: 'current-user',
+                    },
+                };
+                localStorage.setItem('mock_agent_data', JSON.stringify(configs));
+            }
+            return { id };
+        },
+        {
+            onSuccess: () => {
+                queryClient.invalidateQueries(QueryKeyType.AGENT);
+                toast.success('Horizon Agent published successfully');
+            },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onError: (error: any) => {
+                toast.error(error?.message || 'Error publishing agent');
+                logger.error('Error publishing agent:', error?.message);
+            },
+        }
+    );
+
+    const onPublish = () => {
+        const agentId = getValues('id');
+        if (agentId) {
+            mutatePublishAgent({ id: agentId });
+        }
+    };
+
     const intellisenseOptions = useMemo(() => {
         if (!allAgents || !allApis || !allVariables || !allExecutableFunctions) return [];
 
@@ -458,6 +507,10 @@ export const useAgent = (props?: IHookProps) => {
                 setValue('publisherIntegration', obj?.configurations?.publisherIntegration);
                 setValue('sourceValue', isLlm ? obj.llmId : obj.slmId);
                 setValue('connectors', obj?.configurations?.connectors);
+                // Horizon Agent fields
+                setValue('agentCategory', obj?.agentCategory || AgentCategory.REUSABLE);
+                setValue('horizonConfig', obj?.horizonConfig);
+                setValue('publishStatus', obj?.publishStatus);
                 if (
                     guardrailBinding &&
                     guardrailBinding?.length > 0 &&
@@ -507,6 +560,10 @@ export const useAgent = (props?: IHookProps) => {
                 slmId: isLlm ? undefined : data.slmId,
                 promptTemplateId: data.promptTemplateId,
                 tools: data.tools,
+                // Horizon Agent fields
+                agentCategory: data.agentCategory,
+                horizonConfig: data.agentCategory === AgentCategory.HORIZON ? data.horizonConfig : undefined,
+                publishStatus: data.publishStatus,
             };
 
             if (data.id) {
@@ -631,5 +688,8 @@ export const useAgent = (props?: IHookProps) => {
         onRefetchGraphRag,
         onRefetchVectorRag,
         onRefetchMessageBroker,
+        // Horizon Agent publish
+        isPublishing,
+        onPublish,
     };
 };

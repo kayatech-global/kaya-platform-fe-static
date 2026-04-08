@@ -10,6 +10,7 @@ export * from './configuration.model';
 export * from './prompt-template.model';
 export * from './vault.model';
 export * from './agent.model';
+export * from './horizon-agent.model';
 export * from './workflow.model';
 export * from './common.model';
 export * from './node.model';

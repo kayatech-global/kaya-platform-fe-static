@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 import { ColumnDef, Row } from '@tanstack/react-table';
 import { Trash2, Pencil } from 'lucide-react';
-import { Button, Input } from '@/components';
+import { Button, Input, Badge } from '@/components';
 import DataTable from '@/components/molecules/table/data-table';
 import { useForm } from 'react-hook-form';
 import { cn, handleNoValue } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
-import { ISelfLearning } from '@/models';
+import { ISelfLearning, AgentCategory, IPublishStatus } from '@/models';
 
 export interface AgentData {
     id: string;
@@ -20,6 +20,8 @@ export interface AgentData {
     search?: string;
     isReadOnly?: boolean;
     selfLearning?: ISelfLearning;
+    agentCategory?: AgentCategory;
+    publishStatus?: IPublishStatus;
 }
 
 interface AgentTableContainerProps {
@@ -89,6 +91,42 @@ const generateColumns = (onEditButtonClick: (id: string) => void, onDelete: (id:
             },
             cell({ row }) {
                 return <div>{handleNoValue(row.getValue('agentName'))}</div>;
+            },
+        },
+        {
+            accessorKey: 'agentCategory',
+            enableSorting: true,
+            header() {
+                return <div className="w-full text-left">Type</div>;
+            },
+            cell({ row }) {
+                const category = row.original.agentCategory;
+                const publishStatus = row.original.publishStatus;
+                const isHorizon = category === AgentCategory.HORIZON;
+                
+                return (
+                    <div className="flex items-center gap-x-2">
+                        <Badge 
+                            variant={isHorizon ? 'default' : 'secondary'}
+                            className={cn(
+                                'text-xs',
+                                isHorizon 
+                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
+                                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                            )}
+                        >
+                            {isHorizon ? 'Horizon' : 'Reusable'}
+                        </Badge>
+                        {isHorizon && publishStatus?.isPublished && (
+                            <Badge 
+                                variant="secondary"
+                                className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            >
+                                Published
+                            </Badge>
+                        )}
+                    </div>
+                );
             },
         },
         {
