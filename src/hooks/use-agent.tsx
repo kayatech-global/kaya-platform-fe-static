@@ -435,7 +435,21 @@ export const useAgent = (props?: IHookProps) => {
             return { id };
         },
         {
-            onSuccess: () => {
+            onSuccess: (_, variables) => {
+                // Update local state immediately for instant UI feedback
+                setAgentConfigurationTableData(prev => 
+                    prev.map(agent => 
+                        agent.id === variables.id 
+                            ? { 
+                                ...agent, 
+                                publishStatus: { 
+                                    isPublished: true, 
+                                    publishedAt: new Date().toISOString() 
+                                } 
+                            } 
+                            : agent
+                    )
+                );
                 queryClient.invalidateQueries(QueryKeyType.AGENT);
                 toast.success('Horizon Agent published successfully');
             },
@@ -447,8 +461,8 @@ export const useAgent = (props?: IHookProps) => {
         }
     );
 
-    const onPublish = () => {
-        const agentId = getValues('id');
+    const onPublish = (id?: string) => {
+        const agentId = id || getValues('id');
         if (agentId) {
             mutatePublishAgent({ id: agentId });
         }

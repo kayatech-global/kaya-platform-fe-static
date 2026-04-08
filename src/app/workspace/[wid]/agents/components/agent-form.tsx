@@ -873,17 +873,17 @@ export const FormBody = (props: AgentProps) => {
                             isReadOnly={isEdit && !!watch('isReadOnly')}
                             connectors={connectors}
                         />
-                        
-                        <ExecutionPolicySection
-                            control={control}
-                            watch={watch}
-                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                        />
 
                         <ExecutionPrimitivesSection
                             control={control}
                             watch={watch}
                             setValue={setValue}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                        />
+                        
+                        <ExecutionPolicySection
+                            control={control}
+                            watch={watch}
                             isReadOnly={isEdit && !!watch('isReadOnly')}
                         />
                         
