@@ -2,10 +2,10 @@
 
 import { Input, Textarea, Button, Label, Checkbox, Badge } from '@/components';
 import { cn } from '@/lib/utils';
-import { IAgentForm, IHorizonSkill, IOMode } from '@/models';
-import { Zap, Plus, Trash2, ChevronDown, ChevronUp, Tag, X } from 'lucide-react';
+import { IAgentForm, IHorizonSkill, IOMode, IConnectorForm } from '@/models';
+import { Zap, Plus, Trash2, ChevronDown, ChevronUp, Tag, X, Link2 } from 'lucide-react';
 import { Control, Controller, UseFormWatch, UseFormSetValue, FieldErrors } from 'react-hook-form';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 interface SkillsSectionProps {
@@ -14,6 +14,7 @@ interface SkillsSectionProps {
     setValue: UseFormSetValue<IAgentForm>;
     errors?: FieldErrors<IAgentForm>;
     isReadOnly?: boolean;
+    connectors?: IConnectorForm[];
 }
 
 const ioModeOptions: { label: string; value: IOMode }[] = [
@@ -31,12 +32,61 @@ const defaultSkill: Omit<IHorizonSkill, 'id'> = {
     version: '1.0.0',
 };
 
-export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly }: SkillsSectionProps) => {
+export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, connectors = [] }: SkillsSectionProps) => {
     const [expandedSkills, setExpandedSkills] = useState<Set<string>>(new Set());
     const [newTag, setNewTag] = useState<Record<string, string>>({});
     const [newExample, setNewExample] = useState<Record<string, string>>({});
 
     const skills = watch('horizonConfig.skills') || [];
+
+    // Create a skill from a connector
+    const createSkillFromConnector = useCallback((connector: IConnectorForm): IHorizonSkill => {
+        return {
+            id: `connector-${connector.id}`,
+            name: connector.name || 'Unnamed Connector',
+            description: connector.description || `Data connector skill for ${connector.name}`,
+            tags: ['data-connector', connector.type || 'connector'],
+            examples: [`Retrieve data using ${connector.name}`],
+            ioModes: ['structured'] as IOMode[],
+            version: '1.0.0',
+            inputConnectorMapping: { connectorId: connector.id || '' },
+        };
+    }, []);
+
+    // Sync skills with connectors - auto-populate skills from connectors
+    useEffect(() => {
+        if (connectors.length === 0) return;
+
+        const existingConnectorSkillIds = new Set(
+            skills
+                .filter((s) => s.id.startsWith('connector-'))
+                .map((s) => s.id.replace('connector-', ''))
+        );
+
+        const connectorIds = new Set(connectors.map((c) => c.id));
+        
+        // Find connectors that don't have corresponding skills
+        const newConnectorSkills = connectors
+            .filter((c) => c.id && !existingConnectorSkillIds.has(c.id))
+            .map(createSkillFromConnector);
+
+        // Find skills that no longer have corresponding connectors (to remove)
+        const orphanedSkillIds = skills
+            .filter((s) => s.id.startsWith('connector-'))
+            .filter((s) => !connectorIds.has(s.id.replace('connector-', '')))
+            .map((s) => s.id);
+
+        if (newConnectorSkills.length > 0 || orphanedSkillIds.length > 0) {
+            const updatedSkills = [
+                ...skills.filter((s) => !orphanedSkillIds.includes(s.id)),
+                ...newConnectorSkills,
+            ];
+            setValue('horizonConfig.skills', updatedSkills);
+        }
+    }, [connectors, skills, setValue, createSkillFromConnector]);
+
+    // Check if a skill is auto-generated from a connector
+    const isConnectorSkill = (skillId: string) => skillId.startsWith('connector-');
 
     const toggleSkill = (skillId: string) => {
         const newExpanded = new Set(expandedSkills);
@@ -131,7 +181,7 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly }: 
                             <p className="text-sm font-medium">Skills Metadata</p>
                         </div>
                         <p className="text-xs font-normal text-gray-400">
-                            Define the skills and capabilities this Horizon Agent exposes.
+                            Skills are automatically generated from Input Data Connects. You can also add custom skills.
                         </p>
                     </div>
                     {!isReadOnly && (
@@ -148,7 +198,7 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly }: 
                         <Zap size={32} className="mx-auto text-gray-400 mb-2" />
                         <p className="text-sm text-gray-500 dark:text-gray-400">No skills configured yet.</p>
                         <p className="text-xs text-gray-400 mt-1">
-                            Add skills to define what this agent can do.
+                            Skills are auto-populated from Input Data Connects, or add custom skills manually.
                         </p>
                     </div>
                 ) : (
@@ -166,35 +216,46 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly }: 
                                     )}
                                     onClick={() => toggleSkill(skill.id)}
                                 >
-                                    <div className="flex items-center gap-x-3">
-                                        {expandedSkills.has(skill.id) ? (
-                                            <ChevronUp size={16} className="text-gray-400" />
-                                        ) : (
-                                            <ChevronDown size={16} className="text-gray-400" />
-                                        )}
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                                {skill.name || `Skill ${index + 1}`}
-                                            </p>
-                                            <p className="text-xs text-gray-400">
-                                                v{skill.version} | {skill.ioModes.join(', ')}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {!isReadOnly && (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                removeSkill(skill.id);
-                                            }}
-                                            className="text-gray-400 hover:text-red-500"
-                                        >
-                                            <Trash2 size={16} />
-                                        </Button>
-                                    )}
+<div className="flex items-center gap-x-3">
+                                                        {expandedSkills.has(skill.id) ? (
+                                                            <ChevronUp size={16} className="text-gray-400" />
+                                                        ) : (
+                                                            <ChevronDown size={16} className="text-gray-400" />
+                                                        )}
+                                                        <div>
+                                                            <div className="flex items-center gap-x-2">
+                                                                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                                                    {skill.name || `Skill ${index + 1}`}
+                                                                </p>
+                                                                {isConnectorSkill(skill.id) && (
+                                                                    <Badge 
+                                                                        variant="secondary" 
+                                                                        className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                                                    >
+                                                                        <Link2 size={10} className="mr-1" />
+                                                                        Data Connect
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-xs text-gray-400">
+                                                                v{skill.version} | {skill.ioModes.join(', ')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+{!isReadOnly && !isConnectorSkill(skill.id) && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                removeSkill(skill.id);
+                                                            }}
+                                                            className="text-gray-400 hover:text-red-500"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </Button>
+                                                    )}
                                 </div>
 
                                 {/* Skill Details */}

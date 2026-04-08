@@ -16,6 +16,9 @@ export type HostingModel = 'managed' | 'agentcore';
 // Environment Type
 export type DeployEnvironment = 'dev' | 'stage' | 'prod';
 
+// Runtime Type (for AgentCore hosting)
+export type RuntimeType = 'python311' | 'python312' | 'nodejs20' | 'nodejs22' | 'java21' | 'dotnet8';
+
 // Priority Handling Strategy
 export type PriorityStrategy = 'fifo' | 'priority' | 'fair';
 
@@ -41,6 +44,7 @@ export interface IScalingPolicy {
 export interface IHorizonDeployConfig {
   hostingModel: HostingModel;
   environment: DeployEnvironment;
+  runtime?: RuntimeType; // Used when hostingModel is 'agentcore'
   scalingPolicy: IScalingPolicy;
 }
 

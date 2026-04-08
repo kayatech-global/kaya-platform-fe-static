@@ -24,9 +24,20 @@ const environmentOptions = [
     { name: 'Production', value: 'prod' },
 ];
 
+const runtimeOptions = [
+    { name: 'Python 3.11', value: 'python311' },
+    { name: 'Python 3.12', value: 'python312' },
+    { name: 'Node.js 20', value: 'nodejs20' },
+    { name: 'Node.js 22', value: 'nodejs22' },
+    { name: 'Java 21', value: 'java21' },
+    { name: '.NET 8', value: 'dotnet8' },
+];
+
 export const DeployConfigSection = ({ control, watch, setValue, isReadOnly }: DeployConfigSectionProps) => {
     const horizonConfig = watch('horizonConfig');
     const autoScale = horizonConfig?.deploy?.scalingPolicy?.autoScale ?? true;
+    const hostingModel = horizonConfig?.deploy?.hostingModel || 'managed';
+    const isAgentCore = hostingModel === 'agentcore';
 
     return (
         <div className="col-span-1 sm:col-span-2 border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-2 sm:p-4">
@@ -58,21 +69,41 @@ export const DeployConfigSection = ({ control, watch, setValue, isReadOnly }: De
                         )}
                     />
 
-                    {/* Environment */}
-                    <Controller
-                        name="horizonConfig.deploy.environment"
-                        control={control}
-                        render={({ field }) => (
-                            <Select
-                                label="Environment"
-                                placeholder="Select environment"
-                                options={environmentOptions}
-                                currentValue={field.value || 'dev'}
-                                disabled={isReadOnly}
-                                onChange={(e) => field.onChange(e.target.value as DeployEnvironment)}
-                            />
-                        )}
-                    />
+                    {/* Environment - shown when Managed */}
+                    {!isAgentCore && (
+                        <Controller
+                            name="horizonConfig.deploy.environment"
+                            control={control}
+                            render={({ field }) => (
+                                <Select
+                                    label="Environment"
+                                    placeholder="Select environment"
+                                    options={environmentOptions}
+                                    currentValue={field.value || 'dev'}
+                                    disabled={isReadOnly}
+                                    onChange={(e) => field.onChange(e.target.value as DeployEnvironment)}
+                                />
+                            )}
+                        />
+                    )}
+
+                    {/* Runtime - shown when AgentCore (External) */}
+                    {isAgentCore && (
+                        <Controller
+                            name="horizonConfig.deploy.runtime"
+                            control={control}
+                            render={({ field }) => (
+                                <Select
+                                    label="Runtime"
+                                    placeholder="Select runtime"
+                                    options={runtimeOptions}
+                                    currentValue={field.value || 'python312'}
+                                    disabled={isReadOnly}
+                                    onChange={(e) => field.onChange(e.target.value)}
+                                />
+                            )}
+                        />
+                    )}
                 </div>
 
                 {/* Scaling Policy Section */}

@@ -723,10 +723,10 @@ export const FormBody = (props: AgentProps) => {
                         <div className="flex flex-col gap-y-1">
                             <div className="flex items-center gap-x-[10px]">
                                 <Boxes size={20} absoluteStrokeWidth={false} className="stroke-[1px]" />
-                                <p>Add Helper Tools</p>
+                                <p>Add Input Data Connects</p>
                             </div>
                             <p className="text-xs font-normal text-gray-400">
-                                Select helper tools that required for this agent to run efficiently.
+                                Configure data sources and tools required for this agent to operate.
                             </p>
                         </div>
                         <div>
@@ -889,6 +889,7 @@ export const FormBody = (props: AgentProps) => {
                             setValue={setValue}
                             errors={errors}
                             isReadOnly={isEdit && !!watch('isReadOnly')}
+                            connectors={connectors}
                         />
                         
                         <ExecutionPolicySection
