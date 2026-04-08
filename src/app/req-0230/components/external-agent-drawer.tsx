@@ -30,6 +30,14 @@ import {
     ArrowRight,
     Clock,
     RotateCcw,
+    Globe,
+    ArrowRightLeft,
+    Code2,
+    Activity,
+    Play,
+    Eye,
+    ExternalLink,
+    AlertCircle,
 } from 'lucide-react';
 
 /* ─── Types ─────────────────────────────────────────────────────────────────── */
@@ -38,6 +46,7 @@ type ToolType = 'REST' | 'MCP' | 'Vector RAG' | 'Graph RAG' | 'Executable' | 'Op
 type IOMode = 'sync' | 'stream' | 'async';
 type AuthScheme = 'none' | 'bearer' | 'oauth2';
 type RetryStrategy = 'none' | 'linear' | 'exponential';
+type ExecutionMode = 'synchronous' | 'asynchronous';
 
 interface RemoteSkill {
     id: string;
@@ -500,6 +509,8 @@ function RuntimeOptions() {
     const [streaming, setStreaming] = useState(true);
     const [timeout, setTimeout_] = useState(30);
     const [retry, setRetry] = useState<RetryStrategy>('linear');
+    const [executionMode, setExecutionMode] = useState<ExecutionMode>('synchronous');
+    const [pollingInterval, setPollingInterval] = useState(5);
 
     const retryOptions: { value: RetryStrategy; label: string }[] = [
         { value: 'none', label: 'No retry' },
@@ -515,6 +526,71 @@ function RuntimeOptions() {
 
     return (
         <div className="flex flex-col gap-y-3.5">
+            {/* Execution Mode */}
+            <div className="flex flex-col gap-y-1.5">
+                <div className="flex items-center gap-x-1.5">
+                    <span className="text-xs font-medium text-foreground">Execution Mode</span>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button>
+                                    <Info size={11} className="text-muted-foreground" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-[180px]">
+                                <p className="text-[11px]">
+                                    Sync: wait for response. Async: receive job_id and poll for completion.
+                                </p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
+                <div className="flex rounded-md border border-border overflow-hidden">
+                    <button
+                        type="button"
+                        onClick={() => setExecutionMode('synchronous')}
+                        className={cn(
+                            'flex-1 px-3 py-1.5 text-xs font-medium transition-colors',
+                            executionMode === 'synchronous'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-background text-muted-foreground hover:bg-muted'
+                        )}
+                    >
+                        Synchronous
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setExecutionMode('asynchronous')}
+                        className={cn(
+                            'flex-1 px-3 py-1.5 text-xs font-medium transition-colors border-l border-border',
+                            executionMode === 'asynchronous'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-background text-muted-foreground hover:bg-muted'
+                        )}
+                    >
+                        Asynchronous
+                    </button>
+                </div>
+            </div>
+
+            {executionMode === 'asynchronous' && (
+                <div className="flex flex-col gap-y-1 pl-2 border-l-2 border-blue-500/30">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Polling Interval</span>
+                        <span className="text-[11px] font-mono text-muted-foreground">{pollingInterval}s</span>
+                    </div>
+                    <input
+                        type="range"
+                        min={1}
+                        max={60}
+                        step={1}
+                        value={pollingInterval}
+                        onChange={e => setPollingInterval(Number(e.target.value))}
+                        className="w-full h-1.5 accent-blue-600 cursor-pointer"
+                    />
+                </div>
+            )}
+
             {/* Streaming */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-x-1.5">
@@ -544,7 +620,7 @@ function RuntimeOptions() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-x-1.5">
                         <Clock size={12} className="text-muted-foreground" />
-                        <span className="text-xs font-medium text-foreground">Timeout</span>
+                        <span className="text-xs font-medium text-foreground">Timeout Limit</span>
                     </div>
                     <span className="text-[11px] font-mono text-muted-foreground">{timeout}s</span>
                 </div>
@@ -567,7 +643,7 @@ function RuntimeOptions() {
             <div className="flex flex-col gap-y-1.5">
                 <div className="flex items-center gap-x-1.5">
                     <RotateCcw size={12} className="text-muted-foreground" />
-                    <span className="text-xs font-medium text-foreground">Retry Strategy</span>
+                    <span className="text-xs font-medium text-foreground">Retry Logic</span>
                 </div>
                 <select
                     value={retry}
@@ -583,7 +659,7 @@ function RuntimeOptions() {
             </div>
 
             {/* Branch targets */}
-            <div className="flex flex-col gap-y-1.5">
+            <div className="flex flex-col gap-y-1.5 pt-2 border-t border-border">
                 <span className="text-xs font-medium text-foreground">Branch Targets</span>
                 <div className="flex flex-wrap gap-1.5">
                     {branchBadges.map(b => (
@@ -602,6 +678,192 @@ function RuntimeOptions() {
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
                     Connect downstream nodes to these branch ports in the canvas.
                 </p>
+            </div>
+        </div>
+    );
+}
+
+/* ─── Discovery Configuration ───────────────────────────────────────────────── */
+
+function DiscoveryConfiguration() {
+    const [autoDiscovery, setAutoDiscovery] = useState(false);
+    const [discoveryInterval, setDiscoveryInterval] = useState(60);
+
+    return (
+        <div className="flex flex-col gap-y-3">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-x-1.5">
+                    <Globe size={12} className="text-muted-foreground" />
+                    <span className="text-xs font-medium text-foreground">Auto-Discovery</span>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button>
+                                    <Info size={11} className="text-muted-foreground" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-[180px]">
+                                <p className="text-[11px]">
+                                    Periodically refresh the Agent Card to detect new skills or endpoint changes.
+                                </p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
+                <Switch checked={autoDiscovery} onCheckedChange={setAutoDiscovery} className="scale-75 origin-right" />
+            </div>
+            {autoDiscovery && (
+                <div className="flex flex-col gap-y-1 pl-2 border-l-2 border-sky-500/30">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Refresh Interval</span>
+                        <span className="text-[11px] font-mono text-muted-foreground">{discoveryInterval} min</span>
+                    </div>
+                    <input
+                        type="range"
+                        min={5}
+                        max={1440}
+                        step={5}
+                        value={discoveryInterval}
+                        onChange={e => setDiscoveryInterval(Number(e.target.value))}
+                        className="w-full h-1.5 accent-blue-600 cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[9px] text-muted-foreground">
+                        <span>5 min</span>
+                        <span>24 hrs</span>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+/* ─── Task Mapping ──────────────────────────────────────────────────────────── */
+
+function TaskMappingPanel() {
+    const [methodName, setMethodName] = useState('execute_task');
+    const [inputSchema, setInputSchema] = useState('{\n  "prompt": "{{workflow.user_query}}"\n}');
+    const [outputMapping, setOutputMapping] = useState('result.data');
+
+    return (
+        <div className="flex flex-col gap-y-3">
+            {/* Method Name */}
+            <LabeledField
+                label="Method Name"
+                hint="The JSON-RPC method the agent supports (e.g., execute_task, generate_report)"
+            >
+                <input
+                    className="w-full h-8 rounded-md border border-border bg-background px-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    placeholder="execute_task"
+                    value={methodName}
+                    onChange={e => setMethodName(e.target.value)}
+                />
+            </LabeledField>
+
+            {/* Input Schema */}
+            <LabeledField
+                label="Input Schema (JSON)"
+                hint='Map workflow variables to agent params using {{workflow.variable}} syntax'
+            >
+                <div className="relative">
+                    <Code2 size={12} className="absolute left-2.5 top-2 text-muted-foreground" />
+                    <textarea
+                        className="w-full rounded-md border border-border bg-background pl-7 pr-2.5 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+                        placeholder={'{\n  "prompt": "{{workflow.user_query}}"\n}'}
+                        rows={4}
+                        value={inputSchema}
+                        onChange={e => setInputSchema(e.target.value)}
+                    />
+                </div>
+            </LabeledField>
+
+            {/* Output Mapping */}
+            <LabeledField
+                label="Output Mapping"
+                hint="JSONPath to extract from agent result (e.g., result.data, response.output)"
+            >
+                <input
+                    className="w-full h-8 rounded-md border border-border bg-background px-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    placeholder="result.data"
+                    value={outputMapping}
+                    onChange={e => setOutputMapping(e.target.value)}
+                />
+            </LabeledField>
+        </div>
+    );
+}
+
+/* ─── Advanced Monitoring ───────────────────────────────────────────────────── */
+
+function MonitoringPanel({ agentCardUrl }: { agentCardUrl: string }) {
+    const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+    const [testMessage, setTestMessage] = useState('');
+
+    const testConnection = async () => {
+        setTestStatus('testing');
+        setTestMessage('');
+        // Simulate async test
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setTestStatus('success');
+        setTestMessage('Agent is A2A-compliant and reachable. Schema version 0.2.1 detected.');
+    };
+
+    const openInspector = () => {
+        if (agentCardUrl) {
+            window.open(agentCardUrl, '_blank', 'noopener,noreferrer');
+        }
+    };
+
+    return (
+        <div className="flex flex-col gap-y-3">
+            {/* Test Connection */}
+            <div className="flex flex-col gap-y-2">
+                <span className="text-xs text-muted-foreground">Capability Check</span>
+                <button
+                    onClick={testConnection}
+                    disabled={testStatus === 'testing' || !agentCardUrl}
+                    className="w-full h-8 flex items-center justify-center gap-x-2 rounded-md border border-border bg-background text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                >
+                    {testStatus === 'testing' ? (
+                        <Loader2 size={12} className="animate-spin" />
+                    ) : testStatus === 'success' ? (
+                        <CheckCircle2 size={12} className="text-green-500" />
+                    ) : testStatus === 'error' ? (
+                        <AlertCircle size={12} className="text-red-500" />
+                    ) : (
+                        <Play size={12} />
+                    )}
+                    Test Connection
+                </button>
+                {testMessage && (
+                    <div className={cn(
+                        'flex items-start gap-x-2 px-3 py-2 rounded-md text-[11px]',
+                        testStatus === 'success'
+                            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
+                            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+                    )}>
+                        {testStatus === 'success' ? (
+                            <CheckCircle2 size={12} className="shrink-0 mt-0.5" />
+                        ) : (
+                            <AlertCircle size={12} className="shrink-0 mt-0.5" />
+                        )}
+                        <span>{testMessage}</span>
+                    </div>
+                )}
+            </div>
+
+            {/* A2A Inspector Link */}
+            <div className="flex flex-col gap-y-2">
+                <span className="text-xs text-muted-foreground">A2A Inspector</span>
+                <button
+                    onClick={openInspector}
+                    disabled={!agentCardUrl}
+                    className="w-full h-8 flex items-center justify-center gap-x-2 rounded-md border border-border bg-background text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                >
+                    <Eye size={12} />
+                    View Raw Agent Card
+                    <ExternalLink size={10} className="ml-auto" />
+                </button>
+                <p className="text-[10px] text-muted-foreground">Opens the agent&apos;s JSON card for debugging and inspection.</p>
             </div>
         </div>
     );
@@ -675,9 +937,12 @@ export function ExternalAgentDrawer({ onClose }: ExternalAgentDrawerProps) {
 
     // Section open states
     const [sectionsOpen, setSectionsOpen] = useState({
+        discovery: true,
         skills: true,
+        taskMapping: false,
         auth: true,
         runtime: false,
+        monitoring: false,
     });
 
     // Banners
@@ -810,6 +1075,25 @@ export function ExternalAgentDrawer({ onClose }: ExternalAgentDrawerProps) {
                 {/* Divider */}
                 <div className="h-px bg-border" />
 
+                {/* Discovery Configuration (NEW) */}
+                <div>
+                    <SectionHeader
+                        label="Discovery Configuration"
+                        open={sectionsOpen.discovery}
+                        onToggle={() => toggleSection('discovery')}
+                    >
+                        <Globe size={13} className="text-sky-500" />
+                    </SectionHeader>
+                    {sectionsOpen.discovery && (
+                        <div className="mt-2">
+                            <DiscoveryConfiguration />
+                        </div>
+                    )}
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-border" />
+
                 {/* Remote Skills */}
                 <div>
                     <SectionHeader
@@ -838,6 +1122,25 @@ export function ExternalAgentDrawer({ onClose }: ExternalAgentDrawerProps) {
                 {/* Divider */}
                 <div className="h-px bg-border" />
 
+                {/* Task Mapping (NEW) */}
+                <div>
+                    <SectionHeader
+                        label="Task Mapping"
+                        open={sectionsOpen.taskMapping}
+                        onToggle={() => toggleSection('taskMapping')}
+                    >
+                        <ArrowRightLeft size={13} className="text-emerald-500" />
+                    </SectionHeader>
+                    {sectionsOpen.taskMapping && (
+                        <div className="mt-2">
+                            <TaskMappingPanel />
+                        </div>
+                    )}
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-border" />
+
                 {/* Auth */}
                 <div>
                     <SectionHeader
@@ -845,7 +1148,7 @@ export function ExternalAgentDrawer({ onClose }: ExternalAgentDrawerProps) {
                         open={sectionsOpen.auth}
                         onToggle={() => toggleSection('auth')}
                         >
-                        <ShieldCheck size={13} className="text-muted-foreground" />
+                        <ShieldCheck size={13} className="text-green-500" />
                     </SectionHeader>
                     {sectionsOpen.auth && (
                         <div className="mt-2">
@@ -860,13 +1163,32 @@ export function ExternalAgentDrawer({ onClose }: ExternalAgentDrawerProps) {
                 {/* Runtime */}
                 <div>
                     <SectionHeader
-                        label="Runtime Options"
+                        label="Runtime & Execution"
                         open={sectionsOpen.runtime}
                         onToggle={() => toggleSection('runtime')}
                     />
                     {sectionsOpen.runtime && (
                         <div className="mt-2">
                             <RuntimeOptions />
+                        </div>
+                    )}
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-border" />
+
+                {/* Advanced Monitoring (NEW) */}
+                <div>
+                    <SectionHeader
+                        label="Advanced Monitoring"
+                        open={sectionsOpen.monitoring}
+                        onToggle={() => toggleSection('monitoring')}
+                    >
+                        <Activity size={13} className="text-rose-500" />
+                    </SectionHeader>
+                    {sectionsOpen.monitoring && (
+                        <div className="mt-2">
+                            <MonitoringPanel agentCardUrl={cardUrl} />
                         </div>
                     )}
                 </div>
