@@ -4,7 +4,7 @@ import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { Button, Input, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/atoms/dialog';
 import { cn, getSubmitButtonLabel, validateSpaces } from '@/lib/utils';
-import { Bot, FileText, Brain, UserCheck, Database, GraduationCap, Broadcast, Check, ChevronLeft, ChevronRight, Settings2 } from 'lucide-react';
+import { Bot, FileText, Brain, UserCheck, Database, GraduationCap, Radio, Check, ChevronLeft, ChevronRight, Settings2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgentCategory, DEFAULT_HORIZON_CONFIG, IAgentForm, IAuthorization, IHeaderValues, IGraphRag, INodeHumanInput, IVectorRag, ISelfLearning, RequestToolType, IConnectorForm, Tool, IMessageBroker, IMessagePublisher, IGuardrailSetup, IExecutableFunctionCredential } from '@/models';
 import { Control, Controller, FieldErrors, UseFormGetValues, UseFormHandleSubmit, UseFormRegister, UseFormReset, UseFormSetValue, UseFormTrigger, UseFormWatch } from 'react-hook-form';
@@ -85,7 +85,7 @@ const WIZARD_STEPS: WizardStep[] = [
     { id: 3, title: 'Human Review', description: 'Configure human-in-the-loop', icon: UserCheck },
     { id: 4, title: 'Input Data Connects', description: 'Add data sources and tools', icon: Database },
     { id: 5, title: 'Self Learning', description: 'Enable agent learning capabilities', icon: GraduationCap },
-    { id: 6, title: 'Output Broadcasting', description: 'Configure output destinations', icon: Broadcast },
+    { id: 6, title: 'Output Broadcasting', description: 'Configure output destinations', icon: Radio },
     { id: 7, title: 'Horizon Config', description: 'Skills, policies & deployment', icon: Settings2, isHorizonOnly: true },
 ];
 
