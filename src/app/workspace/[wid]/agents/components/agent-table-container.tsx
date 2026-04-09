@@ -38,7 +38,7 @@ interface AgentTableContainerProps {
     onEditButtonClick: (id: string) => void;
     onDelete: (id: string) => void;
     onRecentActivity: () => void;
-    onDeploy?: (id: string) => void;
+    onDeployWithProgress?: (agentId: string, agentName: string, isRedeploy: boolean) => void;
     isDeploying?: boolean;
 }
 
@@ -119,8 +119,8 @@ const DeleteRecord = ({ row, onDelete }: { row: Row<AgentData>; onDelete: (id: s
     );
 };
 
-// Deployment Progress Dialog
-const DeploymentProgressDialog = ({
+// Deployment Progress Dialog - Exported for use in AgentContainer
+export const DeploymentProgressDialog = ({
     open,
     onOpenChange,
     agentName,
@@ -316,10 +316,8 @@ const ActionCell = ({
     const isDeployed = row.original.publishStatus?.isPublished;
 
     const handleConfirmDeploy = () => {
-        console.log('[v0] handleConfirmDeploy called');
         setConfirmOpen(false);
         if (onDeployWithProgress) {
-            console.log('[v0] calling onDeployWithProgress');
             onDeployWithProgress(row.original.id, row.original.agentName, !!isDeployed);
         }
     };
@@ -518,33 +516,12 @@ export const AgentTableContainer = ({
     onEditButtonClick,
     onDelete,
     onRecentActivity,
-    onDeploy,
+    onDeployWithProgress,
     isDeploying,
 }: AgentTableContainerProps) => {
     const { register, handleSubmit } = useForm<AgentData>({ mode: 'onChange' });
     const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
     const { isMobile } = useBreakpoint();
-    
-    // Deployment progress state - lifted up to prevent remounting issues
-    const [deploymentProgressOpen, setDeploymentProgressOpen] = useState(false);
-    const [deployingAgentName, setDeployingAgentName] = useState('');
-    const [isRedeployment, setIsRedeployment] = useState(false);
-    
-    // Debug: log state changes
-    useEffect(() => {
-        console.log('[v0] AgentTableContainer - deploymentProgressOpen:', deploymentProgressOpen);
-    }, [deploymentProgressOpen]);
-    
-    const handleDeployWithProgress = (agentId: string, agentName: string, isRedeploy: boolean) => {
-        console.log('[v0] handleDeployWithProgress called - agentId:', agentId, 'agentName:', agentName);
-        setDeployingAgentName(agentName);
-        setIsRedeployment(isRedeploy);
-        setDeploymentProgressOpen(true);
-        console.log('[v0] deploymentProgressOpen set to true');
-        if (onDeploy) {
-            onDeploy(agentId);
-        }
-    };
 
     const onHandleSubmit = (data: AgentData) => {
         if (debounceTimer) {
@@ -557,7 +534,7 @@ export const AgentTableContainer = ({
         setDebounceTimer(timer);
     };
 
-    const columns = generateColumns(onEditButtonClick, onDelete, handleDeployWithProgress, isDeploying);
+    const columns = generateColumns(onEditButtonClick, onDelete, onDeployWithProgress, isDeploying);
 
     return (
         <>
@@ -590,14 +567,6 @@ export const AgentTableContainer = ({
                     }
                 />
             </div>
-            
-            {/* Deployment Progress Dialog - Lifted to container level to survive table re-renders */}
-            <DeploymentProgressDialog
-                open={deploymentProgressOpen}
-                onOpenChange={setDeploymentProgressOpen}
-                agentName={deployingAgentName}
-                isRedeployment={isRedeployment}
-            />
         </>
     );
 };
