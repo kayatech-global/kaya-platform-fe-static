@@ -260,6 +260,11 @@ export interface ICronConfig {
   description?: string;
 }
 
+// Generic Primitive Config (for dynamic/extensible primitives)
+export interface IGenericPrimitiveConfig {
+  [key: string]: string | undefined;
+}
+
 // Execution Primitives Configuration
 export interface IExecutionPrimitivesConfig {
   amazonSES?: { enabled: boolean; config?: IAmazonSESConfig };
@@ -272,6 +277,17 @@ export interface IExecutionPrimitivesConfig {
   googleCloudStorage?: { enabled: boolean; config?: IGoogleCloudStorageConfig };
   sharePoint?: { enabled: boolean; config?: ISharePointConfig };
   cron?: { enabled: boolean; config?: ICronConfig };
+  // Shell & Commands
+  bash?: { enabled: boolean; config?: IGenericPrimitiveConfig };
+  // HTTP & API Clients
+  requests?: { enabled: boolean; config?: IGenericPrimitiveConfig };
+  httpx?: { enabled: boolean; config?: IGenericPrimitiveConfig };
+  // Web Scraping & Search
+  serpapi?: { enabled: boolean; config?: IGenericPrimitiveConfig };
+  scrapy?: { enabled: boolean; config?: IGenericPrimitiveConfig };
+  playwright?: { enabled: boolean; config?: IGenericPrimitiveConfig };
+  // Code Execution
+  jupyterKernel?: { enabled: boolean; config?: IGenericPrimitiveConfig };
 }
 
 // Complete Horizon Configuration
@@ -348,6 +364,17 @@ export const DEFAULT_HORIZON_CONFIG: IHorizonConfig = {
     googleCloudStorage: { enabled: false },
     sharePoint: { enabled: false },
     cron: { enabled: false },
+    // Shell & Commands
+    bash: { enabled: false },
+    // HTTP & API Clients
+    requests: { enabled: false },
+    httpx: { enabled: false },
+    // Web Scraping & Search
+    serpapi: { enabled: false },
+    scrapy: { enabled: false },
+    playwright: { enabled: false },
+    // Code Execution
+    jupyterKernel: { enabled: false },
   },
 };
 

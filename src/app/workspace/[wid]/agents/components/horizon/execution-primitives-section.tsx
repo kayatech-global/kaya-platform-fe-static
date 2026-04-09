@@ -30,7 +30,13 @@ import {
     Cloud,
     Info,
     Shield,
-    ExternalLink
+    ExternalLink,
+    Terminal,
+    Globe,
+    Search,
+    Bug,
+    Monitor,
+    FileCode
 } from 'lucide-react';
 import { Control, UseFormWatch, UseFormSetValue } from 'react-hook-form';
 import { cn } from '@/lib/utils';
@@ -52,7 +58,14 @@ type PrimitiveKey =
     | 'azureBlobStorage'
     | 'googleCloudStorage'
     | 'sharePoint'
-    | 'cron';
+    | 'cron'
+    | 'bash'
+    | 'requests'
+    | 'httpx'
+    | 'serpapi'
+    | 'scrapy'
+    | 'playwright'
+    | 'jupyterKernel';
 
 interface ConfigField {
     key: string;
@@ -69,7 +82,7 @@ interface PrimitiveDefinition {
     name: string;
     description: string;
     icon: React.ReactNode;
-    category: 'email' | 'messaging' | 'storage' | 'scheduling';
+    category: 'email' | 'messaging' | 'storage' | 'scheduling' | 'shell' | 'http' | 'scraping' | 'notebook';
     docsUrl?: string;
     fields: ConfigField[];
 }
@@ -268,6 +281,202 @@ const primitiveDefinitions: PrimitiveDefinition[] = [
             ]},
         ],
     },
+    // Shell & Command Execution
+    {
+        key: 'bash',
+        name: 'Bash',
+        description: 'Execute shell commands and scripts in a secure sandboxed environment',
+        icon: <Terminal size={16} />,
+        category: 'shell',
+        docsUrl: 'https://www.gnu.org/software/bash/manual/',
+        fields: [
+            { key: 'workingDirectory', label: 'Working Directory', type: 'text', placeholder: '/tmp/agent-workspace', required: false, helpText: 'Default directory for command execution' },
+            { key: 'timeout', label: 'Execution Timeout (seconds)', type: 'text', placeholder: '30', required: false, helpText: 'Maximum execution time before command is killed' },
+            { key: 'shellPath', label: 'Shell Path', type: 'text', placeholder: '/bin/bash', required: false, helpText: 'Path to shell executable' },
+            { key: 'runAsUser', label: 'Run As User', type: 'text', placeholder: 'agent', required: false, helpText: 'User to execute commands as' },
+            { key: 'sudoPassword', label: 'Sudo Password', type: 'password', placeholder: 'Enter sudo password', required: false, helpText: 'Password for sudo operations (if allowed)' },
+            { key: 'environmentVariables', label: 'Environment Variables', type: 'textarea', placeholder: 'KEY1=value1\nKEY2=value2', required: false, helpText: 'Additional environment variables (one per line)' },
+            { key: 'secretEnvVariables', label: 'Secret Environment Variables', type: 'textarea', placeholder: 'API_KEY=secret_value\nDB_PASSWORD=secret', required: false, helpText: 'Sensitive environment variables (stored encrypted)' },
+            { key: 'allowedCommands', label: 'Allowed Commands', type: 'textarea', placeholder: 'ls\ncat\ngrep\ncurl', required: false, helpText: 'Whitelist of allowed commands (one per line, empty = all allowed)' },
+            { key: 'sandboxMode', label: 'Sandbox Mode', type: 'select', placeholder: 'Select sandbox level', required: false, helpText: 'Security isolation level', options: [
+                { name: 'Strict (recommended)', value: 'strict' },
+                { name: 'Standard', value: 'standard' },
+                { name: 'Permissive', value: 'permissive' },
+            ]},
+        ],
+    },
+    // HTTP Clients
+    {
+        key: 'requests',
+        name: 'Requests',
+        description: 'Python Requests library for making HTTP calls with session management',
+        icon: <Globe size={16} />,
+        category: 'http',
+        docsUrl: 'https://docs.python-requests.org/',
+        fields: [
+            { key: 'baseUrl', label: 'Base URL', type: 'text', placeholder: 'https://api.example.com', required: false, helpText: 'Default base URL for all requests' },
+            { key: 'authType', label: 'Authentication Type', type: 'select', placeholder: 'Select auth type', required: false, helpText: 'Default authentication method', options: [
+                { name: 'None', value: 'none' },
+                { name: 'Bearer Token', value: 'bearer' },
+                { name: 'Basic Auth', value: 'basic' },
+                { name: 'API Key', value: 'apikey' },
+            ]},
+            { key: 'authToken', label: 'Auth Token / API Key', type: 'password', placeholder: 'Enter token or API key', required: false, helpText: 'Bearer token, API key, or password for authentication' },
+            { key: 'authUsername', label: 'Username (Basic Auth)', type: 'text', placeholder: 'Enter username', required: false, helpText: 'Username for Basic authentication' },
+            { key: 'timeout', label: 'Request Timeout (seconds)', type: 'text', placeholder: '30', required: false, helpText: 'Default timeout for HTTP requests' },
+            { key: 'defaultHeaders', label: 'Default Headers', type: 'textarea', placeholder: 'Content-Type: application/json\nX-Custom-Header: value', required: false, helpText: 'Additional headers (one per line, key: value format)' },
+            { key: 'proxyUrl', label: 'Proxy URL', type: 'text', placeholder: 'http://proxy.example.com:8080', required: false, helpText: 'HTTP/HTTPS proxy for all requests' },
+            { key: 'proxyUsername', label: 'Proxy Username', type: 'text', placeholder: 'proxy_user', required: false, helpText: 'Username for proxy authentication' },
+            { key: 'proxyPassword', label: 'Proxy Password', type: 'password', placeholder: 'Enter proxy password', required: false, helpText: 'Password for proxy authentication' },
+            { key: 'verifySsl', label: 'Verify SSL', type: 'select', placeholder: 'Select option', required: false, helpText: 'Verify SSL certificates', options: [
+                { name: 'Yes (recommended)', value: 'true' },
+                { name: 'No', value: 'false' },
+            ]},
+            { key: 'maxRetries', label: 'Max Retries', type: 'text', placeholder: '3', required: false, helpText: 'Number of retry attempts for failed requests' },
+        ],
+    },
+    {
+        key: 'httpx',
+        name: 'HTTPX',
+        description: 'Modern async HTTP client with HTTP/2 support and connection pooling',
+        icon: <Globe size={16} />,
+        category: 'http',
+        docsUrl: 'https://www.python-httpx.org/',
+        fields: [
+            { key: 'baseUrl', label: 'Base URL', type: 'text', placeholder: 'https://api.example.com', required: false, helpText: 'Default base URL for all requests' },
+            { key: 'authType', label: 'Authentication Type', type: 'select', placeholder: 'Select auth type', required: false, helpText: 'Default authentication method', options: [
+                { name: 'None', value: 'none' },
+                { name: 'Bearer Token', value: 'bearer' },
+                { name: 'Basic Auth', value: 'basic' },
+                { name: 'API Key', value: 'apikey' },
+            ]},
+            { key: 'authToken', label: 'Auth Token / API Key', type: 'password', placeholder: 'Enter token or API key', required: false, helpText: 'Bearer token, API key, or password for authentication' },
+            { key: 'authUsername', label: 'Username (Basic Auth)', type: 'text', placeholder: 'Enter username', required: false, helpText: 'Username for Basic authentication' },
+            { key: 'timeout', label: 'Request Timeout (seconds)', type: 'text', placeholder: '30', required: false, helpText: 'Default timeout for HTTP requests' },
+            { key: 'defaultHeaders', label: 'Default Headers', type: 'textarea', placeholder: 'Content-Type: application/json\nX-Custom-Header: value', required: false, helpText: 'Additional headers (one per line, key: value format)' },
+            { key: 'http2', label: 'Enable HTTP/2', type: 'select', placeholder: 'Select option', required: false, helpText: 'Use HTTP/2 protocol when available', options: [
+                { name: 'Yes', value: 'true' },
+                { name: 'No', value: 'false' },
+            ]},
+            { key: 'proxyUrl', label: 'Proxy URL', type: 'text', placeholder: 'http://proxy.example.com:8080', required: false, helpText: 'HTTP/HTTPS proxy for all requests' },
+            { key: 'proxyUsername', label: 'Proxy Username', type: 'text', placeholder: 'proxy_user', required: false, helpText: 'Username for proxy authentication' },
+            { key: 'proxyPassword', label: 'Proxy Password', type: 'password', placeholder: 'Enter proxy password', required: false, helpText: 'Password for proxy authentication' },
+            { key: 'maxConnections', label: 'Max Connections', type: 'text', placeholder: '100', required: false, helpText: 'Maximum concurrent connections in the pool' },
+            { key: 'verifySsl', label: 'Verify SSL', type: 'select', placeholder: 'Select option', required: false, helpText: 'Verify SSL certificates', options: [
+                { name: 'Yes (recommended)', value: 'true' },
+                { name: 'No', value: 'false' },
+            ]},
+        ],
+    },
+    // Web Scraping & Search
+    {
+        key: 'serpapi',
+        name: 'SerpAPI',
+        description: 'Search engine results API for Google, Bing, Yahoo, and more',
+        icon: <Search size={16} />,
+        category: 'scraping',
+        docsUrl: 'https://serpapi.com/search-api',
+        fields: [
+            { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'Enter your SerpAPI key', required: true, helpText: 'Get your API key from serpapi.com' },
+            { key: 'defaultEngine', label: 'Default Search Engine', type: 'select', placeholder: 'Select engine', required: false, helpText: 'Default search engine to use', options: [
+                { name: 'Google', value: 'google' },
+                { name: 'Google Scholar', value: 'google_scholar' },
+                { name: 'Google News', value: 'google_news' },
+                { name: 'Google Images', value: 'google_images' },
+                { name: 'Bing', value: 'bing' },
+                { name: 'Yahoo', value: 'yahoo' },
+                { name: 'DuckDuckGo', value: 'duckduckgo' },
+                { name: 'Baidu', value: 'baidu' },
+                { name: 'Yandex', value: 'yandex' },
+            ]},
+            { key: 'defaultLocation', label: 'Default Location', type: 'text', placeholder: 'United States', required: false, helpText: 'Location for localized search results' },
+            { key: 'defaultLanguage', label: 'Default Language', type: 'text', placeholder: 'en', required: false, helpText: 'Language code (e.g., en, es, fr)' },
+            { key: 'resultsPerPage', label: 'Results Per Page', type: 'text', placeholder: '10', required: false, helpText: 'Number of results to return per query' },
+        ],
+    },
+    {
+        key: 'scrapy',
+        name: 'Scrapy',
+        description: 'Web scraping framework for extracting structured data from websites',
+        icon: <Bug size={16} />,
+        category: 'scraping',
+        docsUrl: 'https://docs.scrapy.org/',
+        fields: [
+            { key: 'userAgent', label: 'User Agent', type: 'text', placeholder: 'Mozilla/5.0 (compatible; MyBot/1.0)', required: false, helpText: 'User agent string for web requests' },
+            { key: 'downloadDelay', label: 'Download Delay (seconds)', type: 'text', placeholder: '1', required: false, helpText: 'Delay between consecutive requests to same domain' },
+            { key: 'concurrentRequests', label: 'Concurrent Requests', type: 'text', placeholder: '16', required: false, helpText: 'Maximum concurrent requests' },
+            { key: 'robotsTxtObey', label: 'Obey robots.txt', type: 'select', placeholder: 'Select option', required: false, helpText: 'Respect robots.txt rules', options: [
+                { name: 'Yes (recommended)', value: 'true' },
+                { name: 'No', value: 'false' },
+            ]},
+            { key: 'cookiesEnabled', label: 'Enable Cookies', type: 'select', placeholder: 'Select option', required: false, helpText: 'Enable cookie handling', options: [
+                { name: 'Yes', value: 'true' },
+                { name: 'No', value: 'false' },
+            ]},
+            { key: 'retryTimes', label: 'Retry Times', type: 'text', placeholder: '2', required: false, helpText: 'Number of retries for failed requests' },
+            { key: 'proxyUrl', label: 'Proxy URL', type: 'text', placeholder: 'http://proxy.example.com:8080', required: false, helpText: 'HTTP proxy for web scraping' },
+            { key: 'proxyUsername', label: 'Proxy Username', type: 'text', placeholder: 'proxy_user', required: false, helpText: 'Username for proxy authentication' },
+            { key: 'proxyPassword', label: 'Proxy Password', type: 'password', placeholder: 'Enter proxy password', required: false, helpText: 'Password for proxy authentication' },
+        ],
+    },
+    {
+        key: 'playwright',
+        name: 'Playwright',
+        description: 'Browser automation for web scraping, testing, and interaction with dynamic pages',
+        icon: <Monitor size={16} />,
+        category: 'scraping',
+        docsUrl: 'https://playwright.dev/python/docs/intro',
+        fields: [
+            { key: 'browser', label: 'Browser', type: 'select', placeholder: 'Select browser', required: false, helpText: 'Browser engine to use', options: [
+                { name: 'Chromium (recommended)', value: 'chromium' },
+                { name: 'Firefox', value: 'firefox' },
+                { name: 'WebKit (Safari)', value: 'webkit' },
+            ]},
+            { key: 'headless', label: 'Headless Mode', type: 'select', placeholder: 'Select mode', required: false, helpText: 'Run browser without visible UI', options: [
+                { name: 'Yes (recommended)', value: 'true' },
+                { name: 'No', value: 'false' },
+            ]},
+            { key: 'timeout', label: 'Default Timeout (ms)', type: 'text', placeholder: '30000', required: false, helpText: 'Default timeout for navigation and actions' },
+            { key: 'viewport', label: 'Viewport Size', type: 'text', placeholder: '1280x720', required: false, helpText: 'Browser viewport dimensions (WxH)' },
+            { key: 'userAgent', label: 'User Agent', type: 'text', placeholder: 'Custom user agent string', required: false, helpText: 'Override default user agent' },
+            { key: 'proxyServer', label: 'Proxy Server', type: 'text', placeholder: 'http://proxy.example.com:8080', required: false, helpText: 'Proxy server for browser traffic' },
+            { key: 'proxyUsername', label: 'Proxy Username', type: 'text', placeholder: 'proxy_user', required: false, helpText: 'Username for proxy authentication' },
+            { key: 'proxyPassword', label: 'Proxy Password', type: 'password', placeholder: 'Enter proxy password', required: false, helpText: 'Password for proxy authentication' },
+            { key: 'slowMo', label: 'Slow Motion (ms)', type: 'text', placeholder: '0', required: false, helpText: 'Slow down operations by specified milliseconds' },
+        ],
+    },
+    // Notebook & Code Execution
+    {
+        key: 'jupyterKernel',
+        name: 'Jupyter Kernel',
+        description: 'Execute Python code in an interactive Jupyter kernel environment',
+        icon: <FileCode size={16} />,
+        category: 'notebook',
+        docsUrl: 'https://jupyter.org/documentation',
+        fields: [
+            { key: 'connectionType', label: 'Connection Type', type: 'select', placeholder: 'Select connection', required: false, helpText: 'How to connect to Jupyter', options: [
+                { name: 'Local Kernel', value: 'local' },
+                { name: 'Remote Server', value: 'remote' },
+                { name: 'JupyterHub', value: 'hub' },
+            ]},
+            { key: 'serverUrl', label: 'Jupyter Server URL', type: 'text', placeholder: 'http://localhost:8888', required: false, helpText: 'URL of remote Jupyter server (for remote/hub connections)' },
+            { key: 'serverToken', label: 'Server Token', type: 'password', placeholder: 'Enter Jupyter server token', required: false, helpText: 'Authentication token for remote Jupyter server' },
+            { key: 'kernelName', label: 'Kernel Name', type: 'select', placeholder: 'Select kernel', required: false, helpText: 'Jupyter kernel to use', options: [
+                { name: 'Python 3 (ipykernel)', value: 'python3' },
+                { name: 'Python 3.10', value: 'python310' },
+                { name: 'Python 3.11', value: 'python311' },
+                { name: 'Python 3.12', value: 'python312' },
+            ]},
+            { key: 'timeout', label: 'Execution Timeout (seconds)', type: 'text', placeholder: '60', required: false, helpText: 'Maximum time for code cell execution' },
+            { key: 'workingDirectory', label: 'Working Directory', type: 'text', placeholder: '/tmp/notebooks', required: false, helpText: 'Default working directory for kernel' },
+            { key: 'startupCode', label: 'Startup Code', type: 'textarea', placeholder: 'import pandas as pd\nimport numpy as np', required: false, helpText: 'Code executed when kernel starts' },
+            { key: 'memoryLimit', label: 'Memory Limit (MB)', type: 'text', placeholder: '1024', required: false, helpText: 'Maximum memory allocation for kernel' },
+            { key: 'allowNetworkAccess', label: 'Allow Network Access', type: 'select', placeholder: 'Select option', required: false, helpText: 'Allow kernel to make network requests', options: [
+                { name: 'Yes', value: 'true' },
+                { name: 'No', value: 'false' },
+            ]},
+        ],
+    },
 ];
 
 const categoryLabels = {
@@ -275,6 +484,10 @@ const categoryLabels = {
     messaging: 'Messaging & Communication',
     storage: 'Cloud Storage',
     scheduling: 'Scheduling',
+    shell: 'Shell & Commands',
+    http: 'HTTP & API Clients',
+    scraping: 'Web Scraping & Search',
+    notebook: 'Code Execution',
 };
 
 const categoryIcons = {
@@ -282,6 +495,10 @@ const categoryIcons = {
     messaging: <MessageSquare size={14} className="text-gray-500" />,
     storage: <HardDrive size={14} className="text-gray-500" />,
     scheduling: <Clock size={14} className="text-gray-500" />,
+    shell: <Terminal size={14} className="text-gray-500" />,
+    http: <Globe size={14} className="text-gray-500" />,
+    scraping: <Search size={14} className="text-gray-500" />,
+    notebook: <FileCode size={14} className="text-gray-500" />,
 };
 
 export const ExecutionPrimitivesSection = ({ 

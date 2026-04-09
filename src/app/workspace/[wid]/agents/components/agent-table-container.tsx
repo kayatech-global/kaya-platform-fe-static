@@ -38,7 +38,7 @@ interface AgentTableContainerProps {
     onEditButtonClick: (id: string) => void;
     onDelete: (id: string) => void;
     onRecentActivity: () => void;
-    onDeploy?: (id: string) => void;
+    onDeployWithProgress?: (agentId: string, agentName: string, isRedeploy: boolean) => void;
     isDeploying?: boolean;
 }
 
@@ -119,8 +119,8 @@ const DeleteRecord = ({ row, onDelete }: { row: Row<AgentData>; onDelete: (id: s
     );
 };
 
-// Deployment Progress Dialog
-const DeploymentProgressDialog = ({
+// Deployment Progress Dialog - Exported for use in AgentContainer
+export const DeploymentProgressDialog = ({
     open,
     onOpenChange,
     agentName,
@@ -301,26 +301,24 @@ const ActionCell = ({
     row,
     onEditButtonClick,
     onDelete,
-    onDeploy,
+    onDeployWithProgress,
     isDeploying,
 }: { 
     row: Row<AgentData>;
     onEditButtonClick: (id: string) => void;
     onDelete: (id: string) => void;
-    onDeploy?: (id: string) => void;
+    onDeployWithProgress?: (agentId: string, agentName: string, isRedeploy: boolean) => void;
     isDeploying?: boolean;
 }) => {
     const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
-    const [progressOpen, setProgressOpen] = useState<boolean>(false);
     
     const isHorizon = row.original.agentCategory === AgentCategory.HORIZON;
     const isDeployed = row.original.publishStatus?.isPublished;
 
     const handleConfirmDeploy = () => {
         setConfirmOpen(false);
-        setProgressOpen(true);
-        if (onDeploy) {
-            onDeploy(row.original.id);
+        if (onDeployWithProgress) {
+            onDeployWithProgress(row.original.id, row.original.agentName, !!isDeployed);
         }
     };
 
@@ -335,26 +333,25 @@ const ActionCell = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-44">
                         {/* Deploy/Re-Deploy - Only for Horizon Agents */}
-                        {isHorizon && onDeploy && (
+                        {isHorizon && onDeployWithProgress && (
                             <>
                                 <DropdownMenuItem 
-                                    asChild 
-                                    onClick={() => setConfirmOpen(true)}
+                                    onSelect={() => {
+                                        setConfirmOpen(true);
+                                    }}
                                     disabled={row.original.isReadOnly || isDeploying}
                                 >
-                                    <div className="flex items-center cursor-pointer">
-                                        {isDeployed ? (
-                                            <>
-                                                <RefreshCw size={16} className="mr-2" />
-                                                Re-Deploy
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Rocket size={16} className="mr-2" />
-                                                Deploy
-                                            </>
-                                        )}
-                                    </div>
+                                    {isDeployed ? (
+                                        <>
+                                            <RefreshCw size={16} className="mr-2" />
+                                            Re-Deploy
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Rocket size={16} className="mr-2" />
+                                            Deploy
+                                        </>
+                                    )}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                             </>
@@ -422,14 +419,6 @@ const ActionCell = ({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-            {/* Progress Dialog - Rendered outside dropdown */}
-            <DeploymentProgressDialog
-                open={progressOpen}
-                onOpenChange={setProgressOpen}
-                agentName={row.original.agentName}
-                isRedeployment={!!isDeployed}
-            />
         </>
     );
 };
@@ -437,7 +426,7 @@ const ActionCell = ({
 const generateColumns = (
     onEditButtonClick: (id: string) => void, 
     onDelete: (id: string) => void,
-    onDeploy?: (id: string) => void,
+    onDeployWithProgress?: (agentId: string, agentName: string, isRedeploy: boolean) => void,
     isDeploying?: boolean
 ) => {
     const columns: ColumnDef<AgentData>[] = [
@@ -509,7 +498,7 @@ const generateColumns = (
                         row={row}
                         onEditButtonClick={onEditButtonClick}
                         onDelete={onDelete}
-                        onDeploy={onDeploy}
+                        onDeployWithProgress={onDeployWithProgress}
                         isDeploying={isDeploying}
                     />
                 );
@@ -527,7 +516,7 @@ export const AgentTableContainer = ({
     onEditButtonClick,
     onDelete,
     onRecentActivity,
-    onDeploy,
+    onDeployWithProgress,
     isDeploying,
 }: AgentTableContainerProps) => {
     const { register, handleSubmit } = useForm<AgentData>({ mode: 'onChange' });
@@ -545,37 +534,39 @@ export const AgentTableContainer = ({
         setDebounceTimer(timer);
     };
 
-    const columns = generateColumns(onEditButtonClick, onDelete, onDeploy, isDeploying);
+    const columns = generateColumns(onEditButtonClick, onDelete, onDeployWithProgress, isDeploying);
 
     return (
-        <div className="grid gap-8">
-            <DataTable
-                columns={columns}
-                data={agents}
-                searchColumnName="agent"
-                showFooter
-                defaultPageSize={isMobile ? 5 : 10}
-                showTableSearch={false}
-                manualSpan={true}
-                tableHeader={
-                    <div className="flex justify-between items-center w-full">
-                        <Input
-                            {...register('search')}
-                            placeholder="Search Agent"
-                            className="max-w-sm"
-                            onKeyUp={handleSubmit(onHandleSubmit)}
-                        />
-                        <div className="flex ml-2 justify-end items-center gap-4 w-full">
-                            <Button size={'sm'} onClick={onNewButtonClick}>
-                                New Agent
-                            </Button>
-                            <Button variant={'link'} size={'sm'} onClick={onRecentActivity} className="hidden">
-                                Recent Activities
-                            </Button>
+        <>
+            <div className="grid gap-8">
+                <DataTable
+                    columns={columns}
+                    data={agents}
+                    searchColumnName="agent"
+                    showFooter
+                    defaultPageSize={isMobile ? 5 : 10}
+                    showTableSearch={false}
+                    manualSpan={true}
+                    tableHeader={
+                        <div className="flex justify-between items-center w-full">
+                            <Input
+                                {...register('search')}
+                                placeholder="Search Agent"
+                                className="max-w-sm"
+                                onKeyUp={handleSubmit(onHandleSubmit)}
+                            />
+                            <div className="flex ml-2 justify-end items-center gap-4 w-full">
+                                <Button size={'sm'} onClick={onNewButtonClick}>
+                                    New Agent
+                                </Button>
+                                <Button variant={'link'} size={'sm'} onClick={onRecentActivity} className="hidden">
+                                    Recent Activities
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                }
-            />
-        </div>
+                    }
+                />
+            </div>
+        </>
     );
 };

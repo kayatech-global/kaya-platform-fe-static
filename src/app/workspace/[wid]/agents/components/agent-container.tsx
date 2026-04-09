@@ -1,7 +1,7 @@
 'use client';
 import React, { useRef, useState } from 'react';
 import ActivityFeed from '@/components/molecules/activity-feed/activity-feed';
-import { AgentTableContainer } from './agent-table-container';
+import { AgentTableContainer, DeploymentProgressDialog } from './agent-table-container';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components';
@@ -74,6 +74,18 @@ export const AgentContainer = () => {
     );
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isEdit, setIsEdit] = useState<boolean>(false);
+    
+    // Deployment progress dialog state - lifted here to survive table re-renders
+    const [deploymentProgressOpen, setDeploymentProgressOpen] = useState(false);
+    const [deployingAgentName, setDeployingAgentName] = useState('');
+    const [isRedeployment, setIsRedeployment] = useState(false);
+    
+    const handleDeployWithProgress = (agentId: string, agentName: string, isRedeploy: boolean) => {
+        setDeployingAgentName(agentName);
+        setIsRedeployment(isRedeploy);
+        setDeploymentProgressOpen(true);
+        onPublish(agentId);
+    };
 
     const handleClick = () => {
         setWorkflowAuthoringPageHeighInDrawer(window.innerHeight - 141);
@@ -110,7 +122,7 @@ export const AgentContainer = () => {
                             onEditButtonClick={handleEdit}
                             onDelete={onDelete}
                             onRecentActivity={handleClick}
-                            onDeploy={onPublish}
+                            onDeployWithProgress={handleDeployWithProgress}
                             isDeploying={isPublishing}
                         />
                     </div>
@@ -185,6 +197,14 @@ export const AgentContainer = () => {
                 refetchMessageBroker={onRefetchMessageBroker}
                 refetchGuardrails={refetchGuardrails}
                 onRefetchExecutableFunctions={refetchExecutableFunctions}
+            />
+            
+            {/* Deployment Progress Dialog - Lifted to AgentContainer to survive data refetches */}
+            <DeploymentProgressDialog
+                open={deploymentProgressOpen}
+                onOpenChange={setDeploymentProgressOpen}
+                agentName={deployingAgentName}
+                isRedeployment={isRedeployment}
             />
         </React.Fragment>
     );
