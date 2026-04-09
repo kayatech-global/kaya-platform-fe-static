@@ -131,9 +131,9 @@ export function LongHorizonAgentForm({ selectedNode, isReadOnly = false }: LongH
     const { data: allAgents, isFetching, isFetched, refetch } = useQuery(
         ['long-horizon-agents', workspaceId],
         async () => {
-            const response = await agentService.getAgents(workspaceId as string);
+            const response = await agentService.get(workspaceId as string);
             // Filter only HORIZON category agents that are published
-            return response?.filter((agent: any) => 
+            return (response as any[])?.filter((agent: any) => 
                 agent.agentCategory === AgentCategory.HORIZON && 
                 agent.publishStatus?.isPublished
             ) || [];
@@ -148,7 +148,7 @@ export function LongHorizonAgentForm({ selectedNode, isReadOnly = false }: LongH
     const formatAgent = (agents: any[]): LongHorizonAgent[] => {
         return agents?.map((agent: any) => ({
             id: agent.id,
-            name: agent.name || agent.agentName,
+            name: agent.agentName || agent.name || '',
             description: agent.description || '',
             agentCategory: agent.agentCategory,
             publishStatus: agent.publishStatus,
