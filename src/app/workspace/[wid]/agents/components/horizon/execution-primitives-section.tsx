@@ -519,8 +519,8 @@ export const ExecutionPrimitivesSection = ({
     const workspaceId = params?.wid as string;
     const { data: vaultSecrets = [], isLoading: loadingSecrets, refetch: refetchSecrets } = useVaultSecretsFetcher(workspaceId);
     
-    // Transform vault secrets to OptionModel format
-    const secretOptions: OptionModel[] = vaultSecrets?.map((secret: { keyName?: string }) => ({
+    // Transform vault secrets to option format for VaultSelector
+    const secretOptions = vaultSecrets?.map((secret: { keyName?: string }) => ({
         name: secret.keyName || '',
         value: secret.keyName || '',
     })) || [];
