@@ -871,7 +871,6 @@ export const FormBody = (props: AgentProps) => {
                             setValue={setValue}
                             errors={errors}
                             isReadOnly={isEdit && !!watch('isReadOnly')}
-                            connectors={connectors}
                         />
 
                         <ExecutionPrimitivesSection

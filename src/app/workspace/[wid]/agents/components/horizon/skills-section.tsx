@@ -2,10 +2,10 @@
 
 import { Input, Textarea, Button, Label, Badge, Select } from '@/components';
 import { cn } from '@/lib/utils';
-import { IAgentForm, IHorizonSkill, IOMode, IConnectorForm } from '@/models';
-import { Zap, Trash2, ChevronDown, ChevronUp, Tag, X, Link2, Plus, Hash } from 'lucide-react';
+import { IAgentForm, IHorizonSkill, IOMode } from '@/models';
+import { Zap, Trash2, ChevronDown, ChevronUp, Tag, X, Plus, Hash } from 'lucide-react';
 import { Control, Controller, UseFormWatch, UseFormSetValue, FieldErrors } from 'react-hook-form';
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 interface SkillsSectionProps {
@@ -14,7 +14,6 @@ interface SkillsSectionProps {
     setValue: UseFormSetValue<IAgentForm>;
     errors?: FieldErrors<IAgentForm>;
     isReadOnly?: boolean;
-    connectors?: IConnectorForm[];
 }
 
 const ioModeOptions: { name: string; value: IOMode }[] = [
@@ -26,6 +25,7 @@ const ioModeOptions: { name: string; value: IOMode }[] = [
 const defaultSkill: Omit<IHorizonSkill, 'id'> = {
     name: '',
     description: '',
+    instructions: '',
     tags: [],
     examples: [],
     ioModes: ['application/json'],
@@ -34,7 +34,7 @@ const defaultSkill: Omit<IHorizonSkill, 'id'> = {
     version: '1.0.0',
 };
 
-export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, connectors = [] }: SkillsSectionProps) => {
+export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly }: SkillsSectionProps) => {
     const [expandedSkills, setExpandedSkills] = useState<Set<string>>(new Set());
     const [newTag, setNewTag] = useState<Record<string, string>>({});
     const [newInputMode, setNewInputMode] = useState<Record<string, IOMode>>({});
@@ -42,57 +42,17 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
 
     const skills = watch('horizonConfig.skills') || [];
 
-    // Create a skill from a connector with auto-populated fields
-    const createSkillFromConnector = useCallback((connector: IConnectorForm): IHorizonSkill => {
-        const skillId = `skill-${connector.id || uuidv4()}`;
-        return {
-            id: skillId,
-            name: connector.name || 'Unnamed Connector',
-            description: connector.description || `Data connector skill for ${connector.name}. Provides access to ${connector.type || 'external'} data source.`,
-            tags: ['data-connector', connector.type || 'connector', 'auto-generated'],
-            examples: [],
-            ioModes: ['application/json'],
-            inputModes: ['application/json'],
-            outputModes: ['application/json'],
-            version: '1.0.0',
-            inputConnectorMapping: { connectorId: connector.id || '' },
+    // Add a new skill
+    const addSkill = () => {
+        const newSkillId = `skill-${uuidv4()}`;
+        const newSkill: IHorizonSkill = {
+            ...defaultSkill,
+            id: newSkillId,
         };
-    }, []);
-
-    // Sync skills with connectors - auto-populate skills from connectors
-    useEffect(() => {
-        if (connectors.length === 0) return;
-
-        const existingConnectorSkillIds = new Set(
-            skills
-                .filter((s) => s.inputConnectorMapping?.connectorId)
-                .map((s) => s.inputConnectorMapping?.connectorId)
-        );
-
-        const connectorIds = new Set(connectors.map((c) => c.id));
-        
-        // Find connectors that don't have corresponding skills
-        const newConnectorSkills = connectors
-            .filter((c) => c.id && !existingConnectorSkillIds.has(c.id))
-            .map(createSkillFromConnector);
-
-        // Find skills that no longer have corresponding connectors (to remove)
-        const orphanedSkillIds = skills
-            .filter((s) => s.inputConnectorMapping?.connectorId)
-            .filter((s) => !connectorIds.has(s.inputConnectorMapping?.connectorId))
-            .map((s) => s.id);
-
-        if (newConnectorSkills.length > 0 || orphanedSkillIds.length > 0) {
-            const updatedSkills = [
-                ...skills.filter((s) => !orphanedSkillIds.includes(s.id)),
-                ...newConnectorSkills,
-            ];
-            setValue('horizonConfig.skills', updatedSkills);
-        }
-    }, [connectors, skills, setValue, createSkillFromConnector]);
-
-    // Check if a skill is auto-generated from a connector
-    const isConnectorSkill = (skill: IHorizonSkill) => !!skill.inputConnectorMapping?.connectorId;
+        setValue('horizonConfig.skills', [...skills, newSkill]);
+        // Auto-expand the new skill
+        setExpandedSkills(new Set([...expandedSkills, newSkillId]));
+    };
 
     const toggleSkill = (skillId: string) => {
         const newExpanded = new Set(expandedSkills);
@@ -187,14 +147,28 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
     return (
         <div className="col-span-1 sm:col-span-2 border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-2 sm:p-4">
             <div className="flex flex-col gap-y-4">
-                <div className="flex flex-col gap-y-1">
-                    <div className="flex items-center gap-x-[10px]">
-                        <Zap size={20} absoluteStrokeWidth={false} className="stroke-[1px]" />
-                        <p className="text-sm font-medium">Skills Metadata</p>
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-y-1">
+                        <div className="flex items-center gap-x-[10px]">
+                            <Zap size={20} absoluteStrokeWidth={false} className="stroke-[1px]" />
+                            <p className="text-sm font-medium">Skills Metadata</p>
+                        </div>
+                        <p className="text-xs font-normal text-gray-400">
+                            Define the skills and capabilities for this agent.
+                        </p>
                     </div>
-                    <p className="text-xs font-normal text-gray-400">
-                        Skills are automatically generated from Input Data Connects.
-                    </p>
+                    {!isReadOnly && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={addSkill}
+                            className="flex items-center gap-x-1"
+                        >
+                            <Plus size={14} />
+                            Add Skill
+                        </Button>
+                    )}
                 </div>
 
                 {/* Skills List */}
@@ -203,7 +177,7 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
                         <Zap size={32} className="mx-auto text-gray-400 mb-2" />
                         <p className="text-sm text-gray-500 dark:text-gray-400">No skills configured yet.</p>
                         <p className="text-xs text-gray-400 mt-1">
-                            Skills are automatically generated from Input Data Connects.
+                            Click &quot;Add Skill&quot; to define a new skill for this agent.
                         </p>
                     </div>
                 ) : (
@@ -228,26 +202,15 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
                                             <ChevronDown size={16} className="text-gray-400" />
                                         )}
                                         <div>
-                                            <div className="flex items-center gap-x-2">
-                                                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                                    {skill.name || `Skill ${index + 1}`}
-                                                </p>
-                                                {isConnectorSkill(skill) && (
-                                                    <Badge 
-                                                        variant="secondary" 
-                                                        className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                                    >
-                                                        <Link2 size={10} className="mr-1" />
-                                                        Data Connect
-                                                    </Badge>
-                                                )}
-                                            </div>
-<p className="text-xs text-gray-400">
-                                                                v{skill.version} | In: {(skill.inputModes || skill.ioModes || []).map(m => getIoModeLabel(m)).join(', ')} | Out: {(skill.outputModes || skill.ioModes || []).map(m => getIoModeLabel(m)).join(', ')}
-                                                            </p>
+                                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                                {skill.name || `Skill ${index + 1}`}
+                                            </p>
+                                            <p className="text-xs text-gray-400">
+                                                v{skill.version} | In: {(skill.inputModes || skill.ioModes || []).map(m => getIoModeLabel(m)).join(', ')} | Out: {(skill.outputModes || skill.ioModes || []).map(m => getIoModeLabel(m)).join(', ')}
+                                            </p>
                                         </div>
                                     </div>
-                                    {!isReadOnly && !isConnectorSkill(skill) && (
+                                    {!isReadOnly && (
                                         <Button
                                             type="button"
                                             variant="ghost"
@@ -314,6 +277,24 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly, co
                                                     rows={2}
                                                     className="w-full resize-none"
                                                 />
+                                            </div>
+
+                                            {/* Instructions */}
+                                            <div className="col-span-1 sm:col-span-2">
+                                                <Textarea
+                                                    label="Instructions"
+                                                    placeholder="Provide detailed instructions for how this skill should be executed. Include specific steps, parameters, expected inputs/outputs, and any constraints."
+                                                    value={skill.instructions || ''}
+                                                    disabled={isReadOnly}
+                                                    onChange={(e) =>
+                                                        updateSkill(skill.id, { instructions: e.target.value })
+                                                    }
+                                                    rows={4}
+                                                    className="w-full resize-none"
+                                                />
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    Define step-by-step instructions for the agent to follow when executing this skill.
+                                                </p>
                                             </div>
 
                                             {/* Input Modes */}

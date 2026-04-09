@@ -119,6 +119,7 @@ export interface IHorizonSkill {
   id: string;
   name: string;
   description: string;
+  instructions?: string; // Detailed instructions for the skill
   tags: string[];
   examples: string[];
   ioModes: IOMode[]; // Legacy - kept for backwards compatibility
