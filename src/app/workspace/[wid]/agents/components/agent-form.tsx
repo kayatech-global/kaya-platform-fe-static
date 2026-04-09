@@ -871,7 +871,6 @@ export const FormBody = (props: AgentProps) => {
                             setValue={setValue}
                             errors={errors}
                             isReadOnly={isEdit && !!watch('isReadOnly')}
-                            connectors={connectors}
                         />
 
                         <ExecutionPrimitivesSection
@@ -909,11 +908,6 @@ export const FormBody = (props: AgentProps) => {
                             errors={errors}
                             isReadOnly={isEdit && !!watch('isReadOnly')}
                             isEdit={isEdit}
-                            tools={getValues('tools')}
-                            mcpServers={mcpServers}
-                            graphRags={graphRags}
-                            vectorRags={vectorRags}
-                            connectors={connectors}
                         />
                         
                         <DeployConfigSection
