@@ -18,7 +18,7 @@ export const PersistenceSection = ({ control, watch, isReadOnly }: PersistenceSe
                 <div className="flex flex-col gap-y-1">
                     <div className="flex items-center gap-x-[10px]">
                         <Database size={20} absoluteStrokeWidth={false} className="stroke-[1px]" />
-                        <p className="text-sm font-medium">Persistence Configuration</p>
+                        <p className="text-sm font-medium">Persistence Capabilities</p>
                     </div>
                     <p className="text-xs font-normal text-gray-400">
                         Configure what data should be persisted across agent executions.

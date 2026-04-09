@@ -72,6 +72,7 @@ import { GuardrailBindingLevelType } from '@/enums';
 import { ConnectorSelector } from '@/app/editor/[wid]/[workflow_id]/components/connector-selector';
 import { ExecutableFunctionSelector } from '@/app/editor/[wid]/[workflow_id]/components/executable-function-selector';
 import { useSyncPrompt } from '@/hooks/use-common';
+import { AgentWizard } from './agent-wizard';
 
 interface AgentProps {
     isOpen: boolean;
@@ -229,7 +230,7 @@ export const FormBody = (props: AgentProps) => {
     const [guardrails, setGuardrails] = useState<string[] | undefined>();
     const [mounted, setMounted] = useState<boolean>(false);
     
-    // Horizon Agent state
+    // Long Horizon Agent state
     const agentCategory = watch('agentCategory') || AgentCategory.REUSABLE;
     const isHorizonAgent = agentCategory === AgentCategory.HORIZON;
 
@@ -852,14 +853,14 @@ export const FormBody = (props: AgentProps) => {
                     />
                 </div>
                 
-                {/* Horizon Agent Configuration Sections */}
+                {/* Long Horizon Agent Configuration Sections */}
                 {isHorizonAgent && (
                     <>
                         <div className="col-span-1 sm:col-span-2 md:col-span-2">
                             <div className="flex items-center gap-x-2 py-2">
                                 <div className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
                                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 px-2">
-                                    Horizon Agent Configuration
+                                    Long Horizon Agent Configuration
                                 </p>
                                 <div className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
                             </div>
@@ -924,62 +925,11 @@ export const FormBody = (props: AgentProps) => {
 };
 
 export const AgentForm = (props: AgentProps) => {
-    const { isOpen, setOpen, handleSubmit, onHandleSubmit, watch, reset, isValid, isEdit, isSaving } = props;
-    
-    return (
-        <>
-        <AppDrawer
-            open={isOpen}
-            direction="right"
-            isPlainContentSheet={false}
-            setOpen={setOpen}
-            className="custom-drawer-content"
-            dismissible={false}
-            headerIcon={<Bot />}
-            header={isEdit ? 'Edit Agent' : 'New Agent'}
-            footer={
-                <div className="flex justify-end gap-2">
-                    <Button
-                        variant={'secondary'}
-                        size={'sm'}
-                        onClick={() => {
-                            setOpen(false);
-                            reset();
-                        }}
-                    >
-                        Cancel
-                    </Button>
-                    <div>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        size={'sm'}
-                                        disabled={!isValid || isSaving || (isEdit && !!watch('isReadOnly'))}
-                                        onClick={handleSubmit(onHandleSubmit)}
-                                    >
-                                        {getSubmitButtonLabel(isSaving, isEdit)}
-                                    </Button>
-                                </TooltipTrigger>
-                                {!isValid && (
-                                    <TooltipContent side="left" align="center">
-                                        All details need to be filled before the form can be saved
-                                    </TooltipContent>
-                                )}
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div>
-                    
-                </div>
-            }
-            content={
-                <div className={cn('activity-feed-container p-4')}>
-                    <FormBody {...props} />
-                </div>
-            }
-        />
-        </>
-    );
+    // Use the new AgentWizard component for enterprise standard wizard experience
+    return <AgentWizard {...props} />;
 };
 
 export default AgentForm;
+
+// Re-export AgentWizard for direct usage if needed
+export { AgentWizard } from './agent-wizard';

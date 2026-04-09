@@ -131,24 +131,7 @@ export const ExecutionPolicySection = ({ control, watch, isReadOnly }: Execution
                         )}
                     />
 
-                    {/* Priority Handling */}
-                    <div className="col-span-1 sm:col-span-2">
-                        <Controller
-                            name="horizonConfig.executionPolicy.priorityHandling"
-                            control={control}
-                            render={({ field }) => (
-                                <Select
-                                    label="Priority Handling"
-                                    placeholder="Select priority strategy"
-                                    options={priorityOptions}
-                                    currentValue={field.value || 'fifo'}
-                                    disabled={isReadOnly}
-                                    onChange={(e) => field.onChange(e.target.value as PriorityStrategy)}
-                                    helperInfo="How to handle task priority in the queue"
-                                />
-                            )}
-                        />
-                    </div>
+                    
                 </div>
             </div>
         </div>

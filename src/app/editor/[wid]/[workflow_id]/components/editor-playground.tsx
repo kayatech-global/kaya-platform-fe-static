@@ -200,6 +200,8 @@ export const getNodeLabel = (nodeType: CustomNodeTypes): string => {
             return 'Tool Executor';
         case CustomNodeTypes.externalAgentNode:
             return 'External Agent';
+        case CustomNodeTypes.longHorizonAgentNode:
+            return 'Long Horizon Agent';
         default:
             return 'End';
     }
@@ -447,6 +449,7 @@ export const EditorPlayground = React.forwardRef<EditorPlaygroundRef, EditorPlay
                 [CustomNodeTypes.iteratorNode]: Node,
                 [CustomNodeTypes.toolExecutorNode]: Node,
                 [CustomNodeTypes.externalAgentNode]: Node,
+                [CustomNodeTypes.longHorizonAgentNode]: Node,
             }),
             []
         );

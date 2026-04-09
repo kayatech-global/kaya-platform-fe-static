@@ -87,7 +87,7 @@ export const PublishDialog = ({
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-x-2">
                         <Rocket size={20} className="text-blue-600" />
-                        Publish Horizon Agent
+                        Publish Long Horizon Agent
                     </DialogTitle>
                     <DialogDescription>
                         Publishing will make this agent available at your workspace endpoint.

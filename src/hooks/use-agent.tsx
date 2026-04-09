@@ -153,7 +153,7 @@ export const useAgent = (props?: IHookProps) => {
                 guardrails: undefined,
                 sourceValue: undefined,
                 connectors: undefined,
-                // Horizon Agent fields
+                // Long Horizon Agent fields
                 agentCategory: AgentCategory.REUSABLE,
                 horizonConfig: undefined,
                 publishStatus: undefined,
@@ -314,7 +314,7 @@ export const useAgent = (props?: IHookProps) => {
             guardrails: x?.configurations?.guardrails,
             sourceValue: isNullOrEmpty(x.llmId) ? x.slmId : x.llmId,
             connectors: x?.configurations?.connectors,
-            // Horizon Agent fields
+            // Long Horizon Agent fields
             agentCategory: x?.agentCategory || AgentCategory.REUSABLE,
             publishStatus: x?.publishStatus,
         }));
@@ -412,7 +412,7 @@ export const useAgent = (props?: IHookProps) => {
         }
     );
 
-    // Publish mutation for Horizon Agents
+    // Publish mutation for Long Horizon Agents
     const { isLoading: isPublishing, mutate: mutatePublishAgent } = useMutation(
         async ({ id }: { id: string }) => {
             const stored = localStorage.getItem('mock_agent_data');
@@ -451,7 +451,7 @@ export const useAgent = (props?: IHookProps) => {
                     )
                 );
                 queryClient.invalidateQueries(QueryKeyType.AGENT);
-                toast.success('Horizon Agent published successfully');
+                toast.success('Long Horizon Agent published successfully');
             },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onError: (error: any) => {
@@ -521,7 +521,7 @@ export const useAgent = (props?: IHookProps) => {
                 setValue('publisherIntegration', obj?.configurations?.publisherIntegration);
                 setValue('sourceValue', isLlm ? obj.llmId : obj.slmId);
                 setValue('connectors', obj?.configurations?.connectors);
-                // Horizon Agent fields
+                // Long Horizon Agent fields
                 setValue('agentCategory', obj?.agentCategory || AgentCategory.REUSABLE);
                 setValue('horizonConfig', obj?.horizonConfig);
                 setValue('publishStatus', obj?.publishStatus);
@@ -574,7 +574,7 @@ export const useAgent = (props?: IHookProps) => {
                 slmId: isLlm ? undefined : data.slmId,
                 promptTemplateId: data.promptTemplateId,
                 tools: data.tools,
-                // Horizon Agent fields
+                // Long Horizon Agent fields
                 agentCategory: data.agentCategory,
                 horizonConfig: data.agentCategory === AgentCategory.HORIZON ? data.horizonConfig : undefined,
                 publishStatus: data.publishStatus,
@@ -702,7 +702,7 @@ export const useAgent = (props?: IHookProps) => {
         onRefetchGraphRag,
         onRefetchVectorRag,
         onRefetchMessageBroker,
-        // Horizon Agent publish
+        // Long Horizon Agent publish
         isPublishing,
         onPublish,
     };

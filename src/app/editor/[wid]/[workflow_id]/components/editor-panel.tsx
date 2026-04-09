@@ -6,7 +6,7 @@ import { IConnectorForm, IGraphRag, ISLMForm, ISTSForm, IVectorRag, IWorkflowGra
 import { Edge, Node, useEdges, useNodes } from '@xyflow/react';
 import React, { useEffect, useState } from 'react';
 import { NodeSnippetSection } from './node-snippet-section';
-import { AgentForm, IteratorForm, ToolExecutorForm, ExternalAgentForm } from '@/components/organisms';
+import { AgentForm, IteratorForm, ToolExecutorForm, ExternalAgentForm, LongHorizonAgentForm } from '@/components/organisms';
 import { VoiceAgentForm } from '@/components/organisms/workflow-editor-form/voice-agent-form';
 import { cn } from '@/lib/utils';
 import { SubWorkFlowForm } from '@/components/organisms/workflow-editor-form/sub-workflow-form';
@@ -103,6 +103,8 @@ export const EditorPanel = (props: EditorPanelProps) => {
                 return '/png/nodes/tool_executor_preview.png';
             case CustomNodeTypes.externalAgentNode:
                 return '/png/nodes/external_agent_preview.png';
+            case CustomNodeTypes.longHorizonAgentNode:
+                return '/png/nodes/long_horizon_agent_preview.png';
         }
     };
 
@@ -211,6 +213,12 @@ export const EditorPanel = (props: EditorPanelProps) => {
                 )}
                 {selectedNodeInfo.type === CustomNodeTypes.externalAgentNode && (
                     <ExternalAgentForm
+                        selectedNode={selectedNodeInfo}
+                        isReadOnly={isReadOnly}
+                    />
+                )}
+                {selectedNodeInfo.type === CustomNodeTypes.longHorizonAgentNode && (
+                    <LongHorizonAgentForm
                         selectedNode={selectedNodeInfo}
                         isReadOnly={isReadOnly}
                     />

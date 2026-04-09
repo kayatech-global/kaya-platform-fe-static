@@ -29,7 +29,7 @@ export const AgentCategorySelector = ({
                         <p className="text-sm font-medium">Agent Category</p>
                     </div>
                     <p className="text-xs font-normal text-gray-400">
-                        Select the type of agent you want to create. Horizon Agents provide additional deployment and
+                        Select the type of agent you want to create. Long Horizon Agents provide additional deployment and
                         runtime configuration options.
                     </p>
                 </div>
@@ -52,7 +52,7 @@ export const AgentCategorySelector = ({
                                     },
                                     {
                                         value: AgentCategory.HORIZON,
-                                        label: 'Horizon Agent',
+                                        label: 'Long Horizon Agent',
                                     },
                                 ]}
                             />
@@ -72,11 +72,10 @@ export const AgentCategorySelector = ({
                                         />
                                         <div className="flex flex-col gap-y-0.5">
                                             <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                                                Horizon Agent Selected
+                                                Long Horizon Agent Selected
                                             </p>
                                             <p className="text-xs text-blue-600 dark:text-blue-400">
-                                                Configure deployment settings, identity, skills metadata, execution
-                                                policies, and notification options below.
+                                                Long Horizon Agents are standalone, long-running agents that operate independently of workflows, while seamlessly integrating into workflows or interacting with other agents via A2A communication.
                                             </p>
                                         </div>
                                     </>
@@ -91,7 +90,7 @@ export const AgentCategorySelector = ({
                                                 Reusable Agent Selected
                                             </p>
                                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                Standard agent configuration with prompts, tools, and knowledge sources.
+                                                Reusable Agents are short-lived, embedded agents designed to be used within workflows during execution.
                                             </p>
                                         </div>
                                     </>

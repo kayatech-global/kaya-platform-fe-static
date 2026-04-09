@@ -2,7 +2,7 @@
 
 import { Input, Select, Switch, Label } from '@/components';
 import { cn } from '@/lib/utils';
-import { IAgentForm, DeployEnvironment, HostingModel } from '@/models';
+import { IAgentForm, HostingModel } from '@/models';
 import { Cloud, Server } from 'lucide-react';
 import { Control, Controller, UseFormWatch, UseFormSetValue } from 'react-hook-form';
 
@@ -16,12 +16,6 @@ interface DeployConfigSectionProps {
 const hostingModelOptions = [
     { name: 'Managed (KAYA Internal)', value: 'managed' },
     { name: 'External (AgentCore)', value: 'agentcore' },
-];
-
-const environmentOptions = [
-    { name: 'Development', value: 'dev' },
-    { name: 'Staging', value: 'stage' },
-    { name: 'Production', value: 'prod' },
 ];
 
 const runtimeOptions = [
@@ -48,7 +42,7 @@ export const DeployConfigSection = ({ control, watch, setValue, isReadOnly }: De
                         <p className="text-sm font-medium">Deploy Configuration</p>
                     </div>
                     <p className="text-xs font-normal text-gray-400">
-                        Configure how and where this Horizon Agent will be deployed.
+                        Configure how and where this Long Horizon Agent will be deployed.
                     </p>
                 </div>
 
@@ -69,23 +63,7 @@ export const DeployConfigSection = ({ control, watch, setValue, isReadOnly }: De
                         )}
                     />
 
-                    {/* Environment - shown when Managed */}
-                    {!isAgentCore && (
-                        <Controller
-                            name="horizonConfig.deploy.environment"
-                            control={control}
-                            render={({ field }) => (
-                                <Select
-                                    label="Environment"
-                                    placeholder="Select environment"
-                                    options={environmentOptions}
-                                    currentValue={field.value || 'dev'}
-                                    disabled={isReadOnly}
-                                    onChange={(e) => field.onChange(e.target.value as DeployEnvironment)}
-                                />
-                            )}
-                        />
-                    )}
+                    
 
                     {/* Runtime - shown when AgentCore (External) */}
                     {isAgentCore && (

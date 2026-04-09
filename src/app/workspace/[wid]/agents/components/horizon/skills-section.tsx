@@ -3,7 +3,7 @@
 import { Input, Textarea, Button, Label, Badge, Select } from '@/components';
 import { cn } from '@/lib/utils';
 import { IAgentForm, IHorizonSkill, IOMode } from '@/models';
-import { Zap, Trash2, ChevronDown, ChevronUp, Tag, X, Plus, Hash } from 'lucide-react';
+import { Zap, Trash2, ChevronDown, ChevronUp, Tag, X, Plus } from 'lucide-react';
 import { Control, Controller, UseFormWatch, UseFormSetValue, FieldErrors } from 'react-hook-form';
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -151,10 +151,10 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly }: 
                     <div className="flex flex-col gap-y-1">
                         <div className="flex items-center gap-x-[10px]">
                             <Zap size={20} absoluteStrokeWidth={false} className="stroke-[1px]" />
-                            <p className="text-sm font-medium">Skills Metadata</p>
+                            <p className="text-sm font-medium">Skills</p>
                         </div>
                         <p className="text-xs font-normal text-gray-400">
-                            Define the skills and capabilities for this agent.
+                            Define the skills for this agent.
                         </p>
                     </div>
                     {!isReadOnly && (
@@ -230,21 +230,7 @@ export const SkillsSection = ({ control, watch, setValue, errors, isReadOnly }: 
                                 {expandedSkills.has(skill.id) && (
                                     <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-900">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            {/* Skill ID - Editable but auto-populated */}
-                                            <div className="col-span-1 sm:col-span-2">
-                                                <Input
-                                                    label="Skill ID"
-                                                    placeholder="skill-unique-id"
-                                                    value={skill.id}
-                                                    disabled={isReadOnly}
-                                                    onChange={(e) => updateSkill(skill.id, { id: e.target.value })}
-                                                    leadingIcon={<Hash size={14} className="text-gray-400" />}
-                                                    className="font-mono"
-                                                />
-                                                <p className="text-xs text-gray-400 mt-1">
-                                                    Auto-generated but can be customized. Must be unique within this agent.
-                                                </p>
-                                            </div>
+                                            {/* Skill ID is auto-generated and stored internally */}
 
                                             {/* Skill Name */}
                                             <Input
