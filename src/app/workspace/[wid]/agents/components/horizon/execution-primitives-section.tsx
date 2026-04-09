@@ -9,7 +9,7 @@ import {
     Badge, 
     Select, 
     Textarea,
-    SecretInput,
+    VaultSelector,
     Dialog, 
     DialogContent, 
     DialogHeader, 
@@ -40,6 +40,8 @@ import {
 } from 'lucide-react';
 import { Control, UseFormWatch, UseFormSetValue } from 'react-hook-form';
 import { cn } from '@/lib/utils';
+import { useParams } from 'next/navigation';
+import { useVaultSecretsFetcher } from '@/hooks/use-vault-common';
 
 interface ExecutionPrimitivesSectionProps {
     control: Control<IAgentForm>;
@@ -505,12 +507,23 @@ export const ExecutionPrimitivesSection = ({
     control, 
     watch, 
     setValue,
-    isReadOnly 
+    isReadOnly,
 }: ExecutionPrimitivesSectionProps) => {
     const [configModalOpen, setConfigModalOpen] = useState(false);
     const [selectedPrimitive, setSelectedPrimitive] = useState<PrimitiveDefinition | null>(null);
     const [localConfig, setLocalConfig] = useState<Record<string, string>>({});
     const [isSaving, setIsSaving] = useState(false);
+
+    // Fetch vault secrets for secret fields
+    const params = useParams();
+    const workspaceId = params?.wid as string;
+    const { data: vaultSecrets = [], isLoading: loadingSecrets, refetch: refetchSecrets } = useVaultSecretsFetcher(workspaceId);
+    
+    // Transform vault secrets to OptionModel format
+    const secretOptions: OptionModel[] = vaultSecrets?.map((secret: { keyName?: string }) => ({
+        name: secret.keyName || '',
+        value: secret.keyName || '',
+    })) || [];
 
     const executionPrimitives = watch('horizonConfig.executionPrimitives') || {};
 
@@ -736,11 +749,17 @@ export const ExecutionPrimitivesSection = ({
                                             className="font-mono text-xs w-full"
                                         />
                                     ) : field.type === 'password' ? (
-                                        <SecretInput
-                                            placeholder={field.placeholder}
-                                            value={localConfig[field.key] || ''}
+                                        <VaultSelector
+                                            options={secretOptions}
+                                            currentValue={localConfig[field.key] || ''}
                                             onChange={(e) => handleConfigChange(field.key, e.target.value)}
+                                            placeholder={secretOptions.length > 0 ? field.placeholder || 'Select Vault Secret' : 'No Vault Secrets found'}
+                                            disabled={isReadOnly}
+                                            disableCreate={isReadOnly}
+                                            loadingSecrets={loadingSecrets}
+                                            onRefetch={() => refetchSecrets()}
                                             className="w-full text-sm"
+                                            helperInfo="Select an existing vault secret or create a new one"
                                         />
                                     ) : (
                                         <Input
