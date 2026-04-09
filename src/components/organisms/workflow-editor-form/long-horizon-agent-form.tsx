@@ -127,16 +127,51 @@ export function LongHorizonAgentForm({ selectedNode, isReadOnly = false }: LongH
 
     const nodeData = selectedNode.data as LongHorizonAgentData;
 
+    // Mock data for Long Horizon agents (for demo purposes)
+    const MOCK_LONG_HORIZON_AGENTS: LongHorizonAgent[] = [
+        {
+            id: 'lha-001',
+            name: 'Customer Support Agent',
+            description: 'Handles customer inquiries and support tickets autonomously',
+            agentCategory: AgentCategory.HORIZON,
+            publishStatus: { isPublished: true },
+        },
+        {
+            id: 'lha-002',
+            name: 'Data Processing Agent',
+            description: 'Processes and transforms large datasets in the background',
+            agentCategory: AgentCategory.HORIZON,
+            publishStatus: { isPublished: true },
+        },
+        {
+            id: 'lha-003',
+            name: 'Email Campaign Agent',
+            description: 'Manages and executes email marketing campaigns',
+            agentCategory: AgentCategory.HORIZON,
+            publishStatus: { isPublished: true },
+        },
+        {
+            id: 'lha-004',
+            name: 'Report Generation Agent',
+            description: 'Generates periodic business reports and analytics',
+            agentCategory: AgentCategory.HORIZON,
+            publishStatus: { isPublished: true },
+        },
+    ];
+
     // Fetch Long Horizon agents from API
     const { data: allAgents, isFetching, isFetched, refetch } = useQuery(
         ['long-horizon-agents', workspaceId],
         async () => {
             const response = await agentService.get(workspaceId as string);
             // Filter only HORIZON category agents that are published
-            return (response as any[])?.filter((agent: any) => 
+            const apiAgents = (response as any[])?.filter((agent: any) => 
                 agent.agentCategory === AgentCategory.HORIZON && 
                 agent.publishStatus?.isPublished
             ) || [];
+            
+            // Combine API agents with mock data for demo
+            return [...apiAgents, ...MOCK_LONG_HORIZON_AGENTS];
         },
         {
             enabled: !!workspaceId,
