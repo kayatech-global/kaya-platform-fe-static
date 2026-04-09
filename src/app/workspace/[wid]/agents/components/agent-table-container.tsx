@@ -314,6 +314,11 @@ const ActionCell = ({
 }) => {
     const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
     const [progressOpen, setProgressOpen] = useState<boolean>(false);
+
+    // Debug: log state changes
+    useEffect(() => {
+        console.log('[v0] ActionCell state - confirmOpen:', confirmOpen, 'progressOpen:', progressOpen);
+    }, [confirmOpen, progressOpen]);
     
     const isHorizon = row.original.agentCategory === AgentCategory.HORIZON;
     const isDeployed = row.original.publishStatus?.isPublished;
@@ -344,8 +349,7 @@ const ActionCell = ({
                         {isHorizon && onDeploy && (
                             <>
                                 <DropdownMenuItem 
-                                    onSelect={(e) => {
-                                        e.preventDefault();
+                                    onSelect={() => {
                                         console.log('[v0] Deploy DropdownMenuItem onSelect, setting confirmOpen to true');
                                         setConfirmOpen(true);
                                     }}
