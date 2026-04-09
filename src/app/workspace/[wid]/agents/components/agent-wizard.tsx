@@ -689,15 +689,13 @@ export const AgentWizard = (props: AgentWizardProps) => {
                             />
                         </div>
 
-                        <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                            <AgentCategorySelector
-                                control={control}
-                                watch={watch}
-                                setValue={setValue}
-                                isReadOnly={isEdit && !!watch('isReadOnly')}
-                                onCategoryChange={handleCategoryChange}
-                            />
-                        </div>
+                        <AgentCategorySelector
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
+                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                            onCategoryChange={handleCategoryChange}
+                        />
                     </div>
                 );
 
@@ -1046,7 +1044,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
         <Dialog open={isOpen} onOpenChange={handleCancel}>
             <DialogContent
                 hideCloseButtonClass="block top-6"
-                className="gap-0 max-w-none w-[85vw] max-h-[92vh] flex flex-col p-0"
+                className="gap-0 max-w-none w-[calc(100vw-280px)] h-[calc(100vh-48px)] max-h-[calc(100vh-48px)] flex flex-col p-0 left-[calc(50%+120px)] top-[calc(50%+24px)]"
             >
                 <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                     <DialogTitle>

@@ -39,23 +39,18 @@ export const NotificationSection = ({ control, watch, setValue, errors, isReadOn
                 </div>
 
                 {/* Notification Mode */}
-                    <div>
-                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                            Notification Mode
-                        </Label>
-                        <Controller
-                            name="horizonConfig.notifications.mode"
-                            control={control}
-                            render={({ field }) => (
-                                <RadioChips
-                                    value={field.value || 'streaming'}
-                                    onValueChange={(value) => field.onChange(value as NotificationMode)}
-                                    disabled={isReadOnly}
-                                    options={notificationModeOptions}
-                                />
-                            )}
-                        />
-                    </div>
+                    <Controller
+                        name="horizonConfig.notifications.mode"
+                        control={control}
+                        render={({ field }) => (
+                            <RadioChips
+                                value={field.value || 'streaming'}
+                                onValueChange={(value) => field.onChange(value as NotificationMode)}
+                                disabled={isReadOnly}
+                                options={notificationModeOptions}
+                            />
+                        )}
+                    />
 
                     {/* Mode Description */}
                     <div

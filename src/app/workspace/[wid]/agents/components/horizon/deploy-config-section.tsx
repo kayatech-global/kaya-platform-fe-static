@@ -2,7 +2,7 @@
 
 import { Input, Select, Switch, Label } from '@/components';
 import { cn } from '@/lib/utils';
-import { IAgentForm, DeployEnvironment, HostingModel } from '@/models';
+import { IAgentForm, HostingModel } from '@/models';
 import { Cloud, Server } from 'lucide-react';
 import { Control, Controller, UseFormWatch, UseFormSetValue } from 'react-hook-form';
 
@@ -16,12 +16,6 @@ interface DeployConfigSectionProps {
 const hostingModelOptions = [
     { name: 'Managed (KAYA Internal)', value: 'managed' },
     { name: 'External (AgentCore)', value: 'agentcore' },
-];
-
-const environmentOptions = [
-    { name: 'Development', value: 'dev' },
-    { name: 'Staging', value: 'stage' },
-    { name: 'Production', value: 'prod' },
 ];
 
 const runtimeOptions = [
@@ -69,23 +63,7 @@ export const DeployConfigSection = ({ control, watch, setValue, isReadOnly }: De
                         )}
                     />
 
-                    {/* Environment - hidden when Managed (KAYA Internal) is selected */}
-                    {isAgentCore && (
-                        <Controller
-                            name="horizonConfig.deploy.environment"
-                            control={control}
-                            render={({ field }) => (
-                                <Select
-                                    label="Environment"
-                                    placeholder="Select environment"
-                                    options={environmentOptions}
-                                    currentValue={field.value || 'dev'}
-                                    disabled={isReadOnly}
-                                    onChange={(e) => field.onChange(e.target.value as DeployEnvironment)}
-                                />
-                            )}
-                        />
-                    )}
+                    
 
                     {/* Runtime - shown when AgentCore (External) */}
                     {isAgentCore && (
