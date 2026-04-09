@@ -802,7 +802,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
 
             case 'capabilities':
                 return (
-                    <Accordion type="multiple" defaultValue={isHorizonAgent ? ['streaming-webhook', 'persistence', 'human-review', 'self-learning', 'output-broadcasting'] : ['human-review', 'self-learning', 'output-broadcasting']} className="w-full">
+                    <Accordion type="multiple" defaultValue={[]} className="w-full">
                         {/* Horizon-specific capabilities */}
                         {isHorizonAgent && (
                             <>
@@ -928,7 +928,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
 
             case 'input-data-connects':
                 return (
-                    <Accordion type="multiple" defaultValue={['api-tools', 'mcp-servers', 'vector-rag', 'graph-rag', 'data-connectors', 'guardrails', 'executable-functions']} className="w-full">
+                    <Accordion type="multiple" defaultValue={[]} className="w-full">
                         {/* API Tools */}
                         <AccordionItem value="api-tools" className="border-b border-gray-200 dark:border-gray-700">
                             <AccordionTrigger className="hover:no-underline py-4">
@@ -1093,7 +1093,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
                 // Only for Horizon Agent
                 if (!isHorizonAgent) return null;
                 return (
-                    <Accordion type="multiple" defaultValue={['execution-primitives', 'execution-policy']} className="w-full">
+                    <Accordion type="multiple" defaultValue={[]} className="w-full">
                         {/* Execution Primitives */}
                         <AccordionItem value="execution-primitives" className="border-b border-gray-200 dark:border-gray-700">
                             <AccordionTrigger className="hover:no-underline py-4">

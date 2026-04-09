@@ -39,16 +39,10 @@ AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
 const AccordionContent = React.forwardRef<
     React.ElementRef<typeof AccordionPrimitive.Content>,
     React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
->(({ className, forceMount, children, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
     <AccordionPrimitive.Content
         ref={ref}
-        className={cn(
-            'overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down',
-            {
-                'data-[state=closed]:hidden': forceMount,
-            }
-        )}
-        forceMount
+        className="overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
         {...props}
     >
         <div className={cn('pb-4 pt-0', className)}>{children}</div>
