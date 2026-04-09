@@ -41,6 +41,8 @@ interface InputProps {
     namePlaceholder?: string;
     valuePlaceholder?: string;
     typePlaceholder?: string;
+    defaultValuePlaceholder?: string;
+    hasDefaultValue?: boolean;
     list: IHeaderValues[];
     onInputsValid?: () => void;
     className?: string;
@@ -76,6 +78,8 @@ const HeaderInput = React.forwardRef<HTMLInputElement, InputProps>((props: Input
         namePlaceholder = 'Name',
         valuePlaceholder = 'Value',
         typePlaceholder = 'Type',
+        defaultValuePlaceholder = 'Default Value',
+        hasDefaultValue = false,
         list,
         onInputsValid,
         className,
@@ -209,7 +213,8 @@ const HeaderInput = React.forwardRef<HTMLInputElement, InputProps>((props: Input
                         <div
                             className={cn(
                                 'flex-grow grid grid-cols-1 sm:grid-cols-3 gap-2',
-                                (useTextarea || !hasType) && 'sm:grid-cols-2'
+                                (useTextarea || !hasType) && 'sm:grid-cols-2',
+                                hasDefaultValue && 'sm:grid-cols-4'
                             )}
                         >
                             <Input
@@ -324,6 +329,15 @@ const HeaderInput = React.forwardRef<HTMLInputElement, InputProps>((props: Input
                                         </div>
                                     )}
                                 </>
+                            )}
+                            {hasDefaultValue && (
+                                <Input
+                                    {...register(`${namePrefix}[${index}].defaultValue`)}
+                                    placeholder={defaultValuePlaceholder}
+                                    defaultValue={item.defaultValue ?? ''}
+                                    disabled={disabledInputs}
+                                    onKeyUp={onTextChange}
+                                />
                             )}
                         </div>
                         <div className="mt-1.5">
