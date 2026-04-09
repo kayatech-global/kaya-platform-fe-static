@@ -2,12 +2,10 @@
 
 import { Input, Textarea, Select, Button, Label, Badge, Switch, Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components';
 import { cn } from '@/lib/utils';
-import { IAgentForm, AuthType, IAuthScheme, A2AVisibility, IA2AAgentCard, IA2ASkill, A2AToolType, IConnectorForm, IGraphRag, IVectorRag } from '@/models';
-import { IMCPBody } from '@/hooks/use-mcp-configuration';
-import { User, Plus, X, Key, Copy, Check, ExternalLink, Eye, Shield, Globe, Lock, FileJson, Sparkles, Zap, Database, Network, Code, Server, Tag, Info } from 'lucide-react';
+import { IAgentForm, AuthType, IA2AAgentCard, IA2ASkill } from '@/models';
+import { User, Plus, X, Key, Copy, Check, ExternalLink, Eye, Shield, Globe, Lock, FileJson, Sparkles, Zap, Tag, Info } from 'lucide-react';
 import { Control, Controller, UseFormWatch, UseFormSetValue, FieldErrors, UseFormGetValues } from 'react-hook-form';
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Tool } from '@/models';
 
 interface IdentitySectionProps {
     control: Control<IAgentForm>;
@@ -18,12 +16,6 @@ interface IdentitySectionProps {
     isReadOnly?: boolean;
     isEdit?: boolean;
     workspaceSlug?: string;
-    // Tool attachments for A2A skill generation
-    tools?: Tool[];
-    mcpServers?: IMCPBody[];
-    graphRags?: IGraphRag[];
-    vectorRags?: IVectorRag[];
-    connectors?: IConnectorForm[];
 }
 
 const authTypeOptions = [
@@ -48,45 +40,6 @@ const outputModeOptions = [
     { name: 'XML', value: 'application/xml' },
 ];
 
-// Tool type to A2A tool type mapping
-const getA2AToolType = (toolType: string): A2AToolType => {
-    const mapping: Record<string, A2AToolType> = {
-        'API': 'KAYA_REST_API_CONNECTOR',
-        'EXECUTABLE_FUNCTION': 'KAYA_EXECUTABLE_FUNCTION',
-        'MCP': 'KAYA_MCP_CONNECTOR',
-        'VECTOR_RAG': 'KAYA_VECTOR_RAG',
-        'GRAPH_RAG': 'KAYA_GRAPH_RAG',
-        'DB_CONNECTOR': 'KAYA_DB_CONNECTOR',
-    };
-    return mapping[toolType] || 'KAYA_REST_API_CONNECTOR';
-};
-
-// Get icon for tool type
-const getToolTypeIcon = (toolType: A2AToolType) => {
-    const icons: Record<A2AToolType, typeof Server> = {
-        'KAYA_REST_API_CONNECTOR': Globe,
-        'KAYA_MCP_CONNECTOR': Server,
-        'KAYA_VECTOR_RAG': Database,
-        'KAYA_GRAPH_RAG': Network,
-        'KAYA_DB_CONNECTOR': Database,
-        'KAYA_EXECUTABLE_FUNCTION': Code,
-    };
-    return icons[toolType] || Zap;
-};
-
-// Get label for tool type
-const getToolTypeLabel = (toolType: A2AToolType): string => {
-    const labels: Record<A2AToolType, string> = {
-        'KAYA_REST_API_CONNECTOR': 'REST API',
-        'KAYA_MCP_CONNECTOR': 'MCP',
-        'KAYA_VECTOR_RAG': 'Vector RAG',
-        'KAYA_GRAPH_RAG': 'Graph RAG',
-        'KAYA_DB_CONNECTOR': 'Database',
-        'KAYA_EXECUTABLE_FUNCTION': 'Function',
-    };
-    return labels[toolType] || 'Tool';
-};
-
 export const IdentitySection = ({ 
     control, 
     watch, 
@@ -96,11 +49,6 @@ export const IdentitySection = ({
     isReadOnly, 
     isEdit,
     workspaceSlug = 'default-workspace',
-    tools = [],
-    mcpServers = [],
-    graphRags = [],
-    vectorRags = [],
-    connectors = [],
 }: IdentitySectionProps) => {
     const [newAuthType, setNewAuthType] = useState<AuthType>('api_key');
     const [newInputMode, setNewInputMode] = useState<string>('');
@@ -119,6 +67,9 @@ export const IdentitySection = ({
     const agentDescription = watch('agentDescription') || '';
     const defaultInputModes = watch('horizonConfig.identity.defaultInputModes') || ['text/plain', 'application/json'];
     const defaultOutputModes = watch('horizonConfig.identity.defaultOutputModes') || ['application/json', 'text/plain'];
+    
+    // Watch skills from Skills Metadata section
+    const skills = watch('horizonConfig.skills') || [];
 
     // Auto-populate Display Name and Description from Agent Name and Agent Description
     useEffect(() => {
@@ -160,114 +111,20 @@ export const IdentitySection = ({
         return `https://kaya.techlabsglobal.com${discoveryPath}`;
     }, [discoveryPath]);
 
-    // Count tool types for skill summary
-    const toolTypeCounts = useMemo(() => {
-        const counts: Record<A2AToolType, number> = {
-            'KAYA_REST_API_CONNECTOR': 0,
-            'KAYA_MCP_CONNECTOR': 0,
-            'KAYA_VECTOR_RAG': 0,
-            'KAYA_GRAPH_RAG': 0,
-            'KAYA_DB_CONNECTOR': 0,
-            'KAYA_EXECUTABLE_FUNCTION': 0,
-        };
+    // Total skills count from Skills Metadata
+    const totalSkills = skills.length;
 
-        // Count API tools
-        tools.filter(t => t.type === 'API').forEach(() => counts['KAYA_REST_API_CONNECTOR']++);
-        
-        // Count Executable Functions
-        tools.filter(t => t.type === 'EXECUTABLE_FUNCTION').forEach(() => counts['KAYA_EXECUTABLE_FUNCTION']++);
-        
-        // Count MCP Servers
-        counts['KAYA_MCP_CONNECTOR'] = mcpServers.length;
-        
-        // Count RAGs
-        counts['KAYA_VECTOR_RAG'] = vectorRags.length;
-        counts['KAYA_GRAPH_RAG'] = graphRags.length;
-        
-        // Count Connectors (DB)
-        counts['KAYA_DB_CONNECTOR'] = connectors.length;
-
-        return counts;
-    }, [tools, mcpServers, graphRags, vectorRags, connectors]);
-
-    const totalSkills = useMemo(() => 
-        Object.values(toolTypeCounts).reduce((sum, count) => sum + count, 0),
-    [toolTypeCounts]);
-
-    // Generate A2A Skills from tool attachments
+    // Generate A2A Skills from Skills Metadata section
     const generateA2ASkills = useCallback((): IA2ASkill[] => {
-        const skills: IA2ASkill[] = [];
-
-        // API Tools
-        tools.filter(t => t.type === 'API').forEach((tool, idx) => {
-            skills.push({
-                id: `api-${tool.id || idx}`,
-                name: `REST API Tool ${idx + 1}`,
-                description: 'REST API connector skill',
-                toolType: 'KAYA_REST_API_CONNECTOR',
-                tags: ['rest-api', 'connector'],
-            });
-        });
-
-        // Executable Functions
-        tools.filter(t => t.type === 'EXECUTABLE_FUNCTION').forEach((tool, idx) => {
-            skills.push({
-                id: `func-${tool.id || idx}`,
-                name: `Executable Function ${idx + 1}`,
-                description: 'Executable function skill',
-                toolType: 'KAYA_EXECUTABLE_FUNCTION',
-                tags: ['function', 'executable'],
-                inputModes: ['application/json'],
-                outputModes: ['application/json'],
-            });
-        });
-
-        // MCP Servers
-        mcpServers.forEach((mcp, idx) => {
-            skills.push({
-                id: `mcp-${mcp.id || idx}`,
-                name: mcp.name || `MCP Server ${idx + 1}`,
-                description: mcp.description || 'MCP connector skill',
-                toolType: 'KAYA_MCP_CONNECTOR',
-                tags: ['mcp', 'connector'],
-            });
-        });
-
-        // Vector RAGs
-        vectorRags.forEach((rag, idx) => {
-            skills.push({
-                id: `vrag-${rag.id || idx}`,
-                name: rag.name || `Vector RAG ${idx + 1}`,
-                description: rag.description || 'Vector RAG knowledge retrieval',
-                toolType: 'KAYA_VECTOR_RAG',
-                tags: ['vector-rag', 'knowledge-base'],
-            });
-        });
-
-        // Graph RAGs
-        graphRags.forEach((rag, idx) => {
-            skills.push({
-                id: `grag-${rag.id || idx}`,
-                name: rag.name || `Graph RAG ${idx + 1}`,
-                description: rag.description || 'Graph RAG reasoning',
-                toolType: 'KAYA_GRAPH_RAG',
-                tags: ['graph-rag', 'knowledge-graph'],
-            });
-        });
-
-        // Connectors (DB)
-        connectors.forEach((conn, idx) => {
-            skills.push({
-                id: `db-${conn.id || idx}`,
-                name: conn.name || `Database Connector ${idx + 1}`,
-                description: conn.description || 'Database connector skill',
-                toolType: 'KAYA_DB_CONNECTOR',
-                tags: ['database', 'connector'],
-            });
-        });
-
-        return skills;
-    }, [tools, mcpServers, graphRags, vectorRags, connectors]);
+        return skills.map((skill) => ({
+            id: skill.id,
+            name: skill.name || 'Unnamed Skill',
+            description: skill.description || '',
+            tags: skill.tags || [],
+            inputModes: skill.inputModes || skill.ioModes || ['application/json'],
+            outputModes: skill.outputModes || skill.ioModes || ['application/json'],
+        }));
+    }, [skills]);
 
     // Generate full A2A Agent Card
     const generateA2ACard = useCallback((): IA2AAgentCard => {
@@ -817,7 +674,7 @@ export const IdentitySection = ({
                                 )}
                             </div>
 
-                            {/* Attached Skills Summary */}
+                            {/* Attached Skills Summary - Auto-populated from Skills Metadata */}
                             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                                 <div className="flex items-center gap-x-2 mb-4">
                                     <Zap size={14} className="text-gray-500" />
@@ -831,26 +688,25 @@ export const IdentitySection = ({
 
                                 {totalSkills > 0 ? (
                                     <div className="flex flex-wrap gap-2">
-                                        {Object.entries(toolTypeCounts)
-                                            .filter(([, count]) => count > 0)
-                                            .map(([type, count]) => {
-                                                const Icon = getToolTypeIcon(type as A2AToolType);
-                                                return (
-                                                    <Badge 
-                                                        key={type} 
-                                                        variant="secondary"
-                                                        className="flex items-center gap-x-1.5 px-2 py-1"
-                                                    >
-                                                        <Icon size={12} />
-                                                        <span>{getToolTypeLabel(type as A2AToolType)}</span>
-                                                        <span className="text-gray-400">x{count}</span>
-                                                    </Badge>
-                                                );
-                                            })}
+                                        {skills.map((skill) => (
+                                            <Badge 
+                                                key={skill.id} 
+                                                variant="secondary"
+                                                className="flex items-center gap-x-1.5 px-2 py-1"
+                                            >
+                                                <Zap size={12} />
+                                                <span>{skill.name || 'Unnamed Skill'}</span>
+                                                {skill.tags && skill.tags.length > 0 && (
+                                                    <span className="text-gray-400 text-xs">
+                                                        ({skill.tags.slice(0, 2).join(', ')})
+                                                    </span>
+                                                )}
+                                            </Badge>
+                                        ))}
                                     </div>
                                 ) : (
                                     <p className="text-xs text-gray-400">
-                                        No tools attached. Add tools to this agent to auto-generate A2A skills.
+                                        No skills configured. Add skills in the Skills Metadata section above.
                                     </p>
                                 )}
                             </div>
