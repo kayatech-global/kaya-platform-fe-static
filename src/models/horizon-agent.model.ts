@@ -82,12 +82,12 @@ export interface IHorizonIdentity {
   defaultOutputModes?: string[];
 }
 
-// A2A Skill (auto-generated from tool attachments)
+// A2A Skill (populated from Skills Metadata section)
 export interface IA2ASkill {
   id: string;
   name: string;
   description: string;
-  toolType: A2AToolType;
+  toolType?: A2AToolType; // Optional - skills from Skills Metadata may not have a tool type
   tags: string[];
   inputModes?: string[];
   outputModes?: string[];
