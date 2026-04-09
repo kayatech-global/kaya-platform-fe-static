@@ -293,7 +293,10 @@ const primitiveDefinitions: PrimitiveDefinition[] = [
             { key: 'workingDirectory', label: 'Working Directory', type: 'text', placeholder: '/tmp/agent-workspace', required: false, helpText: 'Default directory for command execution' },
             { key: 'timeout', label: 'Execution Timeout (seconds)', type: 'text', placeholder: '30', required: false, helpText: 'Maximum execution time before command is killed' },
             { key: 'shellPath', label: 'Shell Path', type: 'text', placeholder: '/bin/bash', required: false, helpText: 'Path to shell executable' },
+            { key: 'runAsUser', label: 'Run As User', type: 'text', placeholder: 'agent', required: false, helpText: 'User to execute commands as' },
+            { key: 'sudoPassword', label: 'Sudo Password', type: 'password', placeholder: 'Enter sudo password', required: false, helpText: 'Password for sudo operations (if allowed)' },
             { key: 'environmentVariables', label: 'Environment Variables', type: 'textarea', placeholder: 'KEY1=value1\nKEY2=value2', required: false, helpText: 'Additional environment variables (one per line)' },
+            { key: 'secretEnvVariables', label: 'Secret Environment Variables', type: 'textarea', placeholder: 'API_KEY=secret_value\nDB_PASSWORD=secret', required: false, helpText: 'Sensitive environment variables (stored encrypted)' },
             { key: 'allowedCommands', label: 'Allowed Commands', type: 'textarea', placeholder: 'ls\ncat\ngrep\ncurl', required: false, helpText: 'Whitelist of allowed commands (one per line, empty = all allowed)' },
             { key: 'sandboxMode', label: 'Sandbox Mode', type: 'select', placeholder: 'Select sandbox level', required: false, helpText: 'Security isolation level', options: [
                 { name: 'Strict (recommended)', value: 'strict' },
@@ -312,9 +315,19 @@ const primitiveDefinitions: PrimitiveDefinition[] = [
         docsUrl: 'https://docs.python-requests.org/',
         fields: [
             { key: 'baseUrl', label: 'Base URL', type: 'text', placeholder: 'https://api.example.com', required: false, helpText: 'Default base URL for all requests' },
+            { key: 'authType', label: 'Authentication Type', type: 'select', placeholder: 'Select auth type', required: false, helpText: 'Default authentication method', options: [
+                { name: 'None', value: 'none' },
+                { name: 'Bearer Token', value: 'bearer' },
+                { name: 'Basic Auth', value: 'basic' },
+                { name: 'API Key', value: 'apikey' },
+            ]},
+            { key: 'authToken', label: 'Auth Token / API Key', type: 'password', placeholder: 'Enter token or API key', required: false, helpText: 'Bearer token, API key, or password for authentication' },
+            { key: 'authUsername', label: 'Username (Basic Auth)', type: 'text', placeholder: 'Enter username', required: false, helpText: 'Username for Basic authentication' },
             { key: 'timeout', label: 'Request Timeout (seconds)', type: 'text', placeholder: '30', required: false, helpText: 'Default timeout for HTTP requests' },
-            { key: 'defaultHeaders', label: 'Default Headers', type: 'textarea', placeholder: 'Authorization: Bearer token\nContent-Type: application/json', required: false, helpText: 'Headers added to all requests (one per line)' },
+            { key: 'defaultHeaders', label: 'Default Headers', type: 'textarea', placeholder: 'Content-Type: application/json\nX-Custom-Header: value', required: false, helpText: 'Additional headers (one per line, key: value format)' },
             { key: 'proxyUrl', label: 'Proxy URL', type: 'text', placeholder: 'http://proxy.example.com:8080', required: false, helpText: 'HTTP/HTTPS proxy for all requests' },
+            { key: 'proxyUsername', label: 'Proxy Username', type: 'text', placeholder: 'proxy_user', required: false, helpText: 'Username for proxy authentication' },
+            { key: 'proxyPassword', label: 'Proxy Password', type: 'password', placeholder: 'Enter proxy password', required: false, helpText: 'Password for proxy authentication' },
             { key: 'verifySsl', label: 'Verify SSL', type: 'select', placeholder: 'Select option', required: false, helpText: 'Verify SSL certificates', options: [
                 { name: 'Yes (recommended)', value: 'true' },
                 { name: 'No', value: 'false' },
@@ -331,13 +344,23 @@ const primitiveDefinitions: PrimitiveDefinition[] = [
         docsUrl: 'https://www.python-httpx.org/',
         fields: [
             { key: 'baseUrl', label: 'Base URL', type: 'text', placeholder: 'https://api.example.com', required: false, helpText: 'Default base URL for all requests' },
+            { key: 'authType', label: 'Authentication Type', type: 'select', placeholder: 'Select auth type', required: false, helpText: 'Default authentication method', options: [
+                { name: 'None', value: 'none' },
+                { name: 'Bearer Token', value: 'bearer' },
+                { name: 'Basic Auth', value: 'basic' },
+                { name: 'API Key', value: 'apikey' },
+            ]},
+            { key: 'authToken', label: 'Auth Token / API Key', type: 'password', placeholder: 'Enter token or API key', required: false, helpText: 'Bearer token, API key, or password for authentication' },
+            { key: 'authUsername', label: 'Username (Basic Auth)', type: 'text', placeholder: 'Enter username', required: false, helpText: 'Username for Basic authentication' },
             { key: 'timeout', label: 'Request Timeout (seconds)', type: 'text', placeholder: '30', required: false, helpText: 'Default timeout for HTTP requests' },
-            { key: 'defaultHeaders', label: 'Default Headers', type: 'textarea', placeholder: 'Authorization: Bearer token\nContent-Type: application/json', required: false, helpText: 'Headers added to all requests (one per line)' },
+            { key: 'defaultHeaders', label: 'Default Headers', type: 'textarea', placeholder: 'Content-Type: application/json\nX-Custom-Header: value', required: false, helpText: 'Additional headers (one per line, key: value format)' },
             { key: 'http2', label: 'Enable HTTP/2', type: 'select', placeholder: 'Select option', required: false, helpText: 'Use HTTP/2 protocol when available', options: [
                 { name: 'Yes', value: 'true' },
                 { name: 'No', value: 'false' },
             ]},
             { key: 'proxyUrl', label: 'Proxy URL', type: 'text', placeholder: 'http://proxy.example.com:8080', required: false, helpText: 'HTTP/HTTPS proxy for all requests' },
+            { key: 'proxyUsername', label: 'Proxy Username', type: 'text', placeholder: 'proxy_user', required: false, helpText: 'Username for proxy authentication' },
+            { key: 'proxyPassword', label: 'Proxy Password', type: 'password', placeholder: 'Enter proxy password', required: false, helpText: 'Password for proxy authentication' },
             { key: 'maxConnections', label: 'Max Connections', type: 'text', placeholder: '100', required: false, helpText: 'Maximum concurrent connections in the pool' },
             { key: 'verifySsl', label: 'Verify SSL', type: 'select', placeholder: 'Select option', required: false, helpText: 'Verify SSL certificates', options: [
                 { name: 'Yes (recommended)', value: 'true' },
@@ -392,6 +415,8 @@ const primitiveDefinitions: PrimitiveDefinition[] = [
             ]},
             { key: 'retryTimes', label: 'Retry Times', type: 'text', placeholder: '2', required: false, helpText: 'Number of retries for failed requests' },
             { key: 'proxyUrl', label: 'Proxy URL', type: 'text', placeholder: 'http://proxy.example.com:8080', required: false, helpText: 'HTTP proxy for web scraping' },
+            { key: 'proxyUsername', label: 'Proxy Username', type: 'text', placeholder: 'proxy_user', required: false, helpText: 'Username for proxy authentication' },
+            { key: 'proxyPassword', label: 'Proxy Password', type: 'password', placeholder: 'Enter proxy password', required: false, helpText: 'Password for proxy authentication' },
         ],
     },
     {
@@ -415,6 +440,8 @@ const primitiveDefinitions: PrimitiveDefinition[] = [
             { key: 'viewport', label: 'Viewport Size', type: 'text', placeholder: '1280x720', required: false, helpText: 'Browser viewport dimensions (WxH)' },
             { key: 'userAgent', label: 'User Agent', type: 'text', placeholder: 'Custom user agent string', required: false, helpText: 'Override default user agent' },
             { key: 'proxyServer', label: 'Proxy Server', type: 'text', placeholder: 'http://proxy.example.com:8080', required: false, helpText: 'Proxy server for browser traffic' },
+            { key: 'proxyUsername', label: 'Proxy Username', type: 'text', placeholder: 'proxy_user', required: false, helpText: 'Username for proxy authentication' },
+            { key: 'proxyPassword', label: 'Proxy Password', type: 'password', placeholder: 'Enter proxy password', required: false, helpText: 'Password for proxy authentication' },
             { key: 'slowMo', label: 'Slow Motion (ms)', type: 'text', placeholder: '0', required: false, helpText: 'Slow down operations by specified milliseconds' },
         ],
     },
@@ -427,6 +454,13 @@ const primitiveDefinitions: PrimitiveDefinition[] = [
         category: 'notebook',
         docsUrl: 'https://jupyter.org/documentation',
         fields: [
+            { key: 'connectionType', label: 'Connection Type', type: 'select', placeholder: 'Select connection', required: false, helpText: 'How to connect to Jupyter', options: [
+                { name: 'Local Kernel', value: 'local' },
+                { name: 'Remote Server', value: 'remote' },
+                { name: 'JupyterHub', value: 'hub' },
+            ]},
+            { key: 'serverUrl', label: 'Jupyter Server URL', type: 'text', placeholder: 'http://localhost:8888', required: false, helpText: 'URL of remote Jupyter server (for remote/hub connections)' },
+            { key: 'serverToken', label: 'Server Token', type: 'password', placeholder: 'Enter Jupyter server token', required: false, helpText: 'Authentication token for remote Jupyter server' },
             { key: 'kernelName', label: 'Kernel Name', type: 'select', placeholder: 'Select kernel', required: false, helpText: 'Jupyter kernel to use', options: [
                 { name: 'Python 3 (ipykernel)', value: 'python3' },
                 { name: 'Python 3.10', value: 'python310' },
@@ -450,10 +484,10 @@ const categoryLabels = {
     messaging: 'Messaging & Communication',
     storage: 'Cloud Storage',
     scheduling: 'Scheduling',
-    shell: 'Shell & Command Execution',
-    http: 'HTTP Clients',
+    shell: 'Shell & Commands',
+    http: 'HTTP & API Clients',
     scraping: 'Web Scraping & Search',
-    notebook: 'Notebook & Code Execution',
+    notebook: 'Code Execution',
 };
 
 const categoryIcons = {
