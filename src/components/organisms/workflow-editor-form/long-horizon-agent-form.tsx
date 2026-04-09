@@ -18,7 +18,7 @@ import { Node, useReactFlow } from '@xyflow/react';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { AgentCategory } from '@/enums';
+import { AgentCategory } from '@/models/horizon-agent.model';
 
 // Types for Long Horizon Agent
 interface LongHorizonAgent {
