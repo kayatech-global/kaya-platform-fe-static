@@ -31,7 +31,6 @@ export interface DefaultApiParameter {
     [key: string]: {
         value: any;
         type: string;
-        defaultValue?: string;
     };
 }
 
@@ -149,7 +148,7 @@ export const useApiConfiguration = () => {
         defaultValues: {
             payloads: [{ name: '', dataType: 'string', value: '' }],
             promotedVariables: [{ name: '', dataType: 'string', value: '' }],
-            defaultApiParameters: [{ name: '', dataType: 'string', value: '', defaultValue: '' }],
+            defaultApiParameters: [{ name: '', dataType: 'string', value: '' }],
         },
     });
 
@@ -223,7 +222,7 @@ export const useApiConfiguration = () => {
                 },
                 isReadOnly: undefined,
                 promotedVariables: [{ name: '', dataType: 'string', value: '' }],
-                defaultApiParameters: [{ name: '', dataType: 'string', value: '', defaultValue: '' }],
+                defaultApiParameters: [{ name: '', dataType: 'string', value: '' }],
             });
             setEdit(false);
         }
@@ -414,7 +413,6 @@ export const useApiConfiguration = () => {
                         name: key,
                         value: value.value,
                         dataType: value.type,
-                        defaultValue: value.defaultValue ?? '',
                     })
                 );
 
@@ -466,7 +464,7 @@ export const useApiConfiguration = () => {
         } else if (type === HeaderType?.PromotedVariables) {
             appendPromotedVariables({ name: '', dataType: 'string', value: '' });
         } else if (type === HeaderType.DefaultApiParameters) {
-            appendDefaultApiParameter({ name: '', dataType: 'string', value: '', defaultValue: '' });
+            appendDefaultApiParameter({ name: '', dataType: 'string', value: '' });
         }
     };
 
@@ -550,7 +548,6 @@ export const useApiConfiguration = () => {
                     defaultApiParameter[item.name] = {
                         value: item.value,
                         type: item.dataType,
-                        defaultValue: item.defaultValue ?? '',
                     };
                 }
             });
