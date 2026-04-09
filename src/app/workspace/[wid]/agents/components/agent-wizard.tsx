@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
-import { Button, Input, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components';
+import { Button, Input, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, Switch, Label } from '@/components';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/atoms/dialog';
 import { cn, getSubmitButtonLabel, validateSpaces } from '@/lib/utils';
-import { Bot, FileText, Brain, UserCheck, Database, GraduationCap, Radio, Check, ChevronLeft, ChevronRight, Settings2 } from 'lucide-react';
+import { Bot, FileText, Brain, Zap, Settings, Database, Shield, Fingerprint, Rocket, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgentCategory, DEFAULT_HORIZON_CONFIG, IAgentForm, IAuthorization, IHeaderValues, IGraphRag, INodeHumanInput, IVectorRag, ISelfLearning, RequestToolType, IConnectorForm, Tool, IMessageBroker, IMessagePublisher, IGuardrailSetup, IExecutableFunctionCredential } from '@/models';
 import { Control, Controller, FieldErrors, UseFormGetValues, UseFormHandleSubmit, UseFormRegister, UseFormReset, UseFormSetValue, UseFormTrigger, UseFormWatch } from 'react-hook-form';
@@ -71,22 +71,23 @@ export type ExecutableFunctionResponseType = {
 
 // Wizard Step Definition
 interface WizardStep {
-    id: number;
+    id: string;
     title: string;
     description: string;
     icon: React.ElementType;
-    isHorizonOnly?: boolean;
+    forAgentTypes: AgentCategory[];
 }
 
-// Define wizard steps based on requirements
-const WIZARD_STEPS: WizardStep[] = [
-    { id: 1, title: 'Agent Type', description: 'Select agent category and basic info', icon: Bot },
-    { id: 2, title: 'Prompt & Intelligence', description: 'Configure prompt and AI model', icon: FileText },
-    { id: 3, title: 'Human Review', description: 'Configure human-in-the-loop', icon: UserCheck },
-    { id: 4, title: 'Input Data Connects', description: 'Add data sources and tools', icon: Database },
-    { id: 5, title: 'Self Learning', description: 'Enable agent learning capabilities', icon: GraduationCap },
-    { id: 6, title: 'Output Broadcasting', description: 'Configure output destinations', icon: Radio },
-    { id: 7, title: 'Horizon Config', description: 'Skills, policies & deployment', icon: Settings2, isHorizonOnly: true },
+// Define wizard steps for Horizon Agent
+const HORIZON_STEPS: WizardStep[] = [
+    { id: 'basic-info', title: 'Basic Info', description: 'Agent name, description and category', icon: Bot, forAgentTypes: [AgentCategory.HORIZON, AgentCategory.REUSABLE] },
+    { id: 'prompt-intelligence', title: 'Prompt & Intelligence', description: 'Configure prompt and AI model', icon: FileText, forAgentTypes: [AgentCategory.HORIZON, AgentCategory.REUSABLE] },
+    { id: 'skills', title: 'Skills', description: 'Define agent skills and capabilities', icon: Zap, forAgentTypes: [AgentCategory.HORIZON] },
+    { id: 'capabilities', title: 'Capabilities', description: 'Configure agent capabilities', icon: Settings, forAgentTypes: [AgentCategory.HORIZON, AgentCategory.REUSABLE] },
+    { id: 'input-data-connects', title: 'Input Data Connects', description: 'Add data sources and tools', icon: Database, forAgentTypes: [AgentCategory.HORIZON, AgentCategory.REUSABLE] },
+    { id: 'execution-config', title: 'Execution Config', description: 'Execution primitives and policies', icon: Shield, forAgentTypes: [AgentCategory.HORIZON] },
+    { id: 'a2a-identity', title: 'A2A Identity', description: 'Agent-to-agent identity configuration', icon: Fingerprint, forAgentTypes: [AgentCategory.HORIZON] },
+    { id: 'deployment-config', title: 'Deployment Config', description: 'Deploy configuration settings', icon: Rocket, forAgentTypes: [AgentCategory.HORIZON] },
 ];
 
 interface AgentWizardProps {
@@ -141,19 +142,19 @@ interface AgentWizardProps {
 // Stepper Component
 const WizardStepper = ({ 
     steps, 
-    currentStep, 
+    currentStepId, 
     onStepClick,
     completedSteps 
 }: { 
     steps: WizardStep[]; 
-    currentStep: number;
-    onStepClick?: (stepId: number) => void;
-    completedSteps: Set<number>;
+    currentStepId: string;
+    onStepClick?: (stepId: string) => void;
+    completedSteps: Set<string>;
 }) => {
     return (
         <div className="flex items-center justify-between w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
             {steps.map((step, index) => {
-                const isActive = step.id === currentStep;
+                const isActive = step.id === currentStepId;
                 const isCompleted = completedSteps.has(step.id);
                 const isLast = index === steps.length - 1;
                 const Icon = step.icon;
@@ -262,8 +263,8 @@ export const AgentWizard = (props: AgentWizardProps) => {
     const graphRef = useRef<GraphRagSelectorRef>(null);
 
     // Wizard state
-    const [currentStep, setCurrentStep] = useState(1);
-    const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+    const [currentStepId, setCurrentStepId] = useState('basic-info');
+    const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState<boolean>(true);
     const [mounted, setMounted] = useState<boolean>(false);
 
@@ -289,14 +290,25 @@ export const AgentWizard = (props: AgentWizardProps) => {
 
     // Filter steps based on agent type
     const visibleSteps = useMemo(() => {
-        return WIZARD_STEPS.filter(step => !step.isHorizonOnly || isHorizonAgent);
-    }, [isHorizonAgent]);
+        return HORIZON_STEPS.filter(step => step.forAgentTypes.includes(agentCategory));
+    }, [agentCategory]);
+
+    // Get current step index
+    const currentStepIndex = useMemo(() => {
+        return visibleSteps.findIndex(step => step.id === currentStepId);
+    }, [visibleSteps, currentStepId]);
+
+    const isFirstStep = currentStepIndex === 0;
+    const isLastStep = currentStepIndex === visibleSteps.length - 1;
 
     // Handle agent category change
     const handleCategoryChange = useCallback((category: AgentCategory) => {
         if (category === AgentCategory.HORIZON && !getValues('horizonConfig')) {
             setValue('horizonConfig', DEFAULT_HORIZON_CONFIG);
         }
+        // Reset to first step when category changes
+        setCurrentStepId('basic-info');
+        setCompletedSteps(new Set());
     }, [setValue, getValues]);
 
     // Initialize form state
@@ -463,239 +475,233 @@ export const AgentWizard = (props: AgentWizardProps) => {
         const otherTools = currentTools.filter(tool => tool.type !== 'EXECUTABLE_FUNCTION');
 
         if (response && response.length > 0) {
-            const functionTools = response?.map(func => ({ id: func.id, type: 'EXECUTABLE_FUNCTION' })) ?? [];
-            setValue('tools', [...otherTools, ...functionTools]);
+            const executableFunctionTools = response?.map(f => ({ id: f.id, type: 'EXECUTABLE_FUNCTION' })) ?? [];
+            setValue('tools', [...otherTools, ...executableFunctionTools]);
         } else {
             setValue('tools', otherTools);
         }
     };
 
-    const managePrompt = async (response: Prompt | undefined) => {
-        if (response) {
-            setValue('promptTemplateId', response.id);
-        } else {
+    const managePrompt = (response: Prompt | undefined) => {
+        if (!response) {
             setValue('promptTemplateId', '');
+            return;
         }
 
-        const result = await syncTools({
-            prompt: response?.configurations?.prompt_template,
-            allApiTools,
-            apis,
-            allMcpTools,
-            mcpServers,
-            allVectorRags,
-            vectorRags,
-            allGraphRag,
-            graphRags,
-            allConnectors,
-            connectors,
-            allExecutableFunctions,
-            executableFunctions,
-        });
-
-        setApis(result?.apis);
-        manageApi(result?.apis);
-        setMcpServers(result?.mcps);
-        manageMcp(result?.mcps);
-        setVectorRags(result?.vectorRags);
-        onRagChange(result?.vectorRags);
-        setGraphRags(result?.graphRags);
-        onGraphRagChange(result?.graphRags);
-        setConnectors(result?.connectors);
-        onConnectorChange(result?.connectors);
-
-        if (result?.executableFunctions) {
-            setExecutableFunctions(result.executableFunctions);
-            manageExecutableFunction(result.executableFunctions);
+        setValue('promptTemplateId', response?.id as string);
+        trigger('promptTemplateId');
+        if (mounted && !isEdit) {
+            syncTools({
+                promptRef,
+                vectorRef,
+                graphRef,
+                apis,
+                executableFunctions,
+                vectorRags,
+                graphRags,
+                setApis,
+                setExecutableFunctions,
+                setVectorRags,
+                setGraphRags,
+                promptTemplate: response?.configurations?.prompt_template ?? '',
+                manageApi,
+                manageExecutableFunction,
+                allApiTools: allApiTools ?? [],
+                allExecutableFunctions: allExecutableFunctions ?? [],
+                allVectorRags: allVectorRags ?? [],
+                allGraphRags: allGraphRag ?? [],
+                onRagChange,
+                onGraphRagChange,
+            });
         }
     };
 
     const manageLanguageModel = (response: IntelligenceSourceModel | undefined) => {
-        if (response && !isSlm) {
-            setValue('llmId', response.modelId);
-            setValue('slmId', undefined);
-            setValue('sourceValue', response.modelId);
-        } else if (response && isSlm) {
-            setValue('slmId', response.modelId);
+        if (isSlm) {
+            setValue('slmId', response?.modelId as string);
             setValue('llmId', undefined);
-            setValue('sourceValue', response.modelId);
         } else {
-            setValue('llmId', undefined);
+            setValue('llmId', response?.modelId as string);
             setValue('slmId', undefined);
-            setValue('sourceValue', undefined);
         }
-    };
-
-    const onHumanInputChange = (value: INodeHumanInput | undefined) => {
-        setHumanInput(value);
-        setValue('humanInput', value);
-    };
-
-    const onSelfLearningChange = (learning: ISelfLearning | undefined) => {
-        setValue('selfLearning', learning);
+        setValue('sourceValue', response?.modelId);
+        trigger('sourceValue');
     };
 
     const manageMcp = (response: IMCPBody[]) => {
-        setValue('mcpServers', [...response]);
-    };
-
-    const onTriggerValidation = async (key: string) => {
-        if (mounted) {
-            await trigger(key as never);
-        }
-    };
-
-    const onGraphRagChange = (response: IGraphRag[] | undefined) => {
-        if (response && response.length > 0) {
-            setValue('knowledgeGraphs', [...response]);
+        if (response.length === 0) {
+            setValue('mcpServers', []);
         } else {
-            setValue('knowledgeGraphs', undefined);
+            setValue('mcpServers', response);
         }
+    };
+
+    const onRagChange = (vectorRags: IVectorRag[] | undefined) => {
+        const formRags = vectorRags?.map(rag => ({ id: rag.id as string })) ?? [];
+        setValue('rags', formRags);
+    };
+
+    const onGraphRagChange = (graphRags: IGraphRag[] | undefined) => {
+        const formGraphRags = graphRags?.map(rag => ({ id: rag.id as string })) ?? [];
+        setValue('knowledgeGraphs', formGraphRags);
     };
 
     const onConnectorChange = (connectors: IConnectorForm[] | undefined) => {
-        if (connectors && connectors.length > 0) {
-            setValue('connectors', [...connectors]);
-        } else {
-            setValue('connectors', undefined);
+        const formConnectors = connectors?.map(c => ({ id: c.id })) ?? [];
+        setValue('connectors', formConnectors);
+    };
+
+    const onGuardrailsChange = (guardrails: string[]) => {
+        setValue('guardrails', guardrails);
+    };
+
+    const onSelfLearningChange = (selfLearning: ISelfLearning | undefined) => {
+        if (!selfLearning) {
+            setValue('selfLearning', undefined);
+            return;
         }
+        setValue('selfLearning', selfLearning);
     };
 
-    const onRagChange = (response: IVectorRag[] | undefined) => {
-        if (response) {
-            setValue('rags', [...response]);
-        } else {
-            setValue('rags', undefined);
+    const onHumanInputChange = (humanInput: INodeHumanInput | undefined) => {
+        if (!humanInput) {
+            setValue('humanInput', undefined);
+            return;
         }
+        setValue('humanInput', humanInput);
     };
 
-    const onOutputBroadcasting = (data: IMessagePublisher | undefined) => {
-        setValue('publisherIntegration', data);
+    const onOutputBroadcasting = (messagePublisher: IMessagePublisher | undefined) => {
+        if (!messagePublisher) {
+            setValue('publisherIntegration', undefined);
+            return;
+        }
+        setValue('publisherIntegration', messagePublisher);
     };
 
-    const onVectorGraphRefetch = async (isVectorRag?: boolean) => {
-        if (isVectorRag) {
+    const onTriggerValidation = async (field: keyof IAgentForm) => {
+        await trigger(field);
+        setMounted(false);
+    };
+
+    const refetchApiTools = () => {
+        onRefetchApiTools();
+    };
+
+    const refetchMcp = () => {
+        onRefetchMcp();
+    };
+
+    const refetchExecutableFunctions = () => {
+        onRefetchExecutableFunctions();
+    };
+
+    const onVectorGraphRefetch = async (isVector?: boolean) => {
+        if (isVector) {
             await refetchVectorRag();
-            if (vectorRef?.current) {
-                vectorRef.current.onMount();
-            }
         } else {
             await refetchGraphRag();
-            if (graphRef?.current) {
-                graphRef.current.onMount();
-            }
         }
-        await promptRef.current?.refetchVariables();
-    };
-
-    const onGuardrailsChange = async (items: string[] | undefined) => {
-        setValue('guardrails', items);
-    };
-
-    const refetchApiTools = async () => {
-        onRefetchApiTools();
-        await promptRef.current?.refetchVariables();
-    };
-
-    const refetchExecutableFunctions = async () => {
-        onRefetchExecutableFunctions();
-        await promptRef.current?.refetchVariables();
-    };
-
-    const refetchMcp = async () => {
-        onRefetchMcp();
-        await promptRef.current?.refetchVariables();
     };
 
     // Navigation handlers
-    const handleNext = useCallback(() => {
-        const currentIndex = visibleSteps.findIndex(s => s.id === currentStep);
-        if (currentIndex < visibleSteps.length - 1) {
-            setCompletedSteps(prev => new Set([...prev, currentStep]));
-            setCurrentStep(visibleSteps[currentIndex + 1].id);
+    const handleNext = () => {
+        if (!isLastStep) {
+            setCompletedSteps(prev => new Set([...prev, currentStepId]));
+            const nextStepIndex = currentStepIndex + 1;
+            if (nextStepIndex < visibleSteps.length) {
+                setCurrentStepId(visibleSteps[nextStepIndex].id);
+            }
         }
-    }, [currentStep, visibleSteps]);
+    };
 
-    const handleBack = useCallback(() => {
-        const currentIndex = visibleSteps.findIndex(s => s.id === currentStep);
-        if (currentIndex > 0) {
-            setCurrentStep(visibleSteps[currentIndex - 1].id);
+    const handleBack = () => {
+        if (!isFirstStep) {
+            const prevStepIndex = currentStepIndex - 1;
+            if (prevStepIndex >= 0) {
+                setCurrentStepId(visibleSteps[prevStepIndex].id);
+            }
         }
-    }, [currentStep, visibleSteps]);
+    };
 
-    const handleStepClick = useCallback((stepId: number) => {
-        // Allow navigating to completed steps or current step
-        const stepIndex = visibleSteps.findIndex(s => s.id === stepId);
-        const currentIndex = visibleSteps.findIndex(s => s.id === currentStep);
-        if (stepIndex <= currentIndex || completedSteps.has(stepId)) {
-            setCurrentStep(stepId);
-        }
-    }, [visibleSteps, currentStep, completedSteps]);
+    const handleStepClick = (stepId: string) => {
+        // Allow navigation to any step
+        setCurrentStepId(stepId);
+    };
 
-    const handleCancel = useCallback(() => {
+    const handleCancel = () => {
         setOpen(false);
         reset();
-        setCurrentStep(1);
+        setCurrentStepId('basic-info');
         setCompletedSteps(new Set());
-    }, [setOpen, reset]);
+    };
 
-    const handleSave = handleSubmit((data) => {
-        onHandleSubmit(data);
-    });
-
-    // Check if current step is the last step
-    const isLastStep = currentStep === visibleSteps[visibleSteps.length - 1]?.id;
-    const isFirstStep = currentStep === visibleSteps[0]?.id;
-
-    // Render step content
+    // Render step content based on current step
     const renderStepContent = () => {
-        if (isLoadingResources || loading) {
-            return (
-                <div className="h-full flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-y-3">
-                        <div className="w-8 h-8 border-2 border-gray-300 border-t-primary rounded-full animate-spin" />
-                        <p className="text-sm text-gray-600 dark:text-gray-300">Loading agent data...</p>
-                    </div>
-                </div>
-            );
-        }
-
-        switch (currentStep) {
-            case 1: // Agent Type
+        switch (currentStepId) {
+            case 'basic-info':
                 return (
                     <div className="space-y-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Input
-                                {...register('agentName', {
-                                    required: { value: true, message: 'Please enter an agent name' },
-                                    validate: value => validateSpaces(value, 'agent name'),
-                                })}
-                                placeholder="Enter your Agent Key"
-                                label="Agent Key"
-                                isDestructive={!!errors?.agentName?.message}
-                                supportiveText={errors?.agentName?.message}
+                        <div className="grid grid-cols-1 gap-6">
+                            <Controller
+                                name="agentName"
+                                control={control}
+                                rules={{
+                                    required: { value: true, message: 'Please enter agent name' },
+                                    validate: value => validateSpaces(value) || 'Agent name cannot contain spaces',
+                                }}
+                                render={({ field }) => (
+                                    <div>
+                                        <Input
+                                            label="Agent Key"
+                                            placeholder="Enter agent key (no spaces)"
+                                            disabled={isEdit && !!watch('isReadOnly')}
+                                            {...field}
+                                            className={cn(errors?.agentName?.message && 'border-red-300')}
+                                        />
+                                        {errors?.agentName?.message && (
+                                            <p className="text-xs text-red-500 mt-1">{errors?.agentName?.message}</p>
+                                        )}
+                                    </div>
+                                )}
                             />
-                            <Input
-                                {...register('agentDescription', {
-                                    required: { value: true, message: 'Please enter an agent description' },
-                                    validate: value => validateSpaces(value, 'agent description'),
-                                })}
-                                placeholder="Enter your Agent Description"
-                                label="Agent Description"
-                                isDestructive={!!errors?.agentDescription?.message}
-                                supportiveText={errors?.agentDescription?.message}
+
+                            <Controller
+                                name="agentDescription"
+                                control={control}
+                                rules={{
+                                    required: { value: true, message: 'Please enter agent description' },
+                                }}
+                                render={({ field }) => (
+                                    <div>
+                                        <Input
+                                            label="Agent Description"
+                                            placeholder="Enter agent description"
+                                            disabled={isEdit && !!watch('isReadOnly')}
+                                            {...field}
+                                            className={cn(errors?.agentDescription?.message && 'border-red-300')}
+                                        />
+                                        {errors?.agentDescription?.message && (
+                                            <p className="text-xs text-red-500 mt-1">{errors?.agentDescription?.message}</p>
+                                        )}
+                                    </div>
+                                )}
                             />
                         </div>
-                        <AgentCategorySelector
-                            control={control}
-                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                            isEdit={isEdit}
-                            onCategoryChange={handleCategoryChange}
-                        />
+
+                        <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                            <AgentCategorySelector
+                                control={control}
+                                watch={watch}
+                                setValue={setValue}
+                                isReadOnly={isEdit && !!watch('isReadOnly')}
+                                onCategoryChange={handleCategoryChange}
+                            />
+                        </div>
                     </div>
                 );
 
-            case 2: // Prompt & Intelligence
+            case 'prompt-intelligence':
                 return (
                     <div className="space-y-6">
                         <Controller
@@ -779,20 +785,120 @@ export const AgentWizard = (props: AgentWizardProps) => {
                     </div>
                 );
 
-            case 3: // Human Review
+            case 'skills':
+                // Only for Horizon Agent
+                if (!isHorizonAgent) return null;
                 return (
-                    <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                        <HumanInput
-                            humanInput={humanInput}
-                            messageBrokers={messageBrokers ?? []}
-                            setHumanInput={setHumanInput}
+                    <div className="space-y-6">
+                        <SkillsSection
+                            control={control}
+                            watch={watch}
+                            setValue={setValue}
+                            errors={errors}
                             isReadOnly={isEdit && !!watch('isReadOnly')}
-                            onHumanInputChange={onHumanInputChange}
                         />
                     </div>
                 );
 
-            case 4: // Input Data Connects
+            case 'capabilities':
+                return (
+                    <div className="space-y-6">
+                        {/* Horizon-specific capabilities */}
+                        {isHorizonAgent && (
+                            <>
+                                {/* Streaming & Webhook */}
+                                <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                                    <div className="flex flex-col gap-y-4">
+                                        <div className="flex flex-col gap-y-1">
+                                            <p className="text-sm font-medium">Streaming & Webhook</p>
+                                            <p className="text-xs text-gray-400">Configure streaming and webhook capabilities</p>
+                                        </div>
+                                        <NotificationSection
+                                            control={control}
+                                            watch={watch}
+                                            setValue={setValue}
+                                            errors={errors}
+                                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Persistence */}
+                                <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                                    <div className="flex flex-col gap-y-4">
+                                        <div className="flex flex-col gap-y-1">
+                                            <p className="text-sm font-medium">Persistence Options</p>
+                                            <p className="text-xs text-gray-400">Configure task state, memory and artifact storage</p>
+                                        </div>
+                                        <PersistenceSection
+                                            control={control}
+                                            watch={watch}
+                                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {/* Human Review */}
+                        <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                            <HumanInput
+                                humanInput={humanInput}
+                                messageBrokers={messageBrokers ?? []}
+                                setHumanInput={setHumanInput}
+                                isReadOnly={isEdit && !!watch('isReadOnly')}
+                                onHumanInputChange={onHumanInputChange}
+                            />
+                        </div>
+
+                        {/* Self Learning */}
+                        <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                            <SelfLearning
+                                selfLearning={watch('selfLearning') || selfLearning}
+                                isReadOnly={isEdit && !!watch('isReadOnly')}
+                                apis={apis}
+                                allApiTools={allApiTools}
+                                llms={allModels as never}
+                                slms={allSLMModels as never}
+                                agent={agent}
+                                allPrompts={allPrompts as PromptResponse[]}
+                                promptsLoading={!!promptsLoading}
+                                llmModelsLoading={!!llmModelsLoading}
+                                slmModelsLoading={!!slmModelsLoading}
+                                messageBrokers={messageBrokers ?? []}
+                                setSelfLearning={setSelfLearning}
+                                onSelfLearningChange={onSelfLearningChange}
+                                onRefetch={onRefetchApiTools}
+                                onRefetchIntelligence={() => {
+                                    onRefetchLlms();
+                                    onRefetchSLMModel();
+                                }}
+                                onRefetchPrompt={async () => {
+                                    onRefetchPrompts();
+                                }}
+                                allConnectors={allConnectors}
+                                connectorsLoading={connectorsLoading ?? false}
+                                onRefetchConnector={onRefetchConnector}
+                            />
+                        </div>
+
+                        {/* Output Broadcasting */}
+                        <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                            <MessagePublisher
+                                title="Output Broadcasting"
+                                detailButtonLabel="Add Output Broadcasting"
+                                viewLabel="View Output Broadcasting"
+                                messagePublisher={outputBroadcasting}
+                                messageBrokers={messageBrokers ?? []}
+                                isReadOnly={isEdit && !!watch('isReadOnly')}
+                                setMessagePublisher={setOutputBroadcasting}
+                                onMessagePublisherChange={onOutputBroadcasting}
+                            />
+                        </div>
+                    </div>
+                );
+
+            case 'input-data-connects':
                 return (
                     <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
                         <div className="flex flex-col gap-y-4">
@@ -896,73 +1002,11 @@ export const AgentWizard = (props: AgentWizardProps) => {
                     </div>
                 );
 
-            case 5: // Self Learning
-                return (
-                    <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                        <SelfLearning
-                            selfLearning={watch('selfLearning') || selfLearning}
-                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                            apis={apis}
-                            allApiTools={allApiTools}
-                            llms={allModels as never}
-                            slms={allSLMModels as never}
-                            agent={agent}
-                            allPrompts={allPrompts as PromptResponse[]}
-                            promptsLoading={!!promptsLoading}
-                            llmModelsLoading={!!llmModelsLoading}
-                            slmModelsLoading={!!slmModelsLoading}
-                            messageBrokers={messageBrokers ?? []}
-                            setSelfLearning={setSelfLearning}
-                            onSelfLearningChange={onSelfLearningChange}
-                            onRefetch={onRefetchApiTools}
-                            onRefetchIntelligence={() => {
-                                onRefetchLlms();
-                                onRefetchSLMModel();
-                            }}
-                            onRefetchPrompt={async () => {
-                                onRefetchPrompts();
-                            }}
-                            allConnectors={allConnectors}
-                            connectorsLoading={connectorsLoading ?? false}
-                            onRefetchConnector={onRefetchConnector}
-                        />
-                    </div>
-                );
-
-            case 6: // Output Broadcasting
-                return (
-                    <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                        <MessagePublisher
-                            title="Output Broadcasting"
-                            detailButtonLabel="Add Output Broadcasting"
-                            viewLabel="View Output Broadcasting"
-                            messagePublisher={outputBroadcasting}
-                            messageBrokers={messageBrokers ?? []}
-                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                            setMessagePublisher={setOutputBroadcasting}
-                            onMessagePublisherChange={onOutputBroadcasting}
-                        />
-                    </div>
-                );
-
-            case 7: // Horizon Config (only for Horizon agents)
+            case 'execution-config':
+                // Only for Horizon Agent
                 if (!isHorizonAgent) return null;
                 return (
                     <div className="space-y-6">
-                        <div className="flex items-center gap-x-2 py-2">
-                            <div className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
-                            <p className="text-xs font-medium text-gray-500 px-2">Horizon Agent Configuration</p>
-                            <div className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
-                        </div>
-
-                        <SkillsSection
-                            control={control}
-                            watch={watch}
-                            setValue={setValue}
-                            errors={errors}
-                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                        />
-
                         <ExecutionPrimitivesSection
                             control={control}
                             watch={watch}
@@ -975,21 +1019,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                             watch={watch}
                             isReadOnly={isEdit && !!watch('isReadOnly')}
                         />
+                    </div>
+                );
 
-                        <PersistenceSection
-                            control={control}
-                            watch={watch}
-                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                        />
-
-                        <NotificationSection
-                            control={control}
-                            watch={watch}
-                            setValue={setValue}
-                            errors={errors}
-                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                        />
-
+            case 'a2a-identity':
+                // Only for Horizon Agent
+                if (!isHorizonAgent) return null;
+                return (
+                    <div className="space-y-6">
                         <IdentitySection
                             control={control}
                             watch={watch}
@@ -999,7 +1036,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                             isReadOnly={isEdit && !!watch('isReadOnly')}
                             isEdit={isEdit}
                         />
+                    </div>
+                );
 
+            case 'deployment-config':
+                // Only for Horizon Agent
+                if (!isHorizonAgent) return null;
+                return (
+                    <div className="space-y-6">
                         <DeployConfigSection
                             control={control}
                             watch={watch}
@@ -1031,7 +1075,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
                                     {isEdit ? 'Edit Agent' : 'Create New Agent'}
                                 </p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 font-normal">
-                                    {visibleSteps.find(s => s.id === currentStep)?.description}
+                                    {visibleSteps.find(s => s.id === currentStepId)?.description}
                                 </p>
                             </div>
                         </div>
@@ -1041,7 +1085,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
                 {/* Stepper */}
                 <WizardStepper
                     steps={visibleSteps}
-                    currentStep={currentStep}
+                    currentStepId={currentStepId}
                     onStepClick={handleStepClick}
                     completedSteps={completedSteps}
                 />
@@ -1050,7 +1094,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
                 <div className="flex-1 overflow-y-auto px-6 py-6">
                     <AnimatePresence mode="wait">
                         <motion.div
-                            key={currentStep}
+                            key={currentStepId}
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
@@ -1086,31 +1130,22 @@ export const AgentWizard = (props: AgentWizardProps) => {
                                         <TooltipTrigger asChild>
                                             <div>
                                                 <Button
-                                                    variant="primary"
-                                                    onClick={handleSave}
-                                                    disabled={!isValid || isSaving}
-                                                    loading={isSaving}
+                                                    disabled={!isValid || isSaving || (isEdit && !!watch('isReadOnly'))}
+                                                    onClick={handleSubmit(onHandleSubmit)}
                                                 >
-                                                    {getSubmitButtonLabel(
-                                                        isSaving,
-                                                        isEdit,
-                                                        isEdit && !!watch('isReadOnly')
-                                                    )}
+                                                    {getSubmitButtonLabel(isSaving, isEdit)}
                                                 </Button>
                                             </div>
                                         </TooltipTrigger>
                                         {!isValid && (
-                                            <TooltipContent>
-                                                <p>Please fill in all required fields</p>
+                                            <TooltipContent side="left" align="center">
+                                                All required details need to be filled before saving
                                             </TooltipContent>
                                         )}
                                     </Tooltip>
                                 </TooltipProvider>
                             ) : (
-                                <Button
-                                    variant="primary"
-                                    onClick={handleNext}
-                                >
+                                <Button onClick={handleNext}>
                                     Next
                                     <ChevronRight size={16} className="ml-1" />
                                 </Button>
