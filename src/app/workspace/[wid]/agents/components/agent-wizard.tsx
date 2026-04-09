@@ -575,8 +575,8 @@ export const AgentWizard = (props: AgentWizardProps) => {
         }
     };
 
-    const onGuardrailsChange = (guardrails: string[]) => {
-        setValue('guardrails', guardrails);
+    const onGuardrailsChange = (guardrails: string[] | undefined) => {
+        setValue('guardrails', guardrails ?? []);
     };
 
     const onSelfLearningChange = (selfLearning: ISelfLearning | undefined) => {
