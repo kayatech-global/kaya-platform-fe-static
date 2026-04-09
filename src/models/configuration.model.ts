@@ -16,6 +16,7 @@ export interface IHeaderValues {
     dataType: string;
     value: string;
     isSecret?: boolean;
+    defaultValue?: string;
 }
 
 export interface IAuthorization {
