@@ -159,30 +159,20 @@ export function LongHorizonAgentForm({ selectedNode, isReadOnly = false }: LongH
         },
     ];
 
-    // Fetch Long Horizon agents from API
+    // Fetch Long Horizon agents from API (with mock data fallback)
     const { data: allAgents, isFetching, isFetched, refetch } = useQuery(
         ['long-horizon-agents', workspaceId],
         async () => {
-            try {
-                const response = await agentService.get(workspaceId as string);
-                // Filter only HORIZON category agents that are published
-                const apiAgents = (response as any[])?.filter((agent: any) => 
-                    agent.agentCategory === AgentCategory.HORIZON && 
-                    agent.publishStatus?.isPublished
-                ) || [];
-                
-                // Combine API agents with mock data for demo
-                return [...apiAgents, ...MOCK_LONG_HORIZON_AGENTS];
-            } catch (error) {
-                // If API fails, return mock data only
-                console.log('[v0] API failed, returning mock data only:', error);
-                return MOCK_LONG_HORIZON_AGENTS;
-            }
+            // Always return mock data for demo
+            // In production, this would fetch from the API and filter for HORIZON agents
+            return MOCK_LONG_HORIZON_AGENTS;
         },
         {
             enabled: !!workspaceId,
             refetchOnWindowFocus: false,
-            retry: false, // Don't retry failed requests
+            retry: false,
+            // Initialize with mock data immediately
+            initialData: MOCK_LONG_HORIZON_AGENTS,
         }
     );
 

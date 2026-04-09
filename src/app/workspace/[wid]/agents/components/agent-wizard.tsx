@@ -482,7 +482,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
         }
     };
 
-    const managePrompt = (response: Prompt | undefined) => {
+    const managePrompt = async (response: Prompt | undefined) => {
         if (!response) {
             setValue('promptTemplateId', '');
             return;
@@ -491,28 +491,43 @@ export const AgentWizard = (props: AgentWizardProps) => {
         setValue('promptTemplateId', response?.id as string);
         trigger('promptTemplateId');
         if (mounted && !isEdit) {
-            syncTools({
-                promptRef,
-                vectorRef,
-                graphRef,
-                apis,
-                executableFunctions,
-                vectorRags,
-                graphRags,
-                setApis,
-                setExecutableFunctions,
-                setVectorRags,
-                setGraphRags,
-                promptTemplate: response?.configurations?.prompt_template ?? '',
-                manageApi,
-                manageExecutableFunction,
+            const result = await syncTools({
+                prompt: response?.configurations?.prompt_template ?? '',
                 allApiTools: allApiTools ?? [],
-                allExecutableFunctions: allExecutableFunctions ?? [],
+                apis,
+                allMcpTools: allMcpTools ?? [],
+                mcpServers,
                 allVectorRags: allVectorRags ?? [],
-                allGraphRags: allGraphRag ?? [],
-                onRagChange,
-                onGraphRagChange,
+                vectorRags,
+                allGraphRag: allGraphRag ?? [],
+                graphRags,
+                allConnectors: allConnectors ?? [],
+                connectors,
+                allExecutableFunctions: allExecutableFunctions ?? [],
+                executableFunctions,
             });
+
+            if (result) {
+                setApis(result.apis);
+                manageApi(result.apis);
+
+                setMcpServers(result.mcps);
+                manageMcp(result.mcps);
+
+                setVectorRags(result.vectorRags);
+                onRagChange(result.vectorRags);
+
+                setGraphRags(result.graphRags);
+                onGraphRagChange(result.graphRags);
+
+                setConnectors(result.connectors);
+                onConnectorChange(result.connectors);
+
+                if (result.executableFunctions) {
+                    setExecutableFunctions(result.executableFunctions);
+                    manageExecutableFunction(result.executableFunctions);
+                }
+            }
         }
     };
 
