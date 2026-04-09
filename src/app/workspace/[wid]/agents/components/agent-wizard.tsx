@@ -672,7 +672,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
                                 control={control}
                                 rules={{
                                     required: { value: true, message: 'Please enter agent name' },
-                                    validate: value => validateSpaces(value) || 'Agent name cannot contain spaces',
+                                    validate: value => validateSpaces(value, 'agent name'),
                                 }}
                                 render={({ field }) => (
                                     <div>
