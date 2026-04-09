@@ -639,8 +639,6 @@ export const FormBody = (props: ApiConfigurationFormProps) => {
                             isQueryParams={isQueryParams}
                             isResponseField={true}
                             valuePlaceholder="Value"
-                            hasDefaultValue={true}
-                            defaultValuePlaceholder="Default Value"
                             list={watch('defaultApiParameters') as IHeaderValues[]}
                             disabledInputs={isEdit && isReadOnly}
                             customNameValidator={validateUniqueTitle}
