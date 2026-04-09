@@ -324,13 +324,12 @@ const ActionCell = ({
     const isDeployed = row.original.publishStatus?.isPublished;
 
     const handleConfirmDeploy = () => {
-        console.log('[v0] handleConfirmDeploy called');
+        console.log('[v0] handleConfirmDeploy called - BEFORE state changes, confirmOpen:', confirmOpen, 'progressOpen:', progressOpen);
         setConfirmOpen(false);
-        console.log('[v0] confirmOpen set to false, setting progressOpen to true');
         setProgressOpen(true);
-        console.log('[v0] progressOpen set to true');
+        console.log('[v0] handleConfirmDeploy - AFTER setProgressOpen(true) called');
         if (onDeploy) {
-            console.log('[v0] calling onDeploy');
+            console.log('[v0] calling onDeploy with id:', row.original.id);
             onDeploy(row.original.id);
         }
     };
@@ -425,7 +424,10 @@ const ActionCell = ({
                         <Button 
                             variant="primary" 
                             size="sm" 
-                            onClick={handleConfirmDeploy}
+                            onClick={() => {
+                                console.log('[v0] Deploy Agent button clicked');
+                                handleConfirmDeploy();
+                            }}
                             disabled={isDeploying}
                         >
                             {isDeployed ? 'Re-Deploy Agent' : 'Deploy Agent'}
