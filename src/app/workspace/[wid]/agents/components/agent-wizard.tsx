@@ -552,18 +552,27 @@ export const AgentWizard = (props: AgentWizardProps) => {
     };
 
     const onRagChange = (vectorRags: IVectorRag[] | undefined) => {
-        const formRags = vectorRags?.map(rag => ({ id: rag.id as string })) ?? [];
-        setValue('rags', formRags);
+        if (vectorRags) {
+            setValue('rags', [...vectorRags]);
+        } else {
+            setValue('rags', []);
+        }
     };
 
     const onGraphRagChange = (graphRags: IGraphRag[] | undefined) => {
-        const formGraphRags = graphRags?.map(rag => ({ id: rag.id as string })) ?? [];
-        setValue('knowledgeGraphs', formGraphRags);
+        if (graphRags) {
+            setValue('knowledgeGraphs', [...graphRags]);
+        } else {
+            setValue('knowledgeGraphs', []);
+        }
     };
 
     const onConnectorChange = (connectors: IConnectorForm[] | undefined) => {
-        const formConnectors = connectors?.map(c => ({ id: c.id })) ?? [];
-        setValue('connectors', formConnectors);
+        if (connectors) {
+            setValue('connectors', [...connectors]);
+        } else {
+            setValue('connectors', []);
+        }
     };
 
     const onGuardrailsChange = (guardrails: string[]) => {
