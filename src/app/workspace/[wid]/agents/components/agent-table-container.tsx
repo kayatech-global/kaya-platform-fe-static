@@ -2,19 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { ColumnDef, Row } from '@tanstack/react-table';
-import { Trash2, Pencil, Rocket, RefreshCw, MoreHorizontal, Check, Loader2, AlertCircle, Package, Server, Shield, Zap } from 'lucide-react';
+import { Trash2, Pencil, Rocket, RefreshCw, Check, Loader2, AlertCircle, Package, Server, Shield, Zap } from 'lucide-react';
 import { Button, Input, Badge } from '@/components';
 import DataTable from '@/components/molecules/table/data-table';
 import { useForm } from 'react-hook-form';
 import { cn, handleNoValue } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/atoms/dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/atoms/dropdown-menu';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
 import { ISelfLearning, AgentCategory, IPublishStatus } from '@/models';
 
@@ -58,66 +51,6 @@ const initialDeploymentSteps: DeploymentStep[] = [
     { id: 'deploy', label: 'Deploying Agent', description: 'Deploying agent to A2A endpoint', icon: Rocket, status: 'pending' },
     { id: 'verify', label: 'Verifying Deployment', description: 'Running health checks and verification', icon: Zap, status: 'pending' },
 ];
-
-const DeleteRecord = ({ row, onDelete }: { row: Row<AgentData>; onDelete: (id: string) => void }) => {
-    const [open, setOpen] = useState<boolean>(false);
-
-    const handleDelete = () => {
-        onDelete(row.original.id);
-        setOpen(false);
-    };
-
-    return (
-        <>
-            <DropdownMenuItem
-                onClick={(e) => {
-                    e.preventDefault();
-                    setOpen(true);
-                }}
-                disabled={row.original.isReadOnly}
-                className="text-red-600 dark:text-red-400"
-            >
-                <Trash2 size={16} className="mr-2" />
-                Delete
-            </DropdownMenuItem>
-            <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-x-2">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30">
-                                <Trash2 size={16} className="text-red-600 dark:text-red-400" />
-                            </div>
-                            <span>Delete Agent</span>
-                        </DialogTitle>
-                    </DialogHeader>
-                    <DialogBody>
-                        <div className="py-2">
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-gray-100">&quot;{row.original.agentName}&quot;</span>?
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-3">
-                                This action cannot be undone. All configurations and deployment history will be permanently removed.
-                            </p>
-                        </div>
-                    </DialogBody>
-                    <DialogFooter>
-                        <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button 
-                            variant="primary" 
-                            size="sm" 
-                            onClick={handleDelete}
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                        >
-                            Delete Agent
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </>
-    );
-};
 
 // Deployment Progress Dialog - Exported for use in AgentContainer
 export const DeploymentProgressDialog = ({
@@ -296,7 +229,7 @@ export const DeploymentProgressDialog = ({
     );
 };
 
-// Action Cell - Contains dropdown and dialogs with proper state management
+// Action Cell - Contains action icons and dialogs with proper state management
 const ActionCell = ({ 
     row,
     onEditButtonClick,
@@ -311,6 +244,7 @@ const ActionCell = ({
     isDeploying?: boolean;
 }) => {
     const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
+    const [deleteOpen, setDeleteOpen] = useState<boolean>(false);
     
     const isHorizon = row.original.agentCategory === AgentCategory.HORIZON;
     const isDeployed = row.original.publishStatus?.isPublished;
@@ -322,54 +256,92 @@ const ActionCell = ({
         }
     };
 
+    const handleDelete = () => {
+        onDelete(row.original.id);
+        setDeleteOpen(false);
+    };
+
     return (
         <>
-            <div className="flex items-center justify-end gap-x-2">
-                <DropdownMenu modal={false}>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-200" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-44">
-                        {/* Deploy/Re-Deploy - Only for Horizon Agents */}
-                        {isHorizon && onDeployWithProgress && (
-                            <>
-                                <DropdownMenuItem 
-                                    onSelect={() => {
-                                        setConfirmOpen(true);
-                                    }}
-                                    disabled={row.original.isReadOnly || isDeploying}
-                                >
-                                    {isDeployed ? (
-                                        <>
-                                            <RefreshCw size={16} className="mr-2" />
-                                            Re-Deploy
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Rocket size={16} className="mr-2" />
-                                            Deploy
-                                        </>
-                                    )}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                            </>
+            <div className="flex items-center justify-end gap-x-1">
+                {/* Deploy/Re-Deploy - Only for Horizon Agents */}
+                {isHorizon && onDeployWithProgress && (
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => setConfirmOpen(true)}
+                        disabled={row.original.isReadOnly || isDeploying}
+                        title={isDeployed ? 'Re-Deploy' : 'Deploy'}
+                    >
+                        {isDeployed ? (
+                            <RefreshCw size={16} className="text-blue-600 dark:text-blue-400" />
+                        ) : (
+                            <Rocket size={16} className="text-blue-600 dark:text-blue-400" />
                         )}
-                        
-                        {/* Edit */}
-                        <DropdownMenuItem onClick={() => onEditButtonClick(row.getValue('id'))}>
-                            <Pencil size={16} className="mr-2" />
-                            Edit
-                        </DropdownMenuItem>
-                        
-                        <DropdownMenuSeparator />
-                        
-                        {/* Delete */}
-                        <DeleteRecord row={row} onDelete={onDelete} />
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                    </Button>
+                )}
+                
+                {/* Edit */}
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => onEditButtonClick(row.getValue('id'))}
+                    title="Edit"
+                >
+                    <Pencil size={16} className="text-gray-500 dark:text-gray-400" />
+                </Button>
+                
+                {/* Delete */}
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => setDeleteOpen(true)}
+                    disabled={row.original.isReadOnly}
+                    title="Delete"
+                >
+                    <Trash2 size={16} className="text-red-500 dark:text-red-400" />
+                </Button>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-x-2">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30">
+                                <Trash2 size={16} className="text-red-600 dark:text-red-400" />
+                            </div>
+                            <span>Delete Agent</span>
+                        </DialogTitle>
+                    </DialogHeader>
+                    <DialogBody>
+                        <div className="py-2">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-gray-100">&quot;{row.original.agentName}&quot;</span>?
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-3">
+                                This action cannot be undone. All configurations and deployment history will be permanently removed.
+                            </p>
+                        </div>
+                    </DialogBody>
+                    <DialogFooter>
+                        <Button variant="secondary" size="sm" onClick={() => setDeleteOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button 
+                            variant="primary" 
+                            size="sm" 
+                            onClick={handleDelete}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Delete Agent
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Confirmation Dialog - Rendered outside dropdown */}
             <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
