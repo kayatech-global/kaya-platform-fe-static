@@ -341,5 +341,24 @@ export const Node: React.FC<NodeProps> = ({ id, data, type }) => {
         );
     }
 
+    if (type === CustomNodeTypes.longHorizonAgentNode) {
+        return (
+            <CustomNodeBase
+                id={id}
+                data={data}
+                title="Long Horizon Agent"
+                type={type}
+                color="#0D9488"
+                activeColor="#0F766E"
+                icon="ri-compass-3-fill text-[50px] antialiased text-white"
+                handleConfig={{ showSource: true, showTarget: true }}
+                showInteractions
+                iconType="icon"
+                showTitle
+                customTitle={data?.name as string}
+            />
+        );
+    }
+
     return null;
 };

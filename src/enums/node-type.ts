@@ -44,4 +44,6 @@ export enum CustomNodeTypes {
     toolExecutorNode = 'tool_executor_node',
     // External Agent node (A2A)
     externalAgentNode = 'external_agent_node',
+    // Long Horizon Agent node
+    longHorizonAgentNode = 'long_horizon_agent_node',
 }
