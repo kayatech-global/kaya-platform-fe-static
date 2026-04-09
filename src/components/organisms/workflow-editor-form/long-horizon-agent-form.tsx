@@ -163,19 +163,26 @@ export function LongHorizonAgentForm({ selectedNode, isReadOnly = false }: LongH
     const { data: allAgents, isFetching, isFetched, refetch } = useQuery(
         ['long-horizon-agents', workspaceId],
         async () => {
-            const response = await agentService.get(workspaceId as string);
-            // Filter only HORIZON category agents that are published
-            const apiAgents = (response as any[])?.filter((agent: any) => 
-                agent.agentCategory === AgentCategory.HORIZON && 
-                agent.publishStatus?.isPublished
-            ) || [];
-            
-            // Combine API agents with mock data for demo
-            return [...apiAgents, ...MOCK_LONG_HORIZON_AGENTS];
+            try {
+                const response = await agentService.get(workspaceId as string);
+                // Filter only HORIZON category agents that are published
+                const apiAgents = (response as any[])?.filter((agent: any) => 
+                    agent.agentCategory === AgentCategory.HORIZON && 
+                    agent.publishStatus?.isPublished
+                ) || [];
+                
+                // Combine API agents with mock data for demo
+                return [...apiAgents, ...MOCK_LONG_HORIZON_AGENTS];
+            } catch (error) {
+                // If API fails, return mock data only
+                console.log('[v0] API failed, returning mock data only:', error);
+                return MOCK_LONG_HORIZON_AGENTS;
+            }
         },
         {
             enabled: !!workspaceId,
             refetchOnWindowFocus: false,
+            retry: false, // Don't retry failed requests
         }
     );
 
