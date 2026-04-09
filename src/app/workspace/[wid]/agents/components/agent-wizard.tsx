@@ -716,9 +716,8 @@ export const AgentWizard = (props: AgentWizardProps) => {
 
                         <AgentCategorySelector
                             control={control}
-                            watch={watch}
-                            setValue={setValue}
                             isReadOnly={isEdit && !!watch('isReadOnly')}
+                            isEdit={isEdit}
                             onCategoryChange={handleCategoryChange}
                         />
                     </div>
