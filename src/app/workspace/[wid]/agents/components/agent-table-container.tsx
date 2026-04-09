@@ -131,6 +131,7 @@ const DeploymentProgressDialog = ({
     agentName: string;
     isRedeployment: boolean;
 }) => {
+    console.log('[v0] DeploymentProgressDialog render, open:', open, 'agentName:', agentName);
     const [steps, setSteps] = useState<DeploymentStep[]>(initialDeploymentSteps);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
@@ -138,6 +139,7 @@ const DeploymentProgressDialog = ({
 
     // Simulate deployment progress
     useEffect(() => {
+        console.log('[v0] DeploymentProgressDialog useEffect, open:', open);
         if (!open) {
             // Reset when dialog closes
             setSteps(initialDeploymentSteps);
@@ -317,9 +319,13 @@ const ActionCell = ({
     const isDeployed = row.original.publishStatus?.isPublished;
 
     const handleConfirmDeploy = () => {
+        console.log('[v0] handleConfirmDeploy called');
         setConfirmOpen(false);
+        console.log('[v0] confirmOpen set to false, setting progressOpen to true');
         setProgressOpen(true);
+        console.log('[v0] progressOpen set to true');
         if (onDeploy) {
+            console.log('[v0] calling onDeploy');
             onDeploy(row.original.id);
         }
     };
@@ -340,6 +346,7 @@ const ActionCell = ({
                                 <DropdownMenuItem 
                                     onSelect={(e) => {
                                         e.preventDefault();
+                                        console.log('[v0] Deploy DropdownMenuItem onSelect, setting confirmOpen to true');
                                         setConfirmOpen(true);
                                     }}
                                     disabled={row.original.isReadOnly || isDeploying}
