@@ -131,7 +131,6 @@ const DeploymentProgressDialog = ({
     agentName: string;
     isRedeployment: boolean;
 }) => {
-    console.log('[v0] DeploymentProgressDialog render, open:', open, 'agentName:', agentName);
     const [steps, setSteps] = useState<DeploymentStep[]>(initialDeploymentSteps);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
@@ -139,7 +138,6 @@ const DeploymentProgressDialog = ({
 
     // Simulate deployment progress
     useEffect(() => {
-        console.log('[v0] DeploymentProgressDialog useEffect, open:', open);
         if (!open) {
             // Reset when dialog closes
             setSteps(initialDeploymentSteps);
@@ -303,34 +301,24 @@ const ActionCell = ({
     row,
     onEditButtonClick,
     onDelete,
-    onDeploy,
+    onDeployWithProgress,
     isDeploying,
 }: { 
     row: Row<AgentData>;
     onEditButtonClick: (id: string) => void;
     onDelete: (id: string) => void;
-    onDeploy?: (id: string) => void;
+    onDeployWithProgress?: (agentId: string, agentName: string, isRedeploy: boolean) => void;
     isDeploying?: boolean;
 }) => {
     const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
-    const [progressOpen, setProgressOpen] = useState<boolean>(false);
-
-    // Debug: log state changes
-    useEffect(() => {
-        console.log('[v0] ActionCell state - confirmOpen:', confirmOpen, 'progressOpen:', progressOpen);
-    }, [confirmOpen, progressOpen]);
     
     const isHorizon = row.original.agentCategory === AgentCategory.HORIZON;
     const isDeployed = row.original.publishStatus?.isPublished;
 
     const handleConfirmDeploy = () => {
-        console.log('[v0] handleConfirmDeploy called - BEFORE state changes, confirmOpen:', confirmOpen, 'progressOpen:', progressOpen);
         setConfirmOpen(false);
-        setProgressOpen(true);
-        console.log('[v0] handleConfirmDeploy - AFTER setProgressOpen(true) called');
-        if (onDeploy) {
-            console.log('[v0] calling onDeploy with id:', row.original.id);
-            onDeploy(row.original.id);
+        if (onDeployWithProgress) {
+            onDeployWithProgress(row.original.id, row.original.agentName, !!isDeployed);
         }
     };
 
@@ -345,11 +333,10 @@ const ActionCell = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-44">
                         {/* Deploy/Re-Deploy - Only for Horizon Agents */}
-                        {isHorizon && onDeploy && (
+                        {isHorizon && onDeployWithProgress && (
                             <>
                                 <DropdownMenuItem 
                                     onSelect={() => {
-                                        console.log('[v0] Deploy DropdownMenuItem onSelect, setting confirmOpen to true');
                                         setConfirmOpen(true);
                                     }}
                                     disabled={row.original.isReadOnly || isDeploying}
@@ -424,10 +411,7 @@ const ActionCell = ({
                         <Button 
                             variant="primary" 
                             size="sm" 
-                            onClick={() => {
-                                console.log('[v0] Deploy Agent button clicked');
-                                handleConfirmDeploy();
-                            }}
+                            onClick={handleConfirmDeploy}
                             disabled={isDeploying}
                         >
                             {isDeployed ? 'Re-Deploy Agent' : 'Deploy Agent'}
@@ -435,14 +419,6 @@ const ActionCell = ({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-            {/* Progress Dialog - Rendered outside dropdown */}
-            <DeploymentProgressDialog
-                open={progressOpen}
-                onOpenChange={setProgressOpen}
-                agentName={row.original.agentName}
-                isRedeployment={!!isDeployed}
-            />
         </>
     );
 };
@@ -450,7 +426,7 @@ const ActionCell = ({
 const generateColumns = (
     onEditButtonClick: (id: string) => void, 
     onDelete: (id: string) => void,
-    onDeploy?: (id: string) => void,
+    onDeployWithProgress?: (agentId: string, agentName: string, isRedeploy: boolean) => void,
     isDeploying?: boolean
 ) => {
     const columns: ColumnDef<AgentData>[] = [
@@ -522,7 +498,7 @@ const generateColumns = (
                         row={row}
                         onEditButtonClick={onEditButtonClick}
                         onDelete={onDelete}
-                        onDeploy={onDeploy}
+                        onDeployWithProgress={onDeployWithProgress}
                         isDeploying={isDeploying}
                     />
                 );
@@ -546,6 +522,20 @@ export const AgentTableContainer = ({
     const { register, handleSubmit } = useForm<AgentData>({ mode: 'onChange' });
     const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
     const { isMobile } = useBreakpoint();
+    
+    // Deployment progress state - lifted up to prevent remounting issues
+    const [deploymentProgressOpen, setDeploymentProgressOpen] = useState(false);
+    const [deployingAgentName, setDeployingAgentName] = useState('');
+    const [isRedeployment, setIsRedeployment] = useState(false);
+    
+    const handleDeployWithProgress = (agentId: string, agentName: string, isRedeploy: boolean) => {
+        setDeployingAgentName(agentName);
+        setIsRedeployment(isRedeploy);
+        setDeploymentProgressOpen(true);
+        if (onDeploy) {
+            onDeploy(agentId);
+        }
+    };
 
     const onHandleSubmit = (data: AgentData) => {
         if (debounceTimer) {
@@ -558,37 +548,47 @@ export const AgentTableContainer = ({
         setDebounceTimer(timer);
     };
 
-    const columns = generateColumns(onEditButtonClick, onDelete, onDeploy, isDeploying);
+    const columns = generateColumns(onEditButtonClick, onDelete, handleDeployWithProgress, isDeploying);
 
     return (
-        <div className="grid gap-8">
-            <DataTable
-                columns={columns}
-                data={agents}
-                searchColumnName="agent"
-                showFooter
-                defaultPageSize={isMobile ? 5 : 10}
-                showTableSearch={false}
-                manualSpan={true}
-                tableHeader={
-                    <div className="flex justify-between items-center w-full">
-                        <Input
-                            {...register('search')}
-                            placeholder="Search Agent"
-                            className="max-w-sm"
-                            onKeyUp={handleSubmit(onHandleSubmit)}
-                        />
-                        <div className="flex ml-2 justify-end items-center gap-4 w-full">
-                            <Button size={'sm'} onClick={onNewButtonClick}>
-                                New Agent
-                            </Button>
-                            <Button variant={'link'} size={'sm'} onClick={onRecentActivity} className="hidden">
-                                Recent Activities
-                            </Button>
+        <>
+            <div className="grid gap-8">
+                <DataTable
+                    columns={columns}
+                    data={agents}
+                    searchColumnName="agent"
+                    showFooter
+                    defaultPageSize={isMobile ? 5 : 10}
+                    showTableSearch={false}
+                    manualSpan={true}
+                    tableHeader={
+                        <div className="flex justify-between items-center w-full">
+                            <Input
+                                {...register('search')}
+                                placeholder="Search Agent"
+                                className="max-w-sm"
+                                onKeyUp={handleSubmit(onHandleSubmit)}
+                            />
+                            <div className="flex ml-2 justify-end items-center gap-4 w-full">
+                                <Button size={'sm'} onClick={onNewButtonClick}>
+                                    New Agent
+                                </Button>
+                                <Button variant={'link'} size={'sm'} onClick={onRecentActivity} className="hidden">
+                                    Recent Activities
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                }
+                    }
+                />
+            </div>
+            
+            {/* Deployment Progress Dialog - Lifted to container level to survive table re-renders */}
+            <DeploymentProgressDialog
+                open={deploymentProgressOpen}
+                onOpenChange={setDeploymentProgressOpen}
+                agentName={deployingAgentName}
+                isRedeployment={isRedeployment}
             />
-        </div>
+        </>
     );
 };
