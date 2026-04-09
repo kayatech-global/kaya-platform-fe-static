@@ -643,7 +643,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
             case 'basic-info':
                 return (
                     <div className="space-y-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 gap-6">
                             <Controller
                                 name="agentName"
                                 control={control}
@@ -680,7 +680,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
                                             placeholder="Enter agent description"
                                             disabled={isEdit && !!watch('isReadOnly')}
                                             {...field}
-                                            rows={1}
+                                            rows={3}
                                             className={cn('resize-none', errors?.agentDescription?.message && 'border-red-300')}
                                         />
                                         {errors?.agentDescription?.message && (
@@ -802,19 +802,19 @@ export const AgentWizard = (props: AgentWizardProps) => {
 
             case 'capabilities':
                 return (
-                    <Accordion type="multiple" defaultValue={[]} className="w-full">
+                    <Accordion type="multiple" defaultValue={isHorizonAgent ? ['streaming-webhook', 'persistence', 'human-review', 'self-learning', 'output-broadcasting'] : ['human-review', 'self-learning', 'output-broadcasting']} className="w-full">
                         {/* Horizon-specific capabilities */}
                         {isHorizonAgent && (
                             <>
                                 {/* Streaming & Webhook */}
-                                <AccordionItem value="streaming-webhook" className="border-b border-gray-200 dark:border-gray-700">
-                                    <AccordionTrigger className="hover:no-underline py-4">
+                                <AccordionItem value="streaming-webhook" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                                    <AccordionTrigger className="hover:no-underline">
                                         <div className="flex items-center gap-x-2">
                                             <Radio size={18} className="text-gray-600 dark:text-gray-400" />
                                             <span className="text-sm font-medium">Streaming & Webhook</span>
                                         </div>
                                     </AccordionTrigger>
-                                    <AccordionContent className="pb-4">
+                                    <AccordionContent>
                                         <NotificationSection
                                             control={control}
                                             watch={watch}
@@ -826,14 +826,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                                 </AccordionItem>
 
                                 {/* Persistence */}
-                                <AccordionItem value="persistence" className="border-b border-gray-200 dark:border-gray-700">
-                                    <AccordionTrigger className="hover:no-underline py-4">
+                                <AccordionItem value="persistence" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                                    <AccordionTrigger className="hover:no-underline">
                                         <div className="flex items-center gap-x-2">
                                             <Database size={18} className="text-gray-600 dark:text-gray-400" />
                                             <span className="text-sm font-medium">Persistence Capabilities</span>
                                         </div>
                                     </AccordionTrigger>
-                                    <AccordionContent className="pb-4">
+                                    <AccordionContent>
                                         <PersistenceSection
                                             control={control}
                                             watch={watch}
@@ -845,14 +845,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                         )}
 
                         {/* Human Review */}
-                        <AccordionItem value="human-review" className="border-b border-gray-200 dark:border-gray-700">
-                            <AccordionTrigger className="hover:no-underline py-4">
+                        <AccordionItem value="human-review" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
                                     <UserCheck size={18} className="text-gray-600 dark:text-gray-400" />
                                     <span className="text-sm font-medium">Human Review</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pb-4">
+                            <AccordionContent>
                                 <HumanInput
                                     humanInput={humanInput}
                                     messageBrokers={messageBrokers ?? []}
@@ -864,14 +864,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                         </AccordionItem>
 
                         {/* Self Learning */}
-                        <AccordionItem value="self-learning" className="border-b border-gray-200 dark:border-gray-700">
-                            <AccordionTrigger className="hover:no-underline py-4">
+                        <AccordionItem value="self-learning" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
                                     <GraduationCap size={18} className="text-gray-600 dark:text-gray-400" />
                                     <span className="text-sm font-medium">Self Learning</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pb-4">
+                            <AccordionContent>
                                 <SelfLearning
                                     selfLearning={watch('selfLearning') || selfLearning}
                                     isReadOnly={isEdit && !!watch('isReadOnly')}
@@ -903,14 +903,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                         </AccordionItem>
 
                         {/* Output Broadcasting */}
-                        <AccordionItem value="output-broadcasting" className="border-b border-gray-200 dark:border-gray-700">
-                            <AccordionTrigger className="hover:no-underline py-4">
+                        <AccordionItem value="output-broadcasting" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
                                     <Radio size={18} className="text-gray-600 dark:text-gray-400" />
                                     <span className="text-sm font-medium">Output Broadcasting</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pb-4">
+                            <AccordionContent>
                                 <MessagePublisher
                                     title="Output Broadcasting"
                                     detailButtonLabel="Add Output Broadcasting"
@@ -928,16 +928,16 @@ export const AgentWizard = (props: AgentWizardProps) => {
 
             case 'input-data-connects':
                 return (
-                    <Accordion type="multiple" defaultValue={[]} className="w-full">
+                    <Accordion type="multiple" defaultValue={['api-tools', 'mcp-servers', 'vector-rag', 'graph-rag', 'data-connectors', 'guardrails', 'executable-functions']} className="w-full">
                         {/* API Tools */}
-                        <AccordionItem value="api-tools" className="border-b border-gray-200 dark:border-gray-700">
-                            <AccordionTrigger className="hover:no-underline py-4">
+                        <AccordionItem value="api-tools" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
                                     <Globe size={18} className="text-gray-600 dark:text-gray-400" />
                                     <span className="text-sm font-medium">API Tools</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pb-4">
+                            <AccordionContent>
                                 <APISelector
                                     {...register('tools')}
                                     agent={agent}
@@ -953,14 +953,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                         </AccordionItem>
 
                         {/* MCP Servers */}
-                        <AccordionItem value="mcp-servers" className="border-b border-gray-200 dark:border-gray-700">
-                            <AccordionTrigger className="hover:no-underline py-4">
+                        <AccordionItem value="mcp-servers" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
                                     <Server size={18} className="text-gray-600 dark:text-gray-400" />
                                     <span className="text-sm font-medium">MCP Servers</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pb-4">
+                            <AccordionContent>
                                 <MCPSelector
                                     mcpServers={mcpServers}
                                     setMcpServers={setMcpServers}
@@ -975,14 +975,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                         </AccordionItem>
 
                         {/* Vector RAG */}
-                        <AccordionItem value="vector-rag" className="border-b border-gray-200 dark:border-gray-700">
-                            <AccordionTrigger className="hover:no-underline py-4">
+                        <AccordionItem value="vector-rag" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
                                     <Database size={18} className="text-gray-600 dark:text-gray-400" />
                                     <span className="text-sm font-medium">Vector RAG</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pb-4">
+                            <AccordionContent>
                                 <VectorRagSelector
                                     ref={vectorRef}
                                     vectorRags={vectorRags}
@@ -996,14 +996,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                         </AccordionItem>
 
                         {/* Graph RAG */}
-                        <AccordionItem value="graph-rag" className="border-b border-gray-200 dark:border-gray-700">
-                            <AccordionTrigger className="hover:no-underline py-4">
+                        <AccordionItem value="graph-rag" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
                                     <Network size={18} className="text-gray-600 dark:text-gray-400" />
                                     <span className="text-sm font-medium">Graph RAG</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pb-4">
+                            <AccordionContent>
                                 <GraphRagConfigSelector
                                     ref={graphRef}
                                     allGraphRags={allGraphRag ?? []}
@@ -1017,14 +1017,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                         </AccordionItem>
 
                         {/* Data Connectors */}
-                        <AccordionItem value="data-connectors" className="border-b border-gray-200 dark:border-gray-700">
-                            <AccordionTrigger className="hover:no-underline py-4">
+                        <AccordionItem value="data-connectors" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
                                     <Link2 size={18} className="text-gray-600 dark:text-gray-400" />
                                     <span className="text-sm font-medium">Data Connectors</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pb-4">
+                            <AccordionContent>
                                 <ConnectorSelector
                                     agent={agent}
                                     connectors={connectors ?? []}
@@ -1041,14 +1041,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                         </AccordionItem>
 
                         {/* Guardrails */}
-                        <AccordionItem value="guardrails" className="border-b border-gray-200 dark:border-gray-700">
-                            <AccordionTrigger className="hover:no-underline py-4">
+                        <AccordionItem value="guardrails" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
                                     <ShieldCheck size={18} className="text-gray-600 dark:text-gray-400" />
                                     <span className="text-sm font-medium">Agent Level Guardrails</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pb-4">
+                            <AccordionContent>
                                 <GuardrailSelector
                                     agent={agent}
                                     allGuardrails={guardrailData ?? []}
@@ -1065,14 +1065,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                         </AccordionItem>
 
                         {/* Executable Functions */}
-                        <AccordionItem value="executable-functions" className="border-b border-gray-200 dark:border-gray-700">
-                            <AccordionTrigger className="hover:no-underline py-4">
+                        <AccordionItem value="executable-functions" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
                                     <Code size={18} className="text-gray-600 dark:text-gray-400" />
                                     <span className="text-sm font-medium">Executable Functions</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pb-4">
+                            <AccordionContent>
                                 <ExecutableFunctionSelector
                                     {...register('tools')}
                                     agent={agent}
@@ -1093,16 +1093,16 @@ export const AgentWizard = (props: AgentWizardProps) => {
                 // Only for Horizon Agent
                 if (!isHorizonAgent) return null;
                 return (
-                    <Accordion type="multiple" defaultValue={[]} className="w-full">
+                    <Accordion type="multiple" defaultValue={['execution-primitives', 'execution-policy']} className="w-full">
                         {/* Execution Primitives */}
-                        <AccordionItem value="execution-primitives" className="border-b border-gray-200 dark:border-gray-700">
-                            <AccordionTrigger className="hover:no-underline py-4">
+                        <AccordionItem value="execution-primitives" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
                                     <Gauge size={18} className="text-gray-600 dark:text-gray-400" />
                                     <span className="text-sm font-medium">Execution Primitives</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pb-4">
+                            <AccordionContent>
                                 <ExecutionPrimitivesSection
                                     control={control}
                                     watch={watch}
@@ -1113,14 +1113,14 @@ export const AgentWizard = (props: AgentWizardProps) => {
                         </AccordionItem>
 
                         {/* Execution Policy */}
-                        <AccordionItem value="execution-policy" className="border-b border-gray-200 dark:border-gray-700">
-                            <AccordionTrigger className="hover:no-underline py-4">
+                        <AccordionItem value="execution-policy" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
                                     <Scale size={18} className="text-gray-600 dark:text-gray-400" />
                                     <span className="text-sm font-medium">Execution Policy</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pb-4">
+                            <AccordionContent>
                                 <ExecutionPolicySection
                                     control={control}
                                     watch={watch}
