@@ -69,8 +69,8 @@ export const DeployConfigSection = ({ control, watch, setValue, isReadOnly }: De
                         )}
                     />
 
-                    {/* Environment - shown when Managed */}
-                    {!isAgentCore && (
+                    {/* Environment - hidden when Managed (KAYA Internal) is selected */}
+                    {isAgentCore && (
                         <Controller
                             name="horizonConfig.deploy.environment"
                             control={control}

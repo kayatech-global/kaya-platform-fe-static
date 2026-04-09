@@ -31,15 +31,14 @@ export const NotificationSection = ({ control, watch, setValue, errors, isReadOn
                 <div className="flex flex-col gap-y-1">
                     <div className="flex items-center gap-x-[10px]">
                         <Bell size={20} absoluteStrokeWidth={false} className="stroke-[1px]" />
-                        <p className="text-sm font-medium">Notification Configuration</p>
+                        <p className="text-sm font-medium">Streaming & Webhook</p>
                     </div>
                     <p className="text-xs font-normal text-gray-400">
                         Configure how the agent communicates task progress and results.
                     </p>
                 </div>
 
-                <div className="flex flex-col gap-y-4">
-                    {/* Notification Mode */}
+                {/* Notification Mode */}
                     <div>
                         <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                             Notification Mode
@@ -247,7 +246,6 @@ export const NotificationSection = ({ control, watch, setValue, errors, isReadOn
                             </div>
                         </div>
                     )}
-                </div>
             </div>
         </div>
     );

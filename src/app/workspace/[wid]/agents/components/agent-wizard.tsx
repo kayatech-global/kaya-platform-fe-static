@@ -806,37 +806,21 @@ export const AgentWizard = (props: AgentWizardProps) => {
                         {/* Horizon-specific capabilities */}
                         {isHorizonAgent && (
                             <>
-                                {/* Streaming & Webhook */}
-                                <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                                    <div className="flex flex-col gap-y-4">
-                                        <div className="flex flex-col gap-y-1">
-                                            <p className="text-sm font-medium">Streaming & Webhook</p>
-                                            <p className="text-xs text-gray-400">Configure streaming and webhook capabilities</p>
-                                        </div>
-                                        <NotificationSection
-                                            control={control}
-                                            watch={watch}
-                                            setValue={setValue}
-                                            errors={errors}
-                                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                                        />
-                                    </div>
-                                </div>
+                                {/* Streaming & Webhook - uses NotificationSection which has its own panel */}
+                                <NotificationSection
+                                    control={control}
+                                    watch={watch}
+                                    setValue={setValue}
+                                    errors={errors}
+                                    isReadOnly={isEdit && !!watch('isReadOnly')}
+                                />
 
-                                {/* Persistence */}
-                                <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                                    <div className="flex flex-col gap-y-4">
-                                        <div className="flex flex-col gap-y-1">
-                                            <p className="text-sm font-medium">Persistence Options</p>
-                                            <p className="text-xs text-gray-400">Configure task state, memory and artifact storage</p>
-                                        </div>
-                                        <PersistenceSection
-                                            control={control}
-                                            watch={watch}
-                                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                                        />
-                                    </div>
-                                </div>
+                                {/* Persistence - uses PersistenceSection which has its own panel */}
+                                <PersistenceSection
+                                    control={control}
+                                    watch={watch}
+                                    isReadOnly={isEdit && !!watch('isReadOnly')}
+                                />
                             </>
                         )}
 
