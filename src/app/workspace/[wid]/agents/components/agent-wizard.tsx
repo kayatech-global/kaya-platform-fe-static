@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
-import { Button, Input, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, Switch, Label } from '@/components';
+import { Button, Input, Textarea, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, Switch, Label } from '@/components';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/atoms/accordion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/atoms/dialog';
 import { cn, getSubmitButtonLabel, validateSpaces } from '@/lib/utils';
-import { Bot, FileText, Brain, Zap, Settings, Database, Shield, Fingerprint, Rocket, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bot, FileText, Brain, Zap, Settings, Database, Shield, Fingerprint, Rocket, Check, ChevronLeft, ChevronRight, Radio, UserCheck, GraduationCap, Gauge, Scale, Globe, Server, Network, Link2, ShieldCheck, Code } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgentCategory, DEFAULT_HORIZON_CONFIG, IAgentForm, IAuthorization, IHeaderValues, IGraphRag, INodeHumanInput, IVectorRag, ISelfLearning, RequestToolType, IConnectorForm, Tool, IMessageBroker, IMessagePublisher, IGuardrailSetup, IExecutableFunctionCredential } from '@/models';
 import { Control, Controller, FieldErrors, UseFormGetValues, UseFormHandleSubmit, UseFormRegister, UseFormReset, UseFormSetValue, UseFormTrigger, UseFormWatch } from 'react-hook-form';
@@ -674,12 +675,13 @@ export const AgentWizard = (props: AgentWizardProps) => {
                                 }}
                                 render={({ field }) => (
                                     <div>
-                                        <Input
+                                        <Textarea
                                             label="Agent Description"
                                             placeholder="Enter agent description"
                                             disabled={isEdit && !!watch('isReadOnly')}
                                             {...field}
-                                            className={cn(errors?.agentDescription?.message && 'border-red-300')}
+                                            rows={3}
+                                            className={cn('resize-none', errors?.agentDescription?.message && 'border-red-300')}
                                         />
                                         {errors?.agentDescription?.message && (
                                             <p className="text-xs text-red-500 mt-1">{errors?.agentDescription?.message}</p>
@@ -800,208 +802,333 @@ export const AgentWizard = (props: AgentWizardProps) => {
 
             case 'capabilities':
                 return (
-                    <div className="space-y-6">
+                    <Accordion type="multiple" defaultValue={isHorizonAgent ? ['streaming-webhook', 'persistence', 'human-review', 'self-learning', 'output-broadcasting'] : ['human-review', 'self-learning', 'output-broadcasting']} className="w-full">
                         {/* Horizon-specific capabilities */}
                         {isHorizonAgent && (
                             <>
-                                {/* Streaming & Webhook - uses NotificationSection which has its own panel */}
-                                <NotificationSection
-                                    control={control}
-                                    watch={watch}
-                                    setValue={setValue}
-                                    errors={errors}
-                                    isReadOnly={isEdit && !!watch('isReadOnly')}
-                                />
+                                {/* Streaming & Webhook */}
+                                <AccordionItem value="streaming-webhook" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                                    <AccordionTrigger className="hover:no-underline">
+                                        <div className="flex items-center gap-x-2">
+                                            <Radio size={18} className="text-gray-600 dark:text-gray-400" />
+                                            <span className="text-sm font-medium">Streaming & Webhook</span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <NotificationSection
+                                            control={control}
+                                            watch={watch}
+                                            setValue={setValue}
+                                            errors={errors}
+                                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                                        />
+                                    </AccordionContent>
+                                </AccordionItem>
 
-                                {/* Persistence - uses PersistenceSection which has its own panel */}
-                                <PersistenceSection
-                                    control={control}
-                                    watch={watch}
-                                    isReadOnly={isEdit && !!watch('isReadOnly')}
-                                />
+                                {/* Persistence */}
+                                <AccordionItem value="persistence" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                                    <AccordionTrigger className="hover:no-underline">
+                                        <div className="flex items-center gap-x-2">
+                                            <Database size={18} className="text-gray-600 dark:text-gray-400" />
+                                            <span className="text-sm font-medium">Persistence Capabilities</span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <PersistenceSection
+                                            control={control}
+                                            watch={watch}
+                                            isReadOnly={isEdit && !!watch('isReadOnly')}
+                                        />
+                                    </AccordionContent>
+                                </AccordionItem>
                             </>
                         )}
 
                         {/* Human Review */}
-                        <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                            <HumanInput
-                                humanInput={humanInput}
-                                messageBrokers={messageBrokers ?? []}
-                                setHumanInput={setHumanInput}
-                                isReadOnly={isEdit && !!watch('isReadOnly')}
-                                onHumanInputChange={onHumanInputChange}
-                            />
-                        </div>
+                        <AccordionItem value="human-review" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-x-2">
+                                    <UserCheck size={18} className="text-gray-600 dark:text-gray-400" />
+                                    <span className="text-sm font-medium">Human Review</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <HumanInput
+                                    humanInput={humanInput}
+                                    messageBrokers={messageBrokers ?? []}
+                                    setHumanInput={setHumanInput}
+                                    isReadOnly={isEdit && !!watch('isReadOnly')}
+                                    onHumanInputChange={onHumanInputChange}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
 
                         {/* Self Learning */}
-                        <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                            <SelfLearning
-                                selfLearning={watch('selfLearning') || selfLearning}
-                                isReadOnly={isEdit && !!watch('isReadOnly')}
-                                apis={apis}
-                                allApiTools={allApiTools}
-                                llms={allModels as never}
-                                slms={allSLMModels as never}
-                                agent={agent}
-                                allPrompts={allPrompts as PromptResponse[]}
-                                promptsLoading={!!promptsLoading}
-                                llmModelsLoading={!!llmModelsLoading}
-                                slmModelsLoading={!!slmModelsLoading}
-                                messageBrokers={messageBrokers ?? []}
-                                setSelfLearning={setSelfLearning}
-                                onSelfLearningChange={onSelfLearningChange}
-                                onRefetch={onRefetchApiTools}
-                                onRefetchIntelligence={() => {
-                                    onRefetchLlms();
-                                    onRefetchSLMModel();
-                                }}
-                                onRefetchPrompt={async () => {
-                                    onRefetchPrompts();
-                                }}
-                                allConnectors={allConnectors}
-                                connectorsLoading={connectorsLoading ?? false}
-                                onRefetchConnector={onRefetchConnector}
-                            />
-                        </div>
+                        <AccordionItem value="self-learning" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-x-2">
+                                    <GraduationCap size={18} className="text-gray-600 dark:text-gray-400" />
+                                    <span className="text-sm font-medium">Self Learning</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <SelfLearning
+                                    selfLearning={watch('selfLearning') || selfLearning}
+                                    isReadOnly={isEdit && !!watch('isReadOnly')}
+                                    apis={apis}
+                                    allApiTools={allApiTools}
+                                    llms={allModels as never}
+                                    slms={allSLMModels as never}
+                                    agent={agent}
+                                    allPrompts={allPrompts as PromptResponse[]}
+                                    promptsLoading={!!promptsLoading}
+                                    llmModelsLoading={!!llmModelsLoading}
+                                    slmModelsLoading={!!slmModelsLoading}
+                                    messageBrokers={messageBrokers ?? []}
+                                    setSelfLearning={setSelfLearning}
+                                    onSelfLearningChange={onSelfLearningChange}
+                                    onRefetch={onRefetchApiTools}
+                                    onRefetchIntelligence={() => {
+                                        onRefetchLlms();
+                                        onRefetchSLMModel();
+                                    }}
+                                    onRefetchPrompt={async () => {
+                                        onRefetchPrompts();
+                                    }}
+                                    allConnectors={allConnectors}
+                                    connectorsLoading={connectorsLoading ?? false}
+                                    onRefetchConnector={onRefetchConnector}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
 
                         {/* Output Broadcasting */}
-                        <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                            <MessagePublisher
-                                title="Output Broadcasting"
-                                detailButtonLabel="Add Output Broadcasting"
-                                viewLabel="View Output Broadcasting"
-                                messagePublisher={outputBroadcasting}
-                                messageBrokers={messageBrokers ?? []}
-                                isReadOnly={isEdit && !!watch('isReadOnly')}
-                                setMessagePublisher={setOutputBroadcasting}
-                                onMessagePublisherChange={onOutputBroadcasting}
-                            />
-                        </div>
-                    </div>
+                        <AccordionItem value="output-broadcasting" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-x-2">
+                                    <Radio size={18} className="text-gray-600 dark:text-gray-400" />
+                                    <span className="text-sm font-medium">Output Broadcasting</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <MessagePublisher
+                                    title="Output Broadcasting"
+                                    detailButtonLabel="Add Output Broadcasting"
+                                    viewLabel="View Output Broadcasting"
+                                    messagePublisher={outputBroadcasting}
+                                    messageBrokers={messageBrokers ?? []}
+                                    isReadOnly={isEdit && !!watch('isReadOnly')}
+                                    setMessagePublisher={setOutputBroadcasting}
+                                    onMessagePublisherChange={onOutputBroadcasting}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 );
 
             case 'input-data-connects':
                 return (
-                    <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                        <div className="flex flex-col gap-y-4">
-                            <div className="flex flex-col gap-y-1">
+                    <Accordion type="multiple" defaultValue={['api-tools', 'mcp-servers', 'vector-rag', 'graph-rag', 'data-connectors', 'guardrails', 'executable-functions']} className="w-full">
+                        {/* API Tools */}
+                        <AccordionItem value="api-tools" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-x-2">
-                                    <Database size={20} className="text-gray-600 dark:text-gray-400" />
-                                    <p className="text-sm font-medium">Input Data Connects</p>
+                                    <Globe size={18} className="text-gray-600 dark:text-gray-400" />
+                                    <span className="text-sm font-medium">API Tools</span>
                                 </div>
-                                <p className="text-xs text-gray-400">
-                                    Configure data sources and tools required for this agent to operate.
-                                </p>
-                            </div>
-                            
-                            <APISelector
-                                {...register('tools')}
-                                agent={agent}
-                                apis={apis}
-                                setApis={setApis}
-                                allApiTools={allApiTools as ApiToolResponseType[]}
-                                isReadonly={isEdit && !!watch('isReadOnly')}
-                                apiLoading={apiLoading}
-                                onRefetch={() => refetchApiTools()}
-                                onApiChange={manageApi}
-                            />
-                            <hr className="border-b dark:border-gray-700" />
-                            
-                            <MCPSelector
-                                mcpServers={mcpServers}
-                                setMcpServers={setMcpServers}
-                                agent={agent}
-                                isReadonly={isEdit && !!watch('isReadOnly')}
-                                loading={mcpLoading}
-                                allMcpTools={allMcpTools as McpToolResponseType[]}
-                                onRefetch={() => refetchMcp()}
-                                onMcpChange={manageMcp}
-                            />
-                            <hr className="border-b dark:border-gray-700" />
-                            
-                            <VectorRagSelector
-                                ref={vectorRef}
-                                vectorRags={vectorRags}
-                                setVectorRags={setVectorRags}
-                                agent={agent}
-                                allVectorRags={allVectorRags ?? []}
-                                onRefetch={() => onVectorGraphRefetch(true)}
-                                onVectorRagChange={onRagChange}
-                            />
-                            <hr className="border-b dark:border-gray-700" />
-                            
-                            <GraphRagConfigSelector
-                                ref={graphRef}
-                                allGraphRags={allGraphRag ?? []}
-                                graphRags={graphRags}
-                                setGraphRags={setGraphRags}
-                                agent={agent}
-                                onRefetch={() => onVectorGraphRefetch()}
-                                onGraphRagChange={onGraphRagChange}
-                            />
-                            <hr className="border-b dark:border-gray-700" />
-                            
-                            <ConnectorSelector
-                                agent={agent}
-                                connectors={connectors ?? []}
-                                isMultiple={true}
-                                setConnectors={setConnectors}
-                                allConnectors={allConnectors}
-                                isSelfLearning={true}
-                                label="Data Connectors"
-                                onRefetch={onRefetchConnector}
-                                onConnectorsChange={onConnectorChange}
-                                connectorLoading={connectorsLoading}
-                            />
-                            <hr className="border-b dark:border-gray-700" />
-                            
-                            <GuardrailSelector
-                                agent={agent}
-                                allGuardrails={guardrailData ?? []}
-                                guardrails={guardrails}
-                                isReadonly={isEdit && !!watch('isReadOnly')}
-                                guardrailsLoading={guardrailLoading}
-                                title="Agent Level Guardrails"
-                                level={GuardrailBindingLevelType.AGENT}
-                                setGuardrails={setGuardrails}
-                                onRefetch={refetchGuardrails}
-                                onGuardrailsChange={onGuardrailsChange}
-                            />
-                            <hr className="border-b dark:border-gray-700" />
-                            
-                            <ExecutableFunctionSelector
-                                {...register('tools')}
-                                agent={agent}
-                                functions={executableFunctions}
-                                setFunctions={setExecutableFunctions}
-                                allExecutableFunctions={allExecutableFunctions as ExecutableFunctionResponseType[]}
-                                isReadonly={isEdit && !!watch('isReadOnly')}
-                                functionLoading={executableFunctionLoading}
-                                onRefetch={() => refetchExecutableFunctions()}
-                                onExecutableFunctionChange={manageExecutableFunction}
-                            />
-                        </div>
-                    </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <APISelector
+                                    {...register('tools')}
+                                    agent={agent}
+                                    apis={apis}
+                                    setApis={setApis}
+                                    allApiTools={allApiTools as ApiToolResponseType[]}
+                                    isReadonly={isEdit && !!watch('isReadOnly')}
+                                    apiLoading={apiLoading}
+                                    onRefetch={() => refetchApiTools()}
+                                    onApiChange={manageApi}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        {/* MCP Servers */}
+                        <AccordionItem value="mcp-servers" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-x-2">
+                                    <Server size={18} className="text-gray-600 dark:text-gray-400" />
+                                    <span className="text-sm font-medium">MCP Servers</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <MCPSelector
+                                    mcpServers={mcpServers}
+                                    setMcpServers={setMcpServers}
+                                    agent={agent}
+                                    isReadonly={isEdit && !!watch('isReadOnly')}
+                                    loading={mcpLoading}
+                                    allMcpTools={allMcpTools as McpToolResponseType[]}
+                                    onRefetch={() => refetchMcp()}
+                                    onMcpChange={manageMcp}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        {/* Vector RAG */}
+                        <AccordionItem value="vector-rag" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-x-2">
+                                    <Database size={18} className="text-gray-600 dark:text-gray-400" />
+                                    <span className="text-sm font-medium">Vector RAG</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <VectorRagSelector
+                                    ref={vectorRef}
+                                    vectorRags={vectorRags}
+                                    setVectorRags={setVectorRags}
+                                    agent={agent}
+                                    allVectorRags={allVectorRags ?? []}
+                                    onRefetch={() => onVectorGraphRefetch(true)}
+                                    onVectorRagChange={onRagChange}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        {/* Graph RAG */}
+                        <AccordionItem value="graph-rag" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-x-2">
+                                    <Network size={18} className="text-gray-600 dark:text-gray-400" />
+                                    <span className="text-sm font-medium">Graph RAG</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <GraphRagConfigSelector
+                                    ref={graphRef}
+                                    allGraphRags={allGraphRag ?? []}
+                                    graphRags={graphRags}
+                                    setGraphRags={setGraphRags}
+                                    agent={agent}
+                                    onRefetch={() => onVectorGraphRefetch()}
+                                    onGraphRagChange={onGraphRagChange}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        {/* Data Connectors */}
+                        <AccordionItem value="data-connectors" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-x-2">
+                                    <Link2 size={18} className="text-gray-600 dark:text-gray-400" />
+                                    <span className="text-sm font-medium">Data Connectors</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <ConnectorSelector
+                                    agent={agent}
+                                    connectors={connectors ?? []}
+                                    isMultiple={true}
+                                    setConnectors={setConnectors}
+                                    allConnectors={allConnectors}
+                                    isSelfLearning={true}
+                                    label="Data Connectors"
+                                    onRefetch={onRefetchConnector}
+                                    onConnectorsChange={onConnectorChange}
+                                    connectorLoading={connectorsLoading}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        {/* Guardrails */}
+                        <AccordionItem value="guardrails" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-x-2">
+                                    <ShieldCheck size={18} className="text-gray-600 dark:text-gray-400" />
+                                    <span className="text-sm font-medium">Agent Level Guardrails</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <GuardrailSelector
+                                    agent={agent}
+                                    allGuardrails={guardrailData ?? []}
+                                    guardrails={guardrails}
+                                    isReadonly={isEdit && !!watch('isReadOnly')}
+                                    guardrailsLoading={guardrailLoading}
+                                    title="Agent Level Guardrails"
+                                    level={GuardrailBindingLevelType.AGENT}
+                                    setGuardrails={setGuardrails}
+                                    onRefetch={refetchGuardrails}
+                                    onGuardrailsChange={onGuardrailsChange}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        {/* Executable Functions */}
+                        <AccordionItem value="executable-functions" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-x-2">
+                                    <Code size={18} className="text-gray-600 dark:text-gray-400" />
+                                    <span className="text-sm font-medium">Executable Functions</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <ExecutableFunctionSelector
+                                    {...register('tools')}
+                                    agent={agent}
+                                    functions={executableFunctions}
+                                    setFunctions={setExecutableFunctions}
+                                    allExecutableFunctions={allExecutableFunctions as ExecutableFunctionResponseType[]}
+                                    isReadonly={isEdit && !!watch('isReadOnly')}
+                                    functionLoading={executableFunctionLoading}
+                                    onRefetch={() => refetchExecutableFunctions()}
+                                    onExecutableFunctionChange={manageExecutableFunction}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 );
 
             case 'execution-config':
                 // Only for Horizon Agent
                 if (!isHorizonAgent) return null;
                 return (
-                    <div className="space-y-6">
-                        <ExecutionPrimitivesSection
-                            control={control}
-                            watch={watch}
-                            setValue={setValue}
-                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                        />
+                    <Accordion type="multiple" defaultValue={['execution-primitives', 'execution-policy']} className="w-full">
+                        {/* Execution Primitives */}
+                        <AccordionItem value="execution-primitives" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-x-2">
+                                    <Gauge size={18} className="text-gray-600 dark:text-gray-400" />
+                                    <span className="text-sm font-medium">Execution Primitives</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <ExecutionPrimitivesSection
+                                    control={control}
+                                    watch={watch}
+                                    setValue={setValue}
+                                    isReadOnly={isEdit && !!watch('isReadOnly')}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
 
-                        <ExecutionPolicySection
-                            control={control}
-                            watch={watch}
-                            isReadOnly={isEdit && !!watch('isReadOnly')}
-                        />
-                    </div>
+                        {/* Execution Policy */}
+                        <AccordionItem value="execution-policy" className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg mb-4 px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-x-2">
+                                    <Scale size={18} className="text-gray-600 dark:text-gray-400" />
+                                    <span className="text-sm font-medium">Execution Policy</span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <ExecutionPolicySection
+                                    control={control}
+                                    watch={watch}
+                                    isReadOnly={isEdit && !!watch('isReadOnly')}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 );
 
             case 'a2a-identity':
@@ -1044,7 +1171,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
         <Dialog open={isOpen} onOpenChange={handleCancel}>
             <DialogContent
                 hideCloseButtonClass="block top-6"
-                className="gap-0 max-w-none w-[calc(100vw-280px)] h-[calc(100vh-48px)] max-h-[calc(100vh-48px)] flex flex-col p-0 left-[calc(50%+120px)] top-[calc(50%+24px)]"
+                className="gap-0 max-w-none w-[calc(100vw-320px)] h-[calc(100vh-100px)] max-h-[calc(100vh-100px)] flex flex-col p-0 left-[calc(50%+140px)] top-[50%]"
             >
                 <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                     <DialogTitle>
