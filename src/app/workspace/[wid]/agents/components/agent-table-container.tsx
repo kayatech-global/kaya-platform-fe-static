@@ -264,7 +264,7 @@ const ActionCell = ({
     return (
         <>
             <div className="flex items-center justify-end gap-x-1">
-                {/* Deploy/Re-Deploy - Only for Horizon Agents */}
+                {/* Deploy/Re-Deploy - Only for Long Horizon Agents */}
                 {isHorizon && onDeployWithProgress && (
                     <Button 
                         variant="ghost" 
@@ -434,7 +434,7 @@ const generateColumns = (
                                     : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                             )}
                         >
-                            {isHorizon ? 'Horizon' : 'Reusable'}
+                            {isHorizon ? 'Long Horizon' : 'Reusable'}
                         </Badge>
                         {isHorizon && publishStatus?.isPublished && (
                             <Badge 

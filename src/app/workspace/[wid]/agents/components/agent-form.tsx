@@ -230,7 +230,7 @@ export const FormBody = (props: AgentProps) => {
     const [guardrails, setGuardrails] = useState<string[] | undefined>();
     const [mounted, setMounted] = useState<boolean>(false);
     
-    // Horizon Agent state
+    // Long Horizon Agent state
     const agentCategory = watch('agentCategory') || AgentCategory.REUSABLE;
     const isHorizonAgent = agentCategory === AgentCategory.HORIZON;
 
@@ -853,14 +853,14 @@ export const FormBody = (props: AgentProps) => {
                     />
                 </div>
                 
-                {/* Horizon Agent Configuration Sections */}
+                {/* Long Horizon Agent Configuration Sections */}
                 {isHorizonAgent && (
                     <>
                         <div className="col-span-1 sm:col-span-2 md:col-span-2">
                             <div className="flex items-center gap-x-2 py-2">
                                 <div className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
                                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 px-2">
-                                    Horizon Agent Configuration
+                                    Long Horizon Agent Configuration
                                 </p>
                                 <div className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
                             </div>

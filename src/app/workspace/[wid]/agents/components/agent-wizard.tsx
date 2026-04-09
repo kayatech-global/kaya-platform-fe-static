@@ -78,7 +78,7 @@ interface WizardStep {
     forAgentTypes: AgentCategory[];
 }
 
-// Define wizard steps for Horizon Agent
+// Define wizard steps for Long Horizon Agent
 const HORIZON_STEPS: WizardStep[] = [
     { id: 'basic-info', title: 'Basic Info', description: 'Agent name, description and category', icon: Bot, forAgentTypes: [AgentCategory.HORIZON, AgentCategory.REUSABLE] },
     { id: 'prompt-intelligence', title: 'Prompt & Intelligence', description: 'Configure prompt and AI model', icon: FileText, forAgentTypes: [AgentCategory.HORIZON, AgentCategory.REUSABLE] },
@@ -284,7 +284,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
     const [outputBroadcasting, setOutputBroadcasting] = useState<IMessagePublisher | undefined>();
     const [guardrails, setGuardrails] = useState<string[] | undefined>();
 
-    // Horizon Agent state
+    // Long Horizon Agent state
     const agentCategory = watch('agentCategory') || AgentCategory.REUSABLE;
     const isHorizonAgent = agentCategory === AgentCategory.HORIZON;
 
@@ -785,7 +785,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
                 );
 
             case 'skills':
-                // Only for Horizon Agent
+                // Only for Long Horizon Agent
                 if (!isHorizonAgent) return null;
                 return (
                     <div className="space-y-6">
@@ -802,7 +802,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
             case 'capabilities':
                 return (
                     <div className="space-y-6">
-                        {/* Horizon-specific capabilities */}
+                        {/* Long Horizon-specific capabilities */}
                         {isHorizonAgent && (
                             <>
                                 {/* Streaming & Webhook - uses NotificationSection which has its own panel */}
@@ -986,7 +986,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
                 );
 
             case 'execution-config':
-                // Only for Horizon Agent
+                // Only for Long Horizon Agent
                 if (!isHorizonAgent) return null;
                 return (
                     <div className="space-y-6">
@@ -1006,7 +1006,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
                 );
 
             case 'a2a-identity':
-                // Only for Horizon Agent
+                // Only for Long Horizon Agent
                 if (!isHorizonAgent) return null;
                 return (
                     <div className="space-y-6">
@@ -1023,7 +1023,7 @@ export const AgentWizard = (props: AgentWizardProps) => {
                 );
 
             case 'deployment-config':
-                // Only for Horizon Agent
+                // Only for Long Horizon Agent
                 if (!isHorizonAgent) return null;
                 return (
                     <div className="space-y-6">

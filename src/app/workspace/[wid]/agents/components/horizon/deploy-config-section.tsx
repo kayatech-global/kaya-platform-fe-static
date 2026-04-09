@@ -42,7 +42,7 @@ export const DeployConfigSection = ({ control, watch, setValue, isReadOnly }: De
                         <p className="text-sm font-medium">Deploy Configuration</p>
                     </div>
                     <p className="text-xs font-normal text-gray-400">
-                        Configure how and where this Horizon Agent will be deployed.
+                        Configure how and where this Long Horizon Agent will be deployed.
                     </p>
                 </div>
 
