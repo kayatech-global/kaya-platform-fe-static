@@ -10,7 +10,7 @@ import { useForm } from 'react-hook-form';
 import { cn, handleNoValue } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/atoms/dialog';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
-import { ISelfLearning, AgentCategory, IPublishStatus } from '@/models';
+import { ISelfLearning, AgentCategory, IPublishStatus, IHorizonConfig } from '@/models';
 
 export interface AgentData {
     id: string;
@@ -23,6 +23,7 @@ export interface AgentData {
     selfLearning?: ISelfLearning;
     agentCategory?: AgentCategory;
     publishStatus?: IPublishStatus;
+    horizonConfig?: IHorizonConfig;
 }
 
 interface AgentTableContainerProps {
@@ -418,6 +419,7 @@ const ActionCell = ({
                     llmId: row.original.llmId,
                     agentCategory: row.original.agentCategory as AgentCategory,
                     publishStatus: row.original.publishStatus,
+                    horizonConfig: row.original.horizonConfig,
                 } as LongHorizonAgentViewData : null}
             />
         </>

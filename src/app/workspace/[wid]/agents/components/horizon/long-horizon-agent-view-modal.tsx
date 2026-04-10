@@ -1,7 +1,27 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Eye, Activity, Fingerprint, Info, Server, Play, Square, AlertTriangle, Search, Download, RefreshCw, Copy, Check, Globe, Lock, Sparkles, Tag, Zap, Calendar } from 'lucide-react';
+import {
+    Eye,
+    Activity,
+    Fingerprint,
+    Info,
+    Server,
+    Play,
+    Square,
+    AlertTriangle,
+    Search,
+    Download,
+    RefreshCw,
+    Copy,
+    Check,
+    Globe,
+    Lock,
+    Sparkles,
+    Tag,
+    Zap,
+    Calendar,
+} from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/atoms/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/atoms/tabs';
 import { Badge } from '@/components/atoms/badge';
@@ -68,7 +88,7 @@ const generateMockLogs = (): LogEntry[] => {
         const hoursAgo = Math.random() * 24;
         const timestamp = new Date(now.getTime() - hoursAgo * 60 * 60 * 1000);
         const msgData = messages[Math.floor(Math.random() * messages.length)];
-        
+
         logs.push({
             id: `log-${i}`,
             timestamp: timestamp.toISOString(),
@@ -97,17 +117,54 @@ const mockMetrics: MetricData[] = [
     { label: 'Active Instances', value: '3', change: '0', trend: 'neutral' },
 ];
 
+// Mock skills data aligned with skills-section structure
+const MOCK_SKILLS: IHorizonSkill[] = [
+    {
+        id: 'skill-1',
+        name: 'Data Analysis',
+        description: 'Analyzes structured and unstructured data to extract insights',
+        instructions: 'Process the input data and return analytical insights',
+        tags: ['analytics', 'data'],
+        examples: [],
+        ioModes: ['application/json'],
+        inputModes: ['application/json', 'text/plain'],
+        outputModes: ['application/json'],
+        version: '1.0.0',
+    },
+    {
+        id: 'skill-2',
+        name: 'Report Generation',
+        description: 'Generates comprehensive reports from provided data',
+        instructions: 'Create a formatted report based on input parameters',
+        tags: ['reporting', 'documentation'],
+        examples: [],
+        ioModes: ['application/json'],
+        inputModes: ['application/json'],
+        outputModes: ['application/json', 'text/plain'],
+        version: '1.0.0',
+    },
+    {
+        id: 'skill-3',
+        name: 'Email Drafting',
+        description: 'Drafts professional emails based on context and requirements',
+        instructions: 'Compose an email following the given tone and requirements',
+        tags: ['communication', 'writing'],
+        examples: [],
+        ioModes: ['text/plain'],
+        inputModes: ['text/plain', 'application/json'],
+        outputModes: ['text/plain'],
+        version: '1.0.0',
+    },
+];
+
 // Overview Tab Component
 const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
     const config = agent.horizonConfig;
     const deploymentStatus = agent.publishStatus?.isPublished ? 'Running' : 'Stopped';
-    
+
     // Get skills from horizonConfig if available, otherwise use mock data
-    const skills: IHorizonSkill[] = config?.skills || [];
-    const skillNames = skills.length > 0 
-        ? skills.map(s => s.name) 
-        : ['Data Analysis', 'Report Generation', 'Email Drafting']; // Fallback mock data
-    
+    const skills: IHorizonSkill[] = config?.skills && config.skills.length > 0 ? config.skills : MOCK_SKILLS;
+
     const displayData = {
         intelligenceSource: 'GPT-4 Turbo',
         version: config?.identity?.version || '1.0.0',
@@ -117,33 +174,37 @@ const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
     };
 
     return (
-        <div className="space-y-6 py-4">
+        <div className="space-y-4 p-4">
             {/* Basic Info */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
-                <div className="flex items-center gap-x-2 mb-4">
-                    <Info size={16} className="text-gray-500" />
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Basic Information</p>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                <div className="flex items-center gap-x-2 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <Info size={16} className="text-teal-600 dark:text-teal-400" />
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+                        Basic Information
+                    </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Agent Name</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{agent.agentName}</p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Agent Name</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">{agent.agentName}</p>
                     </div>
-                    <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Intelligence Source</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{displayData.intelligenceSource}</p>
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Intelligence Source</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">{displayData.intelligenceSource}</p>
                     </div>
-                    <div className="col-span-2 space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Description</p>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{agent.agentDescription || 'No description provided'}</p>
+                    <div className="col-span-2">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {agent.agentDescription || 'No description provided'}
+                        </p>
                     </div>
-                    <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Version</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{displayData.version}</p>
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Version</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">{displayData.version}</p>
                     </div>
-                    <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Deployment Date</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Deployment Date</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">
                             {new Date(displayData.deploymentDate).toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'short',
@@ -157,37 +218,43 @@ const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
             </div>
 
             {/* Skills */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
-                <div className="flex items-center gap-x-2 mb-3">
-                    <Zap size={16} className="text-gray-500" />
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Agent Skills</p>
-                    <Badge variant="secondary" className="ml-auto text-xs bg-gray-200 dark:bg-gray-700">
-                        {skillNames.length} skill{skillNames.length !== 1 ? 's' : ''}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-x-2">
+                        <Zap size={16} className="text-teal-600 dark:text-teal-400" />
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+                            Agent Skills
+                        </p>
+                    </div>
+                    <Badge variant="secondary" className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                        {skills.length} skill{skills.length !== 1 ? 's' : ''}
                     </Badge>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    {skillNames.map((skill, idx) => (
-                        <Badge 
-                            key={idx} 
+                    {skills.map((skill, idx) => (
+                        <Badge
+                            key={skill.id || idx}
                             variant="secondary"
-                            className="bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 border border-teal-200 dark:border-teal-800"
+                            className="bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 border border-teal-200 dark:border-teal-800 px-3 py-1"
                         >
-                            {skill}
+                            {skill.name}
                         </Badge>
                     ))}
                 </div>
             </div>
 
             {/* Deployment Info */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
-                <div className="flex items-center gap-x-2 mb-4">
-                    <Server size={16} className="text-gray-500" />
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Deployment Information</p>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                <div className="flex items-center gap-x-2 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <Server size={16} className="text-teal-600 dark:text-teal-400" />
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+                        Deployment Information
+                    </p>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Status</p>
-                        <div className="flex items-center gap-2">
+                <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</p>
+                        <div className="flex items-center gap-x-2">
                             {deploymentStatus === 'Running' ? (
                                 <>
                                     <Play size={14} className="text-green-500 fill-green-500" />
@@ -206,13 +273,13 @@ const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
                             )}
                         </div>
                     </div>
-                    <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Hosting Model</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{displayData.hostingModel}</p>
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Hosting Model</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">{displayData.hostingModel}</p>
                     </div>
-                    <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Runtime</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{displayData.runtime}</p>
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Runtime</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">{displayData.runtime}</p>
                     </div>
                 </div>
             </div>
@@ -225,23 +292,29 @@ const A2AIdentityTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const config = agent.horizonConfig;
     const identity = config?.identity;
-    
+
     // Generate A2A URI based on agent data (matching identity-section.tsx pattern)
     const workspaceSlug = 'default-workspace';
     const agentSlug = useMemo(() => {
         const name = identity?.displayName || agent.agentName;
-        return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'unnamed-agent';
+        return (
+            name
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '') || 'unnamed-agent'
+        );
     }, [identity?.displayName, agent.agentName]);
-    
+
     const version = identity?.version || '1.0.0';
-    
+
     // A2A Identity data aligned with identity-section.tsx
     const a2aData = {
         displayName: identity?.displayName || agent.agentName,
         description: identity?.description || agent.agentDescription,
         version: version,
         a2aUri: identity?.a2aUri || `agent://kaya/${workspaceSlug}/${agentSlug}-${version}`,
-        endpointUrl: identity?.endpointUrl || `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/agents/${agentSlug}/a2a`,
+        endpointUrl:
+            identity?.endpointUrl || `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/agents/${agentSlug}/a2a`,
         discoveryPath: `/ws/${workspaceSlug}/agents/${agentSlug}/.well-known/agent-card.json`,
         wellKnownUrl: `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/agents/${agentSlug}/.well-known/agent-card.json`,
         a2aEnabled: identity?.a2aEnabled ?? true,
@@ -258,34 +331,27 @@ const A2AIdentityTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
     };
 
     return (
-        <div className="space-y-6 py-4">
+        <div className="space-y-4 p-4">
             {/* A2A Identity Header */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-x-3">
-                        <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                            <Sparkles size={18} className="text-gray-600 dark:text-gray-400" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-x-2">
-                                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">A2A Identity</p>
-                                {a2aData.a2aEnabled && (
-                                    <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">
-                                        <Check size={10} className="mr-1" />
-                                        Enabled
-                                    </Badge>
-                                )}
-                            </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Agent-to-Agent protocol identity for external discovery
-                            </p>
-                        </div>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-x-2">
+                        <Sparkles size={16} className="text-teal-600 dark:text-teal-400" />
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+                            A2A Identity
+                        </p>
                     </div>
+                    {a2aData.a2aEnabled && (
+                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">
+                            <Check size={10} className="mr-1" />
+                            Enabled
+                        </Badge>
+                    )}
                 </div>
 
                 {/* Agent URI */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between">
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between gap-x-3">
                         <div className="flex-1 min-w-0">
                             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Agent URI</p>
                             <p className="text-sm font-mono text-teal-600 dark:text-teal-400 truncate">
@@ -297,46 +363,54 @@ const A2AIdentityTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
                             variant="ghost"
                             size="icon"
                             onClick={() => copyToClipboard(a2aData.a2aUri, 'uri')}
-                            className="ml-2 shrink-0 h-8 w-8"
+                            className="shrink-0 h-8 w-8"
                         >
-                            {copiedField === 'uri' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                            {copiedField === 'uri' ? (
+                                <Check size={14} className="text-green-500" />
+                            ) : (
+                                <Copy size={14} className="text-gray-500" />
+                            )}
                         </Button>
                     </div>
                 </div>
             </div>
 
             {/* Basic Identity Info */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
-                <div className="flex items-center gap-x-2 mb-4">
-                    <Tag size={14} className="text-gray-500" />
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Basic Identity</p>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                <div className="flex items-center gap-x-2 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <Tag size={14} className="text-teal-600 dark:text-teal-400" />
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+                        Basic Identity
+                    </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Display Name</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{a2aData.displayName}</p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Display Name</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">{a2aData.displayName}</p>
                     </div>
-                    <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Version</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{a2aData.version}</p>
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Version</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">{a2aData.version}</p>
                     </div>
-                    <div className="col-span-2 space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Description</p>
+                    <div className="col-span-2">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</p>
                         <p className="text-sm text-gray-700 dark:text-gray-300">{a2aData.description || 'No description'}</p>
                     </div>
                 </div>
             </div>
 
             {/* Discovery & Endpoint */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
-                <div className="flex items-center gap-x-2 mb-4">
-                    <Globe size={14} className="text-gray-500" />
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Discovery & Endpoint</p>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                <div className="flex items-center gap-x-2 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <Globe size={14} className="text-teal-600 dark:text-teal-400" />
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+                        Discovery & Endpoint
+                    </p>
                 </div>
                 <div className="space-y-3">
                     {/* Endpoint URL */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between">
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between gap-x-3">
                             <div className="flex-1 min-w-0">
                                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Endpoint URL</p>
                                 <p className="text-sm font-mono text-gray-700 dark:text-gray-300 truncate">
@@ -348,17 +422,23 @@ const A2AIdentityTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => copyToClipboard(a2aData.endpointUrl, 'endpoint')}
-                                className="ml-2 shrink-0 h-8 w-8"
+                                className="shrink-0 h-8 w-8"
                             >
-                                {copiedField === 'endpoint' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                {copiedField === 'endpoint' ? (
+                                    <Check size={14} className="text-green-500" />
+                                ) : (
+                                    <Copy size={14} className="text-gray-500" />
+                                )}
                             </Button>
                         </div>
                     </div>
                     {/* Discovery Location */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between">
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between gap-x-3">
                             <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Discovery Location</p>
+                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                                    Discovery Location
+                                </p>
                                 <p className="text-sm font-mono text-gray-700 dark:text-gray-300 truncate">
                                     {a2aData.wellKnownUrl}
                                 </p>
@@ -368,9 +448,13 @@ const A2AIdentityTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => copyToClipboard(a2aData.wellKnownUrl, 'discovery')}
-                                className="ml-2 shrink-0 h-8 w-8"
+                                className="shrink-0 h-8 w-8"
                             >
-                                {copiedField === 'discovery' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                {copiedField === 'discovery' ? (
+                                    <Check size={14} className="text-green-500" />
+                                ) : (
+                                    <Copy size={14} className="text-gray-500" />
+                                )}
                             </Button>
                         </div>
                     </div>
@@ -378,31 +462,37 @@ const A2AIdentityTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
             </div>
 
             {/* Visibility & Auth */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
-                <div className="flex items-center gap-x-2 mb-4">
-                    <Lock size={14} className="text-gray-500" />
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Security & Visibility</p>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                <div className="flex items-center gap-x-2 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <Lock size={14} className="text-teal-600 dark:text-teal-400" />
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+                        Security & Visibility
+                    </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Visibility</p>
-                        <Badge 
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Visibility</p>
+                        <Badge
                             variant="secondary"
                             className={cn(
-                                a2aData.a2aVisibility === 'public' 
+                                a2aData.a2aVisibility === 'public'
                                     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                     : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                             )}
                         >
                             {a2aData.a2aVisibility === 'public' ? (
-                                <><Globe size={12} className="mr-1" /> Public</>
+                                <>
+                                    <Globe size={12} className="mr-1" /> Public
+                                </>
                             ) : (
-                                <><Lock size={12} className="mr-1" /> Private</>
+                                <>
+                                    <Lock size={12} className="mr-1" /> Private
+                                </>
                             )}
                         </Badge>
                     </div>
-                    <div className="space-y-2">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Authentication</p>
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Authentication</p>
                         <Badge variant="secondary" className="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                             {a2aData.authSchemes[0]?.type?.toUpperCase() || 'NONE'}
                         </Badge>
@@ -411,15 +501,17 @@ const A2AIdentityTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
             </div>
 
             {/* IO Modes */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
-                <div className="flex items-center gap-x-2 mb-4">
-                    <Fingerprint size={14} className="text-gray-500" />
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Input/Output Modes</p>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                <div className="flex items-center gap-x-2 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <Fingerprint size={14} className="text-teal-600 dark:text-teal-400" />
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+                        Input/Output Modes
+                    </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Input Modes</p>
-                        <div className="flex flex-wrap gap-1">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Input Modes</p>
+                        <div className="flex flex-wrap gap-1.5">
                             {a2aData.defaultInputModes.map((mode, idx) => (
                                 <Badge key={idx} variant="outline" className="text-xs">
                                     {mode}
@@ -427,9 +519,9 @@ const A2AIdentityTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
                             ))}
                         </div>
                     </div>
-                    <div className="space-y-2">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Output Modes</p>
-                        <div className="flex flex-wrap gap-1">
+                    <div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Output Modes</p>
+                        <div className="flex flex-wrap gap-1.5">
                             {a2aData.defaultOutputModes.map((mode, idx) => (
                                 <Badge key={idx} variant="outline" className="text-xs">
                                     {mode}
@@ -444,15 +536,16 @@ const A2AIdentityTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
 };
 
 // Logging & Monitoring Tab Component
-const LoggingMonitoringTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
+const LoggingMonitoringTab = () => {
     const [logs] = useState<LogEntry[]>(generateMockLogs());
     const [searchQuery, setSearchQuery] = useState('');
     const [dateRange, setDateRange] = useState<'1h' | '6h' | '24h' | '7d' | 'custom'>('24h');
     const [levelFilter, setLevelFilter] = useState<'all' | LogEntry['level']>('all');
 
-    const filteredLogs = logs.filter(log => {
-        const matchesSearch = log.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              log.source.toLowerCase().includes(searchQuery.toLowerCase());
+    const filteredLogs = logs.filter((log) => {
+        const matchesSearch =
+            log.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            log.source.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesLevel = levelFilter === 'all' || log.level === levelFilter;
         return matchesSearch && matchesLevel;
     });
@@ -473,24 +566,26 @@ const LoggingMonitoringTab = ({ agent }: { agent: LongHorizonAgentViewData }) =>
     };
 
     return (
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 p-4">
             {/* Metrics Cards */}
             <div className="grid grid-cols-4 gap-3">
                 {mockMetrics.map((metric, idx) => (
-                    <div 
+                    <div
                         key={idx}
-                        className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700"
+                        className="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
                     >
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{metric.label}</p>
-                        <div className="flex items-baseline gap-2 mt-1">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{metric.label}</p>
+                        <div className="flex items-baseline gap-x-2 mt-1">
                             <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">{metric.value}</span>
                             {metric.change && (
-                                <span className={cn(
-                                    'text-xs font-medium',
-                                    metric.trend === 'up' && 'text-green-600 dark:text-green-400',
-                                    metric.trend === 'down' && 'text-red-600 dark:text-red-400',
-                                    metric.trend === 'neutral' && 'text-gray-500'
-                                )}>
+                                <span
+                                    className={cn(
+                                        'text-xs font-medium',
+                                        metric.trend === 'up' && 'text-green-600 dark:text-green-400',
+                                        metric.trend === 'down' && 'text-red-600 dark:text-red-400',
+                                        metric.trend === 'neutral' && 'text-gray-500'
+                                    )}
+                                >
                                     {metric.change}
                                 </span>
                             )}
@@ -500,7 +595,7 @@ const LoggingMonitoringTab = ({ agent }: { agent: LongHorizonAgentViewData }) =>
             </div>
 
             {/* Filters */}
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap bg-white dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
                 <div className="relative flex-1 min-w-[200px]">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <Input
@@ -510,11 +605,11 @@ const LoggingMonitoringTab = ({ agent }: { agent: LongHorizonAgentViewData }) =>
                         className="pl-9 h-8 text-sm"
                     />
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-x-2">
                     <Calendar size={14} className="text-gray-500" />
                     <span className="text-xs text-gray-500">Time Range:</span>
                     <div className="flex gap-1">
-                        {(['1h', '6h', '24h', '7d'] as const).map(range => (
+                        {(['1h', '6h', '24h', '7d'] as const).map((range) => (
                             <Button
                                 key={range}
                                 variant={dateRange === range ? 'default' : 'outline'}
@@ -527,12 +622,12 @@ const LoggingMonitoringTab = ({ agent }: { agent: LongHorizonAgentViewData }) =>
                         ))}
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-x-2">
                     <span className="text-xs text-gray-500">Level:</span>
                     <select
                         value={levelFilter}
                         onChange={(e) => setLevelFilter(e.target.value as typeof levelFilter)}
-                        className="h-7 px-2 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                        className="h-7 px-2 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                     >
                         <option value="all">All</option>
                         <option value="error">Error</option>
@@ -541,11 +636,11 @@ const LoggingMonitoringTab = ({ agent }: { agent: LongHorizonAgentViewData }) =>
                         <option value="debug">Debug</option>
                     </select>
                 </div>
-                <Button variant="outline" size="sm" className="h-7 px-2 gap-1">
+                <Button variant="outline" size="sm" className="h-7 px-2 gap-x-1">
                     <RefreshCw size={12} />
                     <span className="text-xs">Refresh</span>
                 </Button>
-                <Button variant="outline" size="sm" className="h-7 px-2 gap-1">
+                <Button variant="outline" size="sm" className="h-7 px-2 gap-x-1">
                     <Download size={12} />
                     <span className="text-xs">Export</span>
                 </Button>
@@ -553,21 +648,21 @@ const LoggingMonitoringTab = ({ agent }: { agent: LongHorizonAgentViewData }) =>
 
             {/* Log Entries */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                <div className="bg-gray-50 dark:bg-gray-800 px-3 py-2 border-b border-gray-200 dark:border-gray-700">
-                    <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+                <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700">
+                    <div className="grid grid-cols-12 gap-x-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                         <div className="col-span-2">Timestamp</div>
                         <div className="col-span-1">Level</div>
                         <div className="col-span-2">Source</div>
                         <div className="col-span-7">Message</div>
                     </div>
                 </div>
-                <div className="max-h-[280px] overflow-y-auto">
+                <div className="max-h-[240px] overflow-y-auto bg-white dark:bg-gray-900">
                     {filteredLogs.slice(0, 30).map((log) => (
-                        <div 
+                        <div
                             key={log.id}
-                            className="px-3 py-2 border-b border-gray-100 dark:border-gray-800 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                            className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                         >
-                            <div className="grid grid-cols-12 gap-2 text-xs">
+                            <div className="grid grid-cols-12 gap-x-4 items-center text-xs">
                                 <div className="col-span-2 text-gray-500 dark:text-gray-400 font-mono">
                                     {new Date(log.timestamp).toLocaleTimeString('en-US', {
                                         hour: '2-digit',
@@ -576,17 +671,18 @@ const LoggingMonitoringTab = ({ agent }: { agent: LongHorizonAgentViewData }) =>
                                     })}
                                 </div>
                                 <div className="col-span-1">
-                                    <Badge variant="secondary" className={cn('text-[10px] px-1.5', getLevelBadgeClass(log.level))}>
+                                    <Badge
+                                        variant="secondary"
+                                        className={cn('text-[10px] px-1.5 py-0.5', getLevelBadgeClass(log.level))}
+                                    >
                                         {log.level.toUpperCase()}
                                     </Badge>
                                 </div>
-                                <div className="col-span-2 text-gray-600 dark:text-gray-400 truncate">
-                                    {log.source}
-                                </div>
+                                <div className="col-span-2 text-gray-600 dark:text-gray-400 truncate">{log.source}</div>
                                 <div className="col-span-7 text-gray-800 dark:text-gray-200">
                                     {log.message}
                                     {log.taskId && (
-                                        <span className="ml-2 text-gray-400 dark:text-gray-500 font-mono">
+                                        <span className="ml-2 text-gray-400 dark:text-gray-500 font-mono text-[10px]">
                                             [{log.taskId}]
                                         </span>
                                     )}
@@ -611,43 +707,58 @@ export const LongHorizonAgentViewModal = ({ open, onOpenChange, agent }: LongHor
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
-                <DialogHeader>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+                <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <DialogTitle className="flex items-center gap-x-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/30">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/30">
                             <Eye size={20} className="text-teal-600 dark:text-teal-400" />
                         </div>
                         <div>
-                            <span className="block">{agent.agentName}</span>
-                            <span className="text-sm font-normal text-gray-500 dark:text-gray-400">Long Horizon Agent Details</span>
+                            <span className="block text-base font-semibold text-gray-900 dark:text-gray-100">
+                                {agent.agentName}
+                            </span>
+                            <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                                Long Horizon Agent Details
+                            </span>
                         </div>
                     </DialogTitle>
                 </DialogHeader>
-                <DialogBody className="flex-1 overflow-hidden flex flex-col">
+                <DialogBody className="flex-1 overflow-hidden flex flex-col p-0">
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-                        <TabsList className="grid grid-cols-3 w-full">
-                            <TabsTrigger value="overview" className="gap-1.5">
-                                <Info size={14} />
-                                Overview
-                            </TabsTrigger>
-                            <TabsTrigger value="a2a-identity" className="gap-1.5">
-                                <Fingerprint size={14} />
-                                A2A Identity
-                            </TabsTrigger>
-                            <TabsTrigger value="logging" className="gap-1.5">
-                                <Activity size={14} />
-                                Logging & Monitoring
-                            </TabsTrigger>
-                        </TabsList>
-                        <div className="flex-1 overflow-y-auto">
-                            <TabsContent value="overview">
+                        <div className="px-6 border-b border-gray-200 dark:border-gray-700">
+                            <TabsList className="h-11 w-full justify-start gap-x-1 bg-transparent p-0">
+                                <TabsTrigger
+                                    value="overview"
+                                    className="gap-x-1.5 px-4 py-2 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-teal-600 data-[state=active]:text-teal-600 rounded-none"
+                                >
+                                    <Info size={14} />
+                                    Overview
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="a2a-identity"
+                                    className="gap-x-1.5 px-4 py-2 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-teal-600 data-[state=active]:text-teal-600 rounded-none"
+                                >
+                                    <Fingerprint size={14} />
+                                    A2A Identity
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="logging"
+                                    className="gap-x-1.5 px-4 py-2 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-teal-600 data-[state=active]:text-teal-600 rounded-none"
+                                >
+                                    <Activity size={14} />
+                                    Logging & Monitoring
+                                </TabsTrigger>
+                            </TabsList>
+                        </div>
+                        <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800/50">
+                            <TabsContent value="overview" className="m-0">
                                 <OverviewTab agent={agent} />
                             </TabsContent>
-                            <TabsContent value="a2a-identity">
+                            <TabsContent value="a2a-identity" className="m-0">
                                 <A2AIdentityTab agent={agent} />
                             </TabsContent>
-                            <TabsContent value="logging">
-                                <LoggingMonitoringTab agent={agent} />
+                            <TabsContent value="logging" className="m-0">
+                                <LoggingMonitoringTab />
                             </TabsContent>
                         </div>
                     </Tabs>
