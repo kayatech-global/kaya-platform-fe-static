@@ -160,7 +160,6 @@ const MOCK_SKILLS: IHorizonSkill[] = [
 // Overview Tab Component
 const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
     const config = agent.horizonConfig;
-    const deploymentStatus = agent.publishStatus?.isPublished ? 'Running' : 'Stopped';
 
     // Get skills from horizonConfig if available, otherwise use mock data
     const skills: IHorizonSkill[] = config?.skills && config.skills.length > 0 ? config.skills : MOCK_SKILLS;
@@ -174,7 +173,7 @@ const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
     };
 
     return (
-        <div className="space-y-4 p-4">
+        <div className="space-y-4 p-4 pb-6">
             {/* Basic Info */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
                 <div className="flex items-center gap-x-2 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
@@ -251,28 +250,7 @@ const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
                         Deployment Information
                     </p>
                 </div>
-                <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-                    <div>
-                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</p>
-                        <div className="flex items-center gap-x-2">
-                            {deploymentStatus === 'Running' ? (
-                                <>
-                                    <Play size={14} className="text-green-500 fill-green-500" />
-                                    <span className="text-sm font-medium text-green-600 dark:text-green-400">Running</span>
-                                </>
-                            ) : deploymentStatus === 'Stopped' ? (
-                                <>
-                                    <Square size={14} className="text-gray-500" />
-                                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Stopped</span>
-                                </>
-                            ) : (
-                                <>
-                                    <AlertTriangle size={14} className="text-red-500" />
-                                    <span className="text-sm font-medium text-red-600 dark:text-red-400">Error</span>
-                                </>
-                            )}
-                        </div>
-                    </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                     <div>
                         <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Hosting Model</p>
                         <p className="text-sm text-gray-900 dark:text-gray-100">{displayData.hostingModel}</p>
@@ -709,19 +687,34 @@ export const LongHorizonAgentViewModal = ({ open, onOpenChange, agent }: LongHor
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
                 <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <DialogTitle className="flex items-center gap-x-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/30">
-                            <Eye size={20} className="text-teal-600 dark:text-teal-400" />
+                    <div className="flex items-center justify-between">
+                        <DialogTitle className="flex items-center gap-x-3">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/30">
+                                <Eye size={20} className="text-teal-600 dark:text-teal-400" />
+                            </div>
+                            <div>
+                                <span className="block text-base font-semibold text-gray-900 dark:text-gray-100">
+                                    {agent.agentName}
+                                </span>
+                                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                                    Long Horizon Agent Details
+                                </span>
+                            </div>
+                        </DialogTitle>
+                        <div className="flex items-center gap-x-2 mr-8">
+                            {agent.publishStatus?.isPublished ? (
+                                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800 px-3 py-1">
+                                    <Play size={12} className="mr-1.5 fill-current" />
+                                    Running
+                                </Badge>
+                            ) : (
+                                <Badge className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700 px-3 py-1">
+                                    <Square size={12} className="mr-1.5" />
+                                    Stopped
+                                </Badge>
+                            )}
                         </div>
-                        <div>
-                            <span className="block text-base font-semibold text-gray-900 dark:text-gray-100">
-                                {agent.agentName}
-                            </span>
-                            <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                                Long Horizon Agent Details
-                            </span>
-                        </div>
-                    </DialogTitle>
+                    </div>
                 </DialogHeader>
                 <DialogBody className="flex-1 overflow-hidden flex flex-col p-0">
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
