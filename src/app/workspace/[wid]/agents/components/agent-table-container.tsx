@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { ColumnDef, Row } from '@tanstack/react-table';
-import { Trash2, Pencil, Rocket, RefreshCw, Check, Loader2, AlertCircle, Package, Server, Shield, Zap } from 'lucide-react';
+import { Trash2, Pencil, Rocket, RefreshCw, Check, Loader2, AlertCircle, Package, Server, Shield, Zap, Eye } from 'lucide-react';
+import { LongHorizonAgentViewModal, LongHorizonAgentViewData } from './horizon/long-horizon-agent-view-modal';
 import { Button, Input, Badge } from '@/components';
 import DataTable from '@/components/molecules/table/data-table';
 import { useForm } from 'react-hook-form';
 import { cn, handleNoValue } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/atoms/dialog';
 import { useBreakpoint } from '@/hooks/use-breakpoints';
-import { ISelfLearning, AgentCategory, IPublishStatus } from '@/models';
+import { ISelfLearning, AgentCategory, IPublishStatus, IHorizonConfig } from '@/models';
 
 export interface AgentData {
     id: string;
@@ -22,6 +23,7 @@ export interface AgentData {
     selfLearning?: ISelfLearning;
     agentCategory?: AgentCategory;
     publishStatus?: IPublishStatus;
+    horizonConfig?: IHorizonConfig;
 }
 
 interface AgentTableContainerProps {
@@ -245,6 +247,7 @@ const ActionCell = ({
 }) => {
     const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
     const [deleteOpen, setDeleteOpen] = useState<boolean>(false);
+    const [viewOpen, setViewOpen] = useState<boolean>(false);
     
     const isHorizon = row.original.agentCategory === AgentCategory.HORIZON;
     const isDeployed = row.original.publishStatus?.isPublished;
@@ -264,6 +267,19 @@ const ActionCell = ({
     return (
         <>
             <div className="flex items-center justify-end gap-x-1">
+                {/* View - Only for deployed Long Horizon Agents */}
+                {isHorizon && isDeployed && (
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => setViewOpen(true)}
+                        title="View Details"
+                    >
+                        <Eye size={16} className="text-teal-600 dark:text-teal-400" />
+                    </Button>
+                )}
+                
                 {/* Deploy/Re-Deploy - Only for Long Horizon Agents */}
                 {isHorizon && onDeployWithProgress && (
                     <Button 
@@ -391,6 +407,21 @@ const ActionCell = ({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* View Long Horizon Agent Modal */}
+            <LongHorizonAgentViewModal
+                open={viewOpen}
+                onOpenChange={setViewOpen}
+                agent={isHorizon && isDeployed ? {
+                    id: row.original.id,
+                    agentName: row.original.agentName,
+                    agentDescription: row.original.agentDescription,
+                    llmId: row.original.llmId,
+                    agentCategory: row.original.agentCategory as AgentCategory,
+                    publishStatus: row.original.publishStatus,
+                    horizonConfig: row.original.horizonConfig,
+                } as LongHorizonAgentViewData : null}
+            />
         </>
     );
 };
