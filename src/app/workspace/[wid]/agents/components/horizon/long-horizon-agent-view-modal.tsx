@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Eye, Activity, Fingerprint, Info, Clock, Calendar, Server, Play, Square, AlertTriangle, Search, Download, RefreshCw } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Eye, Activity, Fingerprint, Info, Server, Play, Square, AlertTriangle, Search, Download, RefreshCw, Copy, Check, Globe, Lock, Sparkles, Tag, Zap, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/atoms/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/atoms/tabs';
 import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
 import { cn } from '@/lib/utils';
-import { AgentCategory, IHorizonConfig, IPublishStatus } from '@/models';
+import { AgentCategory, IHorizonConfig, IPublishStatus, IHorizonSkill } from '@/models';
 
 // Agent data for viewing
 export interface LongHorizonAgentViewData {
@@ -41,7 +41,6 @@ const generateMockLogs = (): LogEntry[] => {
     const now = new Date();
     const logs: LogEntry[] = [];
     const sources = ['agent-runtime', 'task-executor', 'a2a-handler', 'skill-processor', 'memory-manager'];
-    const levels: LogEntry['level'][] = ['info', 'warn', 'error', 'debug'];
     const messages = [
         { level: 'info', msg: 'Agent initialized successfully' },
         { level: 'info', msg: 'Task received from A2A endpoint' },
@@ -65,7 +64,6 @@ const generateMockLogs = (): LogEntry[] => {
         { level: 'info', msg: 'Session state persisted to storage' },
     ];
 
-    // Generate 50 log entries over the last 24 hours
     for (let i = 0; i < 50; i++) {
         const hoursAgo = Math.random() * 24;
         const timestamp = new Date(now.getTime() - hoursAgo * 60 * 60 * 1000);
@@ -81,7 +79,6 @@ const generateMockLogs = (): LogEntry[] => {
         });
     }
 
-    // Sort by timestamp descending (newest first)
     return logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 };
 
@@ -105,24 +102,28 @@ const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
     const config = agent.horizonConfig;
     const deploymentStatus = agent.publishStatus?.isPublished ? 'Running' : 'Stopped';
     
-    // Mock data for display
-    const mockData = {
+    // Get skills from horizonConfig if available, otherwise use mock data
+    const skills: IHorizonSkill[] = config?.skills || [];
+    const skillNames = skills.length > 0 
+        ? skills.map(s => s.name) 
+        : ['Data Analysis', 'Report Generation', 'Email Drafting']; // Fallback mock data
+    
+    const displayData = {
         intelligenceSource: 'GPT-4 Turbo',
         version: config?.identity?.version || '1.0.0',
         deploymentDate: agent.publishStatus?.publishedAt || new Date().toISOString(),
-        skills: config?.skills?.map(s => s.name) || ['Data Analysis', 'Report Generation', 'Email Drafting'],
-        hostingModel: config?.deploy?.hostingModel === 'managed' ? 'Managed (KAYA Internal)' : 'External (AgentCore)',
+        hostingModel: config?.deploy?.hostingModel === 'agentcore' ? 'External (AgentCore)' : 'Managed (KAYA Internal)',
         runtime: config?.deploy?.runtime || 'python312',
     };
 
     return (
         <div className="space-y-6 py-4">
             {/* Basic Info */}
-            <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex items-center gap-x-2 mb-4">
                     <Info size={16} className="text-gray-500" />
-                    Basic Information
-                </h3>
+                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Basic Information</p>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                         <p className="text-xs text-gray-500 dark:text-gray-400">Agent Name</p>
@@ -130,7 +131,7 @@ const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
                     </div>
                     <div className="space-y-1">
                         <p className="text-xs text-gray-500 dark:text-gray-400">Intelligence Source</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{mockData.intelligenceSource}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{displayData.intelligenceSource}</p>
                     </div>
                     <div className="col-span-2 space-y-1">
                         <p className="text-xs text-gray-500 dark:text-gray-400">Description</p>
@@ -138,12 +139,12 @@ const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
                     </div>
                     <div className="space-y-1">
                         <p className="text-xs text-gray-500 dark:text-gray-400">Version</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{mockData.version}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{displayData.version}</p>
                     </div>
                     <div className="space-y-1">
                         <p className="text-xs text-gray-500 dark:text-gray-400">Deployment Date</p>
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {new Date(mockData.deploymentDate).toLocaleDateString('en-US', {
+                            {new Date(displayData.deploymentDate).toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'short',
                                 day: 'numeric',
@@ -156,14 +157,20 @@ const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
             </div>
 
             {/* Skills */}
-            <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Agent Skills</h3>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex items-center gap-x-2 mb-3">
+                    <Zap size={16} className="text-gray-500" />
+                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Agent Skills</p>
+                    <Badge variant="secondary" className="ml-auto text-xs bg-gray-200 dark:bg-gray-700">
+                        {skillNames.length} skill{skillNames.length !== 1 ? 's' : ''}
+                    </Badge>
+                </div>
                 <div className="flex flex-wrap gap-2">
-                    {mockData.skills.map((skill, idx) => (
+                    {skillNames.map((skill, idx) => (
                         <Badge 
                             key={idx} 
                             variant="secondary"
-                            className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                            className="bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 border border-teal-200 dark:border-teal-800"
                         >
                             {skill}
                         </Badge>
@@ -172,42 +179,40 @@ const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
             </div>
 
             {/* Deployment Info */}
-            <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex items-center gap-x-2 mb-4">
                     <Server size={16} className="text-gray-500" />
-                    Deployment Information
-                </h3>
-                <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-1">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Status</p>
-                            <div className="flex items-center gap-2">
-                                {deploymentStatus === 'Running' ? (
-                                    <>
-                                        <Play size={14} className="text-green-500 fill-green-500" />
-                                        <span className="text-sm font-medium text-green-600 dark:text-green-400">Running</span>
-                                    </>
-                                ) : deploymentStatus === 'Stopped' ? (
-                                    <>
-                                        <Square size={14} className="text-gray-500" />
-                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Stopped</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <AlertTriangle size={14} className="text-red-500" />
-                                        <span className="text-sm font-medium text-red-600 dark:text-red-400">Error</span>
-                                    </>
-                                )}
-                            </div>
+                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Deployment Information</p>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Status</p>
+                        <div className="flex items-center gap-2">
+                            {deploymentStatus === 'Running' ? (
+                                <>
+                                    <Play size={14} className="text-green-500 fill-green-500" />
+                                    <span className="text-sm font-medium text-green-600 dark:text-green-400">Running</span>
+                                </>
+                            ) : deploymentStatus === 'Stopped' ? (
+                                <>
+                                    <Square size={14} className="text-gray-500" />
+                                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Stopped</span>
+                                </>
+                            ) : (
+                                <>
+                                    <AlertTriangle size={14} className="text-red-500" />
+                                    <span className="text-sm font-medium text-red-600 dark:text-red-400">Error</span>
+                                </>
+                            )}
                         </div>
-                        <div className="space-y-1">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Hosting Model</p>
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{mockData.hostingModel}</p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Runtime</p>
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{mockData.runtime}</p>
-                        </div>
+                    </div>
+                    <div className="space-y-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Hosting Model</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{displayData.hostingModel}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Runtime</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{displayData.runtime}</p>
                     </div>
                 </div>
             </div>
@@ -217,81 +222,155 @@ const OverviewTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
 
 // A2A Identity Tab Component
 const A2AIdentityTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
+    const [copiedField, setCopiedField] = useState<string | null>(null);
     const config = agent.horizonConfig;
     const identity = config?.identity;
     
-    // Mock A2A Identity data
-    const mockA2AData = {
+    // Generate A2A URI based on agent data (matching identity-section.tsx pattern)
+    const workspaceSlug = 'default-workspace';
+    const agentSlug = useMemo(() => {
+        const name = identity?.displayName || agent.agentName;
+        return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'unnamed-agent';
+    }, [identity?.displayName, agent.agentName]);
+    
+    const version = identity?.version || '1.0.0';
+    
+    // A2A Identity data aligned with identity-section.tsx
+    const a2aData = {
         displayName: identity?.displayName || agent.agentName,
         description: identity?.description || agent.agentDescription,
-        version: identity?.version || '1.0.0',
-        a2aUri: identity?.a2aUri || `agent://kaya/workspace/${agent.agentName.toLowerCase().replace(/\s+/g, '-')}-v1`,
-        endpointUrl: identity?.endpointUrl || `https://api.kaya.ai/a2a/agents/${agent.id}`,
-        discoveryLocation: identity?.discoveryLocation || `https://api.kaya.ai/.well-known/agent-card/${agent.id}`,
+        version: version,
+        a2aUri: identity?.a2aUri || `agent://kaya/${workspaceSlug}/${agentSlug}-${version}`,
+        endpointUrl: identity?.endpointUrl || `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/agents/${agentSlug}/a2a`,
+        discoveryPath: `/ws/${workspaceSlug}/agents/${agentSlug}/.well-known/agent-card.json`,
+        wellKnownUrl: `https://kaya.techlabsglobal.com/ws/${workspaceSlug}/agents/${agentSlug}/.well-known/agent-card.json`,
+        a2aEnabled: identity?.a2aEnabled ?? true,
         a2aVisibility: identity?.a2aVisibility || 'private',
         defaultInputModes: identity?.defaultInputModes || ['text/plain', 'application/json'],
         defaultOutputModes: identity?.defaultOutputModes || ['application/json', 'text/plain'],
         authSchemes: identity?.authSchemes || [{ type: 'bearer' }],
     };
 
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
+    const copyToClipboard = async (text: string, fieldName: string) => {
+        await navigator.clipboard.writeText(text);
+        setCopiedField(fieldName);
+        setTimeout(() => setCopiedField(null), 2000);
     };
 
     return (
         <div className="space-y-6 py-4">
-            {/* A2A URI */}
-            <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <Fingerprint size={16} className="text-gray-500" />
-                    A2A Identity
-                </h3>
-                <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
+            {/* A2A Identity Header */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-x-3">
+                        <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                            <Sparkles size={18} className="text-gray-600 dark:text-gray-400" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-x-2">
+                                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">A2A Identity</p>
+                                {a2aData.a2aEnabled && (
+                                    <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">
+                                        <Check size={10} className="mr-1" />
+                                        Enabled
+                                    </Badge>
+                                )}
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Agent-to-Agent protocol identity for external discovery
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Agent URI */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Agent URI</p>
+                            <p className="text-sm font-mono text-teal-600 dark:text-teal-400 truncate">
+                                {a2aData.a2aUri}
+                            </p>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => copyToClipboard(a2aData.a2aUri, 'uri')}
+                            className="ml-2 shrink-0 h-8 w-8"
+                        >
+                            {copiedField === 'uri' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Basic Identity Info */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex items-center gap-x-2 mb-4">
+                    <Tag size={14} className="text-gray-500" />
+                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Basic Identity</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">A2A URI</p>
-                        <div className="flex items-center gap-2">
-                            <code className="text-sm font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-blue-600 dark:text-blue-400 flex-1 truncate">
-                                {mockA2AData.a2aUri}
-                            </code>
-                            <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => copyToClipboard(mockA2AData.a2aUri)}
-                                className="h-7 px-2"
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Display Name</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{a2aData.displayName}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Version</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{a2aData.version}</p>
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Description</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">{a2aData.description || 'No description'}</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Discovery & Endpoint */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex items-center gap-x-2 mb-4">
+                    <Globe size={14} className="text-gray-500" />
+                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Discovery & Endpoint</p>
+                </div>
+                <div className="space-y-3">
+                    {/* Endpoint URL */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Endpoint URL</p>
+                                <p className="text-sm font-mono text-gray-700 dark:text-gray-300 truncate">
+                                    {a2aData.endpointUrl}
+                                </p>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => copyToClipboard(a2aData.endpointUrl, 'endpoint')}
+                                className="ml-2 shrink-0 h-8 w-8"
                             >
-                                Copy
+                                {copiedField === 'endpoint' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                             </Button>
                         </div>
                     </div>
-                    <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Endpoint URL</p>
-                        <div className="flex items-center gap-2">
-                            <code className="text-sm font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300 flex-1 truncate">
-                                {mockA2AData.endpointUrl}
-                            </code>
-                            <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => copyToClipboard(mockA2AData.endpointUrl)}
-                                className="h-7 px-2"
+                    {/* Discovery Location */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Discovery Location</p>
+                                <p className="text-sm font-mono text-gray-700 dark:text-gray-300 truncate">
+                                    {a2aData.wellKnownUrl}
+                                </p>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => copyToClipboard(a2aData.wellKnownUrl, 'discovery')}
+                                className="ml-2 shrink-0 h-8 w-8"
                             >
-                                Copy
-                            </Button>
-                        </div>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Discovery Location</p>
-                        <div className="flex items-center gap-2">
-                            <code className="text-sm font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300 flex-1 truncate">
-                                {mockA2AData.discoveryLocation}
-                            </code>
-                            <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => copyToClipboard(mockA2AData.discoveryLocation)}
-                                className="h-7 px-2"
-                            >
-                                Copy
+                                {copiedField === 'discovery' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                             </Button>
                         </div>
                     </div>
@@ -299,36 +378,49 @@ const A2AIdentityTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
             </div>
 
             {/* Visibility & Auth */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Visibility</p>
-                    <Badge 
-                        variant="secondary"
-                        className={cn(
-                            mockA2AData.a2aVisibility === 'public' 
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                        )}
-                    >
-                        {mockA2AData.a2aVisibility === 'public' ? 'Public' : 'Private'}
-                    </Badge>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex items-center gap-x-2 mb-4">
+                    <Lock size={14} className="text-gray-500" />
+                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Security & Visibility</p>
                 </div>
-                <div className="space-y-1">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Authentication</p>
-                    <Badge variant="secondary" className="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                        {mockA2AData.authSchemes[0]?.type?.toUpperCase() || 'NONE'}
-                    </Badge>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Visibility</p>
+                        <Badge 
+                            variant="secondary"
+                            className={cn(
+                                a2aData.a2aVisibility === 'public' 
+                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                            )}
+                        >
+                            {a2aData.a2aVisibility === 'public' ? (
+                                <><Globe size={12} className="mr-1" /> Public</>
+                            ) : (
+                                <><Lock size={12} className="mr-1" /> Private</>
+                            )}
+                        </Badge>
+                    </div>
+                    <div className="space-y-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Authentication</p>
+                        <Badge variant="secondary" className="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                            {a2aData.authSchemes[0]?.type?.toUpperCase() || 'NONE'}
+                        </Badge>
+                    </div>
                 </div>
             </div>
 
             {/* IO Modes */}
-            <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Input/Output Modes</h3>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex items-center gap-x-2 mb-4">
+                    <Fingerprint size={14} className="text-gray-500" />
+                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Input/Output Modes</p>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <p className="text-xs text-gray-500 dark:text-gray-400">Input Modes</p>
                         <div className="flex flex-wrap gap-1">
-                            {mockA2AData.defaultInputModes.map((mode, idx) => (
+                            {a2aData.defaultInputModes.map((mode, idx) => (
                                 <Badge key={idx} variant="outline" className="text-xs">
                                     {mode}
                                 </Badge>
@@ -338,7 +430,7 @@ const A2AIdentityTab = ({ agent }: { agent: LongHorizonAgentViewData }) => {
                     <div className="space-y-2">
                         <p className="text-xs text-gray-500 dark:text-gray-400">Output Modes</p>
                         <div className="flex flex-wrap gap-1">
-                            {mockA2AData.defaultOutputModes.map((mode, idx) => (
+                            {a2aData.defaultOutputModes.map((mode, idx) => (
                                 <Badge key={idx} variant="outline" className="text-xs">
                                     {mode}
                                 </Badge>
@@ -419,6 +511,7 @@ const LoggingMonitoringTab = ({ agent }: { agent: LongHorizonAgentViewData }) =>
                     />
                 </div>
                 <div className="flex items-center gap-2">
+                    <Calendar size={14} className="text-gray-500" />
                     <span className="text-xs text-gray-500">Time Range:</span>
                     <div className="flex gap-1">
                         {(['1h', '6h', '24h', '7d'] as const).map(range => (
@@ -438,7 +531,7 @@ const LoggingMonitoringTab = ({ agent }: { agent: LongHorizonAgentViewData }) =>
                     <span className="text-xs text-gray-500">Level:</span>
                     <select
                         value={levelFilter}
-                        onChange={(e) => setLevelFilter(e.target.value as any)}
+                        onChange={(e) => setLevelFilter(e.target.value as typeof levelFilter)}
                         className="h-7 px-2 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
                     >
                         <option value="all">All</option>
