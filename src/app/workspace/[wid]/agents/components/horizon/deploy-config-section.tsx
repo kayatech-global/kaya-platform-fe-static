@@ -3,7 +3,7 @@
 import { Input, Select, Switch, Label, Textarea, Button, Badge, VaultSelector } from '@/components';
 import { cn } from '@/lib/utils';
 import { IAgentForm, HostingModel } from '@/models';
-import { Cloud, Server, Plus, Trash2, Shield, Key, Activity, ExternalLink, CheckCircle, Clock, AlertCircle, Pencil } from 'lucide-react';
+import { Cloud, Server, Plus, Trash2, Shield, Key, ExternalLink, CheckCircle, Clock, AlertCircle, Pencil } from 'lucide-react';
 import { Control, Controller, UseFormWatch, UseFormSetValue, FieldErrors, useFieldArray } from 'react-hook-form';
 import { useState, useEffect } from 'react';
 import { BannerInfo } from '@/components/atoms/banner-info';
@@ -46,8 +46,6 @@ type ValidationStatus = 'pending' | 'success' | 'error';
 
 interface ValidationState {
     iamRole: ValidationStatus;
-    vaultSecret: ValidationStatus;
-    healthCheck: ValidationStatus;
 }
 
 const ValidationCard = ({ 
@@ -122,8 +120,6 @@ export const DeployConfigSection = ({ control, watch, setValue, errors, isReadOn
     // Validation state for AgentCore connection
     const [validationStatus, setValidationStatus] = useState<ValidationState>({
         iamRole: 'pending',
-        vaultSecret: 'pending',
-        healthCheck: 'pending',
     });
     const [isValidating, setIsValidating] = useState(false);
     const [isEditingEcrUri, setIsEditingEcrUri] = useState(false);
@@ -164,19 +160,13 @@ export const DeployConfigSection = ({ control, watch, setValue, errors, isReadOn
         await new Promise(resolve => setTimeout(resolve, 800));
         setValidationStatus(prev => ({ ...prev, iamRole: 'success' }));
         
-        await new Promise(resolve => setTimeout(resolve, 600));
-        setValidationStatus(prev => ({ ...prev, vaultSecret: 'success' }));
-        
         await new Promise(resolve => setTimeout(resolve, 500));
-        setValidationStatus(prev => ({ ...prev, healthCheck: 'success' }));
+        
         
         setIsValidating(false);
     };
 
-    const allValidated = 
-        validationStatus.iamRole === 'success' && 
-        validationStatus.vaultSecret === 'success' && 
-        validationStatus.healthCheck === 'success';
+    const allValidated = validationStatus.iamRole === 'success';
 
     return (
         <div className="col-span-1 sm:col-span-2 border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-2 sm:p-4">
@@ -586,16 +576,6 @@ export const DeployConfigSection = ({ control, watch, setValue, errors, isReadOn
                                     label="IAM Role Permissions" 
                                     status={validationStatus.iamRole}
                                     icon={Shield}
-                                />
-                                <ValidationCard 
-                                    label="Vault Secret Access" 
-                                    status={validationStatus.vaultSecret}
-                                    icon={Key}
-                                />
-                                <ValidationCard 
-                                    label="Runtime Health Check" 
-                                    status={validationStatus.healthCheck}
-                                    icon={Activity}
                                 />
                             </div>
                             {allValidated && (

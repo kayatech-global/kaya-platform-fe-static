@@ -73,7 +73,6 @@ export const IdentitySection = ({
     // A2A Skills Configuration - allows user to select which skills to expose and customize name/description
     const [a2aSkillsConfig, setA2ASkillsConfig] = useState<IA2ASkillConfig[]>([]);
     const [expandedA2ASkill, setExpandedA2ASkill] = useState<string | null>(null);
-    const [showAddSkillDialog, setShowAddSkillDialog] = useState(false);
 
     const authSchemes = watch('horizonConfig.identity.authSchemes') || [];
     const a2aEnabled = watch('horizonConfig.identity.a2aEnabled') ?? true;
@@ -187,22 +186,6 @@ export const IdentitySection = ({
 
     const removeA2ASkill = (skillId: string) => {
         setA2ASkillsConfig(prev => prev.filter(skill => skill.id !== skillId));
-    };
-
-    const addCustomA2ASkill = () => {
-        const newSkill: IA2ASkillConfig = {
-            id: `a2a-custom-${uuidv4()}`,
-            sourceSkillId: '', // No source skill - this is a custom A2A skill
-            name: 'Custom Skill',
-            description: '',
-            enabled: true,
-            tags: [],
-            inputModes: ['application/json'],
-            outputModes: ['application/json'],
-        };
-        setA2ASkillsConfig(prev => [...prev, newSkill]);
-        setExpandedA2ASkill(newSkill.id);
-        setShowAddSkillDialog(false);
     };
 
     // Generate A2A Skills from A2A Skills Config (only enabled skills)
@@ -769,28 +752,14 @@ export const IdentitySection = ({
 
                             {/* A2A Skills Configuration - Editable skills to expose via A2A protocol */}
                             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-x-2">
-                                        <Zap size={14} className="text-gray-500" />
-                                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
-                                            A2A Skills
-                                        </p>
-                                        <Badge variant="secondary" className="text-xs">
-                                            {enabledA2ASkillsCount} / {a2aSkillsConfig.length} enabled
-                                        </Badge>
-                                    </div>
-                                    {!isReadOnly && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={addCustomA2ASkill}
-                                            className="flex items-center gap-x-1"
-                                        >
-                                            <Plus size={14} />
-                                            Add Custom
-                                        </Button>
-                                    )}
+                                <div className="flex items-center gap-x-2 mb-4">
+                                    <Zap size={14} className="text-gray-500" />
+                                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
+                                        A2A Skills
+                                    </p>
+                                    <Badge variant="secondary" className="text-xs">
+                                        {enabledA2ASkillsCount} / {a2aSkillsConfig.length} enabled
+                                    </Badge>
                                 </div>
 
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
