@@ -52,12 +52,40 @@ export interface IScalingPolicy {
   scaleDownThreshold?: number;
 }
 
+// Environment Variable
+export interface IEnvironmentVariable {
+  key: string;
+  value: string;
+}
+
+// Credential Type for AgentCore
+export type CredentialType = 'key-access' | 'managed-access';
+
+// Source Type for AgentCore
+export type SourceType = 'ecr-container';
+
+// AgentCore Configuration (used when hostingModel is 'agentcore')
+export interface IAgentCoreConfig {
+  region: string;
+  credentialType: CredentialType;
+  accessKey?: string;
+  secretKey?: string;
+  roleArn: string;
+  sourceType: SourceType;
+  ecrRepositoryUri: string;
+  imageTag: string;
+  idleTimeout: number;
+  maxLifetime: number;
+  environmentVariables: IEnvironmentVariable[];
+}
+
 // Deploy Configuration
 export interface IHorizonDeployConfig {
   hostingModel: HostingModel;
   environment: DeployEnvironment;
-  runtime?: RuntimeType; // Used when hostingModel is 'agentcore'
+  runtime?: RuntimeType; // Deprecated - use agentCoreConfig for AgentCore hosting
   scalingPolicy: IScalingPolicy;
+  agentCoreConfig?: IAgentCoreConfig; // Used when hostingModel is 'agentcore'
 }
 
 // Authentication Scheme
