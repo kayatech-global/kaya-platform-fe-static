@@ -1,11 +1,24 @@
 'use client';
 
-import { Input, Textarea, Select, Button, Label, Badge, Switch, Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components';
+import { Input, Textarea, Select, Button, Label, Badge, Switch, Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter, Checkbox } from '@/components';
 import { cn } from '@/lib/utils';
-import { IAgentForm, AuthType, IA2AAgentCard, IA2ASkill } from '@/models';
-import { User, Plus, X, Key, Copy, Check, ExternalLink, Eye, Shield, Globe, Lock, FileJson, Sparkles, Zap, Tag, Info } from 'lucide-react';
+import { IAgentForm, AuthType, IA2AAgentCard, IA2ASkill, IHorizonSkill } from '@/models';
+import { User, Plus, X, Key, Copy, Check, ExternalLink, Eye, Shield, Globe, Lock, FileJson, Sparkles, Zap, Tag, Info, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react';
 import { Control, Controller, UseFormWatch, UseFormSetValue, FieldErrors, UseFormGetValues } from 'react-hook-form';
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+
+// Interface for A2A skills that can be enabled/disabled and have editable name/description
+interface IA2ASkillConfig {
+    id: string;
+    sourceSkillId: string; // Reference to the original skill from skills step
+    name: string;
+    description: string;
+    enabled: boolean;
+    tags: string[];
+    inputModes: string[];
+    outputModes: string[];
+}
 
 interface IdentitySectionProps {
     control: Control<IAgentForm>;
@@ -56,6 +69,11 @@ export const IdentitySection = ({
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [copiedJson, setCopiedJson] = useState(false);
     const [showA2ACardModal, setShowA2ACardModal] = useState(false);
+    
+    // A2A Skills Configuration - allows user to select which skills to expose and customize name/description
+    const [a2aSkillsConfig, setA2ASkillsConfig] = useState<IA2ASkillConfig[]>([]);
+    const [expandedA2ASkill, setExpandedA2ASkill] = useState<string | null>(null);
+    const [showAddSkillDialog, setShowAddSkillDialog] = useState(false);
 
     const authSchemes = watch('horizonConfig.identity.authSchemes') || [];
     const a2aEnabled = watch('horizonConfig.identity.a2aEnabled') ?? true;
@@ -70,6 +88,43 @@ export const IdentitySection = ({
     
     // Watch skills from Skills Metadata section
     const skills = watch('horizonConfig.skills') || [];
+
+    // Auto-sync A2A skills config when skills from Skills step change
+    useEffect(() => {
+        if (skills.length > 0) {
+            setA2ASkillsConfig(prevConfig => {
+                // Map existing config by sourceSkillId for quick lookup
+                const existingConfigMap = new Map(prevConfig.map(c => [c.sourceSkillId, c]));
+                
+                // Create new config array based on current skills
+                const newConfig: IA2ASkillConfig[] = skills.map(skill => {
+                    const existing = existingConfigMap.get(skill.id);
+                    if (existing) {
+                        // Keep existing config but update tags/modes from source if user hasn't customized
+                        return {
+                            ...existing,
+                            tags: skill.tags || [],
+                            inputModes: skill.inputModes || skill.ioModes || ['application/json'],
+                            outputModes: skill.outputModes || skill.ioModes || ['application/json'],
+                        };
+                    }
+                    // Create new config entry for new skills - enabled by default
+                    return {
+                        id: `a2a-${skill.id}`,
+                        sourceSkillId: skill.id,
+                        name: skill.name || 'Unnamed Skill',
+                        description: skill.description || '',
+                        enabled: true,
+                        tags: skill.tags || [],
+                        inputModes: skill.inputModes || skill.ioModes || ['application/json'],
+                        outputModes: skill.outputModes || skill.ioModes || ['application/json'],
+                    };
+                });
+                
+                return newConfig;
+            });
+        }
+    }, [skills]);
 
     // Auto-populate Display Name and Description from Agent Name and Agent Description
     useEffect(() => {
@@ -113,18 +168,56 @@ export const IdentitySection = ({
 
     // Total skills count from Skills Metadata
     const totalSkills = skills.length;
+    
+    // Count of enabled A2A skills
+    const enabledA2ASkillsCount = a2aSkillsConfig.filter(s => s.enabled).length;
 
-    // Generate A2A Skills from Skills Metadata section
+    // Helper functions for A2A skills management
+    const toggleA2ASkill = (skillId: string) => {
+        setA2ASkillsConfig(prev => prev.map(skill => 
+            skill.id === skillId ? { ...skill, enabled: !skill.enabled } : skill
+        ));
+    };
+
+    const updateA2ASkill = (skillId: string, updates: Partial<IA2ASkillConfig>) => {
+        setA2ASkillsConfig(prev => prev.map(skill =>
+            skill.id === skillId ? { ...skill, ...updates } : skill
+        ));
+    };
+
+    const removeA2ASkill = (skillId: string) => {
+        setA2ASkillsConfig(prev => prev.filter(skill => skill.id !== skillId));
+    };
+
+    const addCustomA2ASkill = () => {
+        const newSkill: IA2ASkillConfig = {
+            id: `a2a-custom-${uuidv4()}`,
+            sourceSkillId: '', // No source skill - this is a custom A2A skill
+            name: 'Custom Skill',
+            description: '',
+            enabled: true,
+            tags: [],
+            inputModes: ['application/json'],
+            outputModes: ['application/json'],
+        };
+        setA2ASkillsConfig(prev => [...prev, newSkill]);
+        setExpandedA2ASkill(newSkill.id);
+        setShowAddSkillDialog(false);
+    };
+
+    // Generate A2A Skills from A2A Skills Config (only enabled skills)
     const generateA2ASkills = useCallback((): IA2ASkill[] => {
-        return skills.map((skill) => ({
-            id: skill.id,
-            name: skill.name || 'Unnamed Skill',
-            description: skill.description || '',
-            tags: skill.tags || [],
-            inputModes: skill.inputModes || skill.ioModes || ['application/json'],
-            outputModes: skill.outputModes || skill.ioModes || ['application/json'],
-        }));
-    }, [skills]);
+        return a2aSkillsConfig
+            .filter(skill => skill.enabled)
+            .map((skill) => ({
+                id: skill.id,
+                name: skill.name || 'Unnamed Skill',
+                description: skill.description || '',
+                tags: skill.tags || [],
+                inputModes: skill.inputModes || ['application/json'],
+                outputModes: skill.outputModes || ['application/json'],
+            }));
+    }, [a2aSkillsConfig]);
 
     // Generate full A2A Agent Card
     const generateA2ACard = useCallback((): IA2AAgentCard => {
@@ -674,40 +767,179 @@ export const IdentitySection = ({
                                 )}
                             </div>
 
-                            {/* Attached Skills Summary - Auto-populated from Skills Metadata */}
+                            {/* A2A Skills Configuration - Editable skills to expose via A2A protocol */}
                             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                                <div className="flex items-center gap-x-2 mb-4">
-                                    <Zap size={14} className="text-gray-500" />
-                                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
-                                        Attached Skills
-                                    </p>
-                                    <Badge variant="secondary" className="text-xs">
-                                        {totalSkills} total
-                                    </Badge>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-x-2">
+                                        <Zap size={14} className="text-gray-500" />
+                                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
+                                            A2A Skills
+                                        </p>
+                                        <Badge variant="secondary" className="text-xs">
+                                            {enabledA2ASkillsCount} / {a2aSkillsConfig.length} enabled
+                                        </Badge>
+                                    </div>
+                                    {!isReadOnly && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={addCustomA2ASkill}
+                                            className="flex items-center gap-x-1"
+                                        >
+                                            <Plus size={14} />
+                                            Add Custom
+                                        </Button>
+                                    )}
                                 </div>
 
-                                {totalSkills > 0 ? (
-                                    <div className="flex flex-wrap gap-2">
-                                        {skills.map((skill) => (
-                                            <Badge 
-                                                key={skill.id} 
-                                                variant="secondary"
-                                                className="flex items-center gap-x-1.5 px-2 py-1"
-                                            >
-                                                <Zap size={12} />
-                                                <span>{skill.name || 'Unnamed Skill'}</span>
-                                                {skill.tags && skill.tags.length > 0 && (
-                                                    <span className="text-gray-400 text-xs">
-                                                        ({skill.tags.slice(0, 2).join(', ')})
-                                                    </span>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                                    Skills from the Skills step are auto-populated below. You can enable/disable which skills to expose via A2A, 
+                                    and customize their name and description for external discovery.
+                                </p>
+
+                                {a2aSkillsConfig.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {a2aSkillsConfig.map((skill) => (
+                                            <div
+                                                key={skill.id}
+                                                className={cn(
+                                                    "border rounded-lg overflow-hidden transition-colors",
+                                                    skill.enabled 
+                                                        ? "border-teal-200 dark:border-teal-800 bg-teal-50/50 dark:bg-teal-900/10"
+                                                        : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 opacity-60"
                                                 )}
-                                            </Badge>
+                                            >
+                                                {/* Skill Header */}
+                                                <div className="flex items-center justify-between p-3">
+                                                    <div className="flex items-center gap-x-3 flex-1 min-w-0">
+                                                        {!isReadOnly && (
+                                                            <Checkbox
+                                                                checked={skill.enabled}
+                                                                onCheckedChange={() => toggleA2ASkill(skill.id)}
+                                                            />
+                                                        )}
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-x-2">
+                                                                <Zap size={14} className={skill.enabled ? "text-teal-600" : "text-gray-400"} />
+                                                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
+                                                                    {skill.name || 'Unnamed Skill'}
+                                                                </span>
+                                                                {!skill.sourceSkillId && (
+                                                                    <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                                                                        Custom
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                            {skill.description && (
+                                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                                                    {skill.description}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-x-1 shrink-0">
+                                                        {!isReadOnly && (
+                                                            <>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8"
+                                                                    onClick={() => setExpandedA2ASkill(
+                                                                        expandedA2ASkill === skill.id ? null : skill.id
+                                                                    )}
+                                                                >
+                                                                    {expandedA2ASkill === skill.id ? (
+                                                                        <ChevronUp size={14} />
+                                                                    ) : (
+                                                                        <Pencil size={14} />
+                                                                    )}
+                                                                </Button>
+                                                                {!skill.sourceSkillId && (
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-8 w-8 text-gray-400 hover:text-red-500"
+                                                                        onClick={() => removeA2ASkill(skill.id)}
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                    </Button>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Expanded Edit Form */}
+                                                {expandedA2ASkill === skill.id && (
+                                                    <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-900 space-y-4">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                            <Input
+                                                                label="A2A Skill Name"
+                                                                placeholder="Skill name for A2A discovery"
+                                                                value={skill.name}
+                                                                disabled={isReadOnly}
+                                                                onChange={(e) => updateA2ASkill(skill.id, { name: e.target.value })}
+                                                            />
+                                                            {skill.sourceSkillId && (
+                                                                <div className="flex items-end">
+                                                                    <div className="text-xs text-gray-500 dark:text-gray-400 pb-2">
+                                                                        <span className="font-medium">Source:</span>{' '}
+                                                                        {skills.find(s => s.id === skill.sourceSkillId)?.name || 'Unknown'}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <Textarea
+                                                            label="A2A Description"
+                                                            placeholder="Description for A2A discovery (can differ from source skill description)"
+                                                            value={skill.description}
+                                                            disabled={isReadOnly}
+                                                            onChange={(e) => updateA2ASkill(skill.id, { description: e.target.value })}
+                                                            rows={2}
+                                                            className="w-full resize-none"
+                                                        />
+                                                        {skill.tags.length > 0 && (
+                                                            <div>
+                                                                <Label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 block">
+                                                                    Tags
+                                                                </Label>
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {skill.tags.map((tag, idx) => (
+                                                                        <Badge key={idx} variant="secondary" className="text-xs">
+                                                                            {tag}
+                                                                        </Badge>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex justify-end">
+                                                            <Button
+                                                                type="button"
+                                                                variant="secondary"
+                                                                size="sm"
+                                                                onClick={() => setExpandedA2ASkill(null)}
+                                                            >
+                                                                Done
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-xs text-gray-400">
-                                        No skills configured. Add skills in the Skills Metadata section above.
-                                    </p>
+                                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
+                                        <Zap size={24} className="mx-auto text-gray-400 mb-2" />
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            No skills available for A2A exposure.
+                                        </p>
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            Add skills in the Skills step above, or add a custom A2A skill.
+                                        </p>
+                                    </div>
                                 )}
                             </div>
 

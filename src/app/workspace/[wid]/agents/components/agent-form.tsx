@@ -915,6 +915,7 @@ export const FormBody = (props: AgentProps) => {
                             control={control}
                             watch={watch}
                             setValue={setValue}
+                            errors={errors}
                             isReadOnly={isEdit && !!watch('isReadOnly')}
                         />
                     </>
