@@ -846,61 +846,66 @@ export const AgentWizard = (props: AgentWizardProps) => {
                             </>
                         )}
 
-                        {/* Human Review */}
-                        <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                            <HumanInput
-                                humanInput={humanInput}
-                                messageBrokers={messageBrokers ?? []}
-                                setHumanInput={setHumanInput}
-                                isReadOnly={isEdit && !!watch('isReadOnly')}
-                                onHumanInputChange={onHumanInputChange}
-                            />
-                        </div>
+                        {/* Human Review / Self Learning / Output Broadcasting are not applicable to Long Horizon agents */}
+                        {!isHorizonAgent && (
+                            <>
+                                {/* Human Review */}
+                                <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                                    <HumanInput
+                                        humanInput={humanInput}
+                                        messageBrokers={messageBrokers ?? []}
+                                        setHumanInput={setHumanInput}
+                                        isReadOnly={isEdit && !!watch('isReadOnly')}
+                                        onHumanInputChange={onHumanInputChange}
+                                    />
+                                </div>
 
-                        {/* Self Learning */}
-                        <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                            <SelfLearning
-                                selfLearning={watch('selfLearning') || selfLearning}
-                                isReadOnly={isEdit && !!watch('isReadOnly')}
-                                apis={apis}
-                                allApiTools={allApiTools}
-                                llms={allModels as never}
-                                slms={allSLMModels as never}
-                                agent={agent}
-                                allPrompts={allPrompts as PromptResponse[]}
-                                promptsLoading={!!promptsLoading}
-                                llmModelsLoading={!!llmModelsLoading}
-                                slmModelsLoading={!!slmModelsLoading}
-                                messageBrokers={messageBrokers ?? []}
-                                setSelfLearning={setSelfLearning}
-                                onSelfLearningChange={onSelfLearningChange}
-                                onRefetch={onRefetchApiTools}
-                                onRefetchIntelligence={() => {
-                                    onRefetchLlms();
-                                    onRefetchSLMModel();
-                                }}
-                                onRefetchPrompt={async () => {
-                                    onRefetchPrompts();
-                                }}
-                                allConnectors={allConnectors}
-                                connectorsLoading={connectorsLoading ?? false}
-                                onRefetchConnector={onRefetchConnector}
-                            />
-                        </div>
+                                {/* Self Learning */}
+                                <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                                    <SelfLearning
+                                        selfLearning={watch('selfLearning') || selfLearning}
+                                        isReadOnly={isEdit && !!watch('isReadOnly')}
+                                        apis={apis}
+                                        allApiTools={allApiTools}
+                                        llms={allModels as never}
+                                        slms={allSLMModels as never}
+                                        agent={agent}
+                                        allPrompts={allPrompts as PromptResponse[]}
+                                        promptsLoading={!!promptsLoading}
+                                        llmModelsLoading={!!llmModelsLoading}
+                                        slmModelsLoading={!!slmModelsLoading}
+                                        messageBrokers={messageBrokers ?? []}
+                                        setSelfLearning={setSelfLearning}
+                                        onSelfLearningChange={onSelfLearningChange}
+                                        onRefetch={onRefetchApiTools}
+                                        onRefetchIntelligence={() => {
+                                            onRefetchLlms();
+                                            onRefetchSLMModel();
+                                        }}
+                                        onRefetchPrompt={async () => {
+                                            onRefetchPrompts();
+                                        }}
+                                        allConnectors={allConnectors}
+                                        connectorsLoading={connectorsLoading ?? false}
+                                        onRefetchConnector={onRefetchConnector}
+                                    />
+                                </div>
 
-                        {/* Output Broadcasting */}
-                        <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                            <MessagePublisher
-                                title="Output Broadcasting"
-                                detailButtonLabel="Add Output Broadcasting"
-                                viewLabel="View Output Broadcasting"
-                                messagePublisher={outputBroadcasting}
-                                messageBrokers={messageBrokers ?? []}
-                                isReadOnly={isEdit && !!watch('isReadOnly')}
-                                setMessagePublisher={setOutputBroadcasting}
-                                onMessagePublisherChange={onOutputBroadcasting}
-                            />
-                        </div>
+                                {/* Output Broadcasting */}
+                                <div className="border-2 border-solid border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                                    <MessagePublisher
+                                        title="Output Broadcasting"
+                                        detailButtonLabel="Add Output Broadcasting"
+                                        viewLabel="View Output Broadcasting"
+                                        messagePublisher={outputBroadcasting}
+                                        messageBrokers={messageBrokers ?? []}
+                                        isReadOnly={isEdit && !!watch('isReadOnly')}
+                                        setMessagePublisher={setOutputBroadcasting}
+                                        onMessagePublisherChange={onOutputBroadcasting}
+                                    />
+                                </div>
+                            </>
+                        )}
                     </div>
                 );
 
