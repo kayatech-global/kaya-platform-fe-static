@@ -2,11 +2,23 @@
 
 import { Input, Textarea, Select, Button, Label, Badge, Switch, Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter, Checkbox } from '@/components';
 import { cn } from '@/lib/utils';
-import { IAgentForm, AuthType, IA2AAgentCard, IA2ASkill, IHorizonSkill } from '@/models';
+import { IAgentForm, AuthType, IA2AAgentCard, IA2ASkill, IHorizonSkill, IOMode } from '@/models';
 import { User, Plus, X, Key, Copy, Check, ExternalLink, Eye, Shield, Globe, Lock, FileJson, Sparkles, Zap, Tag, Info, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react';
 import { Control, Controller, UseFormWatch, UseFormSetValue, FieldErrors, UseFormGetValues } from 'react-hook-form';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+
+// MIME types supported by skills for A2A protocol
+const skillIoModeOptions: { name: string; value: IOMode }[] = [
+    { name: 'JSON', value: 'application/json' },
+    { name: 'Text', value: 'text/plain' },
+    { name: 'XML', value: 'application/xml' },
+];
+
+const getSkillIoModeLabel = (mode: IOMode): string => {
+    const option = skillIoModeOptions.find((o) => o.value === mode);
+    return option?.name || mode;
+};
 
 // Interface for A2A skills that can be enabled/disabled and have editable name/description
 interface IA2ASkillConfig {
@@ -73,6 +85,11 @@ export const IdentitySection = ({
     // A2A Skills Configuration - allows user to select which skills to expose and customize name/description
     const [a2aSkillsConfig, setA2ASkillsConfig] = useState<IA2ASkillConfig[]>([]);
     const [expandedA2ASkill, setExpandedA2ASkill] = useState<string | null>(null);
+
+    // Per-skill temporary inputs for adding new tags / input modes / output modes
+    const [newSkillTag, setNewSkillTag] = useState<Record<string, string>>({});
+    const [newSkillInputMode, setNewSkillInputMode] = useState<Record<string, IOMode | ''>>({});
+    const [newSkillOutputMode, setNewSkillOutputMode] = useState<Record<string, IOMode | ''>>({});
 
     const authSchemes = watch('horizonConfig.identity.authSchemes') || [];
     const a2aEnabled = watch('horizonConfig.identity.a2aEnabled') ?? true;
@@ -186,6 +203,68 @@ export const IdentitySection = ({
 
     const removeA2ASkill = (skillId: string) => {
         setA2ASkillsConfig(prev => prev.filter(skill => skill.id !== skillId));
+    };
+
+    // Update a source skill in horizonConfig.skills by id (used for tags / input modes / output modes)
+    const updateSourceSkill = useCallback((sourceSkillId: string, updates: Partial<IHorizonSkill>) => {
+        const currentSkills = getValues('horizonConfig.skills') || [];
+        const nextSkills = currentSkills.map((s) => (s.id === sourceSkillId ? { ...s, ...updates } : s));
+        setValue('horizonConfig.skills', nextSkills);
+    }, [getValues, setValue]);
+
+    const addSourceSkillTag = (sourceSkillId: string) => {
+        const tag = newSkillTag[sourceSkillId]?.trim();
+        if (!tag) return;
+        const source = skills.find((s) => s.id === sourceSkillId);
+        if (source && !(source.tags || []).includes(tag)) {
+            updateSourceSkill(sourceSkillId, { tags: [...(source.tags || []), tag] });
+        }
+        setNewSkillTag((prev) => ({ ...prev, [sourceSkillId]: '' }));
+    };
+
+    const removeSourceSkillTag = (sourceSkillId: string, tag: string) => {
+        const source = skills.find((s) => s.id === sourceSkillId);
+        if (source) {
+            updateSourceSkill(sourceSkillId, { tags: (source.tags || []).filter((t) => t !== tag) });
+        }
+    };
+
+    const addSourceSkillInputMode = (sourceSkillId: string) => {
+        const mode = newSkillInputMode[sourceSkillId];
+        if (!mode) return;
+        const source = skills.find((s) => s.id === sourceSkillId);
+        const current = source?.inputModes || source?.ioModes || [];
+        if (source && !current.includes(mode)) {
+            updateSourceSkill(sourceSkillId, { inputModes: [...current, mode] });
+        }
+        setNewSkillInputMode((prev) => ({ ...prev, [sourceSkillId]: '' }));
+    };
+
+    const removeSourceSkillInputMode = (sourceSkillId: string, mode: IOMode) => {
+        const source = skills.find((s) => s.id === sourceSkillId);
+        const current = source?.inputModes || source?.ioModes || [];
+        if (source && current.length > 1) {
+            updateSourceSkill(sourceSkillId, { inputModes: current.filter((m) => m !== mode) });
+        }
+    };
+
+    const addSourceSkillOutputMode = (sourceSkillId: string) => {
+        const mode = newSkillOutputMode[sourceSkillId];
+        if (!mode) return;
+        const source = skills.find((s) => s.id === sourceSkillId);
+        const current = source?.outputModes || source?.ioModes || [];
+        if (source && !current.includes(mode)) {
+            updateSourceSkill(sourceSkillId, { outputModes: [...current, mode] });
+        }
+        setNewSkillOutputMode((prev) => ({ ...prev, [sourceSkillId]: '' }));
+    };
+
+    const removeSourceSkillOutputMode = (sourceSkillId: string, mode: IOMode) => {
+        const source = skills.find((s) => s.id === sourceSkillId);
+        const current = source?.outputModes || source?.ioModes || [];
+        if (source && current.length > 1) {
+            updateSourceSkill(sourceSkillId, { outputModes: current.filter((m) => m !== mode) });
+        }
     };
 
     // Generate A2A Skills from A2A Skills Config (only enabled skills)
@@ -763,8 +842,9 @@ export const IdentitySection = ({
                                 </div>
 
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                                    Skills from the Skills step are auto-populated below. You can enable/disable which skills to expose via A2A, 
-                                    and customize their name and description for external discovery.
+                                    Skills from the Skills step are auto-populated below. You can enable/disable which skills to expose via A2A,
+                                    customize their name and description for external discovery, and configure each skill&apos;s input modes,
+                                    output modes, and tags.
                                 </p>
 
                                 {a2aSkillsConfig.length > 0 ? (
@@ -870,20 +950,194 @@ export const IdentitySection = ({
                                                             rows={2}
                                                             className="w-full resize-none"
                                                         />
-                                                        {skill.tags.length > 0 && (
-                                                            <div>
-                                                                <Label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 block">
-                                                                    Tags
-                                                                </Label>
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    {skill.tags.map((tag, idx) => (
-                                                                        <Badge key={idx} variant="secondary" className="text-xs">
-                                                                            {tag}
-                                                                        </Badge>
-                                                                    ))}
+                                                        {skill.sourceSkillId && (() => {
+                                                            const sourceId = skill.sourceSkillId;
+                                                            const source = skills.find((s) => s.id === sourceId);
+                                                            const inputModes = (source?.inputModes || source?.ioModes || []) as IOMode[];
+                                                            const outputModes = (source?.outputModes || source?.ioModes || []) as IOMode[];
+                                                            const tags = source?.tags || [];
+
+                                                            return (
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                                    {/* Input Modes */}
+                                                                    <div>
+                                                                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                                                            Input Modes
+                                                                        </Label>
+                                                                        {inputModes.length > 0 && (
+                                                                            <div className="flex flex-wrap gap-2 mb-3">
+                                                                                {inputModes.map((mode) => (
+                                                                                    <Badge
+                                                                                        key={mode}
+                                                                                        variant="secondary"
+                                                                                        className="flex items-center gap-x-1 px-3 py-1.5"
+                                                                                    >
+                                                                                        {getSkillIoModeLabel(mode)}
+                                                                                        {!isReadOnly && inputModes.length > 1 && (
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() => removeSourceSkillInputMode(sourceId, mode)}
+                                                                                                className="ml-1 hover:text-red-500"
+                                                                                            >
+                                                                                                <X size={12} />
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </Badge>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                        {!isReadOnly && (
+                                                                            <div className="flex gap-x-2">
+                                                                                <Select
+                                                                                    options={skillIoModeOptions.filter(
+                                                                                        (opt) => !inputModes.includes(opt.value)
+                                                                                    )}
+                                                                                    currentValue={newSkillInputMode[sourceId] || ''}
+                                                                                    onChange={(e) =>
+                                                                                        setNewSkillInputMode({
+                                                                                            ...newSkillInputMode,
+                                                                                            [sourceId]: e.target.value as IOMode,
+                                                                                        })
+                                                                                    }
+                                                                                    className="flex-1"
+                                                                                    placeholder="Select mode..."
+                                                                                />
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    variant="secondary"
+                                                                                    size="sm"
+                                                                                    onClick={() => addSourceSkillInputMode(sourceId)}
+                                                                                    disabled={
+                                                                                        !newSkillInputMode[sourceId] ||
+                                                                                        inputModes.includes(newSkillInputMode[sourceId] as IOMode)
+                                                                                    }
+                                                                                >
+                                                                                    <Plus size={14} className="mr-1" />
+                                                                                    Add
+                                                                                </Button>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Output Modes */}
+                                                                    <div>
+                                                                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                                                            Output Modes
+                                                                        </Label>
+                                                                        {outputModes.length > 0 && (
+                                                                            <div className="flex flex-wrap gap-2 mb-3">
+                                                                                {outputModes.map((mode) => (
+                                                                                    <Badge
+                                                                                        key={mode}
+                                                                                        variant="secondary"
+                                                                                        className="flex items-center gap-x-1 px-3 py-1.5"
+                                                                                    >
+                                                                                        {getSkillIoModeLabel(mode)}
+                                                                                        {!isReadOnly && outputModes.length > 1 && (
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() => removeSourceSkillOutputMode(sourceId, mode)}
+                                                                                                className="ml-1 hover:text-red-500"
+                                                                                            >
+                                                                                                <X size={12} />
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </Badge>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                        {!isReadOnly && (
+                                                                            <div className="flex gap-x-2">
+                                                                                <Select
+                                                                                    options={skillIoModeOptions.filter(
+                                                                                        (opt) => !outputModes.includes(opt.value)
+                                                                                    )}
+                                                                                    currentValue={newSkillOutputMode[sourceId] || ''}
+                                                                                    onChange={(e) =>
+                                                                                        setNewSkillOutputMode({
+                                                                                            ...newSkillOutputMode,
+                                                                                            [sourceId]: e.target.value as IOMode,
+                                                                                        })
+                                                                                    }
+                                                                                    className="flex-1"
+                                                                                    placeholder="Select mode..."
+                                                                                />
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    variant="secondary"
+                                                                                    size="sm"
+                                                                                    onClick={() => addSourceSkillOutputMode(sourceId)}
+                                                                                    disabled={
+                                                                                        !newSkillOutputMode[sourceId] ||
+                                                                                        outputModes.includes(newSkillOutputMode[sourceId] as IOMode)
+                                                                                    }
+                                                                                >
+                                                                                    <Plus size={14} className="mr-1" />
+                                                                                    Add
+                                                                                </Button>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Tags */}
+                                                                    <div className="col-span-1 sm:col-span-2">
+                                                                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                                                            Tags
+                                                                        </Label>
+                                                                        <div className="flex flex-wrap gap-2 mb-2">
+                                                                            {tags.map((tag) => (
+                                                                                <Badge
+                                                                                    key={tag}
+                                                                                    variant="secondary"
+                                                                                    className="flex items-center gap-x-1"
+                                                                                >
+                                                                                    <Tag size={12} />
+                                                                                    {tag}
+                                                                                    {!isReadOnly && (
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => removeSourceSkillTag(sourceId, tag)}
+                                                                                            className="ml-1 hover:text-red-500"
+                                                                                        >
+                                                                                            <X size={12} />
+                                                                                        </button>
+                                                                                    )}
+                                                                                </Badge>
+                                                                            ))}
+                                                                        </div>
+                                                                        {!isReadOnly && (
+                                                                            <div className="flex gap-x-2">
+                                                                                <Input
+                                                                                    placeholder="Add tag"
+                                                                                    value={newSkillTag[sourceId] || ''}
+                                                                                    onChange={(e) =>
+                                                                                        setNewSkillTag({
+                                                                                            ...newSkillTag,
+                                                                                            [sourceId]: e.target.value,
+                                                                                        })
+                                                                                    }
+                                                                                    onKeyDown={(e) => {
+                                                                                        if (e.key === 'Enter') {
+                                                                                            e.preventDefault();
+                                                                                            addSourceSkillTag(sourceId);
+                                                                                        }
+                                                                                    }}
+                                                                                    containerClassName="flex-1"
+                                                                                />
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    variant="secondary"
+                                                                                    size="sm"
+                                                                                    onClick={() => addSourceSkillTag(sourceId)}
+                                                                                >
+                                                                                    Add
+                                                                                </Button>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
+                                                            );
+                                                        })()}
                                                         <div className="flex justify-end">
                                                             <Button
                                                                 type="button"
