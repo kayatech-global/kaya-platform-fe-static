@@ -7,6 +7,7 @@ import WorkspaceForm from './workspace-form';
 import { useAuth } from '@/context';
 import { IOption, ISearch } from '@/models';
 import { useForm } from 'react-hook-form';
+import { Activity } from 'lucide-react';
 
 interface WorkspaceListHeaderProps {
     metadataOption: IOption | null;
@@ -104,13 +105,21 @@ const WorkspaceListHeader = ({
                     className="max-w-sm"
                     onKeyUp={handleSubmit(onHandleSubmit)}
                 />
-                {isSuperAdmin && (
-                    <div className="data-table-header-button flex gap-x-3">
+                <div className="data-table-header-button flex gap-x-3">
+                    <a href="/kaya-status" target="_blank" rel="noreferrer noopener">
+                        <Button
+                            size={'sm'}
+                            leadingIcon={<Activity size={14} />}
+                        >
+                            KAYA Status
+                        </Button>
+                    </a>
+                    {isSuperAdmin && (
                         <Button onClick={() => handleCreate()} size={'sm'}>
                             New Workspace
                         </Button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
             <Dialog open={openNewWorkspaceForm} onOpenChange={setOpenNewWorkspaceForm}>
                 <DialogContent className="max-w-[unset] w-[550px]">
